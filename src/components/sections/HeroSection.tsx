@@ -175,7 +175,7 @@ const HeroSection: React.FC = () => {
               >
                 <img
                   src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=700&h=500&fit=crop"
-                  alt="Admin Dashboard Preview"
+                  alt={language === 'bn' ? 'ইশপ মার্কেট এডমিন প্যানেল প্রিভিউ' : 'eShop Market Admin Panel Preview'}
                   className="rounded-2xl shadow-2xl border border-white/10"
                 />
               </motion.div>

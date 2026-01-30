@@ -24,8 +24,8 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   noindex = false,
 }) => {
   const { language } = useLanguage();
-  const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const siteUrl = 'https://eshopmarket.com'; // Replace with actual production URL
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : siteUrl;
 
   const siteName = language === 'bn' ? 'ইশপ মার্কেট' : 'eShop Market';
   const fullTitle = `${title} | ${siteName}`;
@@ -34,43 +34,56 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': `${siteUrl}/#organization`,
     name: siteName,
     url: siteUrl,
-    logo: `${siteUrl}/logo.png`,
-    description: language === 'bn'
-      ? 'বাংলাদেশের সেরা রেডিমেড ইকমার্স সলিউশন প্রোভাইডার'
-      : 'Best ready-made ecommerce solution provider in Bangladesh',
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: 'Dhaka',
-      addressCountry: 'BD',
+    logo: {
+      '@type': 'ImageObject',
+      url: `${siteUrl}/logo.png`,
+      width: '112',
+      height: '112'
     },
+    sameAs: [
+      'https://facebook.com/eshopmarket',
+      'https://twitter.com/eshopmarket',
+      'https://linkedin.com/company/eshopmarket'
+    ],
     contactPoint: {
       '@type': 'ContactPoint',
       telephone: '+880-1700-000000',
       contactType: 'customer service',
       availableLanguage: ['Bengali', 'English'],
-    },
+      areaServed: 'BD'
+    }
+  };
+
+  // Website Schema
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${siteUrl}/#website`,
+    url: siteUrl,
+    name: siteName,
+    publisher: { '@id': `${siteUrl}/#organization` },
+    inLanguage: language === 'bn' ? 'bn-BD' : 'en-US',
   };
 
   return (
     <Helmet>
       {/* Basic Meta Tags */}
-      <html lang={language} />
+      <html lang={language === 'bn' ? 'bn' : 'en'} />
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       {keywords.length > 0 && (
         <meta name="keywords" content={keywords.join(', ')} />
       )}
-      {noindex && <meta name="robots" content="noindex, nofollow" />}
+      <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"} />
+      <link rel="canonical" href={canonicalUrl || currentUrl} />
 
-      {/* Canonical URL */}
-      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
-
-      {/* Hreflang Tags */}
-      <link rel="alternate" hrefLang="bn" href={`${siteUrl}/`} />
-      <link rel="alternate" hrefLang="en" href={`${siteUrl}/en`} />
-      <link rel="alternate" hrefLang="x-default" href={`${siteUrl}/`} />
+      {/* Hreflang Tags for Multilingual Support */}
+      <link rel="alternate" hrefLang="bn-BD" href={siteUrl} />
+      <link rel="alternate" hrefLang="en-US" href={`${siteUrl}/en`} />
+      <link rel="alternate" hrefLang="x-default" href={siteUrl} />
 
       {/* Open Graph Tags */}
       <meta property="og:type" content={ogType} />
@@ -79,10 +92,13 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       <meta property="og:url" content={currentUrl} />
       <meta property="og:site_name" content={siteName} />
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:locale" content={language === 'bn' ? 'bn_BD' : 'en_US'} />
 
       {/* Twitter Card Tags */}
       <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:site" content="@eshopmarket" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
@@ -90,6 +106,9 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       {/* Structured Data */}
       <script type="application/ld+json">
         {JSON.stringify(organizationSchema)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(websiteSchema)}
       </script>
       {structuredData && (
         <script type="application/ld+json">
