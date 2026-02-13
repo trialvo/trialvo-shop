@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, Mail, Download, FileText, Server, Home } from 'lucide-react';
+import { CheckCircle, Mail, Download, FileText, Server, Home, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
-import { getProductBySlug } from '@/data/products';
+import { useProduct } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/button';
 
 const OrderSuccessPage: React.FC = () => {
@@ -13,7 +13,8 @@ const OrderSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('orderId') || 'ORD-XXXXXX';
   const productSlug = searchParams.get('product');
-  const product = productSlug ? getProductBySlug(productSlug) : undefined;
+
+  const { data: product, isLoading } = useProduct(productSlug || undefined);
 
   const steps = [
     { icon: Mail, text: t('orderSuccess.step1') },
@@ -21,6 +22,18 @@ const OrderSuccessPage: React.FC = () => {
     { icon: FileText, text: t('orderSuccess.step3') },
     { icon: Server, text: t('orderSuccess.step4') },
   ];
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="section-padding">
+          <div className="container-custom flex justify-center py-20">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

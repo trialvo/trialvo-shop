@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, ShoppingCart, Play, Star, Award, Clock, Package, Headphones, FileText, Video } from 'lucide-react';
+import { ArrowLeft, Check, ShoppingCart, Play, Star, Award, Clock, Package, Headphones, FileText, Video, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
@@ -9,7 +9,7 @@ import DemoAccessCard from '@/components/cards/DemoAccessCard';
 import ProductCard from '@/components/cards/ProductCard';
 import FAQ from '@/components/sections/FAQ';
 import ScreenshotGallery from '@/components/gallery/ScreenshotGallery';
-import { getProductBySlug, getRelatedProducts } from '@/data/products';
+import { useProduct, useRelatedProducts } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -19,13 +19,25 @@ const ProductDetailPage: React.FC = () => {
   const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'shop' | 'admin'>('shop');
 
-  const product = slug ? getProductBySlug(slug) : undefined;
+  const { data: product, isLoading, error } = useProduct(slug);
+  const { data: relatedProducts } = useRelatedProducts(product?.id, product?.category);
 
-  if (!product) {
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="section-padding">
+          <div className="container-custom flex justify-center py-20">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!product || error) {
     return <Navigate to="/products" replace />;
   }
 
-  const relatedProducts = getRelatedProducts(product.id, product.category);
   const images = activeTab === 'shop' ? product.images.shop : product.images.admin;
 
   const productSchema = {
@@ -201,12 +213,14 @@ const ProductDetailPage: React.FC = () => {
                     {t('product.buyNow')}
                   </Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="flex-1 h-14 text-base">
-                  <a href={product.demo.shopUrl} target="_blank" rel="noopener noreferrer">
-                    <Play className="w-5 h-5 mr-2" />
-                    {t('product.viewDemo')}
-                  </a>
-                </Button>
+                {product.demo.length > 0 && (
+                  <Button asChild variant="outline" size="lg" className="flex-1 h-14 text-base">
+                    <a href={product.demo[0].url} target="_blank" rel="noopener noreferrer">
+                      <Play className="w-5 h-5 mr-2" />
+                      {t('product.viewDemo')}
+                    </a>
+                  </Button>
+                )}
               </div>
 
               {/* Highlights */}
@@ -260,24 +274,7 @@ const ProductDetailPage: React.FC = () => {
               <Play className="w-6 h-6 text-primary" />
               {language === 'bn' ? 'ডেমো অ্যাক্সেস' : 'Demo Access'}
             </h2>
-            <DemoAccessCard
-              adminDemo={{
-                url: product.demo.adminUrl,
-                username: product.demo.adminUsername,
-                password: product.demo.adminPassword,
-                label: t('product.adminPanel'),
-              }}
-              shopDemo={
-                product.demo.shopUsername
-                  ? {
-                      url: product.demo.shopUrl,
-                      username: product.demo.shopUsername,
-                      password: product.demo.shopPassword || '',
-                      label: t('product.shopWebsite'),
-                    }
-                  : undefined
-              }
-            />
+            <DemoAccessCard demos={product.demo} />
           </section>
 
           {/* Video Section */}
@@ -307,7 +304,7 @@ const ProductDetailPage: React.FC = () => {
           )}
 
           {/* Related Products */}
-          {relatedProducts.length > 0 && (
+          {relatedProducts && relatedProducts.length > 0 && (
             <section className="mt-16">
               <h2 className="text-2xl font-semibold mb-6">{t('product.related')}</h2>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">

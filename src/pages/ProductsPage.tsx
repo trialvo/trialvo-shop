@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
 import ProductCard from '@/components/cards/ProductCard';
-import { products, categories } from '@/data/products';
+import { categories } from '@/data/products';
+import { useProducts } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -17,13 +18,7 @@ const ProductsPage: React.FC = () => {
 
   const selectedCategory = searchParams.get('category') || '';
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      if (!product.isActive) return false;
-      if (selectedCategory && product.category !== selectedCategory) return false;
-      return true;
-    });
-  }, [selectedCategory]);
+  const { data: products, isLoading } = useProducts(selectedCategory || undefined);
 
   const handleCategoryFilter = (categoryId: string) => {
     if (categoryId === selectedCategory) {
@@ -67,8 +62,9 @@ const ProductsPage: React.FC = () => {
               {t('nav.products')}
             </h1>
             <p className="text-muted-foreground">
-              {filteredProducts.length}{' '}
-              {language === 'bn' ? 'টি প্রোডাক্ট পাওয়া গেছে' : 'products found'}
+              {isLoading
+                ? (language === 'bn' ? 'লোড হচ্ছে...' : 'Loading...')
+                : `${products?.length || 0} ${language === 'bn' ? 'টি প্রোডাক্ট পাওয়া গেছে' : 'products found'}`}
             </p>
           </div>
 
@@ -97,11 +93,10 @@ const ProductsPage: React.FC = () => {
                       <button
                         key={category.id}
                         onClick={() => handleCategoryFilter(category.id)}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                          selectedCategory === category.id
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === category.id
                             ? 'bg-primary text-primary-foreground'
                             : 'hover:bg-muted'
-                        }`}
+                          }`}
                       >
                         {category.name[language]}
                       </button>
@@ -146,9 +141,13 @@ const ProductsPage: React.FC = () => {
               )}
 
               {/* Products */}
-              {filteredProducts.length > 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center py-16">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : (products?.length || 0) > 0 ? (
                 <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredProducts.map((product, index) => (
+                  {products!.map((product, index) => (
                     <motion.div
                       key={product.id}
                       initial={{ opacity: 0, y: 20 }}

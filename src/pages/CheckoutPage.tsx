@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CreditCard, Smartphone, Building2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Smartphone, Building2, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
-import { getProductBySlug } from '@/data/products';
+import { useProduct } from '@/hooks/useProducts';
+import { useCreateOrder } from '@/hooks/useOrders';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 const paymentMethods = [
   { id: 'sslcommerz', name: 'SSLCommerz', icon: CreditCard },
@@ -26,7 +28,8 @@ const CheckoutPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const productSlug = searchParams.get('product');
 
-  const product = productSlug ? getProductBySlug(productSlug) : undefined;
+  const { data: product, isLoading: productLoading } = useProduct(productSlug || undefined);
+  const createOrder = useCreateOrder();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -37,7 +40,18 @@ const CheckoutPage: React.FC = () => {
     notes: '',
     paymentMethod: 'bkash',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (productLoading) {
+    return (
+      <Layout>
+        <div className="section-padding">
+          <div className="container-custom flex justify-center py-20">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!product) {
     return (
@@ -65,13 +79,28 @@ const CheckoutPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
-      navigate(`/order-success?orderId=${orderId}&product=${product.slug}`);
-    }, 2000);
+    try {
+      const order = await createOrder.mutateAsync({
+        productId: product.id,
+        customerName: formData.name,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        company: formData.company,
+        needsHosting: formData.needsHosting,
+        notes: formData.notes,
+        paymentMethod: formData.paymentMethod,
+        totalBdt: product.priceBDT,
+      });
+
+      navigate(`/order-success?orderId=${order.order_id}&product=${product.slug}`);
+    } catch (err) {
+      toast.error(
+        language === 'bn'
+          ? 'অর্ডার সাবমিট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'
+          : 'Failed to submit order. Please try again.'
+      );
+    }
   };
 
   const seoData = {
@@ -240,9 +269,16 @@ const CheckoutPage: React.FC = () => {
                   type="submit"
                   size="lg"
                   className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                  disabled={isSubmitting}
+                  disabled={createOrder.isPending}
                 >
-                  {isSubmitting ? t('checkout.processing') : t('checkout.placeOrder')}
+                  {createOrder.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t('checkout.processing')}
+                    </>
+                  ) : (
+                    t('checkout.placeOrder')
+                  )}
                 </Button>
               </form>
             </motion.div>

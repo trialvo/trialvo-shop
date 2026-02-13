@@ -4,16 +4,15 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface DemoCredentials {
+interface DemoItem {
+  label: { bn: string; en: string };
   url: string;
   username: string;
   password: string;
-  label: string;
 }
 
 interface DemoAccessCardProps {
-  adminDemo: DemoCredentials;
-  shopDemo?: DemoCredentials;
+  demos: DemoItem[];
 }
 
 const CredentialRow: React.FC<{ label: string; value: string }> = ({ label, value }) => {
@@ -54,13 +53,13 @@ const CredentialRow: React.FC<{ label: string; value: string }> = ({ label, valu
   );
 };
 
-const DemoSection: React.FC<{ demo: DemoCredentials }> = ({ demo }) => {
+const DemoSection: React.FC<{ demo: DemoItem; language: 'bn' | 'en' }> = ({ demo, language }) => {
   const { t } = useLanguage();
 
   return (
     <div className="demo-card">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="font-semibold">{demo.label}</h4>
+        <h4 className="font-semibold">{demo.label[language]}</h4>
         <Button variant="outline" size="sm" asChild>
           <a
             href={demo.url}
@@ -81,13 +80,15 @@ const DemoSection: React.FC<{ demo: DemoCredentials }> = ({ demo }) => {
   );
 };
 
-const DemoAccessCard: React.FC<DemoAccessCardProps> = ({ adminDemo, shopDemo }) => {
-  const { t } = useLanguage();
+const DemoAccessCard: React.FC<DemoAccessCardProps> = ({ demos }) => {
+  const { t, language } = useLanguage();
+
+  if (!demos || demos.length === 0) return null;
 
   return (
     <div className="bg-card border border-border rounded-xl p-6">
       <h3 className="text-xl font-semibold mb-4">{t('product.demoAccess')}</h3>
-      
+
       <Alert className="mb-4">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="text-sm">
@@ -96,10 +97,9 @@ const DemoAccessCard: React.FC<DemoAccessCardProps> = ({ adminDemo, shopDemo }) 
       </Alert>
 
       <div className="space-y-4">
-        <DemoSection demo={adminDemo} />
-        {shopDemo && shopDemo.username && (
-          <DemoSection demo={shopDemo} />
-        )}
+        {demos.map((demo, index) => (
+          <DemoSection key={index} demo={demo} language={language} />
+        ))}
       </div>
     </div>
   );

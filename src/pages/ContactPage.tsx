@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, MessageSquare } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, MessageSquare, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
+import { useCreateContactMessage } from '@/hooks/useContactMessages';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,13 +13,13 @@ import { toast } from 'sonner';
 
 const ContactPage: React.FC = () => {
   const { language, t } = useLanguage();
+  const createMessage = useCreateContactMessage();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
     message: '',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -29,18 +30,22 @@ const ContactPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      await createMessage.mutateAsync(formData);
       toast.success(
         language === 'bn'
           ? 'আপনার বার্তা পাঠানো হয়েছে!'
           : 'Your message has been sent!'
       );
       setFormData({ name: '', email: '', subject: '', message: '' });
-      setIsSubmitting(false);
-    }, 1500);
+    } catch {
+      toast.error(
+        language === 'bn'
+          ? 'বার্তা পাঠাতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'
+          : 'Failed to send message. Please try again.'
+      );
+    }
   };
 
   const seoData = {
@@ -178,12 +183,19 @@ const ContactPage: React.FC = () => {
                     type="submit"
                     size="lg"
                     className="w-full sm:w-auto"
-                    disabled={isSubmitting}
+                    disabled={createMessage.isPending}
                   >
-                    <Send className="w-4 h-4 mr-2" />
-                    {isSubmitting
-                      ? (language === 'bn' ? 'পাঠানো হচ্ছে...' : 'Sending...')
-                      : t('contact.form.submit')}
+                    {createMessage.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {language === 'bn' ? 'পাঠানো হচ্ছে...' : 'Sending...'}
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        {t('contact.form.submit')}
+                      </>
+                    )}
                   </Button>
                 </form>
               </div>
