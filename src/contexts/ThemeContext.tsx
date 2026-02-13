@@ -26,16 +26,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('theme') as Theme | null;
-      return stored || 'system';
+      return stored || 'dark';
     }
-    return 'system';
+    return 'dark';
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     const root = window.document.documentElement;
-    
+
     const getSystemTheme = (): 'light' | 'dark' => {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     };
@@ -43,7 +43,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const applyTheme = (themeToApply: Theme) => {
       const resolved = themeToApply === 'system' ? getSystemTheme() : themeToApply;
       setResolvedTheme(resolved);
-      
+
       root.classList.remove('light', 'dark');
       root.classList.add(resolved);
     };

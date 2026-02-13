@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Globe, ChevronDown } from 'lucide-react';
+import { Menu, X, Globe } from 'lucide-react';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 const Navbar: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -73,8 +67,8 @@ const Navbar: React.FC = () => {
                 key={link.href}
                 to={link.href}
                 className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-lg ${isActive(link.href)
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   }`}
               >
                 {link.label}
@@ -91,37 +85,19 @@ const Navbar: React.FC = () => {
             {/* Theme Toggle */}
             <ThemeToggle />
 
-            {/* Language Switcher */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 h-9"
-                  aria-label="Select language"
-                >
-                  <Globe className="w-4 h-4" />
-                  <span className="uppercase font-medium text-xs">
-                    {language === 'bn' ? 'বাং' : 'EN'}
-                  </span>
-                  <ChevronDown className="w-3 h-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => toggleLanguage('bn')}
-                  className={language === 'bn' ? 'bg-muted' : ''}
-                >
-                  <span className="font-bangla">বাংলা (BN)</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => toggleLanguage('en')}
-                  className={language === 'en' ? 'bg-muted' : ''}
-                >
-                  <span className="font-english">English (EN)</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Language Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-9 min-w-[70px]"
+              aria-label="Toggle language"
+              onClick={() => toggleLanguage(language === 'bn' ? 'en' : 'bn')}
+            >
+              <Globe className="w-4 h-4" />
+              <span className="uppercase font-medium text-xs">
+                {language === 'bn' ? 'EN' : 'বাং'}
+              </span>
+            </Button>
 
             {/* Mobile Menu Toggle */}
             <Button
@@ -150,8 +126,8 @@ const Navbar: React.FC = () => {
                   key={link.href}
                   to={link.href}
                   className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive(link.href)
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-foreground hover:bg-muted'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-foreground hover:bg-muted'
                     }`}
                 >
                   {link.label}
