@@ -40,21 +40,25 @@ const Navbar: React.FC = () => {
     setLanguage(lang);
   };
 
+  const isActive = (href: string) => {
+    if (href === '/') return location.pathname === '/';
+    return location.pathname.startsWith(href);
+  };
+
   return (
     <header
-      className={`header-sticky transition-all duration-300 ${
-        isScrolled ? 'shadow-soft-md' : ''
-      }`}
+      className={`header-sticky transition-all duration-300 ${isScrolled ? 'shadow-soft-md' : ''
+        }`}
     >
       <nav className="container-custom" aria-label="Main navigation">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 font-bold text-xl text-primary"
+            className="flex items-center gap-2.5 font-bold text-xl text-primary group"
             aria-label="Home"
           >
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center transition-transform group-hover:scale-105">
               <span className="text-primary-foreground font-bold text-lg">E</span>
             </div>
             <span className="hidden sm:inline">
@@ -63,18 +67,21 @@ const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === link.href
+                className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-lg ${isActive(link.href)
                     ? 'text-primary'
-                    : 'text-muted-foreground'
-                }`}
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`}
               >
                 {link.label}
+                {/* Active Indicator */}
+                {isActive(link.href) && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-primary rounded-full" />
+                )}
               </Link>
             ))}
           </div>
@@ -90,11 +97,11 @@ const Navbar: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2"
+                  className="gap-1.5 h-9"
                   aria-label="Select language"
                 >
                   <Globe className="w-4 h-4" />
-                  <span className="uppercase font-medium">
+                  <span className="uppercase font-medium text-xs">
                     {language === 'bn' ? 'বাং' : 'EN'}
                   </span>
                   <ChevronDown className="w-3 h-3" />
@@ -136,17 +143,16 @@ const Navbar: React.FC = () => {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border py-4 animate-fade-in">
-            <div className="flex flex-col gap-2">
+          <div className="md:hidden border-t border-border py-3 animate-fade-in">
+            <div className="flex flex-col gap-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === link.href
-                      ? 'bg-primary text-primary-foreground'
+                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive(link.href)
+                      ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-foreground hover:bg-muted'
-                  }`}
+                    }`}
                 >
                   {link.label}
                 </Link>

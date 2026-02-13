@@ -10,6 +10,7 @@ interface SEOHeadProps {
   ogImage?: string;
   ogType?: 'website' | 'product' | 'article';
   structuredData?: object;
+  faqData?: { question: string; answer: string }[];
   noindex?: boolean;
 }
 
@@ -21,11 +22,12 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   ogImage = 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=630&fit=crop',
   ogType = 'website',
   structuredData,
+  faqData,
   noindex = false,
 }) => {
   const { language } = useLanguage();
-  const siteUrl = 'https://eshopmarket.com'; // Replace with actual production URL
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : siteUrl;
+  const siteUrl = 'https://eshopmarket.com';
+  const currentUrl = canonicalUrl || (typeof window !== 'undefined' ? window.location.href : siteUrl);
 
   const siteName = language === 'bn' ? 'ইশপ মার্কেট' : 'eShop Market';
   const fullTitle = `${title} | ${siteName}`;
@@ -39,14 +41,14 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     url: siteUrl,
     logo: {
       '@type': 'ImageObject',
-      url: `${siteUrl}/logo.png`,
+      url: `${siteUrl}/favicon.svg`,
       width: '112',
       height: '112'
     },
     sameAs: [
       'https://facebook.com/eshopmarket',
-      'https://twitter.com/eshopmarket',
-      'https://linkedin.com/company/eshopmarket'
+      'https://youtube.com/@eshopmarket',
+      'https://wa.me/8801700000000'
     ],
     contactPoint: {
       '@type': 'ContactPoint',
@@ -57,7 +59,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     }
   };
 
-  // Website Schema
+  // Website Schema with SearchAction
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -66,7 +68,26 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     name: siteName,
     publisher: { '@id': `${siteUrl}/#organization` },
     inLanguage: language === 'bn' ? 'bn-BD' : 'en-US',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteUrl}/products?q={search_term_string}`,
+      'query-input': 'required name=search_term_string'
+    }
   };
+
+  // FAQ Schema (for product detail pages)
+  const faqSchema = faqData && faqData.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqData.map(item => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      }
+    }))
+  } : null;
 
   return (
     <Helmet>
@@ -78,7 +99,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
         <meta name="keywords" content={keywords.join(', ')} />
       )}
       <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"} />
-      <link rel="canonical" href={canonicalUrl || currentUrl} />
+      <link rel="canonical" href={currentUrl} />
 
       {/* Hreflang Tags for Multilingual Support */}
       <link rel="alternate" hrefLang="bn-BD" href={siteUrl} />
@@ -113,6 +134,11 @@ const SEOHead: React.FC<SEOHeadProps> = ({
       {structuredData && (
         <script type="application/ld+json">
           {JSON.stringify(structuredData)}
+        </script>
+      )}
+      {faqSchema && (
+        <script type="application/ld+json">
+          {JSON.stringify(faqSchema)}
         </script>
       )}
     </Helmet>

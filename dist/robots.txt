@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /checkout
+Disallow: /order-success
 
 Sitemap: https://eshopmarket.com/sitemap.xml

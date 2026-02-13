@@ -164,7 +164,7 @@ const HeroSection: React.FC = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="hidden lg:block relative"
+            className="mt-12 lg:mt-0 relative"
           >
             <div className="relative">
               {/* Main Dashboard Image */}

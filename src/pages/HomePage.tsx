@@ -7,7 +7,9 @@ import GoalSection from '@/components/sections/GoalSection';
 import CategoriesSection from '@/components/sections/CategoriesSection';
 import FeaturedProducts from '@/components/sections/FeaturedProducts';
 import HowItWorks from '@/components/sections/HowItWorks';
+import TestimonialsSection from '@/components/sections/TestimonialsSection';
 import TrustSection from '@/components/sections/TrustSection';
+import CTASection from '@/components/sections/CTASection';
 
 const HomePage: React.FC = () => {
   const { language } = useLanguage();
@@ -46,13 +48,15 @@ const HomePage: React.FC = () => {
         keywords={seoData[language].keywords}
         structuredData={breadcrumbSchema}
       />
-      
+
       <HeroSection />
       <GoalSection />
       <CategoriesSection />
       <FeaturedProducts />
       <HowItWorks />
+      <TestimonialsSection />
       <TrustSection />
+      <CTASection />
     </Layout>
   );
 };
