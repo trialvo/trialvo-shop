@@ -65,20 +65,20 @@ const AdminSettingsPage: React.FC = () => {
   <div className="space-y-6 max-w-2xl">
    <div>
     <h1 className="text-2xl font-bold text-white">Settings</h1>
-    <p className="text-sm text-slate-400">Manage your admin profile</p>
+    <p className="text-sm text-gray-400">Manage your admin profile</p>
    </div>
 
    {/* Profile Info */}
-   <Card className="bg-slate-800/50 border-slate-700/50">
+   <Card className="bg-[#161822] border-white/[0.08]">
     <CardHeader>
      <CardTitle className="text-white flex items-center gap-2">
-      <User className="w-5 h-5 text-slate-400" />
+      <User className="w-5 h-5 text-gray-400" />
       Profile Information
      </CardTitle>
-     <CardDescription className="text-slate-400">Update your account details</CardDescription>
+     <CardDescription className="text-gray-400">Update your account details</CardDescription>
     </CardHeader>
     <CardContent className="space-y-4">
-     <div className="flex items-center gap-4 pb-4 border-b border-slate-700/50">
+     <div className="flex items-center gap-4 pb-4 border-b border-white/[0.08]">
       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
        <span className="text-2xl font-bold text-white">
         {adminProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
@@ -86,7 +86,7 @@ const AdminSettingsPage: React.FC = () => {
       </div>
       <div>
        <p className="text-lg font-semibold text-white">{adminProfile?.full_name}</p>
-       <p className="text-sm text-slate-400">{adminProfile?.email}</p>
+       <p className="text-sm text-gray-400">{adminProfile?.email}</p>
        <Badge variant="outline" className="mt-1 text-xs border-primary/30 text-primary bg-primary/10">
         <ShieldCheck className="w-3 h-3 mr-1" />
         {adminProfile?.role?.replace('_', ' ')}
@@ -95,20 +95,20 @@ const AdminSettingsPage: React.FC = () => {
      </div>
 
      <div className="space-y-2">
-      <Label className="text-slate-300">Full Name</Label>
+      <Label className="text-gray-300">Full Name</Label>
       <Input
        value={fullName}
        onChange={(e) => setFullName(e.target.value)}
-       className="bg-slate-700/50 border-slate-600 text-white"
+       className="bg-white/5 border-white/10 text-white"
       />
      </div>
 
      <div className="space-y-2">
-      <Label className="text-slate-300">Email</Label>
+      <Label className="text-gray-300">Email</Label>
       <Input
        value={adminProfile?.email || ''}
        disabled
-       className="bg-slate-700/30 border-slate-600 text-slate-400"
+       className="bg-white/5/30 border-white/10 text-gray-400"
       />
      </div>
 
@@ -124,33 +124,33 @@ const AdminSettingsPage: React.FC = () => {
    </Card>
 
    {/* Change Password */}
-   <Card className="bg-slate-800/50 border-slate-700/50">
+   <Card className="bg-[#161822] border-white/[0.08]">
     <CardHeader>
      <CardTitle className="text-white flex items-center gap-2">
-      <Lock className="w-5 h-5 text-slate-400" />
+      <Lock className="w-5 h-5 text-gray-400" />
       Change Password
      </CardTitle>
-     <CardDescription className="text-slate-400">Update your login password</CardDescription>
+     <CardDescription className="text-gray-400">Update your login password</CardDescription>
     </CardHeader>
     <CardContent className="space-y-4">
      <div className="space-y-2">
-      <Label className="text-slate-300">New Password</Label>
+      <Label className="text-gray-300">New Password</Label>
       <Input
        type="password"
        value={newPassword}
        onChange={(e) => setNewPassword(e.target.value)}
-       className="bg-slate-700/50 border-slate-600 text-white"
+       className="bg-white/5 border-white/10 text-white"
        placeholder="••••••••"
       />
      </div>
 
      <div className="space-y-2">
-      <Label className="text-slate-300">Confirm New Password</Label>
+      <Label className="text-gray-300">Confirm New Password</Label>
       <Input
        type="password"
        value={confirmPassword}
        onChange={(e) => setConfirmPassword(e.target.value)}
-       className="bg-slate-700/50 border-slate-600 text-white"
+       className="bg-white/5 border-white/10 text-white"
        placeholder="••••••••"
       />
      </div>

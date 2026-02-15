@@ -18,11 +18,11 @@ const StatCard: React.FC<{
  link: string;
 }> = ({ title, value, icon: Icon, trend, color, link }) => (
  <Link to={link}>
-  <Card className="bg-slate-800/50 border-slate-700/50 hover:border-slate-600/50 transition-all hover:-translate-y-0.5 hover:shadow-lg group cursor-pointer">
+  <Card className="bg-[#161822] border-white/[0.08] hover:border-white/10/50 transition-all hover:-translate-y-0.5 hover:shadow-lg group cursor-pointer">
    <CardContent className="p-6">
     <div className="flex items-start justify-between">
      <div>
-      <p className="text-sm text-slate-400 mb-1">{title}</p>
+      <p className="text-sm text-gray-400 mb-1">{title}</p>
       <p className="text-3xl font-bold text-white">{value}</p>
       {trend && (
        <div className="flex items-center gap-1 mt-2">
@@ -35,7 +35,7 @@ const StatCard: React.FC<{
       <Icon className="w-6 h-6 text-white" />
      </div>
     </div>
-    <div className="flex items-center gap-1 mt-3 text-slate-500 text-xs group-hover:text-primary transition-colors">
+    <div className="flex items-center gap-1 mt-3 text-gray-500 text-xs group-hover:text-primary transition-colors">
      <span>View details</span>
      <ArrowUpRight className="w-3 h-3" />
     </div>
@@ -66,10 +66,10 @@ const DashboardPage: React.FC = () => {
    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     {isLoading ? (
      Array.from({ length: 4 }).map((_, i) => (
-      <Card key={i} className="bg-slate-800/50 border-slate-700/50">
+      <Card key={i} className="bg-[#161822] border-white/[0.08]">
        <CardContent className="p-6">
-        <Skeleton className="h-4 w-20 mb-2 bg-slate-700" />
-        <Skeleton className="h-8 w-16 bg-slate-700" />
+        <Skeleton className="h-4 w-20 mb-2 bg-white/5" />
+        <Skeleton className="h-8 w-16 bg-white/5" />
        </CardContent>
       </Card>
      ))
@@ -110,11 +110,11 @@ const DashboardPage: React.FC = () => {
    </div>
 
    {/* Recent Orders */}
-   <Card className="bg-slate-800/50 border-slate-700/50">
+   <Card className="bg-[#161822] border-white/[0.08]">
     <CardHeader className="pb-3">
      <div className="flex items-center justify-between">
       <CardTitle className="text-lg text-white flex items-center gap-2">
-       <Clock className="w-5 h-5 text-slate-400" />
+       <Clock className="w-5 h-5 text-gray-400" />
        Recent Orders
       </CardTitle>
       <Link
@@ -129,29 +129,29 @@ const DashboardPage: React.FC = () => {
      {ordersLoading ? (
       <div className="space-y-3">
        {Array.from({ length: 5 }).map((_, i) => (
-        <Skeleton key={i} className="h-12 bg-slate-700" />
+        <Skeleton key={i} className="h-12 bg-white/5" />
        ))}
       </div>
      ) : orders && orders.length > 0 ? (
       <div className="overflow-x-auto">
        <table className="w-full">
         <thead>
-         <tr className="border-b border-slate-700/50">
-          <th className="text-left text-xs text-slate-400 font-medium pb-3 px-2">Order ID</th>
-          <th className="text-left text-xs text-slate-400 font-medium pb-3 px-2">Customer</th>
-          <th className="text-left text-xs text-slate-400 font-medium pb-3 px-2">Amount</th>
-          <th className="text-left text-xs text-slate-400 font-medium pb-3 px-2">Status</th>
-          <th className="text-left text-xs text-slate-400 font-medium pb-3 px-2">Date</th>
+         <tr className="border-b border-white/[0.08]">
+          <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Order ID</th>
+          <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Customer</th>
+          <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Amount</th>
+          <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Status</th>
+          <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Date</th>
          </tr>
         </thead>
         <tbody>
          {orders.slice(0, 5).map((order) => (
-          <tr key={order.id} className="border-b border-slate-700/30 last:border-0">
+          <tr key={order.id} className="border-b border-white/[0.05] last:border-0">
            <td className="py-3 px-2">
             <span className="font-mono text-sm text-white">{order.order_id}</span>
            </td>
            <td className="py-3 px-2">
-            <span className="text-sm text-slate-300">{order.customer_name}</span>
+            <span className="text-sm text-gray-300">{order.customer_name}</span>
            </td>
            <td className="py-3 px-2">
             <span className="text-sm font-medium text-white">৳{order.total_bdt.toLocaleString()}</span>
@@ -162,7 +162,7 @@ const DashboardPage: React.FC = () => {
             </Badge>
            </td>
            <td className="py-3 px-2">
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-gray-400">
              {new Date(order.created_at).toLocaleDateString()}
             </span>
            </td>
@@ -172,7 +172,7 @@ const DashboardPage: React.FC = () => {
        </table>
       </div>
      ) : (
-      <div className="text-center py-8 text-slate-500">
+      <div className="text-center py-8 text-gray-500">
        <ShoppingCart className="w-10 h-10 mx-auto mb-2 opacity-40" />
        <p className="text-sm">No orders yet</p>
       </div>
@@ -183,7 +183,7 @@ const DashboardPage: React.FC = () => {
    {/* Quick Stats Row */}
    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
     {/* Testimonials Summary */}
-    <Card className="bg-slate-800/50 border-slate-700/50">
+    <Card className="bg-[#161822] border-white/[0.08]">
      <CardHeader className="pb-3">
       <div className="flex items-center justify-between">
        <CardTitle className="text-lg text-white flex items-center gap-2">
@@ -202,20 +202,20 @@ const DashboardPage: React.FC = () => {
       <div className="flex items-center gap-6">
        <div>
         <p className="text-3xl font-bold text-white">{testimonials?.length || 0}</p>
-        <p className="text-sm text-slate-400">Total reviews</p>
+        <p className="text-sm text-gray-400">Total reviews</p>
        </div>
        <div>
         <p className="text-3xl font-bold text-emerald-400">
          {testimonials?.filter((t) => t.is_active).length || 0}
         </p>
-        <p className="text-sm text-slate-400">Active</p>
+        <p className="text-sm text-gray-400">Active</p>
        </div>
       </div>
      </CardContent>
     </Card>
 
     {/* Products Summary */}
-    <Card className="bg-slate-800/50 border-slate-700/50">
+    <Card className="bg-[#161822] border-white/[0.08]">
      <CardHeader className="pb-3">
       <div className="flex items-center justify-between">
        <CardTitle className="text-lg text-white flex items-center gap-2">
@@ -234,13 +234,13 @@ const DashboardPage: React.FC = () => {
       <div className="flex items-center gap-6">
        <div>
         <p className="text-3xl font-bold text-white">{products?.length || 0}</p>
-        <p className="text-sm text-slate-400">Total products</p>
+        <p className="text-sm text-gray-400">Total products</p>
        </div>
        <div>
         <p className="text-3xl font-bold text-amber-400">
          {products?.filter((p) => p.isFeatured).length || 0}
         </p>
-        <p className="text-sm text-slate-400">Featured</p>
+        <p className="text-sm text-gray-400">Featured</p>
        </div>
       </div>
      </CardContent>
