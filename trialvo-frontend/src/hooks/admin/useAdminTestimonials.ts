@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 
 export interface TestimonialRow {
   id: string;
@@ -12,16 +12,23 @@ export interface TestimonialRow {
   created_at: string;
 }
 
+function parseRow(row: any): TestimonialRow {
+  return {
+    ...row,
+    name: typeof row.name === "string" ? JSON.parse(row.name) : row.name,
+    role: typeof row.role === "string" ? JSON.parse(row.role) : row.role,
+    content:
+      typeof row.content === "string" ? JSON.parse(row.content) : row.content,
+    is_active: Boolean(row.is_active),
+  };
+}
+
 export function useAdminTestimonials() {
   return useQuery({
     queryKey: ["admin", "testimonials"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("testimonials")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as TestimonialRow[];
+      const data = await api.get<any[]>("/admin/testimonials");
+      return data.map(parseRow);
     },
   });
 }
@@ -30,13 +37,7 @@ export function useCreateTestimonial() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (testimonial: Partial<TestimonialRow>) => {
-      const { data, error } = await supabase
-        .from("testimonials")
-        .insert(testimonial)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      return await api.post("/admin/testimonials", testimonial);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "testimonials"] });
@@ -52,11 +53,7 @@ export function useUpdateTestimonial() {
       id,
       ...updates
     }: { id: string } & Partial<TestimonialRow>) => {
-      const { error } = await supabase
-        .from("testimonials")
-        .update(updates)
-        .eq("id", id);
-      if (error) throw error;
+      return await api.put(`/admin/testimonials/${id}`, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "testimonials"] });
@@ -69,11 +66,7 @@ export function useDeleteTestimonial() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("testimonials")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
+      return await api.delete(`/admin/testimonials/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "testimonials"] });

@@ -1,59 +1,36 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 import type { Product } from "@/data/products";
 
-interface ProductRow {
-  id: string;
-  slug: string;
-  category: string;
-  price_bdt: number;
-  price_usd: number;
-  thumbnail: string;
-  images: { admin: string[]; shop: string[] };
-  video_url: string | null;
-  demo: {
-    label: { bn: string; en: string };
-    url: string;
-    username: string;
-    password: string;
-  }[];
-  name: { bn: string; en: string };
-  short_description: { bn: string; en: string };
-  features: { bn: string[]; en: string[] };
-  facilities: { bn: string[]; en: string[] };
-  faq: {
-    question: { bn: string; en: string };
-    answer: { bn: string; en: string };
-  }[];
-  seo: {
-    title: { bn: string; en: string };
-    description: { bn: string; en: string };
-    keywords: { bn: string[]; en: string[] };
-  };
-  is_featured: boolean;
-  is_active: boolean;
-  created_at: string;
-}
-
-function rowToProduct(row: ProductRow): Product {
+function rowToProduct(row: any): Product {
   return {
     id: row.id,
     slug: row.slug,
-    category: row.category as Product["category"],
-    priceBDT: row.price_bdt,
-    priceUSD: row.price_usd,
+    category: row.category,
+    priceBDT: Number(row.price_bdt),
+    priceUSD: Number(row.price_usd),
     thumbnail: row.thumbnail,
-    images: row.images,
+    images:
+      typeof row.images === "string" ? JSON.parse(row.images) : row.images,
     videoUrl: row.video_url || undefined,
-    demo: row.demo,
-    name: row.name,
-    shortDescription: row.short_description,
-    features: row.features,
-    facilities: row.facilities,
-    faq: row.faq,
-    seo: row.seo,
-    isFeatured: row.is_featured,
-    isActive: row.is_active,
+    demo: typeof row.demo === "string" ? JSON.parse(row.demo) : row.demo,
+    name: typeof row.name === "string" ? JSON.parse(row.name) : row.name,
+    shortDescription:
+      typeof row.short_description === "string"
+        ? JSON.parse(row.short_description)
+        : row.short_description,
+    features:
+      typeof row.features === "string"
+        ? JSON.parse(row.features)
+        : row.features,
+    facilities:
+      typeof row.facilities === "string"
+        ? JSON.parse(row.facilities)
+        : row.facilities,
+    faq: typeof row.faq === "string" ? JSON.parse(row.faq) : row.faq,
+    seo: typeof row.seo === "string" ? JSON.parse(row.seo) : row.seo,
+    isFeatured: Boolean(row.is_featured),
+    isActive: Boolean(row.is_active),
     createdAt: row.created_at,
   };
 }
@@ -62,12 +39,8 @@ export function useAdminProducts() {
   return useQuery({
     queryKey: ["admin", "products"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data as ProductRow[]).map(rowToProduct);
+      const data = await api.get<any[]>("/admin/products");
+      return data.map(rowToProduct);
     },
   });
 }
@@ -75,14 +48,8 @@ export function useAdminProducts() {
 export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (product: Partial<ProductRow>) => {
-      const { data, error } = await supabase
-        .from("products")
-        .insert(product)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+    mutationFn: async (product: Record<string, any>) => {
+      return await api.post("/admin/products", product);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
@@ -98,15 +65,8 @@ export function useUpdateProduct() {
     mutationFn: async ({
       id,
       ...updates
-    }: { id: string } & Partial<ProductRow>) => {
-      const { data, error } = await supabase
-        .from("products")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+    }: { id: string } & Record<string, any>) => {
+      return await api.put(`/admin/products/${id}`, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
@@ -120,8 +80,7 @@ export function useDeleteProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
-      if (error) throw error;
+      return await api.delete(`/admin/products/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });

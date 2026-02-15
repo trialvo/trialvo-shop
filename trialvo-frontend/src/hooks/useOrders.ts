@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 
 interface CreateOrderInput {
   productId: string;
@@ -29,35 +29,11 @@ interface Order {
   created_at: string;
 }
 
-function generateOrderId(): string {
-  return `ORD-${Date.now().toString(36).toUpperCase()}`;
-}
-
 export function useCreateOrder() {
   return useMutation({
     mutationFn: async (input: CreateOrderInput) => {
-      const orderId = generateOrderId();
-
-      const { data, error } = await supabase
-        .from("orders")
-        .insert({
-          order_id: orderId,
-          product_id: input.productId,
-          customer_name: input.customerName,
-          customer_email: input.customerEmail,
-          customer_phone: input.customerPhone,
-          company: input.company || "",
-          needs_hosting: input.needsHosting,
-          notes: input.notes || "",
-          payment_method: input.paymentMethod,
-          total_bdt: input.totalBdt,
-          status: "pending",
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as Order;
+      const data = await api.post<Order>("/orders", input);
+      return data;
     },
   });
 }
@@ -67,17 +43,11 @@ export function useOrder(orderId: string | null) {
     queryKey: ["order", orderId],
     queryFn: async () => {
       if (!orderId) return null;
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .eq("order_id", orderId)
-        .single();
-
-      if (error) {
-        if (error.code === "PGRST116") return null;
-        throw error;
+      try {
+        return await api.get<Order>(`/orders/${orderId}`);
+      } catch {
+        return null;
       }
-      return data as Order;
     },
     enabled: !!orderId,
   });

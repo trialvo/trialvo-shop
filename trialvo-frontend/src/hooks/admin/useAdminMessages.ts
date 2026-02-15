@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 
 export interface ContactMessage {
   id: string;
@@ -15,12 +15,11 @@ export function useAdminMessages() {
   return useQuery({
     queryKey: ["admin", "messages"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contact_messages")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as ContactMessage[];
+      const data = await api.get<any[]>("/admin/messages");
+      return data.map((row: any) => ({
+        ...row,
+        is_read: Boolean(row.is_read),
+      })) as ContactMessage[];
     },
   });
 }
@@ -29,11 +28,7 @@ export function useToggleMessageRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, is_read }: { id: string; is_read: boolean }) => {
-      const { error } = await supabase
-        .from("contact_messages")
-        .update({ is_read })
-        .eq("id", id);
-      if (error) throw error;
+      return await api.put(`/admin/messages/${id}/read`, { is_read });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "messages"] });
@@ -45,11 +40,7 @@ export function useDeleteMessage() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("contact_messages")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
+      return await api.delete(`/admin/messages/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "messages"] });
@@ -61,12 +52,10 @@ export function useUnreadCount() {
   return useQuery({
     queryKey: ["admin", "unreadCount"],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("contact_messages")
-        .select("*", { count: "exact", head: true })
-        .eq("is_read", false);
-      if (error) throw error;
-      return count || 0;
+      const data = await api.get<{ count: number }>(
+        "/admin/messages/unread-count",
+      );
+      return data.count;
     },
   });
 }

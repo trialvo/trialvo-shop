@@ -1,161 +1,74 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import type { Product } from "@/data/products";
-
-// Types matching supabase row → Product interface
-interface ProductRow {
-  id: string;
-  slug: string;
-  category: string;
-  price_bdt: number;
-  price_usd: number;
-  thumbnail: string;
-  images: { admin: string[]; shop: string[] };
-  video_url: string | null;
-  demo: {
-    label: { bn: string; en: string };
-    url: string;
-    username: string;
-    password: string;
-  }[];
-  name: { bn: string; en: string };
-  short_description: { bn: string; en: string };
-  features: { bn: string[]; en: string[] };
-  facilities: { bn: string[]; en: string[] };
-  faq: {
-    question: { bn: string; en: string };
-    answer: { bn: string; en: string };
-  }[];
-  seo: {
-    title: { bn: string; en: string };
-    description: { bn: string; en: string };
-    keywords: { bn: string[]; en: string[] };
-  };
-  is_featured: boolean;
-  is_active: boolean;
-  created_at: string;
-}
-
-function rowToProduct(row: ProductRow): Product {
-  return {
-    id: row.id,
-    slug: row.slug,
-    category: row.category as Product["category"],
-    priceBDT: row.price_bdt,
-    priceUSD: row.price_usd,
-    thumbnail: row.thumbnail,
-    images: row.images,
-    videoUrl: row.video_url || undefined,
-    demo: row.demo,
-    name: row.name,
-    shortDescription: row.short_description,
-    features: row.features,
-    facilities: row.facilities,
-    faq: row.faq,
-    seo: row.seo,
-    isFeatured: row.is_featured,
-    isActive: row.is_active,
-    createdAt: row.created_at,
-  };
-}
 
 // Fetch all active products with optional category filter
 async function fetchProducts(category?: string): Promise<Product[]> {
-  let query = supabase
-    .from("products")
-    .select("*")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
-
-  if (category) {
-    query = query.eq("category", category);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return (data as ProductRow[]).map(rowToProduct);
+  const query = category ? `?category=${category}` : "";
+  const data = await api.get<any[]>(`/products${query}`);
+  return data.map(rowToProduct);
 }
 
 // Fetch single product by slug
 async function fetchProductBySlug(slug: string): Promise<Product | null> {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("slug", slug)
-    .single();
-
-  if (error) {
-    if (error.code === "PGRST116") return null; // Not found
-    throw error;
+  try {
+    const data = await api.get<any>(`/products/${slug}`);
+    return rowToProduct(data);
+  } catch {
+    return null;
   }
-  return rowToProduct(data as ProductRow);
 }
 
 // Fetch featured products
 async function fetchFeaturedProducts(): Promise<Product[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("is_active", true)
-    .eq("is_featured", true)
-    .order("created_at", { ascending: false });
+  const data = await api.get<any[]>("/products/featured");
+  return data.map(rowToProduct);
+}
 
-  if (error) throw error;
-  return (data as ProductRow[]).map(rowToProduct);
+function rowToProduct(row: any): Product {
+  return {
+    id: row.id,
+    slug: row.slug,
+    category: row.category,
+    priceBDT: Number(row.price_bdt),
+    priceUSD: Number(row.price_usd),
+    thumbnail: row.thumbnail,
+    images:
+      typeof row.images === "string" ? JSON.parse(row.images) : row.images,
+    videoUrl: row.video_url || undefined,
+    demo: typeof row.demo === "string" ? JSON.parse(row.demo) : row.demo,
+    name: typeof row.name === "string" ? JSON.parse(row.name) : row.name,
+    shortDescription:
+      typeof row.short_description === "string"
+        ? JSON.parse(row.short_description)
+        : row.short_description,
+    features:
+      typeof row.features === "string"
+        ? JSON.parse(row.features)
+        : row.features,
+    facilities:
+      typeof row.facilities === "string"
+        ? JSON.parse(row.facilities)
+        : row.facilities,
+    faq: typeof row.faq === "string" ? JSON.parse(row.faq) : row.faq,
+    seo: typeof row.seo === "string" ? JSON.parse(row.seo) : row.seo,
+    isFeatured: Boolean(row.is_featured),
+    isActive: Boolean(row.is_active),
+    createdAt: row.created_at,
+  };
 }
 
 // ========== Hooks ==========
 
 export function useProducts(category?: string) {
-  const queryClient = useQueryClient();
-
-  // Realtime subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel("products-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["products"] });
-          queryClient.invalidateQueries({ queryKey: ["featuredProducts"] });
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
   return useQuery({
     queryKey: ["products", category || "all"],
     queryFn: () => fetchProducts(category),
-    staleTime: 1000 * 60, // 1 min
+    staleTime: 1000 * 60,
   });
 }
 
 export function useProduct(slug: string | undefined) {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("product-detail-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["product", slug] });
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, slug]);
-
   return useQuery({
     queryKey: ["product", slug],
     queryFn: () => fetchProductBySlug(slug!),
@@ -165,25 +78,6 @@ export function useProduct(slug: string | undefined) {
 }
 
 export function useFeaturedProducts() {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("featured-products-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["featuredProducts"] });
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
   return useQuery({
     queryKey: ["featuredProducts"],
     queryFn: fetchFeaturedProducts,
@@ -200,16 +94,13 @@ export function useRelatedProducts(
     queryKey: ["relatedProducts", productId, category],
     queryFn: async () => {
       if (!productId || !category) return [];
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("is_active", true)
-        .eq("category", category)
-        .neq("id", productId)
-        .limit(3);
-
-      if (error) throw error;
-      return (data as ProductRow[]).map(rowToProduct);
+      // We need the slug for the related endpoint, but we only have productId
+      // Use the products endpoint with category filter instead
+      const data = await api.get<any[]>(`/products?category=${category}`);
+      return data
+        .filter((p: any) => p.id !== productId)
+        .slice(0, 3)
+        .map(rowToProduct);
     },
     enabled: !!productId && !!category,
     staleTime: 1000 * 60,

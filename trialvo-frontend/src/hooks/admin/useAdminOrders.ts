@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 
 export interface Order {
   id: string;
@@ -26,12 +26,22 @@ export function useAdminOrders() {
   return useQuery({
     queryKey: ["admin", "orders"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("*, products(name, thumbnail, slug)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Order[];
+      const data = await api.get<any[]>("/admin/orders");
+      return data.map((row: any) => ({
+        ...row,
+        needs_hosting: Boolean(row.needs_hosting),
+        total_bdt: Number(row.total_bdt),
+        products: row.products
+          ? {
+              name:
+                typeof row.products.name === "string"
+                  ? JSON.parse(row.products.name)
+                  : row.products.name,
+              thumbnail: row.products.thumbnail,
+              slug: row.products.slug,
+            }
+          : null,
+      })) as Order[];
     },
   });
 }
@@ -40,11 +50,7 @@ export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status })
-        .eq("id", id);
-      if (error) throw error;
+      return await api.put(`/admin/orders/${id}/status`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
@@ -56,21 +62,15 @@ export function useOrderStats() {
   return useQuery({
     queryKey: ["admin", "orderStats"],
     queryFn: async () => {
-      const { data: orders, error } = await supabase
-        .from("orders")
-        .select("status, total_bdt, created_at");
-      if (error) throw error;
-
-      const total = orders?.length || 0;
-      const pending = orders?.filter((o) => o.status === "pending").length || 0;
-      const confirmed =
-        orders?.filter((o) => o.status === "confirmed").length || 0;
-      const completed =
-        orders?.filter((o) => o.status === "completed").length || 0;
-      const revenue =
-        orders?.reduce((sum, o) => sum + (o.total_bdt || 0), 0) || 0;
-
-      return { total, pending, confirmed, completed, revenue };
+      return await api.get<{
+        total: number;
+        pending: number;
+        confirmed: number;
+        completed: number;
+        revenue: number;
+        totalProducts: number;
+        unreadMessages: number;
+      }>("/admin/dashboard");
     },
   });
 }

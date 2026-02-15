@@ -7,29 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 
 const AdminSettingsPage: React.FC = () => {
  const { toast } = useToast();
- const { adminProfile, user } = useAuth();
+ const { adminProfile } = useAuth();
 
  const [fullName, setFullName] = useState(adminProfile?.full_name || '');
  const [nameLoading, setNameLoading] = useState(false);
 
- const [currentPassword, setCurrentPassword] = useState('');
  const [newPassword, setNewPassword] = useState('');
  const [confirmPassword, setConfirmPassword] = useState('');
  const [passLoading, setPassLoading] = useState(false);
 
  const handleUpdateName = async () => {
-  if (!user) return;
   setNameLoading(true);
   try {
-   const { error } = await supabase
-    .from('admin_profiles')
-    .update({ full_name: fullName })
-    .eq('id', user.id);
-   if (error) throw error;
+   await api.put('/auth/profile', { full_name: fullName });
    toast({ title: 'Profile updated successfully' });
   } catch (err: any) {
    toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -49,10 +43,8 @@ const AdminSettingsPage: React.FC = () => {
 
   setPassLoading(true);
   try {
-   const { error } = await supabase.auth.updateUser({ password: newPassword });
-   if (error) throw error;
+   await api.put('/auth/password', { newPassword });
    toast({ title: 'Password changed successfully' });
-   setCurrentPassword('');
    setNewPassword('');
    setConfirmPassword('');
   } catch (err: any) {
