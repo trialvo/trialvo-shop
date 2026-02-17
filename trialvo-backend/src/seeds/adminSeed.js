@@ -5,7 +5,7 @@ module.exports = {
  table: 'admin_profiles',
  async run(connection) {
   const id = uuidv4();
-  const passwordHash = await bcrypt.hash('admin123', 12);
+  const passwordHash = await bcrypt.hash('Antor@123', 12);
 
   await connection.execute(
    `INSERT INTO admin_profiles (id, email, password_hash, full_name, avatar_url, role) VALUES (?, ?, ?, ?, ?, ?)`,

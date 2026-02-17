@@ -53,6 +53,8 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // ─── Start Server ────────────────────────────────────────
+let server;
+
 async function startServer() {
  console.log('');
  console.log('╔═══════════════════════════════════════════╗');
@@ -76,14 +78,35 @@ async function startServer() {
  await runSeeds();
 
  // 4. Start listening
- app.listen(PORT, () => {
+ server = app.listen(PORT, () => {
   console.log('');
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📡 API available at http://localhost:${PORT}/api`);
   console.log(`🔐 Admin API at http://localhost:${PORT}/api/admin`);
   console.log('');
  });
+
+ server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+   console.error(`❌ Port ${PORT} is already in use. Kill the process and try again.`);
+  } else {
+   console.error('❌ Server error:', err);
+  }
+  process.exit(1);
+ });
 }
+
+// ─── Graceful Shutdown (fixes node --watch restarts) ─────
+function shutdown() {
+ if (server) {
+  server.close(() => process.exit(0));
+ } else {
+  process.exit(0);
+ }
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 startServer().catch((err) => {
  console.error('💀 Fatal error starting server:', err);

@@ -1,0 +1,15 @@
+{
+ "name": "trialvo-shop",
+ "version": "1.0.0",
+ "private": true,
+ "scripts": {
+  "predev": "npx -y kill-port 8000 9000 2>nul || true",
+  "dev": "concurrently -k -n BACKEND,FRONTEND -c blue,green \"npm run dev --prefix trialvo-backend\" \"npm run dev --prefix trialvo-frontend\"",
+  "backend": "npm run dev --prefix trialvo-backend",
+  "frontend": "npm run dev --prefix trialvo-frontend",
+  "install:all": "npm install --prefix trialvo-backend && npm install --prefix trialvo-frontend"
+ },
+ "devDependencies": {
+  "concurrently": "^9.1.2"
+ }
+}
