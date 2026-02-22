@@ -95,48 +95,30 @@ const AdminOrdersPage: React.FC = () => {
        ))}
       </div>
      ) : (
-      <div className="overflow-x-auto">
-       <table className="w-full">
-        <thead>
-         <tr className="border-b border-white/[0.08]">
-          <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Order ID</th>
-          <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Customer</th>
-          <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Product</th>
-          <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Amount</th>
-          <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Status</th>
-          <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Date</th>
-          <th className="text-right text-xs text-gray-400 font-medium py-3 px-4">Actions</th>
-         </tr>
-        </thead>
-        <tbody>
-         {filtered?.map((order) => (
-          <tr key={order.id} className="border-b border-white/[0.05] last:border-0 hover:bg-white/[0.03]">
-           <td className="py-3 px-4">
-            <span className="font-mono text-sm text-white">{order.order_id}</span>
-           </td>
-           <td className="py-3 px-4">
-            <div>
-             <p className="text-sm text-white">{order.customer_name}</p>
-             <p className="text-xs text-gray-400">{order.customer_phone}</p>
-            </div>
-           </td>
-           <td className="py-3 px-4">
-            <span className="text-sm text-gray-300">
-             {order.products?.name?.en || 'N/A'}
-            </span>
-           </td>
-           <td className="py-3 px-4">
-            <span className="text-sm font-medium text-white">৳{order.total_bdt.toLocaleString()}</span>
-           </td>
-           <td className="py-3 px-4">
-            <Select
-             value={order.status}
-             onValueChange={(v) => handleStatusChange(order.id, v)}
-            >
-             <SelectTrigger className="w-32 h-8 text-xs bg-transparent border-white/10">
-              <Badge variant="outline" className={`text-[11px] ${statusColors[order.status] || ''}`}>
-               {order.status}
-              </Badge>
+      <>
+       {/* Mobile Card View */}
+       <div className="md:hidden p-3 space-y-3">
+        {filtered?.map((order) => (
+         <div key={order.id} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 space-y-3">
+          <div className="flex items-center justify-between">
+           <span className="font-mono text-sm text-white">{order.order_id}</span>
+           <Badge variant="outline" className={`text-[11px] capitalize ${statusColors[order.status] || ''}`}>
+            {order.status}
+           </Badge>
+          </div>
+          <div className="flex items-center justify-between">
+           <div>
+            <p className="text-sm font-medium text-white">{order.customer_name}</p>
+            <p className="text-xs text-gray-400">{order.customer_phone}</p>
+           </div>
+           <span className="text-sm font-bold text-white">৳{order.total_bdt.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
+           <span className="text-xs text-gray-500">{new Date(order.created_at).toLocaleDateString()}</span>
+           <div className="flex items-center gap-2">
+            <Select value={order.status} onValueChange={(v) => handleStatusChange(order.id, v)}>
+             <SelectTrigger className="w-28 h-7 text-xs bg-transparent border-white/10">
+              <SelectValue />
              </SelectTrigger>
              <SelectContent className="bg-[#1e2030] border-white/10">
               {statusOptions.map((s) => (
@@ -144,32 +126,87 @@ const AdminOrdersPage: React.FC = () => {
               ))}
              </SelectContent>
             </Select>
-           </td>
-           <td className="py-3 px-4">
-            <span className="text-xs text-gray-400">
-             {new Date(order.created_at).toLocaleDateString()}
-            </span>
-           </td>
-           <td className="py-3 px-4">
-            <div className="flex justify-end">
-             <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-gray-400 hover:text-white"
-              onClick={() => setViewOrder(order)}
-             >
-              <Eye className="w-4 h-4" />
-             </Button>
-            </div>
-           </td>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-white" onClick={() => setViewOrder(order)}>
+             <Eye className="w-4 h-4" />
+            </Button>
+           </div>
+          </div>
+         </div>
+        ))}
+        {filtered?.length === 0 && (
+         <div className="text-center py-12 text-gray-500">No orders found</div>
+        )}
+       </div>
+
+       {/* Desktop Table View */}
+       <div className="hidden md:block overflow-x-auto">
+        <table className="w-full">
+         <thead>
+          <tr className="border-b border-white/[0.08]">
+           <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Order ID</th>
+           <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Customer</th>
+           <th className="text-left text-xs text-gray-400 font-medium py-3 px-4 hidden lg:table-cell">Product</th>
+           <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Amount</th>
+           <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Status</th>
+           <th className="text-left text-xs text-gray-400 font-medium py-3 px-4 hidden lg:table-cell">Date</th>
+           <th className="text-right text-xs text-gray-400 font-medium py-3 px-4">Actions</th>
           </tr>
-         ))}
-        </tbody>
-       </table>
-       {filtered?.length === 0 && (
-        <div className="text-center py-12 text-gray-500">No orders found</div>
-       )}
-      </div>
+         </thead>
+         <tbody>
+          {filtered?.map((order) => (
+           <tr key={order.id} className="border-b border-white/[0.05] last:border-0 hover:bg-white/[0.03]">
+            <td className="py-3 px-4">
+             <span className="font-mono text-sm text-white">{order.order_id}</span>
+            </td>
+            <td className="py-3 px-4">
+             <div>
+              <p className="text-sm text-white">{order.customer_name}</p>
+              <p className="text-xs text-gray-400">{order.customer_phone}</p>
+             </div>
+            </td>
+            <td className="py-3 px-4 hidden lg:table-cell">
+             <span className="text-sm text-gray-300">
+              {order.products?.name?.en || 'N/A'}
+             </span>
+            </td>
+            <td className="py-3 px-4">
+             <span className="text-sm font-medium text-white">৳{order.total_bdt.toLocaleString()}</span>
+            </td>
+            <td className="py-3 px-4">
+             <Select value={order.status} onValueChange={(v) => handleStatusChange(order.id, v)}>
+              <SelectTrigger className="w-32 h-8 text-xs bg-transparent border-white/10">
+               <Badge variant="outline" className={`text-[11px] ${statusColors[order.status] || ''}`}>
+                {order.status}
+               </Badge>
+              </SelectTrigger>
+              <SelectContent className="bg-[#1e2030] border-white/10">
+               {statusOptions.map((s) => (
+                <SelectItem key={s} value={s} className="capitalize text-sm">{s}</SelectItem>
+               ))}
+              </SelectContent>
+             </Select>
+            </td>
+            <td className="py-3 px-4 hidden lg:table-cell">
+             <span className="text-xs text-gray-400">
+              {new Date(order.created_at).toLocaleDateString()}
+             </span>
+            </td>
+            <td className="py-3 px-4">
+             <div className="flex justify-end">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white" onClick={() => setViewOrder(order)}>
+               <Eye className="w-4 h-4" />
+              </Button>
+             </div>
+            </td>
+           </tr>
+          ))}
+         </tbody>
+        </table>
+        {filtered?.length === 0 && (
+         <div className="text-center py-12 text-gray-500">No orders found</div>
+        )}
+       </div>
+      </>
      )}
     </CardContent>
    </Card>

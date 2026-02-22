@@ -309,7 +309,7 @@ const AdminProductsPage: React.FC = () => {
             >
               <X className="w-5 h-5" />
             </Button>
-            <h1 className="text-xl font-bold text-white">
+            <h1 className="text-lg sm:text-xl font-bold text-white">
               {editingId ? 'Edit Product' : 'Create Product'}
             </h1>
           </div>
@@ -345,7 +345,7 @@ const AdminProductsPage: React.FC = () => {
                 Basic Information
               </h3>
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={labelClass}>Name (English) *</Label>
                     <Input
@@ -365,7 +365,7 @@ const AdminProductsPage: React.FC = () => {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label className={labelClass}>Slug *</Label>
                     <Input
@@ -414,7 +414,7 @@ const AdminProductsPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={labelClass}>Price (BDT) *</Label>
                     <Input
@@ -434,7 +434,7 @@ const AdminProductsPage: React.FC = () => {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={labelClass}>Description (English)</Label>
                     <Textarea
@@ -928,92 +928,111 @@ const AdminProductsPage: React.FC = () => {
               ))}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/[0.08]">
-                    <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Product</th>
-                    <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Category</th>
-                    <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Price</th>
-                    <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Status</th>
-                    <th className="text-right text-xs text-gray-400 font-medium py-3 px-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered?.map((product) => (
-                    <tr key={product.id} className="border-b border-white/[0.05] last:border-0 hover:bg-white/[0.03] transition-colors">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={product.thumbnail}
-                            alt={product.name.en}
-                            className="w-12 h-10 object-cover rounded-lg border border-white/10"
-                          />
-                          <div>
-                            <p className="text-sm font-medium text-white">{product.name.en}</p>
-                            <p className="text-xs text-gray-500">{product.slug}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant="outline" className="text-[11px] border-white/15 text-gray-300 capitalize">
-                          {product.category}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4">
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden p-3 space-y-3">
+                {filtered?.map((product) => (
+                  <div key={product.id} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={product.thumbnail}
+                        alt={product.name.en}
+                        className="w-14 h-12 object-cover rounded-lg border border-white/10 flex-shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-white truncate">{product.name.en}</p>
+                        <p className="text-xs text-gray-500 truncate">{product.slug}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[10px] border-white/15 text-gray-300 capitalize">{product.category}</Badge>
                         <span className="text-sm font-medium text-white">৳{product.priceBDT.toLocaleString()}</span>
-                        <span className="text-xs text-gray-500 ml-1">(${product.priceUSD})</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleToggle(product.id, 'is_active', !product.isActive)}
-                            className="transition-colors"
-                            title={product.isActive ? 'Active' : 'Inactive'}
-                          >
-                            {product.isActive ? (
-                              <Eye className="w-4 h-4 text-emerald-400" />
-                            ) : (
-                              <EyeOff className="w-4 h-4 text-gray-600" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleToggle(product.id, 'is_featured', !product.isFeatured)}
-                            className="transition-colors"
-                            title={product.isFeatured ? 'Featured' : 'Not featured'}
-                          >
-                            <Star className={`w-4 h-4 ${product.isFeatured ? 'fill-amber-400 text-amber-400' : 'text-gray-600'}`} />
-                          </button>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10"
-                            onClick={() => openEdit(product)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
-                            onClick={() => setDeleteId(product.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleToggle(product.id, 'is_active', !product.isActive)} className="transition-colors">
+                          {product.isActive ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-gray-600" />}
+                        </button>
+                        <button onClick={() => handleToggle(product.id, 'is_featured', !product.isFeatured)} className="transition-colors">
+                          <Star className={`w-4 h-4 ${product.isFeatured ? 'fill-amber-400 text-amber-400' : 'text-gray-600'}`} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-1 pt-2 border-t border-white/[0.06]">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-white hover:bg-white/10" onClick={() => openEdit(product)}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-red-400 hover:bg-red-500/10" onClick={() => setDeleteId(product.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {filtered?.length === 0 && (
+                  <div className="text-center py-12 text-gray-500">No products found</div>
+                )}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/[0.08]">
+                      <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Product</th>
+                      <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Category</th>
+                      <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Price</th>
+                      <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Status</th>
+                      <th className="text-right text-xs text-gray-400 font-medium py-3 px-4">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filtered?.length === 0 && (
-                <div className="text-center py-12 text-gray-500">No products found</div>
-              )}
-            </div>
+                  </thead>
+                  <tbody>
+                    {filtered?.map((product) => (
+                      <tr key={product.id} className="border-b border-white/[0.05] last:border-0 hover:bg-white/[0.03] transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <img src={product.thumbnail} alt={product.name.en} className="w-12 h-10 object-cover rounded-lg border border-white/10" />
+                            <div>
+                              <p className="text-sm font-medium text-white">{product.name.en}</p>
+                              <p className="text-xs text-gray-500">{product.slug}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge variant="outline" className="text-[11px] border-white/15 text-gray-300 capitalize">{product.category}</Badge>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm font-medium text-white">৳{product.priceBDT.toLocaleString()}</span>
+                          <span className="text-xs text-gray-500 ml-1">(${product.priceUSD})</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => handleToggle(product.id, 'is_active', !product.isActive)} className="transition-colors" title={product.isActive ? 'Active' : 'Inactive'}>
+                              {product.isActive ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-gray-600" />}
+                            </button>
+                            <button onClick={() => handleToggle(product.id, 'is_featured', !product.isFeatured)} className="transition-colors" title={product.isFeatured ? 'Featured' : 'Not featured'}>
+                              <Star className={`w-4 h-4 ${product.isFeatured ? 'fill-amber-400 text-amber-400' : 'text-gray-600'}`} />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10" onClick={() => openEdit(product)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10" onClick={() => setDeleteId(product.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {filtered?.length === 0 && (
+                  <div className="text-center py-12 text-gray-500">No products found</div>
+                )}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

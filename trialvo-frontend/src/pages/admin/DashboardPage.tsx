@@ -23,7 +23,7 @@ const StatCard: React.FC<{
     <div className="flex items-start justify-between">
      <div>
       <p className="text-sm text-gray-400 mb-1">{title}</p>
-      <p className="text-3xl font-bold text-white">{value}</p>
+      <p className="text-2xl sm:text-3xl font-bold text-white">{value}</p>
       {trend && (
        <div className="flex items-center gap-1 mt-2">
         <TrendingUp className="w-3 h-3 text-emerald-400" />
@@ -63,11 +63,11 @@ const DashboardPage: React.FC = () => {
  return (
   <div className="space-y-6">
    {/* Stats Grid */}
-   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
     {isLoading ? (
      Array.from({ length: 4 }).map((_, i) => (
       <Card key={i} className="bg-[#161822] border-white/[0.08]">
-       <CardContent className="p-6">
+       <CardContent className="p-4 sm:p-6">
         <Skeleton className="h-4 w-20 mb-2 bg-white/5" />
         <Skeleton className="h-8 w-16 bg-white/5" />
        </CardContent>
@@ -139,9 +139,9 @@ const DashboardPage: React.FC = () => {
          <tr className="border-b border-white/[0.08]">
           <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Order ID</th>
           <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Customer</th>
-          <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Amount</th>
+          <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2 hidden sm:table-cell">Amount</th>
           <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Status</th>
-          <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2">Date</th>
+          <th className="text-left text-xs text-gray-400 font-medium pb-3 px-2 hidden md:table-cell">Date</th>
          </tr>
         </thead>
         <tbody>
@@ -153,7 +153,7 @@ const DashboardPage: React.FC = () => {
            <td className="py-3 px-2">
             <span className="text-sm text-gray-300">{order.customer_name}</span>
            </td>
-           <td className="py-3 px-2">
+           <td className="py-3 px-2 hidden sm:table-cell">
             <span className="text-sm font-medium text-white">৳{order.total_bdt.toLocaleString()}</span>
            </td>
            <td className="py-3 px-2">
@@ -161,7 +161,7 @@ const DashboardPage: React.FC = () => {
              {order.status}
             </Badge>
            </td>
-           <td className="py-3 px-2">
+           <td className="py-3 px-2 hidden md:table-cell">
             <span className="text-xs text-gray-400">
              {new Date(order.created_at).toLocaleDateString()}
             </span>
