@@ -56,58 +56,58 @@ const AdminSettingsPage: React.FC = () => {
  return (
   <div className="space-y-6 max-w-2xl">
    <div>
-    <h1 className="text-2xl font-bold text-white">Settings</h1>
-    <p className="text-sm text-gray-400">Manage your admin profile</p>
+    <h1 className="text-2xl md:text-3xl font-bold text-foreground">Settings</h1>
+    <p className="text-sm text-muted-foreground mt-1">Manage your admin profile</p>
    </div>
 
    {/* Profile Info */}
-   <Card className="bg-[#161822] border-white/[0.08]">
-    <CardHeader>
-     <CardTitle className="text-white flex items-center gap-2">
-      <User className="w-5 h-5 text-gray-400" />
+   <Card className="bg-card border-border card-shadow">
+    <CardHeader className="border-b border-border pb-4 mb-4">
+     <CardTitle className="text-foreground flex items-center gap-2">
+      <User className="w-5 h-5 text-primary" />
       Profile Information
      </CardTitle>
-     <CardDescription className="text-gray-400">Update your account details</CardDescription>
+     <CardDescription className="text-muted-foreground">Update your account details</CardDescription>
     </CardHeader>
-    <CardContent className="space-y-4">
-     <div className="flex items-center gap-4 pb-4 border-b border-white/[0.08]">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-       <span className="text-2xl font-bold text-white">
+    <CardContent className="space-y-6">
+     <div className="flex items-center gap-5 pb-6 border-b border-border/50">
+      <div className="w-16 h-16 rounded-2xl hero-gradient shadow-soft-sm flex items-center justify-center">
+       <span className="text-2xl font-bold text-primary-foreground">
         {adminProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
        </span>
       </div>
       <div>
-       <p className="text-lg font-semibold text-white">{adminProfile?.full_name}</p>
-       <p className="text-sm text-gray-400">{adminProfile?.email}</p>
-       <Badge variant="outline" className="mt-1 text-xs border-primary/30 text-primary bg-primary/10">
+       <p className="text-lg font-bold text-foreground">{adminProfile?.full_name}</p>
+       <p className="text-sm text-muted-foreground mt-0.5">{adminProfile?.email}</p>
+       <Badge variant="outline" className="mt-2 text-xs font-semibold tracking-wide uppercase border-primary/30 text-primary bg-primary/10">
         <ShieldCheck className="w-3 h-3 mr-1" />
         {adminProfile?.role?.replace('_', ' ')}
        </Badge>
       </div>
      </div>
 
-     <div className="space-y-2">
-      <Label className="text-gray-300">Full Name</Label>
+     <div className="space-y-2.5">
+      <Label className="text-foreground font-medium">Full Name</Label>
       <Input
        value={fullName}
        onChange={(e) => setFullName(e.target.value)}
-       className="bg-white/5 border-white/10 text-white"
+       className="bg-background border-border text-foreground focus:border-primary focus:ring-primary/25"
       />
      </div>
 
-     <div className="space-y-2">
-      <Label className="text-gray-300">Email</Label>
+     <div className="space-y-2.5">
+      <Label className="text-foreground font-medium">Email</Label>
       <Input
        value={adminProfile?.email || ''}
        disabled
-       className="bg-white/5/30 border-white/10 text-gray-400"
+       className="bg-muted border-border text-muted-foreground opacity-70"
       />
      </div>
 
      <Button
       onClick={handleUpdateName}
       disabled={nameLoading}
-      className="bg-primary"
+      className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm mt-2"
      >
       {nameLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
       Save Changes
@@ -116,33 +116,33 @@ const AdminSettingsPage: React.FC = () => {
    </Card>
 
    {/* Change Password */}
-   <Card className="bg-[#161822] border-white/[0.08]">
-    <CardHeader>
-     <CardTitle className="text-white flex items-center gap-2">
-      <Lock className="w-5 h-5 text-gray-400" />
+   <Card className="bg-card border-border card-shadow">
+    <CardHeader className="border-b border-border pb-4 mb-4">
+     <CardTitle className="text-foreground flex items-center gap-2">
+      <Lock className="w-5 h-5 text-primary" />
       Change Password
      </CardTitle>
-     <CardDescription className="text-gray-400">Update your login password</CardDescription>
+     <CardDescription className="text-muted-foreground">Update your login password</CardDescription>
     </CardHeader>
-    <CardContent className="space-y-4">
-     <div className="space-y-2">
-      <Label className="text-gray-300">New Password</Label>
+    <CardContent className="space-y-6">
+     <div className="space-y-2.5">
+      <Label className="text-foreground font-medium">New Password</Label>
       <Input
        type="password"
        value={newPassword}
        onChange={(e) => setNewPassword(e.target.value)}
-       className="bg-white/5 border-white/10 text-white"
+       className="bg-background border-border text-foreground focus:border-primary focus:ring-primary/25"
        placeholder="••••••••"
       />
      </div>
 
-     <div className="space-y-2">
-      <Label className="text-gray-300">Confirm New Password</Label>
+     <div className="space-y-2.5">
+      <Label className="text-foreground font-medium">Confirm New Password</Label>
       <Input
        type="password"
        value={confirmPassword}
        onChange={(e) => setConfirmPassword(e.target.value)}
-       className="bg-white/5 border-white/10 text-white"
+       className="bg-background border-border text-foreground focus:border-primary focus:ring-primary/25"
        placeholder="••••••••"
       />
      </div>
@@ -150,7 +150,7 @@ const AdminSettingsPage: React.FC = () => {
      <Button
       onClick={handleChangePassword}
       disabled={passLoading || !newPassword || !confirmPassword}
-      className="bg-primary"
+      className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm mt-2"
      >
       {passLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
       Change Password

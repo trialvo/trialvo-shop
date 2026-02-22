@@ -61,16 +61,16 @@ const AdminLayout: React.FC = () => {
   };
 
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-sidebar">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-indigo-500/20">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/25">
-          <ShieldCheck className="w-5 h-5 text-white" />
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
+        <div className="w-10 h-10 rounded-xl hero-gradient flex items-center justify-center flex-shrink-0 shadow-soft-sm">
+          <ShieldCheck className="w-5 h-5 text-primary-foreground" />
         </div>
         {(sidebarOpen || isMobile) && (
           <div className="overflow-hidden">
-            <h1 className="font-bold text-white text-sm whitespace-nowrap">Trialvo</h1>
-            <p className="text-[10px] text-indigo-300/70 uppercase tracking-wider font-medium">Admin Panel</p>
+            <h1 className="font-bold text-sidebar-foreground text-sm whitespace-nowrap">Trialvo</h1>
+            <p className="text-[10px] text-sidebar-foreground/70 uppercase tracking-wider font-medium">Admin Panel</p>
           </div>
         )}
       </div>
@@ -85,13 +85,13 @@ const AdminLayout: React.FC = () => {
               to={item.path}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover-scale',
                 active
-                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+                  ? 'btn-accent-gradient text-primary-foreground shadow-soft-md'
+                  : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent'
               )}
             >
-              <item.icon className={cn('w-5 h-5 flex-shrink-0', active ? 'text-white' : 'text-gray-400')} />
+              <item.icon className={cn('w-5 h-5 flex-shrink-0', active ? 'text-primary-foreground' : 'text-sidebar-foreground/70')} />
               {(sidebarOpen || isMobile) && <span className="whitespace-nowrap">{item.label}</span>}
             </Link>
           );
@@ -100,16 +100,16 @@ const AdminLayout: React.FC = () => {
 
       {/* User section */}
       {(sidebarOpen || isMobile) && adminProfile && (
-        <div className="px-3 py-4 border-t border-white/10">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5">
-            <Avatar className="w-9 h-9 border-2 border-indigo-500/40">
-              <AvatarFallback className="bg-indigo-600 text-white text-xs font-bold">
+        <div className="px-3 py-4 border-t border-sidebar-border">
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-sidebar-accent">
+            <Avatar className="w-9 h-9 border-2 border-primary/40">
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                 {adminProfile.full_name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="overflow-hidden">
-              <p className="text-sm font-medium text-white truncate">{adminProfile.full_name}</p>
-              <p className="text-[11px] text-indigo-300/60 truncate capitalize">{adminProfile.role.replace('_', ' ')}</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">{adminProfile.full_name}</p>
+              <p className="text-[11px] text-sidebar-foreground/70 truncate capitalize">{adminProfile.role.replace('_', ' ')}</p>
             </div>
           </div>
         </div>
@@ -118,11 +118,11 @@ const AdminLayout: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#0f1117] flex">
+    <div className="min-h-screen bg-background flex">
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          'hidden lg:flex flex-col border-r border-white/[0.08] bg-[#161822] transition-all duration-300',
+          'hidden lg:flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300',
           sidebarOpen ? 'w-64' : 'w-[72px]'
         )}
       >
@@ -139,7 +139,7 @@ const AdminLayout: React.FC = () => {
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
         <aside
           className={cn(
-            'absolute left-0 top-0 bottom-0 w-64 bg-[#161822] border-r border-white/[0.08] shadow-2xl transition-transform duration-300 ease-out',
+            'absolute left-0 top-0 bottom-0 w-64 bg-sidebar border-r border-sidebar-border shadow-2xl transition-transform duration-300 ease-out',
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
@@ -150,12 +150,12 @@ const AdminLayout: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
         {/* Top Bar */}
-        <header className="h-16 border-b border-white/[0.08] bg-[#161822]/80 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20">
+        <header className="h-16 border-b border-border bg-background/95 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden text-gray-400 hover:text-white hover:bg-white/10"
+              className="lg:hidden text-muted-foreground hover:text-foreground hover:bg-accent"
               onClick={() => setMobileOpen(true)}
             >
               <Menu className="w-5 h-5" />
@@ -163,12 +163,12 @@ const AdminLayout: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="hidden lg:flex text-gray-400 hover:text-white hover:bg-white/10"
+              className="hidden lg:flex text-muted-foreground hover:text-foreground hover:bg-accent"
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
               {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               {navItems.find((item) => isActive(item.path, item.exact))?.label || 'Admin'}
             </h2>
           </div>
@@ -176,26 +176,26 @@ const AdminLayout: React.FC = () => {
           <div className="flex items-center gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-white/10">
-                  <Avatar className="w-8 h-8 border-2 border-indigo-500/40">
-                    <AvatarFallback className="bg-indigo-600 text-white text-xs font-bold">
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-accent">
+                  <Avatar className="w-8 h-8 border-2 border-primary/40">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                       {adminProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
                     </AvatarFallback>
                   </Avatar>
                   <span className="hidden md:inline text-sm font-medium">{adminProfile?.full_name || 'Admin'}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-[#1e2030] border-white/10 shadow-xl">
-                <DropdownMenuItem asChild className="text-gray-300 hover:text-white focus:text-white focus:bg-white/10">
+              <DropdownMenuContent align="end" className="w-48 bg-card border-border shadow-xl">
+                <DropdownMenuItem asChild className="text-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer">
                   <Link to="/admin/settings">
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-red-400 hover:text-red-300 focus:text-red-300 focus:bg-red-500/10"
+                  className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
@@ -206,7 +206,7 @@ const AdminLayout: React.FC = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 bg-[#0f1117]">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 bg-background">
           <Outlet />
         </main>
       </div>

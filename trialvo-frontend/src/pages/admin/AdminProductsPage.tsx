@@ -83,9 +83,9 @@ const emptyForm: ProductFormData = {
 };
 
 // ─── Reusable styling constants ───────────────────────────────
-const inputClass = 'bg-[#1a1d2e] border-white/10 text-white placeholder:text-gray-500 focus:border-indigo-500 focus:ring-indigo-500/25';
-const labelClass = 'text-gray-300 text-xs font-medium';
-const sectionClass = 'p-4 rounded-xl bg-[#13152080] border border-white/5';
+const inputClass = 'bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/25';
+const labelClass = 'text-muted-foreground text-xs font-medium mb-1.5 block';
+const sectionClass = 'p-5 rounded-xl bg-card border border-border card-shadow';
 
 // ─── Array Field Helper ───────────────────────────────────────
 const ArrayField: React.FC<{
@@ -112,7 +112,7 @@ const ArrayField: React.FC<{
           <Button
             variant="ghost"
             size="icon"
-            className="h-9 w-9 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+            className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
             onClick={() => onChange(values.filter((_, j) => j !== i))}
           >
             <X className="w-3.5 h-3.5" />
@@ -123,7 +123,7 @@ const ArrayField: React.FC<{
     <Button
       variant="ghost"
       size="sm"
-      className="text-indigo-400 hover:text-indigo-300 text-xs"
+      className="text-primary hover:text-primary/80 text-xs"
       onClick={() => onChange([...values, ''])}
     >
       <Plus className="w-3 h-3 mr-1" /> Add
@@ -156,7 +156,7 @@ const ImageUrlField: React.FC<{
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+              className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={() => onChange(values.filter((_, j) => j !== i))}
             >
               <X className="w-3.5 h-3.5" />
@@ -176,7 +176,7 @@ const ImageUrlField: React.FC<{
     <Button
       variant="ghost"
       size="sm"
-      className="text-indigo-400 hover:text-indigo-300 text-xs"
+      className="text-primary hover:text-primary/80 text-xs"
       onClick={() => onChange([...values, ''])}
     >
       <Plus className="w-3 h-3 mr-1" /> Add Image
@@ -304,12 +304,12 @@ const AdminProductsPage: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="text-gray-400 hover:text-white hover:bg-white/10"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent"
               onClick={() => setEditorOpen(false)}
             >
               <X className="w-5 h-5" />
             </Button>
-            <h1 className="text-lg sm:text-xl font-bold text-white">
+            <h1 className="text-lg sm:text-xl font-bold text-foreground">
               {editingId ? 'Edit Product' : 'Create Product'}
             </h1>
           </div>
@@ -317,14 +317,14 @@ const AdminProductsPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setEditorOpen(false)}
-              className="border-white/10 text-gray-300 bg-transparent hover:bg-white/5"
+              className="border-border text-muted-foreground bg-transparent hover:bg-accent hover:text-foreground"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={createProduct.isPending || updateProduct.isPending}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="hero-gradient hover:opacity-90 text-primary-foreground border-0"
             >
               {(createProduct.isPending || updateProduct.isPending) && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -340,11 +340,11 @@ const AdminProductsPage: React.FC = () => {
           <div className="space-y-4 max-h-[calc(100vh-160px)] overflow-y-auto pr-2">
             {/* Basic Info */}
             <div className={sectionClass}>
-              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                <Package className="w-4 h-4 text-indigo-400" />
+              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2 pb-2 border-b border-border/50">
+                <Package className="w-4 h-4 text-primary" />
                 Basic Information
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={labelClass}>Name (English) *</Label>
@@ -381,7 +381,7 @@ const AdminProductsPage: React.FC = () => {
                       <SelectTrigger className={inputClass}>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#1e2030] border-white/10">
+                      <SelectContent className="bg-popover border-border">
                         <SelectItem value="ecommerce">Ecommerce</SelectItem>
                         <SelectItem value="fashion">Fashion</SelectItem>
                         <SelectItem value="gift">Gift Shop</SelectItem>
@@ -393,21 +393,21 @@ const AdminProductsPage: React.FC = () => {
                   <div className="space-y-1">
                     <Label className={labelClass}>Status</Label>
                     <div className="flex items-center gap-4 pt-2">
-                      <label className="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
                         <input
                           type="checkbox"
                           checked={form.is_featured}
                           onChange={(e) => setForm({ ...form, is_featured: e.target.checked })}
-                          className="rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-500"
+                          className="rounded border-border bg-muted text-primary focus:ring-primary"
                         />
                         Featured
                       </label>
-                      <label className="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
                         <input
                           type="checkbox"
                           checked={form.is_active}
                           onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                          className="rounded border-white/20 bg-white/5 text-indigo-500 focus:ring-indigo-500"
+                          className="rounded border-border bg-muted text-primary focus:ring-primary"
                         />
                         Active
                       </label>
@@ -459,11 +459,11 @@ const AdminProductsPage: React.FC = () => {
 
             {/* Media */}
             <div className={sectionClass}>
-              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-indigo-400" />
+              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2 pb-2 border-b border-border/50">
+                <ImageIcon className="w-4 h-4 text-primary" />
                 Media
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="space-y-1">
                   <Label className={labelClass}>Thumbnail URL *</Label>
                   <Input
@@ -476,7 +476,7 @@ const AdminProductsPage: React.FC = () => {
                     <img
                       src={form.thumbnail}
                       alt="Thumbnail"
-                      className="w-32 h-20 object-cover rounded-lg border border-white/10 mt-1"
+                      className="w-32 h-20 object-cover rounded-lg border border-border mt-2 shadow-soft-sm"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
@@ -505,20 +505,20 @@ const AdminProductsPage: React.FC = () => {
 
             {/* Demo Access */}
             <div className={sectionClass}>
-              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-indigo-400" />
+              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2 pb-2 border-b border-border/50">
+                <Link2 className="w-4 h-4 text-primary" />
                 Demo Access
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {form.demo.map((d, i) => (
-                  <div key={i} className="p-3 rounded-lg bg-white/[0.03] border border-white/5 space-y-2">
+                  <div key={i} className="p-4 rounded-lg bg-muted/50 border border-border space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400 font-medium">Demo #{i + 1}</span>
+                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Demo #{i + 1}</span>
                       {form.demo.length > 1 && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 text-red-400 text-xs hover:bg-red-500/10"
+                          className="h-6 text-destructive text-xs hover:bg-destructive/10"
                           onClick={() => setForm({ ...form, demo: form.demo.filter((_, j) => j !== i) })}
                         >
                           <X className="w-3 h-3 mr-1" /> Remove
@@ -584,7 +584,7 @@ const AdminProductsPage: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-indigo-400 hover:text-indigo-300 text-xs"
+                  className="text-primary hover:text-primary/80 text-xs"
                   onClick={() =>
                     setForm({
                       ...form,
@@ -599,13 +599,13 @@ const AdminProductsPage: React.FC = () => {
 
             {/* Features & Facilities */}
             <div className={sectionClass}>
-              <h3 className="text-sm font-semibold text-white mb-3">Features & Facilities</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-4 pb-2 border-b border-border/50">Features & Facilities</h3>
               <Tabs defaultValue="features" className="w-full">
-                <TabsList className="bg-white/5 border border-white/10 mb-3">
-                  <TabsTrigger value="features" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-gray-400 text-xs">Features</TabsTrigger>
-                  <TabsTrigger value="facilities" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-gray-400 text-xs">Facilities</TabsTrigger>
+                <TabsList className="bg-muted border border-border mb-4">
+                  <TabsTrigger value="features" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground text-xs">Features</TabsTrigger>
+                  <TabsTrigger value="facilities" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground text-xs">Facilities</TabsTrigger>
                 </TabsList>
-                <TabsContent value="features" className="space-y-3">
+                <TabsContent value="features" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <ArrayField
                       label="Features (English)"
@@ -642,17 +642,17 @@ const AdminProductsPage: React.FC = () => {
 
             {/* FAQ */}
             <div className={sectionClass}>
-              <h3 className="text-sm font-semibold text-white mb-3">FAQ</h3>
-              <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground mb-4 pb-2 border-b border-border/50">FAQ</h3>
+              <div className="space-y-4">
                 {form.faq.map((faq, i) => (
-                  <div key={i} className="p-3 rounded-lg bg-white/[0.03] border border-white/5 space-y-2">
+                  <div key={i} className="p-4 rounded-lg bg-muted/50 border border-border space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400 font-medium">FAQ #{i + 1}</span>
+                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">FAQ #{i + 1}</span>
                       {form.faq.length > 1 && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 text-red-400 text-xs hover:bg-red-500/10"
+                          className="h-6 text-destructive text-xs hover:bg-destructive/10"
                           onClick={() => setForm({ ...form, faq: form.faq.filter((_, j) => j !== i) })}
                         >
                           <X className="w-3 h-3 mr-1" /> Remove
@@ -710,7 +710,7 @@ const AdminProductsPage: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-indigo-400 hover:text-indigo-300 text-xs"
+                  className="text-primary hover:text-primary/80 text-xs"
                   onClick={() =>
                     setForm({
                       ...form,
@@ -725,8 +725,8 @@ const AdminProductsPage: React.FC = () => {
 
             {/* SEO */}
             <div className={sectionClass}>
-              <h3 className="text-sm font-semibold text-white mb-3">SEO</h3>
-              <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground mb-4 pb-2 border-b border-border/50">SEO</h3>
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={labelClass}>SEO Title (EN)</Label>
@@ -785,9 +785,9 @@ const AdminProductsPage: React.FC = () => {
 
           {/* ─── RIGHT: Live Preview ──────────────────────────── */}
           <div className="hidden xl:block sticky top-0 max-h-[calc(100vh-160px)] overflow-y-auto">
-            <Card className="bg-[#161822] border-white/[0.08] overflow-hidden">
-              <div className="p-3 border-b border-white/[0.08]">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Live Preview</p>
+            <Card className="bg-card border-border overflow-hidden card-shadow">
+              <div className="p-3 border-b border-border bg-muted/30">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Live Preview</p>
               </div>
               <CardContent className="p-4 space-y-4">
                 {/* Thumbnail */}
@@ -806,49 +806,49 @@ const AdminProductsPage: React.FC = () => {
 
                 {/* Name & Price */}
                 <div>
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-foreground">
                     {form.name.en || 'Product Name'}
                   </h3>
-                  <p className="text-sm text-gray-400">{form.name.bn || 'পণ্যের নাম'}</p>
+                  <p className="text-sm text-muted-foreground">{form.name.bn || 'পণ্যের নাম'}</p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-xl font-bold text-indigo-400">
+                  <span className="text-xl font-bold text-primary">
                     ৳{form.price_bdt.toLocaleString()}
                   </span>
-                  <span className="text-sm text-gray-500">(${form.price_usd})</span>
+                  <span className="text-sm text-muted-foreground">(${form.price_usd})</span>
                 </div>
 
                 <div className="flex gap-2">
-                  <Badge variant="outline" className="text-xs border-white/20 text-gray-300 capitalize">{form.category}</Badge>
+                  <Badge variant="outline" className="text-xs border-border text-muted-foreground capitalize bg-muted/50">{form.category}</Badge>
                   {form.is_featured && (
-                    <Badge className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/20">
-                      <Star className="w-3 h-3 mr-1 fill-amber-400" /> Featured
+                    <Badge className="text-xs bg-accent/10 text-accent border-accent/20">
+                      <Star className="w-3 h-3 mr-1 fill-accent" /> Featured
                     </Badge>
                   )}
-                  <Badge variant="outline" className={`text-xs ${form.is_active ? 'border-emerald-500/20 text-emerald-400' : 'border-red-500/20 text-red-400'}`}>
+                  <Badge variant="outline" className={`text-xs ${form.is_active ? 'border-success/20 text-success bg-success/10' : 'border-destructive/20 text-destructive bg-destructive/10'}`}>
                     {form.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
 
-                <Separator className="bg-white/10" />
+                <Separator className="bg-border" />
 
                 {/* Description */}
                 {form.short_description.en && (
                   <div>
-                    <p className="text-xs font-medium text-gray-400 mb-1">Description</p>
-                    <p className="text-sm text-gray-300 leading-relaxed">{form.short_description.en}</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wider">Description</p>
+                    <p className="text-sm text-foreground/80 leading-relaxed">{form.short_description.en}</p>
                   </div>
                 )}
 
                 {/* Features */}
                 {form.features.en.some((f) => f.trim()) && (
                   <div>
-                    <p className="text-xs font-medium text-gray-400 mb-2">Features</p>
-                    <ul className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Features</p>
+                    <ul className="space-y-1.5">
                       {form.features.en.filter((f) => f.trim()).map((f, i) => (
-                        <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 flex-shrink-0" />
+                        <li key={i} className="text-sm text-foreground/80 flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                           {f}
                         </li>
                       ))}
@@ -859,12 +859,12 @@ const AdminProductsPage: React.FC = () => {
                 {/* Demo */}
                 {form.demo.some((d) => d.url.trim()) && (
                   <div>
-                    <p className="text-xs font-medium text-gray-400 mb-2">Demo Access</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Demo Access</p>
                     {form.demo.filter((d) => d.url.trim()).map((d, i) => (
-                      <div key={i} className="p-2 rounded-lg bg-white/5 text-xs space-y-1 mb-2">
-                        <p className="font-medium text-white">{d.label.en || `Demo #${i + 1}`}</p>
-                        <p className="text-indigo-400">{d.url}</p>
-                        <p className="text-gray-400">User: {d.username} | Pass: {d.password}</p>
+                      <div key={i} className="p-3 rounded-lg bg-muted/50 border border-border text-xs space-y-1 mb-2">
+                        <p className="font-medium text-foreground">{d.label.en || `Demo #${i + 1}`}</p>
+                        <p className="text-primary">{d.url}</p>
+                        <p className="text-muted-foreground">User: {d.username} | Pass: {d.password}</p>
                       </div>
                     ))}
                   </div>
@@ -873,14 +873,14 @@ const AdminProductsPage: React.FC = () => {
                 {/* Gallery Preview */}
                 {(form.images.admin.some((u) => u.trim()) || form.images.shop.some((u) => u.trim())) && (
                   <div>
-                    <p className="text-xs font-medium text-gray-400 mb-2">Gallery</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Gallery</p>
                     <div className="grid grid-cols-3 gap-2">
                       {[...form.images.admin, ...form.images.shop].filter((u) => u.trim()).slice(0, 6).map((url, i) => (
                         <img
                           key={i}
                           src={url}
                           alt=""
-                          className="w-full h-16 object-cover rounded-lg border border-white/10"
+                          className="w-full h-16 object-cover rounded-lg border border-border shadow-soft-sm hover-scale cursor-pointer"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       ))}
@@ -900,17 +900,17 @@ const AdminProductsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Products</h1>
-          <p className="text-sm text-gray-400">Manage your product catalog</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Products</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage your product catalog</p>
         </div>
-        <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+        <Button onClick={openCreate} className="hero-gradient text-primary-foreground hover:opacity-90 border-0 shadow-soft-sm hover-scale">
           <Plus className="w-4 h-4 mr-2" />
           Add Product
         </Button>
       </div>
 
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Search products..."
           value={search}
@@ -919,12 +919,12 @@ const AdminProductsPage: React.FC = () => {
         />
       </div>
 
-      <Card className="bg-[#161822] border-white/[0.08]">
+      <Card className="bg-card border-border card-shadow">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 bg-white/5" />
+                <Skeleton key={i} className="h-14 bg-muted" />
               ))}
             </div>
           ) : (
@@ -932,44 +932,44 @@ const AdminProductsPage: React.FC = () => {
               {/* Mobile Card View */}
               <div className="md:hidden p-3 space-y-3">
                 {filtered?.map((product) => (
-                  <div key={product.id} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 space-y-3">
+                  <div key={product.id} className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-3">
                     <div className="flex items-center gap-3">
                       <img
                         src={product.thumbnail}
                         alt={product.name.en}
-                        className="w-14 h-12 object-cover rounded-lg border border-white/10 flex-shrink-0"
+                        className="w-14 h-12 object-cover rounded-lg border border-border flex-shrink-0"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-white truncate">{product.name.en}</p>
-                        <p className="text-xs text-gray-500 truncate">{product.slug}</p>
+                        <p className="text-sm font-medium text-foreground truncate">{product.name.en}</p>
+                        <p className="text-xs text-muted-foreground truncate">{product.slug}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px] border-white/15 text-gray-300 capitalize">{product.category}</Badge>
-                        <span className="text-sm font-medium text-white">৳{product.priceBDT.toLocaleString()}</span>
+                        <Badge variant="outline" className="text-[10px] border-border text-muted-foreground capitalize">{product.category}</Badge>
+                        <span className="text-sm font-bold text-primary">৳{product.priceBDT.toLocaleString()}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => handleToggle(product.id, 'is_active', !product.isActive)} className="transition-colors">
-                          {product.isActive ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-gray-600" />}
+                        <button onClick={() => handleToggle(product.id, 'is_active', !product.isActive)} className="transition-colors hover:scale-110">
+                          {product.isActive ? <Eye className="w-4 h-4 text-success" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
                         </button>
-                        <button onClick={() => handleToggle(product.id, 'is_featured', !product.isFeatured)} className="transition-colors">
-                          <Star className={`w-4 h-4 ${product.isFeatured ? 'fill-amber-400 text-amber-400' : 'text-gray-600'}`} />
+                        <button onClick={() => handleToggle(product.id, 'is_featured', !product.isFeatured)} className="transition-colors hover:scale-110">
+                          <Star className={`w-4 h-4 ${product.isFeatured ? 'fill-accent text-accent' : 'text-muted-foreground'}`} />
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-end gap-1 pt-2 border-t border-white/[0.06]">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-white hover:bg-white/10" onClick={() => openEdit(product)}>
+                    <div className="flex items-center justify-end gap-1 pt-2 border-t border-border/50">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openEdit(product)}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-red-400 hover:bg-red-500/10" onClick={() => setDeleteId(product.id)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(product.id)}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
                 ))}
                 {filtered?.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">No products found</div>
+                  <div className="text-center py-12 text-muted-foreground">No products found</div>
                 )}
               </div>
 
@@ -977,49 +977,49 @@ const AdminProductsPage: React.FC = () => {
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-white/[0.08]">
-                      <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Product</th>
-                      <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Category</th>
-                      <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Price</th>
-                      <th className="text-left text-xs text-gray-400 font-medium py-3 px-4">Status</th>
-                      <th className="text-right text-xs text-gray-400 font-medium py-3 px-4">Actions</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Product</th>
+                      <th className="text-left text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Category</th>
+                      <th className="text-left text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Price</th>
+                      <th className="text-left text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Status</th>
+                      <th className="text-right text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered?.map((product) => (
-                      <tr key={product.id} className="border-b border-white/[0.05] last:border-0 hover:bg-white/[0.03] transition-colors">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <img src={product.thumbnail} alt={product.name.en} className="w-12 h-10 object-cover rounded-lg border border-white/10" />
+                      <tr key={product.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="py-4 px-5">
+                          <div className="flex items-center gap-4">
+                            <img src={product.thumbnail} alt={product.name.en} className="w-12 h-10 object-cover rounded-lg border border-border/50 shadow-soft-sm" />
                             <div>
-                              <p className="text-sm font-medium text-white">{product.name.en}</p>
-                              <p className="text-xs text-gray-500">{product.slug}</p>
+                              <p className="text-sm font-medium text-foreground">{product.name.en}</p>
+                              <p className="text-xs text-muted-foreground">{product.slug}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4">
-                          <Badge variant="outline" className="text-[11px] border-white/15 text-gray-300 capitalize">{product.category}</Badge>
+                        <td className="py-4 px-5">
+                          <Badge variant="outline" className="text-[11px] border-border text-muted-foreground bg-muted/50 capitalize">{product.category}</Badge>
                         </td>
-                        <td className="py-3 px-4">
-                          <span className="text-sm font-medium text-white">৳{product.priceBDT.toLocaleString()}</span>
-                          <span className="text-xs text-gray-500 ml-1">(${product.priceUSD})</span>
+                        <td className="py-4 px-5">
+                          <span className="text-sm font-bold text-primary">৳{product.priceBDT.toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground ml-1">(${product.priceUSD})</span>
                         </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => handleToggle(product.id, 'is_active', !product.isActive)} className="transition-colors" title={product.isActive ? 'Active' : 'Inactive'}>
-                              {product.isActive ? <Eye className="w-4 h-4 text-emerald-400" /> : <EyeOff className="w-4 h-4 text-gray-600" />}
+                        <td className="py-4 px-5">
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => handleToggle(product.id, 'is_active', !product.isActive)} className="transition-transform hover:scale-110" title={product.isActive ? 'Active' : 'Inactive'}>
+                              {product.isActive ? <Eye className="w-4 h-4 text-success" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
                             </button>
-                            <button onClick={() => handleToggle(product.id, 'is_featured', !product.isFeatured)} className="transition-colors" title={product.isFeatured ? 'Featured' : 'Not featured'}>
-                              <Star className={`w-4 h-4 ${product.isFeatured ? 'fill-amber-400 text-amber-400' : 'text-gray-600'}`} />
+                            <button onClick={() => handleToggle(product.id, 'is_featured', !product.isFeatured)} className="transition-transform hover:scale-110" title={product.isFeatured ? 'Featured' : 'Not featured'}>
+                              <Star className={`w-4 h-4 ${product.isFeatured ? 'fill-accent text-accent' : 'text-muted-foreground'}`} />
                             </button>
                           </div>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-4 px-5">
                           <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10" onClick={() => openEdit(product)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openEdit(product)}>
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10" onClick={() => setDeleteId(product.id)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(product.id)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
@@ -1029,7 +1029,7 @@ const AdminProductsPage: React.FC = () => {
                   </tbody>
                 </table>
                 {filtered?.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">No products found</div>
+                  <div className="text-center py-12 text-muted-foreground">No products found</div>
                 )}
               </div>
             </>
@@ -1039,16 +1039,16 @@ const AdminProductsPage: React.FC = () => {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent className="bg-[#1e2030] border-white/10">
+        <AlertDialogContent className="bg-card border-border shadow-soft-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">Delete Product</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogTitle className="text-foreground">Delete Product</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               Are you sure? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-gray-300 bg-transparent hover:bg-white/5">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+            <AlertDialogCancel className="border-border text-foreground bg-transparent hover:bg-muted">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:opacity-90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
