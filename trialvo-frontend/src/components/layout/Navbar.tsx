@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Globe } from 'lucide-react';
+import { Menu, X, Globe, User, LogIn } from 'lucide-react';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
+import { useCustomerAuth } from '@/contexts/CustomerAuthContext';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const Navbar: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
+  const { isLoggedIn, customer } = useCustomerAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -99,6 +101,26 @@ const Navbar: React.FC = () => {
               </span>
             </Button>
 
+            {/* Account / Login */}
+            {isLoggedIn ? (
+              <Link
+                to="/account"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-xs font-bold text-primary">{customer?.name?.charAt(0).toUpperCase()}</span>
+                </div>
+                <span className="hidden lg:inline text-xs">Account</span>
+              </Link>
+            ) : (
+              <Link to="/login">
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 hidden sm:flex">
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium">Login</span>
+                </Button>
+              </Link>
+            )}
+
             {/* Mobile Menu Toggle */}
             <Button
               variant="ghost"
@@ -133,6 +155,25 @@ const Navbar: React.FC = () => {
                   {link.label}
                 </Link>
               ))}
+              <div className="border-t border-border mt-2 pt-2">
+                {isLoggedIn ? (
+                  <Link
+                    to="/account"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    <User className="w-4 h-4" />
+                    My Account
+                  </Link>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-primary hover:bg-primary/5"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Login / Register
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         )}

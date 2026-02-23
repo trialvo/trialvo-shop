@@ -17,6 +17,8 @@ const orderRoutes = require('./routes/orders');
 const testimonialRoutes = require('./routes/testimonials');
 const contactRoutes = require('./routes/contact');
 const adminRoutes = require('./routes/admin');
+const customerRoutes = require('./routes/customer');
+const couponRoutes = require('./routes/coupons');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -43,6 +45,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/customer', customerRoutes);
+app.use('/api/coupons', couponRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────
 app.use((req, res) => {

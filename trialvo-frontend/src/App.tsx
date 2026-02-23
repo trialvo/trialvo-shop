@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CustomerAuthProvider } from "@/contexts/CustomerAuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductsPage";
@@ -19,6 +20,16 @@ import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import NotFound from "./pages/NotFound";
 
+// Customer imports
+import LoginPage from "./pages/customer/LoginPage";
+import RegisterPage from "./pages/customer/RegisterPage";
+import CustomerGuard from "./components/customer/CustomerGuard";
+import CustomerLayout from "./components/customer/CustomerLayout";
+import AccountDashboard from "./pages/customer/AccountDashboard";
+import OrderHistoryPage from "./pages/customer/OrderHistoryPage";
+import WishlistPage from "./pages/customer/WishlistPage";
+import AccountSettings from "./pages/customer/AccountSettings";
+
 // Admin imports
 import AdminGuard from "./components/admin/AdminGuard";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -29,6 +40,7 @@ import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminMessagesPage from "./pages/admin/AdminMessagesPage";
 import AdminTestimonialsPage from "./pages/admin/AdminTestimonialsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
+import AdminCouponsPage from "./pages/admin/AdminCouponsPage";
 
 const queryClient = new QueryClient();
 
@@ -36,49 +48,71 @@ const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider>
-          <LanguageProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <ScrollToTop />
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/products" element={<ProductsPage />} />
-                  <Route path="/products/:slug" element={<ProductDetailPage />} />
-                  <Route path="/checkout" element={<CheckoutPage />} />
-                  <Route path="/order-success" element={<OrderSuccessPage />} />
-                  <Route path="/about" element={<AboutPage />} />
-                  <Route path="/contact" element={<ContactPage />} />
-                  <Route path="/terms" element={<TermsPage />} />
-                  <Route path="/privacy" element={<PrivacyPage />} />
+        <CustomerAuthProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <ScrollToTop />
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/products" element={<ProductsPage />} />
+                    <Route path="/products/:slug" element={<ProductDetailPage />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/order-success" element={<OrderSuccessPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/contact" element={<ContactPage />} />
+                    <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/privacy" element={<PrivacyPage />} />
 
-                  {/* Admin Routes */}
-                  <Route path="/admin/login" element={<AdminLoginPage />} />
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminGuard>
-                        <AdminLayout />
-                      </AdminGuard>
-                    }
-                  >
-                    <Route index element={<DashboardPage />} />
-                    <Route path="products" element={<AdminProductsPage />} />
-                    <Route path="orders" element={<AdminOrdersPage />} />
-                    <Route path="messages" element={<AdminMessagesPage />} />
-                    <Route path="testimonials" element={<AdminTestimonialsPage />} />
-                    <Route path="settings" element={<AdminSettingsPage />} />
-                  </Route>
+                    {/* Customer Auth */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
 
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+                    {/* Customer Account (protected) */}
+                    <Route
+                      path="/account"
+                      element={
+                        <CustomerGuard>
+                          <CustomerLayout />
+                        </CustomerGuard>
+                      }
+                    >
+                      <Route index element={<AccountDashboard />} />
+                      <Route path="orders" element={<OrderHistoryPage />} />
+                      <Route path="wishlist" element={<WishlistPage />} />
+                      <Route path="settings" element={<AccountSettings />} />
+                    </Route>
+
+                    {/* Admin Routes */}
+                    <Route path="/admin/login" element={<AdminLoginPage />} />
+                    <Route
+                      path="/admin"
+                      element={
+                        <AdminGuard>
+                          <AdminLayout />
+                        </AdminGuard>
+                      }
+                    >
+                      <Route index element={<DashboardPage />} />
+                      <Route path="products" element={<AdminProductsPage />} />
+                      <Route path="orders" element={<AdminOrdersPage />} />
+                      <Route path="messages" element={<AdminMessagesPage />} />
+                      <Route path="testimonials" element={<AdminTestimonialsPage />} />
+                      <Route path="settings" element={<AdminSettingsPage />} />
+                      <Route path="coupons" element={<AdminCouponsPage />} />
+                    </Route>
+
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </TooltipProvider>
+            </LanguageProvider>
+          </ThemeProvider>
+        </CustomerAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
   </HelmetProvider>

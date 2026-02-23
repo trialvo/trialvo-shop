@@ -11,6 +11,7 @@ import {
   Menu,
   ChevronLeft,
   ShieldCheck,
+  Tag,
   ExternalLink,
   ChevronRight,
   Calendar,
@@ -42,6 +43,7 @@ const navGroups = [
     items: [
       { path: '/admin/products', label: 'Products', icon: Package },
       { path: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+      { path: '/admin/coupons', label: 'Coupons', icon: Tag },
     ],
   },
   {
@@ -138,7 +140,7 @@ const AdminLayout: React.FC = () => {
                   >
                     {/* Active left accent */}
                     {active && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-primary" 
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-primary"
                         style={{ background: 'var(--gradient-accent)' }}
                       />
                     )}

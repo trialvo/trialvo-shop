@@ -14,6 +14,7 @@ const {
 } = require('../controllers/orderController');
 const { adminGetTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } = require('../controllers/testimonialController');
 const { adminGetMessages, toggleRead, deleteMessage, getUnreadCount } = require('../controllers/contactMessageController');
+const { adminGetCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } = require('../controllers/couponController');
 
 // All admin routes require auth
 router.use(authenticate);
@@ -52,5 +53,11 @@ router.get('/messages', adminGetMessages);
 router.get('/messages/unread-count', getUnreadCount);
 router.put('/messages/:id/read', toggleRead);
 router.delete('/messages/:id', deleteMessage);
+
+// Coupons
+router.get('/coupons', adminGetCoupons);
+router.post('/coupons', adminCreateCoupon);
+router.put('/coupons/:id', adminUpdateCoupon);
+router.delete('/coupons/:id', adminDeleteCoupon);
 
 module.exports = router;

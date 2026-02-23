@@ -11,6 +11,8 @@ interface CreateOrderInput {
   notes?: string;
   paymentMethod: string;
   totalBdt: number;
+  discountAmount?: number;
+  couponId?: string;
 }
 
 interface Order {

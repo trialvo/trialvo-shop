@@ -12,14 +12,17 @@ async function createOrder(req, res, next) {
       discountAmount, shippingAddress,
     } = req.body;
 
+    const customerId = req.customer?.id || req.body.customerId || null;
+
     await pool.execute(
-      `INSERT INTO orders (id, order_id, product_id, customer_name, customer_email, customer_phone, company, needs_hosting, notes, payment_method, total_bdt, status, discount_amount, shipping_address)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO orders (id, order_id, product_id, customer_name, customer_email, customer_phone, company, needs_hosting, notes, payment_method, total_bdt, status, discount_amount, shipping_address, customer_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id, orderId, productId || null, customerName, customerEmail,
         customerPhone, company || '', needsHosting ? 1 : 0,
         notes || '', paymentMethod, totalBdt || 0, 'pending',
         discountAmount || 0, shippingAddress ? JSON.stringify(shippingAddress) : null,
+        customerId,
       ]
     );
 

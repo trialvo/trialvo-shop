@@ -25,6 +25,8 @@ async function runMigrations() {
       require('./004_testimonials'),
       require('./005_contact_messages'),
       require('./006_advanced_features'),
+      require('./007_customers'),
+      require('./008_coupons_invoices'),
     ];
 
     let count = 0;

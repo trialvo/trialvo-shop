@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CreditCard, Smartphone, Building2, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Smartphone, Building2, Loader2, Tag, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
@@ -40,6 +40,12 @@ const CheckoutPage: React.FC = () => {
     notes: '',
     paymentMethod: 'bkash',
   });
+
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; code: string; type: string; value: number } | null>(null);
+  const [discount, setDiscount] = useState(0);
+  const [couponError, setCouponError] = useState('');
 
   if (productLoading) {
     return (
@@ -90,7 +96,8 @@ const CheckoutPage: React.FC = () => {
         needsHosting: formData.needsHosting,
         notes: formData.notes,
         paymentMethod: formData.paymentMethod,
-        totalBdt: product.priceBDT,
+        totalBdt: product.priceBDT - discount,
+        discountAmount: discount,
       });
 
       navigate(`/order-success?orderId=${order.order_id}&product=${product.slug}`);
@@ -307,26 +314,80 @@ const CheckoutPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="border-t border-border pt-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-muted-foreground">
-                      {t('product.price')}
-                    </span>
-                    <span className="font-semibold">
-                      {t('common.bdt')}{product.priceBDT.toLocaleString()}
-                    </span>
+                {/* Coupon Code */}
+                <div className="border-t border-border mt-4 pt-4">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Tag className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-sm font-medium">{language === 'bn' ? 'কুপন কোড' : 'Coupon Code'}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <span>USD</span>
-                    <span>~${product.priceUSD}</span>
-                  </div>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-200 rounded-lg px-3 py-2">
+                      <div>
+                        <span className="font-mono text-sm font-bold text-emerald-700">{appliedCoupon.code}</span>
+                        <span className="text-xs text-emerald-600 ml-2">
+                          {appliedCoupon.type === 'percent' ? `${appliedCoupon.value}% off` : `৳${appliedCoupon.value} off`}
+                        </span>
+                      </div>
+                      <button onClick={() => { setAppliedCoupon(null); setDiscount(0); setCouponCode(''); }} className="text-emerald-600 hover:text-red-500 transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        value={couponCode}
+                        onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(''); }}
+                        placeholder="SAVE20"
+                        className="font-mono text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!couponCode || couponLoading}
+                        onClick={async () => {
+                          setCouponLoading(true);
+                          setCouponError('');
+                          try {
+                            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                            const res = await fetch(`${API_BASE}/coupons/validate`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ code: couponCode, orderTotal: product.priceBDT }),
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.error);
+                            setAppliedCoupon(data.coupon);
+                            setDiscount(data.discount);
+                          } catch (err: any) {
+                            setCouponError(err.message || 'Invalid coupon');
+                          }
+                          setCouponLoading(false);
+                        }}
+                        className="shrink-0"
+                      >
+                        {couponLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Apply'}
+                      </Button>
+                    </div>
+                  )}
+                  {couponError && <p className="text-xs text-destructive mt-1">{couponError}</p>}
                 </div>
 
                 <div className="border-t border-border mt-4 pt-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-muted-foreground">{language === 'bn' ? 'সাবটোটাল' : 'Subtotal'}</span>
+                    <span>{t('common.bdt')}{product.priceBDT.toLocaleString()}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between items-center mb-2 text-emerald-600">
+                      <span>{language === 'bn' ? 'ডিসকাউন্ট' : 'Discount'}</span>
+                      <span>-{t('common.bdt')}{discount.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center text-lg font-bold">
                     <span>{language === 'bn' ? 'মোট' : 'Total'}</span>
                     <span className="text-primary">
-                      {t('common.bdt')}{product.priceBDT.toLocaleString()}
+                      {t('common.bdt')}{(product.priceBDT - discount).toLocaleString()}
                     </span>
                   </div>
                 </div>
