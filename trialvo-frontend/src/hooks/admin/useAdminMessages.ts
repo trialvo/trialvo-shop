@@ -32,6 +32,7 @@ export function useToggleMessageRead() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "unreadCount"] });
     },
   });
 }
@@ -44,6 +45,7 @@ export function useDeleteMessage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "unreadCount"] });
     },
   });
 }

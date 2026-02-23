@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import {
   Plus, Pencil, Trash2, Star, Eye, EyeOff, Search, Loader2,
-  X, Image as ImageIcon, Video, Link2, ChevronDown, ChevronUp, Package
+  X, Image as ImageIcon, Video, Link2, ChevronDown, ChevronUp, Package,
+  Copy, CheckSquare, Square, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,8 +21,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import {
-  useAdminProducts, useCreateProduct, useUpdateProduct, useDeleteProduct
+  useAdminProducts, useCreateProduct, useUpdateProduct, useDeleteProduct,
+  useDuplicateProduct, useBulkToggleProducts,
 } from '@/hooks/admin/useAdminProducts';
+import { categories } from '@/data/products';
 
 // ─── Types ─────────────────────────────────────────────────────
 interface DemoItem {
@@ -197,13 +200,83 @@ const AdminProductsPage: React.FC = () => {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductFormData>(emptyForm);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  const duplicateProduct = useDuplicateProduct();
+  const bulkToggle = useBulkToggleProducts();
 
   const filtered = products?.filter(
-    (p) =>
-      p.name.en.toLowerCase().includes(search.toLowerCase()) ||
-      p.name.bn.includes(search) ||
-      p.category.includes(search.toLowerCase())
+    (p) => {
+      const matchesSearch =
+        p.name.en.toLowerCase().includes(search.toLowerCase()) ||
+        p.name.bn.includes(search) ||
+        p.category.includes(search.toLowerCase());
+      const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    }
   );
+
+  // Pagination
+  const totalPages = Math.ceil((filtered?.length || 0) / ITEMS_PER_PAGE);
+  const paginatedProducts = filtered?.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Selection
+  const toggleProductSelect = (id: string) => {
+    setSelectedProducts(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const selectAllProducts = () => {
+    if (!filtered) return;
+    if (selectedProducts.size === filtered.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(filtered.map(p => p.id)));
+    }
+  };
+  const allProductsSelected = filtered ? filtered.length > 0 && selectedProducts.size === filtered.length : false;
+
+  // Bulk toggle
+  const handleBulkToggle = async (field: 'is_active' | 'is_featured', value: boolean) => {
+    const ids = Array.from(selectedProducts);
+    try {
+      await bulkToggle.mutateAsync({ ids, field, value });
+      toast({ title: `${ids.length} products updated` });
+      setSelectedProducts(new Set());
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  // Duplicate
+  const handleDuplicate = async (id: string) => {
+    try {
+      await duplicateProduct.mutateAsync(id);
+      toast({ title: 'Product duplicated' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  // ─── Derived data (must be before any early return) ─────────
+  const productStats = useMemo(() => {
+    if (!products) return { total: 0, active: 0, featured: 0 };
+    return {
+      total: products.length,
+      active: products.filter(p => p.isActive).length,
+      featured: products.filter(p => p.isFeatured).length,
+    };
+  }, [products]);
+
+  const uniqueCategories = useMemo(() => {
+    if (!products) return [];
+    return [...new Set(products.map(p => p.category))];
+  }, [products]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -903,20 +976,64 @@ const AdminProductsPage: React.FC = () => {
           <h1>Products</h1>
           <p>Manage your product catalog</p>
         </div>
-        <Button onClick={openCreate} className="hero-gradient text-primary-foreground hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm">
-          <Plus className="w-4 h-4 mr-1.5" />
-          Add Product
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50 border border-border">
+            <span className="text-[11px] text-muted-foreground font-medium">Total</span>
+            <span className="text-sm font-bold">{productStats.total}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+            <span className="text-[11px] text-emerald-600 font-medium">Active</span>
+            <span className="text-sm font-bold text-emerald-600">{productStats.active}</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+            <span className="text-[11px] text-amber-500 font-medium">
+              <Star className="w-3 h-3 inline" />
+            </span>
+            <span className="text-sm font-bold text-amber-500">{productStats.featured}</span>
+          </div>
+          <Button onClick={openCreate} className="hero-gradient text-primary-foreground hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm">
+            <Plus className="w-4 h-4 mr-1.5" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
-      <div className="admin-search max-w-sm">
-        <Search />
-        <Input
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* Search & Category Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="admin-search flex-1 max-w-sm">
+          <Search />
+          <Input
+            placeholder="Search products..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button onClick={() => setCategoryFilter('all')} className={`admin-filter-pill ${categoryFilter === 'all' ? 'active' : ''}`}>All</button>
+          {uniqueCategories.map(cat => (
+            <button key={cat} onClick={() => setCategoryFilter(cat)} className={`admin-filter-pill ${categoryFilter === cat ? 'active' : ''}`}>
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedProducts.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary/5 border border-primary/20 animate-fade-in">
+          <span className="text-sm font-semibold text-primary">{selectedProducts.size} selected</span>
+          <div className="flex items-center gap-1.5 ml-auto">
+            <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleBulkToggle('is_active', true)}>Activate</Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs border-muted-foreground/30 text-muted-foreground hover:bg-muted" onClick={() => handleBulkToggle('is_active', false)}>Deactivate</Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10" onClick={() => handleBulkToggle('is_featured', true)}>
+              <Star className="w-3 h-3 mr-1" />Feature
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => setSelectedProducts(new Set())}>
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="admin-card">
         <CardContent className="p-0">
@@ -930,7 +1047,7 @@ const AdminProductsPage: React.FC = () => {
             <>
               {/* Mobile Card View */}
               <div className="md:hidden p-3 space-y-3">
-                {filtered?.map((product) => (
+                {paginatedProducts?.map((product) => (
                   <div key={product.id} className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-3">
                     <div className="flex items-center gap-3">
                       <img
@@ -977,6 +1094,11 @@ const AdminProductsPage: React.FC = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="admin-table-header">
+                      <th className="w-10">
+                        <button onClick={selectAllProducts} className="flex items-center justify-center">
+                          {allProductsSelected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 text-muted-foreground/40" />}
+                        </button>
+                      </th>
                       <th>Product</th>
                       <th>Category</th>
                       <th>Price</th>
@@ -985,8 +1107,11 @@ const AdminProductsPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered?.map((product) => (
-                      <tr key={product.id} className="admin-table-row group">
+                    {paginatedProducts?.map((product) => (
+                      <tr key={product.id} className={`admin-table-row group ${selectedProducts.has(product.id) ? 'bg-primary/[0.03]' : ''}`}>
+                        <td onClick={() => toggleProductSelect(product.id)} className="cursor-pointer">
+                          {selectedProducts.has(product.id) ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground/60" />}
+                        </td>
                         <td className="py-4 px-5">
                           <div className="flex items-center gap-4">
                             <img src={product.thumbnail} alt={product.name.en} className="w-12 h-10 object-cover rounded-lg border border-border/50 shadow-soft-sm" />
@@ -1015,6 +1140,9 @@ const AdminProductsPage: React.FC = () => {
                         </td>
                         <td>
                           <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" title="Duplicate" onClick={() => handleDuplicate(product.id)}>
+                              <Copy className="w-4 h-4" />
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openEdit(product)}>
                               <Pencil className="w-4 h-4" />
                             </Button>
@@ -1031,6 +1159,28 @@ const AdminProductsPage: React.FC = () => {
                   <div className="admin-empty"><Package /><p>No products found</p></div>
                 )}
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-5 py-3 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filtered?.length || 0)} of {filtered?.length || 0}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button key={page} onClick={() => setCurrentPage(page)} className={`h-7 w-7 rounded-md text-xs font-medium transition-all ${currentPage === page ? 'bg-primary text-primary-foreground shadow-soft-sm' : 'text-muted-foreground hover:bg-muted'}`}>
+                        {page}
+                      </button>
+                    ))}
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </CardContent>

@@ -31,6 +31,7 @@ function rowToProduct(row: any): Product {
     seo: typeof row.seo === "string" ? JSON.parse(row.seo) : row.seo,
     isFeatured: Boolean(row.is_featured),
     isActive: Boolean(row.is_active),
+    sortOrder: Number(row.sort_order || 0),
     createdAt: row.created_at,
   };
 }
@@ -86,6 +87,59 @@ export function useDeleteProduct() {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["featuredProducts"] });
+    },
+  });
+}
+
+export function useDuplicateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return await api.post(`/admin/products/${id}/duplicate`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useBulkToggleProducts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      ids,
+      field,
+      value,
+    }: {
+      ids: string[];
+      field: "is_active" | "is_featured";
+      value: boolean;
+    }) => {
+      return await api.post<{ message: string }>("/admin/products/bulk", {
+        ids,
+        field,
+        value,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["featuredProducts"] });
+    },
+  });
+}
+
+export function useReorderProducts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (items: { id: string; sort_order: number }[]) => {
+      return await api.put<{ message: string }>("/admin/products/reorder", {
+        items,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
     },
   });
 }

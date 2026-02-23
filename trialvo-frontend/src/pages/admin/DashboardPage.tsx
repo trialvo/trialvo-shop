@@ -20,7 +20,7 @@ const StatCard: React.FC<{
  delay?: number;
 }> = ({ title, value, icon: Icon, trend, color, link, delay = 0 }) => (
  <Link to={link}>
-  <div className="admin-stat group cursor-pointer" style={{ animationDelay: `${delay}ms` }}>
+  <div className="admin-stat group cursor-pointer h-full" style={{ animationDelay: `${delay}ms` }}>
    <CardContent className="p-5">
     <div className="flex items-start justify-between">
      <div className="flex-1">
@@ -145,6 +145,85 @@ const DashboardPage: React.FC = () => {
      </>
     )}
    </div>
+
+   {/* Weekly Comparison + Monthly Chart */}
+   {!isLoading && stats && (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+     {/* Weekly Stats */}
+     <div className="admin-card">
+      <div className="px-5 py-4 border-b border-border">
+       <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+        <TrendingUp className="w-4 h-4 text-primary" />
+        This Week vs Last Week
+       </h3>
+      </div>
+      <div className="p-5 grid grid-cols-2 gap-4">
+       <div>
+        <p className="text-xs text-muted-foreground font-medium mb-1">Orders</p>
+        <p className="text-2xl font-bold text-foreground">{stats.weeklyOrders || 0}</p>
+        {stats.prevWeekOrders !== undefined && stats.prevWeekOrders > 0 ? (
+         <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${(stats.weeklyOrders || 0) >= stats.prevWeekOrders ? 'text-emerald-500' : 'text-red-500'}`}>
+          <TrendingUp className={`w-3 h-3 ${(stats.weeklyOrders || 0) < stats.prevWeekOrders ? 'rotate-180' : ''}`} />
+          {Math.abs(Math.round(((stats.weeklyOrders || 0) - stats.prevWeekOrders) / stats.prevWeekOrders * 100))}%
+          <span className="text-muted-foreground font-normal">vs last week</span>
+         </div>
+        ) : (
+         <p className="text-[10px] text-muted-foreground mt-1">No data from last week</p>
+        )}
+       </div>
+       <div>
+        <p className="text-xs text-muted-foreground font-medium mb-1">Revenue</p>
+        <p className="text-2xl font-bold text-foreground">৳{(stats.weeklyRevenue || 0).toLocaleString()}</p>
+        {stats.prevWeekRevenue !== undefined && stats.prevWeekRevenue > 0 ? (
+         <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${(stats.weeklyRevenue || 0) >= stats.prevWeekRevenue ? 'text-emerald-500' : 'text-red-500'}`}>
+          <TrendingUp className={`w-3 h-3 ${(stats.weeklyRevenue || 0) < stats.prevWeekRevenue ? 'rotate-180' : ''}`} />
+          {Math.abs(Math.round(((stats.weeklyRevenue || 0) - stats.prevWeekRevenue) / stats.prevWeekRevenue * 100))}%
+          <span className="text-muted-foreground font-normal">vs last week</span>
+         </div>
+        ) : (
+         <p className="text-[10px] text-muted-foreground mt-1">No data from last week</p>
+        )}
+       </div>
+      </div>
+     </div>
+
+     {/* Monthly Revenue Chart */}
+     <div className="admin-card">
+      <div className="px-5 py-4 border-b border-border">
+       <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+        <DollarSign className="w-4 h-4 text-emerald-500" />
+        Monthly Revenue
+       </h3>
+      </div>
+      <div className="p-5">
+       {stats.monthlyData && stats.monthlyData.length > 0 ? (
+        <div className="flex items-end gap-2 h-24">
+         {stats.monthlyData.map((m, i) => {
+          const maxRevenue = Math.max(...stats.monthlyData!.map(d => d.revenue), 1);
+          const height = (m.revenue / maxRevenue) * 100;
+          return (
+           <div key={i} className="flex-1 flex flex-col items-center gap-1 group" title={`${m.month}: ৳${m.revenue.toLocaleString()} (${m.orders} orders)`}>
+            <span className="text-[9px] text-muted-foreground font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+             ৳{m.revenue >= 1000 ? `${(m.revenue / 1000).toFixed(0)}k` : m.revenue}
+            </span>
+            <div className="w-full relative flex-1 flex items-end justify-center">
+             <div
+              className="w-full max-w-[32px] rounded-t-md bg-gradient-to-t from-primary/80 to-primary/40 group-hover:from-primary group-hover:to-primary/60 transition-all duration-300"
+              style={{ height: `${Math.max(height, 4)}%` }}
+             />
+            </div>
+            <span className="text-[9px] text-muted-foreground font-medium">{m.month}</span>
+           </div>
+          );
+         })}
+        </div>
+       ) : (
+        <p className="text-xs text-muted-foreground text-center py-4">No monthly data available</p>
+       )}
+      </div>
+     </div>
+    </div>
+   )}
 
    {/* Recent Orders */}
    <div className="admin-card">

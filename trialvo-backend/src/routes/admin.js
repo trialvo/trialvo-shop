@@ -3,8 +3,15 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 
 // Admin controllers
-const { adminGetProducts, createProduct, updateProduct, deleteProduct } = require('../controllers/productController');
-const { adminGetOrders, updateOrderStatus, getDashboardStats } = require('../controllers/orderController');
+const {
+ adminGetProducts, createProduct, updateProduct, deleteProduct,
+ duplicateProduct, bulkToggleProducts, reorderProducts,
+} = require('../controllers/productController');
+const {
+ adminGetOrders, updateOrderStatus, updateOrder, bulkUpdateStatus,
+ getOrderTimeline, getOrderNotes, addOrderNote, deleteOrderNote,
+ exportOrders, getDashboardStats,
+} = require('../controllers/orderController');
 const { adminGetTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } = require('../controllers/testimonialController');
 const { adminGetMessages, toggleRead, deleteMessage, getUnreadCount } = require('../controllers/contactMessageController');
 
@@ -17,12 +24,22 @@ router.get('/dashboard', getDashboardStats);
 // Products
 router.get('/products', adminGetProducts);
 router.post('/products', createProduct);
+router.post('/products/bulk', bulkToggleProducts);
+router.put('/products/reorder', reorderProducts);
+router.post('/products/:id/duplicate', duplicateProduct);
 router.put('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProduct);
 
 // Orders
 router.get('/orders', adminGetOrders);
+router.get('/orders/export', exportOrders);
+router.post('/orders/bulk-status', bulkUpdateStatus);
+router.get('/orders/:id/timeline', getOrderTimeline);
+router.get('/orders/:id/notes', getOrderNotes);
+router.post('/orders/:id/notes', addOrderNote);
+router.delete('/orders/notes/:noteId', deleteOrderNote);
 router.put('/orders/:id/status', updateOrderStatus);
+router.put('/orders/:id', updateOrder);
 
 // Testimonials
 router.get('/testimonials', adminGetTestimonials);
