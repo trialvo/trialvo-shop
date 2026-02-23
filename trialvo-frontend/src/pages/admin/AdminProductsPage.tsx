@@ -85,7 +85,7 @@ const emptyForm: ProductFormData = {
 // ─── Reusable styling constants ───────────────────────────────
 const inputClass = 'bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/25';
 const labelClass = 'text-muted-foreground text-xs font-medium mb-1.5 block';
-const sectionClass = 'p-5 rounded-xl bg-card border border-border card-shadow';
+const sectionClass = 'admin-section';
 
 // ─── Array Field Helper ───────────────────────────────────────
 const ArrayField: React.FC<{
@@ -897,29 +897,28 @@ const AdminProductsPage: React.FC = () => {
 
   // ─── TABLE VIEW ────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Products</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your product catalog</p>
+        <div className="admin-page-header">
+          <h1>Products</h1>
+          <p>Manage your product catalog</p>
         </div>
-        <Button onClick={openCreate} className="hero-gradient text-primary-foreground hover:opacity-90 border-0 shadow-soft-sm hover-scale">
-          <Plus className="w-4 h-4 mr-2" />
+        <Button onClick={openCreate} className="hero-gradient text-primary-foreground hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm">
+          <Plus className="w-4 h-4 mr-1.5" />
           Add Product
         </Button>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <div className="admin-search max-w-sm">
+        <Search />
         <Input
           placeholder="Search products..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className={`pl-10 ${inputClass}`}
         />
       </div>
 
-      <Card className="bg-card border-border card-shadow">
+      <div className="admin-card">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-3">
@@ -977,17 +976,17 @@ const AdminProductsPage: React.FC = () => {
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Product</th>
-                      <th className="text-left text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Category</th>
-                      <th className="text-left text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Price</th>
-                      <th className="text-left text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Status</th>
-                      <th className="text-right text-xs text-muted-foreground font-semibold uppercase tracking-wider py-4 px-5">Actions</th>
+                    <tr className="admin-table-header">
+                      <th>Product</th>
+                      <th>Category</th>
+                      <th>Price</th>
+                      <th>Status</th>
+                      <th className="text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered?.map((product) => (
-                      <tr key={product.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
+                      <tr key={product.id} className="admin-table-row group">
                         <td className="py-4 px-5">
                           <div className="flex items-center gap-4">
                             <img src={product.thumbnail} alt={product.name.en} className="w-12 h-10 object-cover rounded-lg border border-border/50 shadow-soft-sm" />
@@ -1014,8 +1013,8 @@ const AdminProductsPage: React.FC = () => {
                             </button>
                           </div>
                         </td>
-                        <td className="py-4 px-5">
-                          <div className="flex items-center justify-end gap-1">
+                        <td>
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openEdit(product)}>
                               <Pencil className="w-4 h-4" />
                             </Button>
@@ -1029,13 +1028,13 @@ const AdminProductsPage: React.FC = () => {
                   </tbody>
                 </table>
                 {filtered?.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">No products found</div>
+                  <div className="admin-empty"><Package /><p>No products found</p></div>
                 )}
               </div>
             </>
           )}
         </CardContent>
-      </Card>
+      </div>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

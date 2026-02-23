@@ -44,9 +44,15 @@ const AdminLoginPage: React.FC = () => {
  return (
   <div className="min-h-screen flex items-center justify-center bg-background p-4">
    {/* Background decorations */}
-   <div className="absolute inset-0 overflow-hidden">
-    <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
-    <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
+   <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+    <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/[0.02] rounded-full blur-3xl" />
+    {/* Grid pattern */}
+    <div className="absolute inset-0 opacity-[0.015]" style={{
+     backgroundImage: 'radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)',
+     backgroundSize: '30px 30px',
+    }} />
    </div>
 
    <motion.div
@@ -55,51 +61,51 @@ const AdminLoginPage: React.FC = () => {
     transition={{ duration: 0.5 }}
     className="relative z-10 w-full max-w-md"
    >
-    <Card className="border-border bg-card/90 backdrop-blur-xl shadow-2xl md:p-2">
-     <CardHeader className="text-center pb-2">
-      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl hero-gradient shadow-soft-sm flex items-center justify-center">
+    <Card className="border-border bg-card/95 backdrop-blur-xl shadow-2xl">
+     <CardHeader className="text-center pb-2 pt-8">
+      <div className="w-16 h-16 mx-auto mb-5 rounded-2xl hero-gradient shadow-soft-md flex items-center justify-center ring-4 ring-primary/10">
        <ShieldCheck className="w-8 h-8 text-primary-foreground" />
       </div>
-      <CardTitle className="text-2xl font-bold text-foreground">Admin Panel</CardTitle>
+      <CardTitle className="text-2xl font-bold text-foreground tracking-tight">Admin Panel</CardTitle>
       <CardDescription className="text-muted-foreground mt-1">
        Sign in to manage your store
       </CardDescription>
      </CardHeader>
-     <CardContent>
+     <CardContent className="px-6 pb-8">
       <form onSubmit={handleSubmit} className="space-y-5">
-       <div className="space-y-2">
-        <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
+       <div className="space-y-1.5">
+        <Label htmlFor="email" className="text-xs text-muted-foreground font-medium">Email</Label>
         <div className="relative">
-         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+         <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
          <Input
           id="email"
           type="email"
           placeholder="admin@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/25"
+          className="pl-10 h-11 bg-muted/30 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 focus:bg-background rounded-xl transition-all"
           required
          />
         </div>
        </div>
 
-       <div className="space-y-2">
-        <Label htmlFor="password" className="text-foreground font-medium">Password</Label>
+       <div className="space-y-1.5">
+        <Label htmlFor="password" className="text-xs text-muted-foreground font-medium">Password</Label>
         <div className="relative">
-         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+         <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
          <Input
           id="password"
           type={showPassword ? 'text' : 'password'}
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="pl-10 pr-10 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/25"
+          className="pl-10 pr-10 h-11 bg-muted/30 border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 focus:bg-background rounded-xl transition-all"
           required
          />
          <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
          >
           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
          </button>
@@ -109,13 +115,13 @@ const AdminLoginPage: React.FC = () => {
        <Button
         type="submit"
         disabled={isLoading}
-        className="w-full h-12 mt-2 text-base font-bold bg-primary text-primary-foreground shadow-soft-md hover:bg-primary/90 transition-all"
+        className="w-full h-11 mt-2 text-sm font-semibold hero-gradient text-primary-foreground shadow-soft-md hover:opacity-90 transition-all rounded-xl border-0"
        >
         {isLoading ? (
          <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
         ) : (
          <>
-          <LogIn className="w-5 h-5 mr-2" />
+          <LogIn className="w-4 h-4 mr-2" />
           Sign In
          </>
         )}
@@ -124,8 +130,8 @@ const AdminLoginPage: React.FC = () => {
      </CardContent>
     </Card>
 
-    <p className="text-center text-muted-foreground text-sm mt-8">
-     © {new Date().getFullYear()} Trialvo Admin
+    <p className="text-center text-muted-foreground/50 text-xs mt-8 font-medium">
+     © {new Date().getFullYear()} Trialvo Admin Panel
     </p>
    </motion.div>
   </div>

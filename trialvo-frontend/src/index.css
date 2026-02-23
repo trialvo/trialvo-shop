@@ -292,6 +292,165 @@
   .glass {
     @apply bg-background/80 backdrop-blur-md;
   }
+
+  /* ─── Admin Panel UI System ─────────────────────────────── */
+
+  /* Admin Page Header */
+  .admin-page-header {
+    @apply flex flex-col gap-1;
+  }
+  .admin-page-header h1 {
+    @apply text-2xl md:text-3xl font-bold text-foreground tracking-tight;
+  }
+  .admin-page-header p {
+    @apply text-sm text-muted-foreground;
+  }
+
+  /* Admin Card */
+  .admin-card {
+    @apply bg-card border border-border rounded-xl;
+    box-shadow: var(--shadow-md);
+    transition:
+      box-shadow 0.25s ease,
+      transform 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .admin-card:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: hsl(var(--primary) / 0.15);
+  }
+
+  /* Admin Stat Card */
+  .admin-stat {
+    @apply relative overflow-hidden bg-card border border-border rounded-xl;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .admin-stat::before {
+    content: "";
+    @apply absolute top-0 left-0 right-0 h-1 rounded-t-xl;
+    background: var(--gradient-accent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .admin-stat:hover {
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-3px);
+  }
+  .admin-stat:hover::before {
+    opacity: 1;
+  }
+
+  /* Admin Table */
+  .admin-table-header {
+    @apply bg-muted/40 border-b-2 border-border;
+  }
+  .admin-table-header th {
+    @apply text-left text-[11px] text-muted-foreground font-semibold uppercase tracking-widest py-3.5 px-5;
+  }
+  .admin-table-row {
+    @apply border-b border-border/40 transition-all duration-200 relative;
+  }
+  .admin-table-row:hover {
+    @apply bg-muted/30;
+  }
+  .admin-table-row td {
+    @apply py-3.5 px-5;
+  }
+  .admin-table-row:last-child {
+    @apply border-b-0;
+  }
+
+  /* Admin Status Badges */
+  .admin-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide uppercase border;
+  }
+  .admin-badge-pending {
+    @apply bg-amber-500/10 text-amber-500 border-amber-500/20;
+  }
+  .admin-badge-confirmed {
+    @apply bg-blue-500/10 text-blue-500 border-blue-500/20;
+  }
+  .admin-badge-completed {
+    @apply bg-emerald-500/10 text-emerald-500 border-emerald-500/20;
+  }
+  .admin-badge-cancelled {
+    @apply bg-red-500/10 text-red-400 border-red-500/20;
+  }
+  .admin-badge-active {
+    @apply bg-emerald-500/10 text-emerald-500 border-emerald-500/20;
+  }
+  .admin-badge-inactive {
+    @apply bg-muted text-muted-foreground border-border;
+  }
+  .admin-badge-unread {
+    @apply bg-primary/10 text-primary border-primary/25 font-bold;
+  }
+  .admin-badge-read {
+    @apply bg-muted/50 text-muted-foreground border-border;
+  }
+
+  /* Admin Search Bar */
+  .admin-search {
+    @apply relative;
+  }
+  .admin-search input {
+    @apply w-full pl-10 pr-4 h-10 bg-muted/40 border border-border rounded-xl text-foreground text-sm placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 focus:bg-background transition-all;
+  }
+  .admin-search svg {
+    @apply absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none;
+  }
+
+  /* Admin Empty State */
+  .admin-empty {
+    @apply flex flex-col items-center justify-center py-16 gap-3;
+  }
+  .admin-empty svg {
+    @apply w-12 h-12 text-muted-foreground/30;
+  }
+  .admin-empty p {
+    @apply text-sm text-muted-foreground font-medium;
+  }
+
+  /* Admin Section Card */
+  .admin-section {
+    @apply p-5 rounded-xl bg-card border border-border;
+    box-shadow: var(--shadow-sm);
+  }
+  .admin-section-title {
+    @apply text-sm font-semibold text-foreground mb-4 flex items-center gap-2 pb-3 border-b border-border/50;
+  }
+
+  /* Admin Welcome Banner */
+  .admin-welcome {
+    @apply relative overflow-hidden rounded-2xl p-6 md:p-8;
+    background: var(--gradient-hero);
+  }
+  .admin-welcome::after {
+    content: "";
+    @apply absolute inset-0 opacity-10;
+    background: radial-gradient(
+      circle at 80% 50%,
+      hsl(var(--accent)) 0%,
+      transparent 60%
+    );
+  }
+
+  /* Admin Sidebar Group Label */
+  .admin-nav-group {
+    @apply text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-[0.15em] px-4 pt-5 pb-1.5;
+  }
+
+  /* Admin Filter Pill */
+  .admin-filter-pill {
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border cursor-pointer transition-all duration-200;
+  }
+  .admin-filter-pill-active {
+    @apply bg-primary text-primary-foreground border-primary shadow-soft-sm;
+  }
+  .admin-filter-pill-inactive {
+    @apply bg-transparent text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground;
+  }
 }
 
 @layer utilities {

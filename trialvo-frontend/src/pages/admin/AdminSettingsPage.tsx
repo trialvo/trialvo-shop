@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { User, Lock, Loader2, Save, ShieldCheck } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { User, Lock, Loader2, Save, ShieldCheck, KeyRound } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { api } from '@/lib/api';
 const AdminSettingsPage: React.FC = () => {
  const { toast } = useToast();
  const { adminProfile } = useAuth();
+ const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
 
  const [fullName, setFullName] = useState(adminProfile?.full_name || '');
  const [nameLoading, setNameLoading] = useState(false);
@@ -53,110 +54,113 @@ const AdminSettingsPage: React.FC = () => {
   setPassLoading(false);
  };
 
+ const inputClass = 'bg-background border-border text-foreground focus:border-primary focus:ring-primary/25';
+
  return (
-  <div className="space-y-6 max-w-2xl">
-   <div>
-    <h1 className="text-2xl md:text-3xl font-bold text-foreground">Settings</h1>
-    <p className="text-sm text-muted-foreground mt-1">Manage your admin profile</p>
+  <div className="space-y-5 max-w-2xl animate-fade-in">
+   <div className="admin-page-header">
+    <h1>Settings</h1>
+    <p>Manage your admin profile and security</p>
    </div>
 
-   {/* Profile Info */}
-   <Card className="bg-card border-border card-shadow">
-    <CardHeader className="border-b border-border pb-4 mb-4">
-     <CardTitle className="text-foreground flex items-center gap-2">
-      <User className="w-5 h-5 text-primary" />
-      Profile Information
-     </CardTitle>
-     <CardDescription className="text-muted-foreground">Update your account details</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-6">
-     <div className="flex items-center gap-5 pb-6 border-b border-border/50">
-      <div className="w-16 h-16 rounded-2xl hero-gradient shadow-soft-sm flex items-center justify-center">
-       <span className="text-2xl font-bold text-primary-foreground">
-        {adminProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
-       </span>
+   {/* Tab Switcher */}
+   <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl border border-border w-fit">
+    <button
+     onClick={() => setActiveTab('profile')}
+     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'profile' ? 'bg-card text-foreground shadow-soft-sm' : 'text-muted-foreground hover:text-foreground'}`}
+    >
+     <User className="w-4 h-4" />
+     Profile
+    </button>
+    <button
+     onClick={() => setActiveTab('security')}
+     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'security' ? 'bg-card text-foreground shadow-soft-sm' : 'text-muted-foreground hover:text-foreground'}`}
+    >
+     <KeyRound className="w-4 h-4" />
+     Security
+    </button>
+   </div>
+
+   {/* Profile Tab */}
+   {activeTab === 'profile' && (
+    <div className="admin-card">
+     <div className="p-5 space-y-6">
+      {/* Admin profile card */}
+      <div className="flex items-center gap-4 pb-5 border-b border-border/50">
+       <div className="relative">
+        <div className="w-16 h-16 rounded-2xl hero-gradient shadow-soft-md flex items-center justify-center ring-4 ring-primary/10">
+         <span className="text-2xl font-bold text-primary-foreground">
+          {adminProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
+         </span>
+        </div>
+        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-card flex items-center justify-center">
+         <span className="w-1.5 h-1.5 rounded-full bg-white" />
+        </div>
+       </div>
+       <div>
+        <p className="text-lg font-bold text-foreground">{adminProfile?.full_name}</p>
+        <p className="text-sm text-muted-foreground mt-0.5">{adminProfile?.email}</p>
+        <Badge variant="outline" className="mt-2 admin-badge admin-badge-active">
+         <ShieldCheck className="w-3 h-3" />
+         {adminProfile?.role?.replace('_', ' ')}
+        </Badge>
+       </div>
       </div>
-      <div>
-       <p className="text-lg font-bold text-foreground">{adminProfile?.full_name}</p>
-       <p className="text-sm text-muted-foreground mt-0.5">{adminProfile?.email}</p>
-       <Badge variant="outline" className="mt-2 text-xs font-semibold tracking-wide uppercase border-primary/30 text-primary bg-primary/10">
-        <ShieldCheck className="w-3 h-3 mr-1" />
-        {adminProfile?.role?.replace('_', ' ')}
-       </Badge>
+
+      {/* Edit fields */}
+      <div className="space-y-4">
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">Full Name</Label>
+        <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} />
+       </div>
+
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">Email</Label>
+        <Input value={adminProfile?.email || ''} disabled className="bg-muted border-border text-muted-foreground opacity-70" />
+       </div>
+
+       <Button onClick={handleUpdateName} disabled={nameLoading} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm h-9 text-sm">
+        {nameLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+        Save Changes
+       </Button>
       </div>
      </div>
+    </div>
+   )}
 
-     <div className="space-y-2.5">
-      <Label className="text-foreground font-medium">Full Name</Label>
-      <Input
-       value={fullName}
-       onChange={(e) => setFullName(e.target.value)}
-       className="bg-background border-border text-foreground focus:border-primary focus:ring-primary/25"
-      />
+   {/* Security Tab */}
+   {activeTab === 'security' && (
+    <div className="admin-card">
+     <div className="p-5 space-y-5">
+      <div className="flex items-center gap-3 pb-4 border-b border-border/50">
+       <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+        <Lock className="w-5 h-5 text-amber-500" />
+       </div>
+       <div>
+        <h3 className="text-sm font-semibold text-foreground">Change Password</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Update your login credentials</p>
+       </div>
+      </div>
+
+      <div className="space-y-4">
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">New Password</Label>
+        <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+       </div>
+
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">Confirm New Password</Label>
+        <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+       </div>
+
+       <Button onClick={handleChangePassword} disabled={passLoading || !newPassword || !confirmPassword} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm h-9 text-sm">
+        {passLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Lock className="w-4 h-4 mr-1.5" />}
+        Change Password
+       </Button>
+      </div>
      </div>
-
-     <div className="space-y-2.5">
-      <Label className="text-foreground font-medium">Email</Label>
-      <Input
-       value={adminProfile?.email || ''}
-       disabled
-       className="bg-muted border-border text-muted-foreground opacity-70"
-      />
-     </div>
-
-     <Button
-      onClick={handleUpdateName}
-      disabled={nameLoading}
-      className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm mt-2"
-     >
-      {nameLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-      Save Changes
-     </Button>
-    </CardContent>
-   </Card>
-
-   {/* Change Password */}
-   <Card className="bg-card border-border card-shadow">
-    <CardHeader className="border-b border-border pb-4 mb-4">
-     <CardTitle className="text-foreground flex items-center gap-2">
-      <Lock className="w-5 h-5 text-primary" />
-      Change Password
-     </CardTitle>
-     <CardDescription className="text-muted-foreground">Update your login password</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-6">
-     <div className="space-y-2.5">
-      <Label className="text-foreground font-medium">New Password</Label>
-      <Input
-       type="password"
-       value={newPassword}
-       onChange={(e) => setNewPassword(e.target.value)}
-       className="bg-background border-border text-foreground focus:border-primary focus:ring-primary/25"
-       placeholder="••••••••"
-      />
-     </div>
-
-     <div className="space-y-2.5">
-      <Label className="text-foreground font-medium">Confirm New Password</Label>
-      <Input
-       type="password"
-       value={confirmPassword}
-       onChange={(e) => setConfirmPassword(e.target.value)}
-       className="bg-background border-border text-foreground focus:border-primary focus:ring-primary/25"
-       placeholder="••••••••"
-      />
-     </div>
-
-     <Button
-      onClick={handleChangePassword}
-      disabled={passLoading || !newPassword || !confirmPassword}
-      className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm mt-2"
-     >
-      {passLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
-      Change Password
-     </Button>
-    </CardContent>
-   </Card>
+    </div>
+   )}
   </div>
  );
 };
