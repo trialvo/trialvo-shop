@@ -46,7 +46,25 @@ const CheckoutPage: React.FC = () => {
     payment_method_send_money_instructions: string;
     payment_method_online_active: boolean;
     payment_method_manual_inbox_active: boolean;
+    payment_method_send_money_providers: any[];
   } | null>(null);
+
+  const [subProviderId, setSubProviderId] = useState<string>('');
+
+  const activeSendMoneyProviders = React.useMemo(() => {
+    if (!paymentSettings?.payment_method_send_money_providers) return [];
+    return paymentSettings.payment_method_send_money_providers.filter((p: any) => p.isActive);
+  }, [paymentSettings]);
+
+  React.useEffect(() => {
+    if (formData.paymentMethod === 'send_money' && !subProviderId && activeSendMoneyProviders.length > 0) {
+      setSubProviderId(activeSendMoneyProviders[0].id);
+    }
+  }, [formData.paymentMethod, activeSendMoneyProviders, subProviderId]);
+
+  const subProviderDetails = React.useMemo(() => {
+    return activeSendMoneyProviders.find((p: any) => p.id === subProviderId);
+  }, [activeSendMoneyProviders, subProviderId]);
 
   React.useEffect(() => {
     // Fetch public payment settings
@@ -68,6 +86,13 @@ const CheckoutPage: React.FC = () => {
   const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; code: string; type: string; value: number } | null>(null);
   const [discount, setDiscount] = useState(0);
   const [couponError, setCouponError] = useState('');
+
+  const sendMoneyFee = React.useMemo(() => {
+    if (formData.paymentMethod !== 'send_money' || !subProviderDetails) return 0;
+    const rate = subProviderDetails.feePerThousand || 0;
+    const baseTotal = product?.priceBDT ? product.priceBDT - discount : 0;
+    return Math.ceil((baseTotal / 1000) * rate);
+  }, [formData.paymentMethod, subProviderDetails, product, discount]);
 
   if (productLoading) {
     return (
@@ -109,6 +134,8 @@ const CheckoutPage: React.FC = () => {
     e.preventDefault();
 
     try {
+      const finalPaymentMethod = formData.paymentMethod === 'send_money' ? `send_money_${subProviderId}` : formData.paymentMethod;
+
       const order = await createOrder.mutateAsync({
         productId: product.id,
         customerName: formData.name,
@@ -117,8 +144,8 @@ const CheckoutPage: React.FC = () => {
         company: formData.company,
         needsHosting: formData.needsHosting,
         notes: formData.notes,
-        paymentMethod: formData.paymentMethod,
-        totalBdt: product.priceBDT - discount,
+        paymentMethod: finalPaymentMethod,
+        totalBdt: product.priceBDT - discount + sendMoneyFee,
         discountAmount: discount,
       });
 
@@ -299,15 +326,52 @@ const CheckoutPage: React.FC = () => {
                   </RadioGroup>
 
                   {/* Send Money Instructions */}
-                  {formData.paymentMethod === 'send_money' && paymentSettings?.payment_method_send_money_instructions && (
-                    <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
-                      <h4 className="font-medium text-sm text-primary mb-2 flex items-center gap-2">
-                        <Smartphone className="w-4 h-4" />
-                        {language === 'bn' ? 'সেন্ড মানি নির্দেশাবলী:' : 'Send Money Instructions:'}
-                      </h4>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {paymentSettings.payment_method_send_money_instructions}
-                      </p>
+                  {formData.paymentMethod === 'send_money' && activeSendMoneyProviders.length > 0 && (
+                    <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20 space-y-4">
+
+                      {/* Sub-provider selection */}
+                      <div className="flex gap-2 flex-wrap pb-3 border-b border-primary/10">
+                        {activeSendMoneyProviders.map((p: any) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => setSubProviderId(p.id)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${subProviderId === p.id ? 'bg-primary text-primary-foreground border-primary shadow-soft-sm' : 'bg-background hover:bg-muted text-foreground border-border'}`}
+                          >
+                            {p.name}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Details of selected provider */}
+                      {subProviderDetails && (
+                        <div className="space-y-3">
+                          <div className="bg-background rounded-md p-3 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground">{subProviderDetails.type} {language === 'bn' ? 'অ্যাকাউন্ট নম্বর' : 'Account Number'}</p>
+                              <p className="font-mono text-lg font-bold text-foreground tracking-wider">{subProviderDetails.number}</p>
+                            </div>
+                            {subProviderDetails.feePerThousand > 0 && (
+                              <div className="text-left sm:text-right">
+                                <p className="text-xs text-muted-foreground">{language === 'bn' ? 'সেন্ড মানি চার্জ' : 'Send Money Fee'}</p>
+                                <p className="text-sm font-semibold text-destructive">+{t('common.bdt')}{sendMoneyFee}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {subProviderDetails.instructions && (
+                            <div>
+                              <h4 className="font-medium text-sm text-primary mb-1 flex items-center gap-1.5">
+                                <Smartphone className="w-4 h-4" />
+                                {language === 'bn' ? 'নির্দেশাবলী:' : 'Instructions:'}
+                              </h4>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                                {subProviderDetails.instructions}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -426,20 +490,26 @@ const CheckoutPage: React.FC = () => {
                 </div>
 
                 <div className="border-t border-border mt-4 pt-4">
-                  <div className="flex justify-between items-center mb-2">
+                  <div className="flex justify-between items-center mb-2 text-sm">
                     <span className="text-muted-foreground">{language === 'bn' ? 'সাবটোটাল' : 'Subtotal'}</span>
-                    <span>{t('common.bdt')}{product.priceBDT.toLocaleString()}</span>
+                    <span className="font-medium">{t('common.bdt')}{product.priceBDT.toLocaleString()}</span>
                   </div>
                   {discount > 0 && (
-                    <div className="flex justify-between items-center mb-2 text-emerald-600">
+                    <div className="flex justify-between items-center mb-2 text-sm text-emerald-600">
                       <span>{language === 'bn' ? 'ডিসকাউন্ট' : 'Discount'}</span>
-                      <span>-{t('common.bdt')}{discount.toLocaleString()}</span>
+                      <span className="font-medium">-{t('common.bdt')}{discount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between items-center text-lg font-bold">
+                  {sendMoneyFee > 0 && (
+                    <div className="flex justify-between items-center mb-4 text-sm text-destructive">
+                      <span>{language === 'bn' ? 'সেন্ড মানি চার্জ' : 'Send Money Fee'}</span>
+                      <span className="font-medium">+{t('common.bdt')}{sendMoneyFee.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-lg font-bold border-t border-border pt-3">
                     <span>{language === 'bn' ? 'মোট' : 'Total'}</span>
                     <span className="text-primary">
-                      {t('common.bdt')}{(product.priceBDT - discount).toLocaleString()}
+                      {t('common.bdt')}{(product.priceBDT - discount + sendMoneyFee).toLocaleString()}
                     </span>
                   </div>
                 </div>

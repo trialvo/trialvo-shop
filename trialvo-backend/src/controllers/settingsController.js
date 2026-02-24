@@ -29,12 +29,19 @@ async function getFeatureFlags(req, res, next) {
   const onlineActive = await getSetting('payment_method_online_active', 'true');
   const manualInboxActive = await getSetting('payment_method_manual_inbox_active', 'true');
 
+  const providersJson = await getSetting('payment_method_send_money_providers', null);
+  let providers = [];
+  if (providersJson) {
+   try { providers = JSON.parse(providersJson); } catch (e) { }
+  }
+
   res.json({
    social_proof_enabled: socialProof === 'true',
    payment_method_send_money_active: sendMoneyActive === 'true',
    payment_method_send_money_instructions: sendMoneyInstructions,
    payment_method_online_active: onlineActive === 'true',
    payment_method_manual_inbox_active: manualInboxActive === 'true',
+   payment_method_send_money_providers: providers,
   });
  } catch (error) {
   next(error);
@@ -131,11 +138,23 @@ async function getPaymentSettings(req, res, next) {
   const onlineActive = await getSetting('payment_method_online_active', 'true');
   const manualInboxActive = await getSetting('payment_method_manual_inbox_active', 'true');
 
+  const defaultProviders = [
+   { id: 'bkash', name: 'bKash', isActive: false, number: '', type: 'Personal', feePerThousand: 18.5, instructions: '' },
+   { id: 'nagad', name: 'Nagad', isActive: false, number: '', type: 'Personal', feePerThousand: 15, instructions: '' },
+   { id: 'rocket', name: 'Rocket', isActive: false, number: '', type: 'Personal', feePerThousand: 18, instructions: '' }
+  ];
+  const providersJson = await getSetting('payment_method_send_money_providers', null);
+  let providers = defaultProviders;
+  if (providersJson) {
+   try { providers = JSON.parse(providersJson); } catch (e) { }
+  }
+
   res.json({
    payment_method_send_money_active: sendMoneyActive,
    payment_method_send_money_instructions: sendMoneyInstructions,
    payment_method_online_active: onlineActive,
    payment_method_manual_inbox_active: manualInboxActive,
+   payment_method_send_money_providers: JSON.stringify(providers), // return as string to match standard upsert behavior
   });
  } catch (error) {
   next(error);
@@ -149,11 +168,17 @@ async function updatePaymentSettings(req, res, next) {
    'payment_method_send_money_active',
    'payment_method_send_money_instructions',
    'payment_method_online_active',
-   'payment_method_manual_inbox_active'
+   'payment_method_manual_inbox_active',
+   'payment_method_send_money_providers'
   ];
   for (const key of fields) {
    if (req.body[key] !== undefined) {
-    await upsertSetting(key, req.body[key]);
+    let valueToSave = req.body[key];
+    // If it's the JSON array, ensure it is safely stringified if passed as object
+    if (key === 'payment_method_send_money_providers' && typeof valueToSave !== 'string') {
+     valueToSave = JSON.stringify(valueToSave);
+    }
+    await upsertSetting(key, valueToSave);
    }
   }
   res.json({ message: 'Payment settings updated' });

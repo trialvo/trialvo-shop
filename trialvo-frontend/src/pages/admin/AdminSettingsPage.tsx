@@ -42,6 +42,7 @@ const AdminSettingsPage: React.FC = () => {
   payment_method_online_active: 'true',
   payment_method_manual_inbox_active: 'true'
  });
+ const [providers, setProviders] = useState<any[]>([]);
  const [paymentLoading, setPaymentLoading] = useState(false);
 
  useEffect(() => {
@@ -52,7 +53,14 @@ const AdminSettingsPage: React.FC = () => {
    api.get<any>('/admin/settings/general').then(setGeneral).catch(() => { });
   }
   if (activeTab === 'payment') {
-   api.get<any>('/admin/settings/payments').then(setPayment).catch(() => { });
+   api.get<any>('/admin/settings/payments').then(data => {
+    setPayment(data);
+    try {
+     if (data.payment_method_send_money_providers) {
+      setProviders(JSON.parse(data.payment_method_send_money_providers));
+     }
+    } catch (e) { }
+   }).catch(() => { });
   }
  }, [activeTab]);
 
@@ -132,7 +140,10 @@ const AdminSettingsPage: React.FC = () => {
  const handleSavePayment = async () => {
   setPaymentLoading(true);
   try {
-   await api.put('/admin/settings/payments', payment);
+   await api.put('/admin/settings/payments', {
+    ...payment,
+    payment_method_send_money_providers: JSON.stringify(providers)
+   });
    toast({ title: 'Payment settings saved' });
   } catch (err: any) {
    toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -423,14 +434,68 @@ const AdminSettingsPage: React.FC = () => {
         </div>
 
         {payment.payment_method_send_money_active === 'true' && (
-         <div className="space-y-2 pt-2 border-t border-border mt-2">
-          <Label className="text-xs text-muted-foreground font-medium">Send Money Instructions (Shown at checkout)</Label>
-          <textarea
-           value={payment.payment_method_send_money_instructions || ''}
-           onChange={(e) => setPayment(s => ({ ...s, payment_method_send_money_instructions: e.target.value }))}
-           placeholder="e.g. Please send Tk 500 to bKash Personal 017XXXXXX and provide the TrxID below."
-           className={`w-full h-24 p-3 rounded-md resize-none ${inputClass}`}
-          />
+         <div className="space-y-3 pt-4 border-t border-border mt-4">
+          <Label className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Configured Providers</Label>
+          {providers.map((provider, index) => (
+           <div key={provider.id} className="p-4 border border-border/50 rounded-lg bg-background">
+            <div className="flex justify-between items-center">
+             <span className="font-semibold text-sm text-foreground">{provider.name}</span>
+             <button
+              onClick={() => {
+               const newProviders = [...providers];
+               newProviders[index].isActive = !newProviders[index].isActive;
+               setProviders(newProviders);
+              }}
+              className={`relative w-9 h-5 rounded-full transition-colors ${provider.isActive ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+             >
+              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${provider.isActive ? 'left-[18px]' : 'left-0.5'}`} />
+             </button>
+            </div>
+
+            {provider.isActive && (
+             <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+               <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground">Account Number</Label>
+                <Input value={provider.number} onChange={(e) => {
+                 const newProviders = [...providers];
+                 newProviders[index].number = e.target.value;
+                 setProviders(newProviders);
+                }} className="h-8 text-xs bg-muted/30" placeholder="e.g. 017XXXXXX" />
+               </div>
+               <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground">Account Type</Label>
+                <select value={provider.type} onChange={(e) => {
+                 const newProviders = [...providers];
+                 newProviders[index].type = e.target.value;
+                 setProviders(newProviders);
+                }} className="flex h-8 w-full rounded-md border border-input bg-muted/30 px-3 py-1 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                 <option value="Personal">Personal</option>
+                 <option value="Agent">Agent</option>
+                </select>
+               </div>
+               <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground">Fee / 1000 BDT</Label>
+                <Input type="number" value={provider.feePerThousand} onChange={(e) => {
+                 const newProviders = [...providers];
+                 newProviders[index].feePerThousand = parseFloat(e.target.value) || 0;
+                 setProviders(newProviders);
+                }} className="h-8 text-xs bg-muted/30" />
+               </div>
+              </div>
+
+              <div className="space-y-1.5">
+               <Label className="text-[11px] text-muted-foreground">Instructions</Label>
+               <textarea value={provider.instructions} onChange={(e) => {
+                const newProviders = [...providers];
+                newProviders[index].instructions = e.target.value;
+                setProviders(newProviders);
+               }} className="flex w-full rounded-md border border-input bg-muted/30 px-3 py-2 text-xs shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[60px] resize-none" placeholder={`Enter instructions for sending via ${provider.name}...`} />
+              </div>
+             </div>
+            )}
+           </div>
+          ))}
          </div>
         )}
        </div>
