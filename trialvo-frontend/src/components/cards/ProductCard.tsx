@@ -1,10 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, Eye, GitCompareArrows, Sparkles, Check } from 'lucide-react';
+import { ExternalLink, Eye, GitCompareArrows, Sparkles, Check, Heart } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCustomerAuth } from '@/contexts/CustomerAuthContext';
+import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/hooks/useWishlist';
 import { Product } from '@/data/products';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
 
 interface ProductCardProps {
   product: Product;
@@ -14,6 +18,39 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onCompareToggle, isInCompare }) => {
   const { language, t } = useLanguage();
+  const { isLoggedIn } = useCustomerAuth();
+  const { data: wishlistItems } = useWishlist();
+  const addToWishlist = useAddToWishlist();
+  const removeFromWishlist = useRemoveFromWishlist();
+  const { toast } = useToast();
+
+  const isInWishlist = wishlistItems?.some(item => item.product_id === product.id) || false;
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isLoggedIn) {
+      toast({
+        title: language === 'bn' ? 'লগইন করুন' : 'Login Required',
+        description: language === 'bn' ? 'ফেভারিটে যোগ করতে প্রথমে লগইন করুন' : 'Please login to add to favourites',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      if (isInWishlist) {
+        await removeFromWishlist.mutateAsync(product.id);
+        toast({ title: language === 'bn' ? 'ফেভারিট থেকে সরানো হয়েছে' : 'Removed from favourites' });
+      } else {
+        await addToWishlist.mutateAsync(product.id);
+        toast({ title: language === 'bn' ? 'ফেভারিটে যোগ হয়েছে ❤️' : 'Added to favourites ❤️' });
+      }
+    } catch {
+      toast({ title: 'Error', variant: 'destructive' });
+    }
+  };
 
   const categoryLabels: Record<string, { bn: string; en: string }> = {
     ecommerce: { bn: 'ইকমার্স', en: 'Ecommerce' },
@@ -31,7 +68,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onCompareToggle, isI
     tech: 'from-emerald-500/20 to-teal-500/20 text-emerald-400 border-emerald-500/30',
   };
 
-  // Check if product was created recently (within 30 days)
   const isNew = () => {
     const created = new Date(product.createdAt);
     const now = new Date();
@@ -39,7 +75,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onCompareToggle, isI
     return diffDays <= 30;
   };
 
-  // Get first 3 features for preview chips
   const featurePreview = product.features[language].slice(0, 3);
 
   return (
@@ -81,7 +116,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onCompareToggle, isI
 
         {/* Top Left Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {/* Category badge with glassmorphism */}
           <Badge
             variant="secondary"
             className={`text-xs font-semibold backdrop-blur-xl bg-gradient-to-r ${categoryColors[product.category] || ''} border shadow-lg`}
@@ -95,15 +129,39 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onCompareToggle, isI
           )}
         </div>
 
-        {/* Featured badge top-right */}
-        {product.isFeatured && (
-          <div className="absolute top-3 right-3">
+        {/* Top Right — Favourite + Featured */}
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
+          {/* Favourite Heart Button */}
+          <motion.button
+            onClick={handleWishlistToggle}
+            whileTap={{ scale: 0.85 }}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg ${isInWishlist
+                ? 'bg-rose-500 text-white shadow-rose-500/30'
+                : 'bg-black/40 text-white/80 hover:bg-black/60 hover:text-white backdrop-blur-md'
+              }`}
+            title={language === 'bn' ? 'ফেভারিট' : 'Favourite'}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isInWishlist ? 'filled' : 'outline'}
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.5, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Heart className={`w-4 h-4 ${isInWishlist ? 'fill-current' : ''}`} />
+              </motion.div>
+            </AnimatePresence>
+          </motion.button>
+
+          {/* Featured badge */}
+          {product.isFeatured && (
             <Badge className="bg-gradient-to-r from-amber-500 to-orange-400 hover:from-amber-500 hover:to-orange-400 text-white text-[10px] font-bold shadow-lg shadow-amber-500/25 border-0 gap-1">
               <Sparkles className="w-3 h-3" />
               {language === 'bn' ? 'জনপ্রিয়' : 'Popular'}
             </Badge>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Compare button */}
         {onCompareToggle && (

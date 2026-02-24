@@ -10,7 +10,6 @@ export interface WishlistItem {
   thumbnail: string;
   price_bdt: number;
   price_usd: number;
-  discount_price_bdt: number | null;
   created_at: string;
 }
 
