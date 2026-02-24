@@ -23,8 +23,18 @@ async function upsertSetting(key, value) {
 async function getFeatureFlags(req, res, next) {
  try {
   const socialProof = await getSetting('social_proof_enabled', 'true');
+
+  const sendMoneyActive = await getSetting('payment_method_send_money_active', 'true');
+  const sendMoneyInstructions = await getSetting('payment_method_send_money_instructions', '');
+  const onlineActive = await getSetting('payment_method_online_active', 'true');
+  const manualInboxActive = await getSetting('payment_method_manual_inbox_active', 'true');
+
   res.json({
    social_proof_enabled: socialProof === 'true',
+   payment_method_send_money_active: sendMoneyActive === 'true',
+   payment_method_send_money_instructions: sendMoneyInstructions,
+   payment_method_online_active: onlineActive === 'true',
+   payment_method_manual_inbox_active: manualInboxActive === 'true',
   });
  } catch (error) {
   next(error);
@@ -113,7 +123,47 @@ async function testSmtpConnection(req, res, next) {
  }
 }
 
+// GET /api/admin/settings/payments
+async function getPaymentSettings(req, res, next) {
+ try {
+  const sendMoneyActive = await getSetting('payment_method_send_money_active', 'true');
+  const sendMoneyInstructions = await getSetting('payment_method_send_money_instructions', '');
+  const onlineActive = await getSetting('payment_method_online_active', 'true');
+  const manualInboxActive = await getSetting('payment_method_manual_inbox_active', 'true');
+
+  res.json({
+   payment_method_send_money_active: sendMoneyActive,
+   payment_method_send_money_instructions: sendMoneyInstructions,
+   payment_method_online_active: onlineActive,
+   payment_method_manual_inbox_active: manualInboxActive,
+  });
+ } catch (error) {
+  next(error);
+ }
+}
+
+// PUT /api/admin/settings/payments
+async function updatePaymentSettings(req, res, next) {
+ try {
+  const fields = [
+   'payment_method_send_money_active',
+   'payment_method_send_money_instructions',
+   'payment_method_online_active',
+   'payment_method_manual_inbox_active'
+  ];
+  for (const key of fields) {
+   if (req.body[key] !== undefined) {
+    await upsertSetting(key, req.body[key]);
+   }
+  }
+  res.json({ message: 'Payment settings updated' });
+ } catch (error) {
+  next(error);
+ }
+}
+
 module.exports = {
  getFeatureFlags, getGeneralSettings, updateGeneralSettings,
  getSmtpSettings, updateSmtpSettings, testSmtpConnection,
+ getPaymentSettings, updatePaymentSettings,
 };

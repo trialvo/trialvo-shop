@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Lock, Loader2, Save, ShieldCheck, KeyRound, Mail, Zap, CheckCircle, XCircle, Settings2, ShoppingBag } from 'lucide-react';
+import { User, Lock, Loader2, Save, ShieldCheck, KeyRound, Mail, Zap, CheckCircle, XCircle, Settings2, ShoppingBag, CreditCard } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { api } from '@/lib/api';
 const AdminSettingsPage: React.FC = () => {
  const { toast } = useToast();
  const { adminProfile } = useAuth();
- const [activeTab, setActiveTab] = useState<'general' | 'profile' | 'security' | 'email'>('general');
+ const [activeTab, setActiveTab] = useState<'general' | 'profile' | 'security' | 'email' | 'payment'>('general');
 
  const [fullName, setFullName] = useState(adminProfile?.full_name || '');
  const [nameLoading, setNameLoading] = useState(false);
@@ -35,12 +35,24 @@ const AdminSettingsPage: React.FC = () => {
  const [general, setGeneral] = useState({ social_proof_enabled: 'true' });
  const [generalLoading, setGeneralLoading] = useState(false);
 
+ // Payment settings
+ const [payment, setPayment] = useState({
+  payment_method_send_money_active: 'true',
+  payment_method_send_money_instructions: '',
+  payment_method_online_active: 'true',
+  payment_method_manual_inbox_active: 'true'
+ });
+ const [paymentLoading, setPaymentLoading] = useState(false);
+
  useEffect(() => {
   if (activeTab === 'email') {
    api.get<any>('/admin/settings/smtp').then(setSmtp).catch(() => { });
   }
   if (activeTab === 'general') {
    api.get<any>('/admin/settings/general').then(setGeneral).catch(() => { });
+  }
+  if (activeTab === 'payment') {
+   api.get<any>('/admin/settings/payments').then(setPayment).catch(() => { });
   }
  }, [activeTab]);
 
@@ -117,6 +129,17 @@ const AdminSettingsPage: React.FC = () => {
   setGeneralLoading(false);
  };
 
+ const handleSavePayment = async () => {
+  setPaymentLoading(true);
+  try {
+   await api.put('/admin/settings/payments', payment);
+   toast({ title: 'Payment settings saved' });
+  } catch (err: any) {
+   toast({ title: 'Error', description: err.message, variant: 'destructive' });
+  }
+  setPaymentLoading(false);
+ };
+
  const inputClass = 'bg-background border-border text-foreground focus:border-primary focus:ring-primary/25';
 
  return (
@@ -155,6 +178,13 @@ const AdminSettingsPage: React.FC = () => {
     >
      <Mail className="w-4 h-4" />
      Email
+    </button>
+    <button
+     onClick={() => setActiveTab('payment')}
+     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'payment' ? 'bg-card text-foreground shadow-soft-sm' : 'text-muted-foreground hover:text-foreground'}`}
+    >
+     <CreditCard className="w-4 h-4" />
+     Payment
     </button>
    </div>
 
@@ -354,6 +384,88 @@ const AdminSettingsPage: React.FC = () => {
         </Button>
         <Button onClick={handleSaveSmtp} disabled={smtpLoading} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm h-9 text-sm gap-1.5">
          {smtpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+         Save Settings
+        </Button>
+       </div>
+      </div>
+     </div>
+    </div>
+   )}
+
+   {/* Payment Tab */}
+   {activeTab === 'payment' && (
+    <div className="space-y-4">
+     <div className="admin-card">
+      <div className="p-5 space-y-5">
+       <div className="flex items-center gap-3 pb-4 border-b border-border/50">
+        <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+         <CreditCard className="w-5 h-5 text-purple-500" />
+        </div>
+        <div>
+         <h3 className="text-sm font-semibold text-foreground">Payment Configuration</h3>
+         <p className="text-xs text-muted-foreground mt-0.5">Manage available checkout payment methods</p>
+        </div>
+       </div>
+
+       {/* Send Money Toggle */}
+       <div className="flex flex-col gap-4 p-4 rounded-lg bg-muted/50 border border-border">
+        <div className="flex items-center justify-between">
+         <div>
+          <p className="text-sm font-medium text-foreground">Manual "Send Money" (bKash/Nagad)</p>
+          <p className="text-xs text-muted-foreground">Allow customers to send money directly to your numbers</p>
+         </div>
+         <button
+          onClick={() => setPayment(s => ({ ...s, payment_method_send_money_active: s.payment_method_send_money_active === 'true' ? 'false' : 'true' }))}
+          className={`relative w-11 h-6 rounded-full transition-colors ${payment.payment_method_send_money_active === 'true' ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+         >
+          <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${payment.payment_method_send_money_active === 'true' ? 'left-[22px]' : 'left-0.5'}`} />
+         </button>
+        </div>
+
+        {payment.payment_method_send_money_active === 'true' && (
+         <div className="space-y-2 pt-2 border-t border-border mt-2">
+          <Label className="text-xs text-muted-foreground font-medium">Send Money Instructions (Shown at checkout)</Label>
+          <textarea
+           value={payment.payment_method_send_money_instructions || ''}
+           onChange={(e) => setPayment(s => ({ ...s, payment_method_send_money_instructions: e.target.value }))}
+           placeholder="e.g. Please send Tk 500 to bKash Personal 017XXXXXX and provide the TrxID below."
+           className={`w-full h-24 p-3 rounded-md resize-none ${inputClass}`}
+          />
+         </div>
+        )}
+       </div>
+
+       {/* Online Payment Toggle */}
+       <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
+        <div>
+         <p className="text-sm font-medium text-foreground">Online Payment (Gateway)</p>
+         <p className="text-xs text-muted-foreground">Allow automatic payments via SSLCommerz/bKash</p>
+        </div>
+        <button
+         onClick={() => setPayment(s => ({ ...s, payment_method_online_active: s.payment_method_online_active === 'true' ? 'false' : 'true' }))}
+         className={`relative w-11 h-6 rounded-full transition-colors ${payment.payment_method_online_active === 'true' ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+        >
+         <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${payment.payment_method_online_active === 'true' ? 'left-[22px]' : 'left-0.5'}`} />
+        </button>
+       </div>
+
+       {/* Manual Inbox Toggle */}
+       <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
+        <div>
+         <p className="text-sm font-medium text-foreground">Manual (Inbox Order)</p>
+         <p className="text-xs text-muted-foreground">Submit order without payment, contact via inbox to finalize</p>
+        </div>
+        <button
+         onClick={() => setPayment(s => ({ ...s, payment_method_manual_inbox_active: s.payment_method_manual_inbox_active === 'true' ? 'false' : 'true' }))}
+         className={`relative w-11 h-6 rounded-full transition-colors ${payment.payment_method_manual_inbox_active === 'true' ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+        >
+         <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${payment.payment_method_manual_inbox_active === 'true' ? 'left-[22px]' : 'left-0.5'}`} />
+        </button>
+       </div>
+
+       <div className="pt-2">
+        <Button onClick={handleSavePayment} disabled={paymentLoading} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm h-9 text-sm gap-1.5">
+         {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
          Save Settings
         </Button>
        </div>

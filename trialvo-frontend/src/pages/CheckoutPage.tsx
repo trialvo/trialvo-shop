@@ -14,12 +14,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 const paymentMethods = [
-  { id: 'sslcommerz', name: 'SSLCommerz', icon: CreditCard },
-  { id: 'bkash', name: 'bKash', icon: Smartphone },
-  { id: 'nagad', name: 'Nagad', icon: Smartphone },
-  { id: 'aamarpay', name: 'aamarPay', icon: Building2 },
+  { id: 'online', name: 'Online Payment', icon: CreditCard },
+  { id: 'send_money', name: 'Send Money', icon: Smartphone },
+  { id: 'manual', name: 'Manual / Inbox', icon: Building2 },
 ];
 
 const CheckoutPage: React.FC = () => {
@@ -38,8 +38,30 @@ const CheckoutPage: React.FC = () => {
     company: '',
     needsHosting: false,
     notes: '',
-    paymentMethod: 'bkash',
+    paymentMethod: 'send_money',
   });
+
+  const [paymentSettings, setPaymentSettings] = React.useState<{
+    payment_method_send_money_active: boolean;
+    payment_method_send_money_instructions: string;
+    payment_method_online_active: boolean;
+    payment_method_manual_inbox_active: boolean;
+  } | null>(null);
+
+  React.useEffect(() => {
+    // Fetch public payment settings
+    api.get<any>('/settings/features').then((res) => {
+      setPaymentSettings(res);
+      // Auto-select first available payment method
+      if (res.payment_method_send_money_active) {
+        setFormData(prev => ({ ...prev, paymentMethod: 'send_money' }));
+      } else if (res.payment_method_online_active) {
+        setFormData(prev => ({ ...prev, paymentMethod: 'online' }));
+      } else if (res.payment_method_manual_inbox_active) {
+        setFormData(prev => ({ ...prev, paymentMethod: 'manual' }));
+      }
+    }).catch(() => { });
+  }, []);
 
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
@@ -252,23 +274,53 @@ const CheckoutPage: React.FC = () => {
                     }
                     className="grid sm:grid-cols-2 gap-3"
                   >
-                    {paymentMethods.map((method) => (
-                      <div key={method.id}>
-                        <RadioGroupItem
-                          value={method.id}
-                          id={method.id}
-                          className="peer sr-only"
-                        />
-                        <Label
-                          htmlFor={method.id}
-                          className="flex items-center gap-3 p-4 rounded-lg border border-border cursor-pointer transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted"
-                        >
-                          <method.icon className="w-5 h-5 text-primary" />
-                          <span className="font-medium">{method.name}</span>
-                        </Label>
-                      </div>
-                    ))}
+                    {paymentSettings && paymentMethods.map((method) => {
+                      if (method.id === 'send_money' && !paymentSettings.payment_method_send_money_active) return null;
+                      if (method.id === 'online' && !paymentSettings.payment_method_online_active) return null;
+                      if (method.id === 'manual' && !paymentSettings.payment_method_manual_inbox_active) return null;
+
+                      return (
+                        <div key={method.id}>
+                          <RadioGroupItem
+                            value={method.id}
+                            id={method.id}
+                            className="peer sr-only"
+                          />
+                          <Label
+                            htmlFor={method.id}
+                            className="flex items-center gap-3 p-4 rounded-lg border border-border cursor-pointer transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted h-full"
+                          >
+                            <method.icon className="w-5 h-5 text-primary shrink-0" />
+                            <span className="font-medium">{method.name}</span>
+                          </Label>
+                        </div>
+                      )
+                    })}
                   </RadioGroup>
+
+                  {/* Send Money Instructions */}
+                  {formData.paymentMethod === 'send_money' && paymentSettings?.payment_method_send_money_instructions && (
+                    <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                      <h4 className="font-medium text-sm text-primary mb-2 flex items-center gap-2">
+                        <Smartphone className="w-4 h-4" />
+                        {language === 'bn' ? 'সেন্ড মানি নির্দেশাবলী:' : 'Send Money Instructions:'}
+                      </h4>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                        {paymentSettings.payment_method_send_money_instructions}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Offline Manual Instruction */}
+                  {formData.paymentMethod === 'manual' && (
+                    <div className="mt-4 p-4 rounded-lg bg-orange-500/5 border border-orange-500/20">
+                      <p className="text-sm text-orange-700/80">
+                        {language === 'bn'
+                          ? 'অর্ডার প্লেস করার পর, আমাদের টিম আপনার সাথে ম্যাসেজ বা কলে যোগাযোগ করে পেমেন্ট সম্পন্ন করবে।'
+                          : 'After placing the order, our team will contact you via message or phone to arrange payment.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Submit Button */}

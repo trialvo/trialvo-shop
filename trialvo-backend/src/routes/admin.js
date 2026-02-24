@@ -15,7 +15,7 @@ const {
 const { adminGetTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } = require('../controllers/testimonialController');
 const { adminGetMessages, toggleRead, deleteMessage, getUnreadCount } = require('../controllers/contactMessageController');
 const { adminGetCoupons, adminCreateCoupon, adminUpdateCoupon, adminDeleteCoupon } = require('../controllers/couponController');
-const { getSmtpSettings, updateSmtpSettings, testSmtpConnection, getGeneralSettings, updateGeneralSettings } = require('../controllers/settingsController');
+const { getSmtpSettings, updateSmtpSettings, testSmtpConnection, getGeneralSettings, updateGeneralSettings, getPaymentSettings, updatePaymentSettings } = require('../controllers/settingsController');
 const { adminGetCustomers, adminGetCustomer, getAnalytics } = require('../controllers/adminController');
 
 // All admin routes require auth
@@ -70,6 +70,10 @@ router.post('/settings/smtp/test', testSmtpConnection);
 // Settings (General)
 router.get('/settings/general', getGeneralSettings);
 router.put('/settings/general', updateGeneralSettings);
+
+// Settings (Payment)
+router.get('/settings/payments', getPaymentSettings);
+router.put('/settings/payments', updatePaymentSettings);
 
 // Customers
 router.get('/customers', adminGetCustomers);
