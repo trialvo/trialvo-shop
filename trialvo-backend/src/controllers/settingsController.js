@@ -2,6 +2,62 @@ const { pool } = require('../config/db');
 const { getSmtpConfig } = require('../utils/mailer');
 const nodemailer = require('nodemailer');
 
+// Helper: get a single setting
+async function getSetting(key, fallback = null) {
+ const [rows] = await pool.execute(
+  'SELECT setting_value FROM site_settings WHERE setting_key = ?', [key]
+ );
+ return rows[0]?.setting_value ?? fallback;
+}
+
+// Helper: upsert a setting
+async function upsertSetting(key, value) {
+ await pool.execute(
+  `INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?)
+   ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+  [key, value]
+ );
+}
+
+// GET /api/settings/features  — PUBLIC (no auth), returns feature flags for storefront
+async function getFeatureFlags(req, res, next) {
+ try {
+  const socialProof = await getSetting('social_proof_enabled', 'true');
+  res.json({
+   social_proof_enabled: socialProof === 'true',
+  });
+ } catch (error) {
+  next(error);
+ }
+}
+
+// GET /api/admin/settings/general — admin only
+async function getGeneralSettings(req, res, next) {
+ try {
+  const socialProof = await getSetting('social_proof_enabled', 'true');
+  res.json({
+   social_proof_enabled: socialProof,
+  });
+ } catch (error) {
+  next(error);
+ }
+}
+
+// PUT /api/admin/settings/general — admin only
+async function updateGeneralSettings(req, res, next) {
+ try {
+  const fields = ['social_proof_enabled'];
+  for (const key of fields) {
+   if (req.body[key] !== undefined) {
+    await upsertSetting(key, req.body[key]);
+   }
+  }
+  res.json({ message: 'General settings updated' });
+ } catch (error) {
+  next(error);
+ }
+}
+
 // GET /api/admin/settings/smtp
 async function getSmtpSettings(req, res, next) {
  try {
@@ -26,11 +82,7 @@ async function updateSmtpSettings(req, res, next) {
   const fields = ['smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass', 'smtp_from', 'email_notifications_enabled'];
   for (const key of fields) {
    if (req.body[key] !== undefined && req.body[key] !== '••••••') {
-    await pool.execute(
-     `INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?)
-      ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
-     [key, req.body[key]]
-    );
+    await upsertSetting(key, req.body[key]);
    }
   }
   res.json({ message: 'SMTP settings updated' });
@@ -61,4 +113,7 @@ async function testSmtpConnection(req, res, next) {
  }
 }
 
-module.exports = { getSmtpSettings, updateSmtpSettings, testSmtpConnection };
+module.exports = {
+ getFeatureFlags, getGeneralSettings, updateGeneralSettings,
+ getSmtpSettings, updateSmtpSettings, testSmtpConnection,
+};

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { api } from '@/lib/api';
 
 const names = {
  bn: ['রাহুল', 'তানভীর', 'সাকিব', 'নাফিসা', 'আরিফা', 'মাহমুদ', 'রাশেদ', 'ফাতেমা', 'তাসনিম', 'ইমরান'],
@@ -20,8 +21,16 @@ const timeAgo = {
 
 const SocialProofPopup: React.FC = () => {
  const [show, setShow] = useState(false);
+ const [enabled, setEnabled] = useState<boolean | null>(null);
  const [data, setData] = useState({ name: '', city: '', time: '' });
  const { language } = useLanguage();
+
+ // Check if social proof is enabled from backend
+ useEffect(() => {
+  api.get<{ social_proof_enabled: boolean }>('/settings/features')
+   .then((res) => setEnabled(res.social_proof_enabled))
+   .catch(() => setEnabled(true)); // Default to showing if API fails
+ }, []);
 
  const generateData = useCallback(() => {
   const lang = language as 'bn' | 'en';
@@ -33,6 +42,9 @@ const SocialProofPopup: React.FC = () => {
  }, [language]);
 
  useEffect(() => {
+  // Don't run if not enabled or still loading
+  if (enabled !== true) return;
+
   // Show first popup after 15 seconds
   const initialTimeout = setTimeout(() => {
    setData(generateData());
@@ -49,7 +61,7 @@ const SocialProofPopup: React.FC = () => {
    clearTimeout(initialTimeout);
    clearInterval(interval);
   };
- }, [generateData]);
+ }, [generateData, enabled]);
 
  // Auto-hide after 5 seconds
  useEffect(() => {
@@ -58,6 +70,9 @@ const SocialProofPopup: React.FC = () => {
    return () => clearTimeout(timeout);
   }
  }, [show, data]);
+
+ // Don't render anything if disabled
+ if (enabled === false || enabled === null) return null;
 
  return (
   <AnimatePresence>

@@ -48,6 +48,10 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/coupons', couponRoutes);
 
+// Public feature flags (no auth)
+const { getFeatureFlags } = require('./controllers/settingsController');
+app.get('/api/settings/features', getFeatureFlags);
+
 // ─── 404 Handler ─────────────────────────────────────────
 app.use((req, res) => {
  res.status(404).json({ error: `Route ${req.method} ${req.originalUrl} not found` });

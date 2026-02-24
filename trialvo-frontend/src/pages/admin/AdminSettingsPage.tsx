@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Lock, Loader2, Save, ShieldCheck, KeyRound, Mail, Zap, CheckCircle, XCircle } from 'lucide-react';
+import { User, Lock, Loader2, Save, ShieldCheck, KeyRound, Mail, Zap, CheckCircle, XCircle, Settings2, ShoppingBag } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { api } from '@/lib/api';
 const AdminSettingsPage: React.FC = () => {
  const { toast } = useToast();
  const { adminProfile } = useAuth();
- const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'email'>('profile');
+ const [activeTab, setActiveTab] = useState<'general' | 'profile' | 'security' | 'email'>('general');
 
  const [fullName, setFullName] = useState(adminProfile?.full_name || '');
  const [nameLoading, setNameLoading] = useState(false);
@@ -31,9 +31,16 @@ const AdminSettingsPage: React.FC = () => {
  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
  const [testLoading, setTestLoading] = useState(false);
 
+ // General settings
+ const [general, setGeneral] = useState({ social_proof_enabled: 'true' });
+ const [generalLoading, setGeneralLoading] = useState(false);
+
  useEffect(() => {
   if (activeTab === 'email') {
    api.get<any>('/admin/settings/smtp').then(setSmtp).catch(() => { });
+  }
+  if (activeTab === 'general') {
+   api.get<any>('/admin/settings/general').then(setGeneral).catch(() => { });
   }
  }, [activeTab]);
 
@@ -99,6 +106,17 @@ const AdminSettingsPage: React.FC = () => {
   setTestLoading(false);
  };
 
+ const handleSaveGeneral = async () => {
+  setGeneralLoading(true);
+  try {
+   await api.put('/admin/settings/general', general);
+   toast({ title: 'General settings saved' });
+  } catch (err: any) {
+   toast({ title: 'Error', description: err.message, variant: 'destructive' });
+  }
+  setGeneralLoading(false);
+ };
+
  const inputClass = 'bg-background border-border text-foreground focus:border-primary focus:ring-primary/25';
 
  return (
@@ -109,7 +127,14 @@ const AdminSettingsPage: React.FC = () => {
    </div>
 
    {/* Tab Switcher */}
-   <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl border border-border w-fit">
+   <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl border border-border w-fit flex-wrap">
+    <button
+     onClick={() => setActiveTab('general')}
+     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'general' ? 'bg-card text-foreground shadow-soft-sm' : 'text-muted-foreground hover:text-foreground'}`}
+    >
+     <Settings2 className="w-4 h-4" />
+     General
+    </button>
     <button
      onClick={() => setActiveTab('profile')}
      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'profile' ? 'bg-card text-foreground shadow-soft-sm' : 'text-muted-foreground hover:text-foreground'}`}
@@ -132,6 +157,47 @@ const AdminSettingsPage: React.FC = () => {
      Email
     </button>
    </div>
+
+   {/* General Tab */}
+   {activeTab === 'general' && (
+    <div className="admin-card">
+     <div className="p-5 space-y-5">
+      <div className="flex items-center gap-3 pb-4 border-b border-border/50">
+       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+        <Settings2 className="w-5 h-5 text-primary" />
+       </div>
+       <div>
+        <h3 className="text-sm font-semibold text-foreground">General Settings</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">Control storefront features</p>
+       </div>
+      </div>
+
+      {/* Social Proof Toggle */}
+      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
+       <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+         <ShoppingBag className="w-4 h-4 text-emerald-500" />
+        </div>
+        <div>
+         <p className="text-sm font-medium text-foreground">Purchase Notifications</p>
+         <p className="text-xs text-muted-foreground">Show &quot;Someone purchased...&quot; popup on storefront</p>
+        </div>
+       </div>
+       <button
+        onClick={() => setGeneral(s => ({ ...s, social_proof_enabled: s.social_proof_enabled === 'true' ? 'false' : 'true' }))}
+        className={`relative w-11 h-6 rounded-full transition-colors ${general.social_proof_enabled === 'true' ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+       >
+        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${general.social_proof_enabled === 'true' ? 'left-[22px]' : 'left-0.5'}`} />
+       </button>
+      </div>
+
+      <Button onClick={handleSaveGeneral} disabled={generalLoading} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm h-9 text-sm gap-1.5">
+       {generalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+       Save Settings
+      </Button>
+     </div>
+    </div>
+   )}
 
    {/* Profile Tab */}
    {activeTab === 'profile' && (
