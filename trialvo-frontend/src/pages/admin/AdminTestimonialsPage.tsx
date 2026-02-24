@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Star, Search, Loader2, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Search, Loader2, Users, X, ImagePlus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +38,7 @@ interface TestimonialForm {
   content: { bn: string; en: string };
   rating: number;
   avatar: string;
+  images: string[];
   is_active: boolean;
 }
 
@@ -47,6 +48,7 @@ const emptyForm: TestimonialForm = {
   content: { bn: '', en: '' },
   rating: 5,
   avatar: '',
+  images: [],
   is_active: true,
 };
 
@@ -102,6 +104,7 @@ const AdminTestimonialsPage: React.FC = () => {
       content: t.content,
       rating: t.rating,
       avatar: t.avatar,
+      images: t.images || [],
       is_active: t.is_active,
     });
     setDialogOpen(true);
@@ -230,9 +233,13 @@ const AdminTestimonialsPage: React.FC = () => {
                     <tr key={t.id} className="admin-table-row group">
                       <td>
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                            {t.name.en.charAt(0)}
-                          </div>
+                          {t.avatar ? (
+                            <img src={t.avatar} alt="" className="w-9 h-9 rounded-full object-cover ring-1 ring-border" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                              {t.name.en.charAt(0)}
+                            </div>
+                          )}
                           <div>
                             <p className="text-sm font-semibold text-foreground">{t.name.en}</p>
                             <p className="text-[11px] text-muted-foreground mt-0.5">{t.name.bn}</p>
@@ -330,7 +337,51 @@ const AdminTestimonialsPage: React.FC = () => {
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground font-medium">Avatar URL</Label>
                 <Input value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.target.value })} className={inputClass} placeholder="https://..." />
+                {form.avatar && (
+                  <img src={form.avatar} alt="Preview" className="w-10 h-10 rounded-full object-cover mt-1 ring-1 ring-border" />
+                )}
               </div>
+            </div>
+
+            {/* Review Images */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground font-medium">Review Images (screenshots, product photos)</Label>
+              {form.images.map((img, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    value={img}
+                    onChange={(e) => {
+                      const newImages = [...form.images];
+                      newImages[i] = e.target.value;
+                      setForm({ ...form, images: newImages });
+                    }}
+                    className={`${inputClass} flex-1`}
+                    placeholder="https://image-url..."
+                  />
+                  {img && (
+                    <img src={img} alt="" className="w-9 h-9 rounded-lg object-cover ring-1 ring-border flex-shrink-0" />
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0"
+                    onClick={() => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) })}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs border-dashed border-border hover:border-primary/30"
+                onClick={() => setForm({ ...form, images: [...form.images, ''] })}
+              >
+                <ImagePlus className="w-3.5 h-3.5" />
+                Add Image
+              </Button>
             </div>
 
             <label className="flex items-center gap-2.5 text-sm text-foreground cursor-pointer font-medium">

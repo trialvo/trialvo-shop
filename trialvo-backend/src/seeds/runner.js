@@ -7,6 +7,7 @@ async function runSeeds() {
   const seeds = [
    require('./adminSeed'),
    require('./productSeed'),
+   require('./testimonialSeed'),
   ];
 
   for (const seed of seeds) {

@@ -32,7 +32,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onCompareToggle, isI
   };
 
   return (
-    <article className="group relative bg-card rounded-2xl border border-border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/20" itemScope itemType="https://schema.org/Product">
+    <article className="group relative bg-card rounded-2xl border border-border overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/20 flex flex-col h-full" itemScope itemType="https://schema.org/Product">
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
@@ -96,11 +96,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onCompareToggle, isI
       </div>
 
       {/* Content */}
-      <div className="p-5">
+      <div className="p-5 flex-1 flex flex-col">
         <h3 className="font-semibold text-lg mb-2 line-clamp-1 group-hover:text-primary transition-colors" itemProp="name">
           {product.name[language]}
         </h3>
-        <p className="text-muted-foreground text-sm mb-4 line-clamp-2" itemProp="description">
+        <p className="text-muted-foreground text-sm mb-4 line-clamp-2 flex-1" itemProp="description">
           {product.shortDescription[language]}
         </p>
 

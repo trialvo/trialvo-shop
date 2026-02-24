@@ -8,17 +8,24 @@ export interface TestimonialRow {
   content: { bn: string; en: string };
   rating: number;
   avatar: string;
+  images: string[];
   is_active: boolean;
   created_at: string;
 }
 
 function parseRow(row: any): TestimonialRow {
+  const images = row.images
+    ? typeof row.images === "string"
+      ? JSON.parse(row.images)
+      : row.images
+    : [];
   return {
     ...row,
     name: typeof row.name === "string" ? JSON.parse(row.name) : row.name,
     role: typeof row.role === "string" ? JSON.parse(row.role) : row.role,
     content:
       typeof row.content === "string" ? JSON.parse(row.content) : row.content,
+    images: Array.isArray(images) ? images : [],
     is_active: Boolean(row.is_active),
   };
 }
