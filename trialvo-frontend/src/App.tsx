@@ -18,6 +18,7 @@ import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import OrderTrackingPage from "./pages/OrderTrackingPage";
 import NotFound from "./pages/NotFound";
 
 // Customer imports
@@ -69,6 +70,7 @@ const App = () => (
                     <Route path="/contact" element={<ContactPage />} />
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/privacy" element={<PrivacyPage />} />
+                    <Route path="/track-order" element={<OrderTrackingPage />} />
 
                     {/* Customer Auth */}
                     <Route path="/login" element={<LoginPage />} />

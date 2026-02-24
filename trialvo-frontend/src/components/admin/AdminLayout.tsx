@@ -32,8 +32,22 @@ import {
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/admin/useAdminMessages';
 
+// Nav item type
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ForwardRefExoticComponent<React.PropsWithoutRef<any> & React.RefAttributes<SVGSVGElement>>;
+  exact?: boolean;
+  badge?: boolean;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
 // Nav groups with section labels
-const navGroups = [
+const navGroups: NavGroup[] = [
   {
     label: 'Main',
     items: [

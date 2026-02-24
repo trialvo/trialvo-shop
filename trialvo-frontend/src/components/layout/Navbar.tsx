@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Globe, User, LogIn } from 'lucide-react';
+import { Menu, X, Globe, User, LogIn, Search } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from '@/components/ThemeToggle';
+import SearchBar from '@/components/SearchBar';
 
 const Navbar: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const { isLoggedIn, customer } = useCustomerAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -23,6 +26,7 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setIsSearchOpen(false);
   }, [location]);
 
   const navLinks = [
@@ -84,6 +88,17 @@ const Navbar: React.FC = () => {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
+            {/* Search Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              aria-label="Search"
+            >
+              <Search className="w-4 h-4" />
+            </Button>
+
             {/* Theme Toggle */}
             <ThemeToggle />
 
@@ -139,44 +154,72 @@ const Navbar: React.FC = () => {
           </div>
         </div>
 
+        {/* Search Overlay */}
+        <AnimatePresence>
+          {isSearchOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="border-t border-border py-3 overflow-hidden"
+            >
+              <SearchBar onClose={() => setIsSearchOpen(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border py-3 animate-fade-in">
-            <div className="flex flex-col gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive(link.href)
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="border-t border-border mt-2 pt-2">
-                {isLoggedIn ? (
-                  <Link
-                    to="/account"
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground hover:bg-muted"
-                  >
-                    <User className="w-4 h-4" />
-                    My Account
-                  </Link>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-primary hover:bg-primary/5"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    Login / Register
-                  </Link>
-                )}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden border-t border-border py-3 overflow-hidden"
+            >
+              {/* Mobile Search */}
+              <div className="px-1 pb-3 border-b border-border mb-2">
+                <SearchBar onClose={() => setIsMobileMenuOpen(false)} />
               </div>
-            </div>
-          </div>
-        )}
+
+              <div className="flex flex-col gap-1">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive(link.href)
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-foreground hover:bg-muted'
+                      }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <div className="border-t border-border mt-2 pt-2">
+                  {isLoggedIn ? (
+                    <Link
+                      to="/account"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground hover:bg-muted"
+                    >
+                      <User className="w-4 h-4" />
+                      My Account
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-primary hover:bg-primary/5"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      Login / Register
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
     </header>
   );

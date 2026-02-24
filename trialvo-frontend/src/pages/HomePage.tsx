@@ -6,9 +6,13 @@ import HeroSection from '@/components/sections/HeroSection';
 import GoalSection from '@/components/sections/GoalSection';
 import CategoriesSection from '@/components/sections/CategoriesSection';
 import FeaturedProducts from '@/components/sections/FeaturedProducts';
+import StatsCounterSection from '@/components/sections/StatsCounterSection';
 import HowItWorks from '@/components/sections/HowItWorks';
 import TestimonialsSection from '@/components/sections/TestimonialsSection';
 import TrustSection from '@/components/sections/TrustSection';
+import PartnersMarquee from '@/components/sections/PartnersMarquee';
+import NewsletterSection from '@/components/sections/NewsletterSection';
+import RecentlyViewedSection from '@/components/sections/RecentlyViewedSection';
 import CTASection from '@/components/sections/CTASection';
 
 const HomePage: React.FC = () => {
@@ -50,12 +54,16 @@ const HomePage: React.FC = () => {
       />
 
       <HeroSection />
+      <PartnersMarquee />
       <GoalSection />
       <CategoriesSection />
       <FeaturedProducts />
+      <StatsCounterSection />
       <HowItWorks />
       <TestimonialsSection />
       <TrustSection />
+      <NewsletterSection />
+      <RecentlyViewedSection />
       <CTASection />
     </Layout>
   );

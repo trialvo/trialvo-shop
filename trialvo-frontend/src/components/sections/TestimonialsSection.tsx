@@ -1,8 +1,9 @@
 import React from 'react';
-import { Star, Quote, Loader2 } from 'lucide-react';
+import { Star, Quote } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTestimonials } from '@/hooks/useTestimonials';
+import { TestimonialSkeleton } from '@/components/ui/skeleton-card';
 
 const TestimonialsSection: React.FC = () => {
   const { language } = useLanguage();
@@ -58,10 +59,12 @@ const TestimonialsSection: React.FC = () => {
           </motion.p>
         </div>
 
-        {/* Loading State */}
+        {/* Loading State - Skeleton */}
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+            {[1, 2, 3].map(i => (
+              <TestimonialSkeleton key={i} />
+            ))}
           </div>
         ) : (
           /* Testimonials Grid */

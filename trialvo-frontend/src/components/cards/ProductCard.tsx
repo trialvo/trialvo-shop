@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, Eye } from 'lucide-react';
+import { ExternalLink, Eye, GitCompareArrows } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Product } from '@/data/products';
 import { Button } from '@/components/ui/button';
@@ -8,9 +8,11 @@ import { Badge } from '@/components/ui/badge';
 
 interface ProductCardProps {
   product: Product;
+  onCompareToggle?: (product: Product) => void;
+  isInCompare?: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onCompareToggle, isInCompare }) => {
   const { language, t } = useLanguage();
 
   const categoryLabels: Record<string, { bn: string; en: string }> = {
@@ -77,6 +79,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </Badge>
           </div>
         )}
+
+        {/* Compare button */}
+        {onCompareToggle && (
+          <button
+            onClick={(e) => { e.preventDefault(); onCompareToggle(product); }}
+            className={`absolute bottom-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isInCompare
+              ? 'bg-primary text-primary-foreground shadow-lg'
+              : 'bg-black/40 text-white/80 hover:bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100'
+              }`}
+            title={language === 'bn' ? 'তুলনা করুন' : 'Compare'}
+          >
+            <GitCompareArrows className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -109,7 +125,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </Button>
           <Button variant="outline" size="icon" asChild className="rounded-xl">
             <a
-              href={product.demo.shopUrl}
+              href={product.demo[0]?.url || '#'}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t('product.viewDemo')}

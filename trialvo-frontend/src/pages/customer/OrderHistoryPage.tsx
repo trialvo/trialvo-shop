@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import {
  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
+import InvoiceDownloadButton from '@/components/InvoiceDownloadButton';
 
 const OrderHistoryPage: React.FC = () => {
  const [search, setSearch] = useState('');
@@ -14,12 +15,12 @@ const OrderHistoryPage: React.FC = () => {
 
  const { data: orders, isLoading } = useQuery({
   queryKey: ['customer', 'orders'],
-  queryFn: () => customerApiHelper.get<any[]>('/customer/orders'),
+  queryFn: () => customerApiHelper.get('/customer/orders') as Promise<any[]>,
  });
 
  const { data: orderDetail } = useQuery({
   queryKey: ['customer', 'order', selectedOrder?.id],
-  queryFn: () => customerApiHelper.get<{ order: any; timeline: any[] }>(`/customer/orders/${selectedOrder?.id}`),
+  queryFn: () => customerApiHelper.get(`/customer/orders/${selectedOrder?.id}`) as Promise<{ order: any; timeline: any[] }>,
   enabled: !!selectedOrder?.id,
  });
 
@@ -111,7 +112,10 @@ const OrderHistoryPage: React.FC = () => {
    <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
     <DialogContent className="max-w-lg bg-card border-border">
      <DialogHeader>
-      <DialogTitle className="font-mono">{selectedOrder?.order_id}</DialogTitle>
+      <div className="flex items-center justify-between">
+       <DialogTitle className="font-mono">{selectedOrder?.order_id}</DialogTitle>
+       {orderDetail && <InvoiceDownloadButton order={orderDetail.order} />}
+      </div>
      </DialogHeader>
 
      {orderDetail && (
