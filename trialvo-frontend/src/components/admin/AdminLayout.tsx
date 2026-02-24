@@ -16,6 +16,8 @@ import {
   ChevronRight,
   Calendar,
   Bell,
+  BarChart3,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -56,6 +58,8 @@ const navGroups = [
   {
     label: 'Account',
     items: [
+      { path: '/admin/customers', label: 'Customers', icon: Users },
+      { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
       { path: '/admin/settings', label: 'Settings', icon: Settings },
     ],
   },

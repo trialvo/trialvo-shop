@@ -1,5 +1,6 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const { sendOrderConfirmation, sendOrderStatusUpdate } = require('../utils/mailer');
 
 // POST /api/orders — public, create order
 async function createOrder(req, res, next) {
@@ -34,6 +35,9 @@ async function createOrder(req, res, next) {
 
     const [rows] = await pool.execute('SELECT * FROM orders WHERE id = ?', [id]);
     res.status(201).json(rows[0]);
+
+    // Fire-and-forget order confirmation email
+    sendOrderConfirmation(rows[0]).catch(() => { });
   } catch (error) {
     next(error);
   }
@@ -100,6 +104,12 @@ async function updateOrderStatus(req, res, next) {
     );
 
     res.json({ message: 'Order status updated' });
+
+    // Fire-and-forget status update email
+    const [orderData] = await pool.execute('SELECT * FROM orders WHERE id = ?', [id]);
+    if (orderData.length > 0) {
+      sendOrderStatusUpdate(orderData[0], status).catch(() => { });
+    }
   } catch (error) {
     next(error);
   }

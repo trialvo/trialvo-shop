@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { pool } = require('../config/db');
+const { sendWelcomeEmail } = require('../utils/mailer');
 
 // POST /api/customer/register
 async function register(req, res, next) {
@@ -16,7 +17,6 @@ async function register(req, res, next) {
    return res.status(400).json({ error: 'Password must be at least 6 characters' });
   }
 
-  // Check if email already exists
   const [existing] = await pool.execute('SELECT id FROM customers WHERE email = ?', [email]);
   if (existing.length > 0) {
    return res.status(409).json({ error: 'An account with this email already exists' });
@@ -40,6 +40,9 @@ async function register(req, res, next) {
    token,
    customer: { id, name, email, phone: phone || null, avatar_url: null, is_verified: false },
   });
+
+  // Fire-and-forget welcome email
+  sendWelcomeEmail({ name, email }).catch(() => { });
  } catch (error) {
   next(error);
  }
@@ -144,10 +147,10 @@ async function getMyOrders(req, res, next) {
  try {
   const [rows] = await pool.execute(
    `SELECT o.*, JSON_OBJECT('name', p.name, 'thumbnail', p.thumbnail, 'slug', p.slug) as product
-    FROM orders o
-    LEFT JOIN products p ON o.product_id = p.id
-    WHERE o.customer_id = ?
-    ORDER BY o.created_at DESC`,
+       FROM orders o
+       LEFT JOIN products p ON o.product_id = p.id
+       WHERE o.customer_id = ?
+       ORDER BY o.created_at DESC`,
    [req.customer.id]
   );
 
@@ -167,9 +170,9 @@ async function getMyOrder(req, res, next) {
  try {
   const [rows] = await pool.execute(
    `SELECT o.*, JSON_OBJECT('name', p.name, 'thumbnail', p.thumbnail, 'slug', p.slug) as product
-    FROM orders o
-    LEFT JOIN products p ON o.product_id = p.id
-    WHERE o.id = ? AND o.customer_id = ?`,
+       FROM orders o
+       LEFT JOIN products p ON o.product_id = p.id
+       WHERE o.id = ? AND o.customer_id = ?`,
    [req.params.orderId, req.customer.id]
   );
 
@@ -182,7 +185,6 @@ async function getMyOrder(req, res, next) {
    product: rows[0].product ? (typeof rows[0].product === 'string' ? JSON.parse(rows[0].product) : rows[0].product) : null,
   };
 
-  // Get timeline
   const [timeline] = await pool.execute(
    'SELECT * FROM order_timeline WHERE order_id = ? ORDER BY created_at ASC',
    [req.params.orderId]
