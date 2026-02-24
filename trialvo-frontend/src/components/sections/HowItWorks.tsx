@@ -4,73 +4,86 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const HowItWorks: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const steps = [
-    {
-      icon: ShoppingBag,
-      title: t('howItWorks.step1.title'),
-      description: t('howItWorks.step1.description'),
-    },
-    {
-      icon: CreditCard,
-      title: t('howItWorks.step2.title'),
-      description: t('howItWorks.step2.description'),
-    },
-    {
-      icon: Mail,
-      title: t('howItWorks.step3.title'),
-      description: t('howItWorks.step3.description'),
-    },
-    {
-      icon: Rocket,
-      title: t('howItWorks.step4.title'),
-      description: t('howItWorks.step4.description'),
-    },
+    { icon: ShoppingBag, title: t('howItWorks.step1.title'), description: t('howItWorks.step1.description'), color: 'from-blue-500 to-indigo-500' },
+    { icon: CreditCard, title: t('howItWorks.step2.title'), description: t('howItWorks.step2.description'), color: 'from-violet-500 to-purple-500' },
+    { icon: Mail, title: t('howItWorks.step3.title'), description: t('howItWorks.step3.description'), color: 'from-emerald-500 to-teal-500' },
+    { icon: Rocket, title: t('howItWorks.step4.title'), description: t('howItWorks.step4.description'), color: 'from-amber-500 to-orange-500' },
   ];
 
   return (
-    <section className="section-padding bg-primary text-primary-foreground" aria-labelledby="how-it-works-title">
+    <section className="section-padding bg-muted/40" aria-labelledby="how-it-works-title">
       <div className="container-custom">
-        <motion.h2
-          id="how-it-works-title"
-          className="text-3xl md:text-4xl font-bold text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          {t('howItWorks.title')}
-        </motion.h2>
+        {/* Header */}
+        <div className="text-center mb-16">
+          <motion.span
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="inline-block px-4 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-full mb-4"
+          >
+            {language === 'bn' ? 'কিভাবে কাজ করে' : 'How It Works'}
+          </motion.span>
+          <motion.h2
+            id="how-it-works-title"
+            className="text-3xl md:text-4xl font-bold mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            {t('howItWorks.title')}
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-muted-foreground text-lg max-w-xl mx-auto"
+          >
+            {language === 'bn'
+              ? '৪টি সহজ ধাপে আপনার ওয়েবসাইট পেয়ে যান'
+              : 'Get your website in 4 simple steps'}
+          </motion.p>
+        </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Steps */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {steps.map((step, index) => (
             <motion.div
               key={index}
-              className="relative text-center"
-              initial={{ opacity: 0, y: 20 }}
+              className="relative group"
+              initial={{ opacity: 0, y: 25 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.15 }}
+              transition={{ delay: index * 0.12 }}
             >
-              {/* Step Number */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-accent text-accent-foreground rounded-full flex items-center justify-center font-bold text-sm">
-                {index + 1}
-              </div>
-              
-              {/* Icon */}
-              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-primary-foreground/10 flex items-center justify-center">
-                <step.icon className="w-9 h-9" />
+              <div className="relative bg-card rounded-2xl border border-border p-6 h-full transition-all duration-300 hover:shadow-xl hover:border-primary/20 hover:-translate-y-1 overflow-hidden">
+                {/* Gradient hover background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-300`} />
+
+                {/* Step number */}
+                <div className="flex items-center justify-between mb-5 relative z-10">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center shadow-lg`}>
+                    <step.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-5xl font-black text-muted-foreground/[0.08]">
+                    0{index + 1}
+                  </span>
+                </div>
+
+                <h3 className="font-bold text-lg mb-2 relative z-10">{step.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed relative z-10">
+                  {step.description}
+                </p>
               </div>
 
-              {/* Content */}
-              <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
-              <p className="text-primary-foreground/70 text-sm">
-                {step.description}
-              </p>
-
-              {/* Connector Line (hidden on last item) */}
+              {/* Connector arrow */}
               {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-primary-foreground/20" />
+                <div className="hidden lg:flex absolute top-1/2 -right-3 z-10 w-6 h-6 items-center justify-center">
+                  <div className="w-2 h-2 border-r-2 border-t-2 border-muted-foreground/20 rotate-45" />
+                </div>
               )}
             </motion.div>
           ))}

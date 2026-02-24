@@ -1,124 +1,102 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Phone, Sparkles } from 'lucide-react';
+import { ArrowRight, Phone, Sparkles, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 
 const CTASection: React.FC = () => {
- const { language, t } = useLanguage();
+  const { language, t } = useLanguage();
 
- return (
-  <section className="relative overflow-hidden py-20 md:py-28">
-   {/* Background */}
-   <div className="absolute inset-0 hero-gradient" />
+  return (
+    <section className="relative overflow-hidden py-24 md:py-32">
+      {/* Background */}
+      <div className="absolute inset-0 hero-gradient" />
 
-   {/* Decorative Elements */}
-   <div className="absolute inset-0 overflow-hidden">
-    <div className="absolute top-0 left-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-    <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
-    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
-   </div>
+      {/* Decorative */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[100px]" style={{ background: 'radial-gradient(circle, hsl(var(--accent) / 0.12), transparent 70%)' }} />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[80px]" style={{ background: 'radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%)' }} />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
+      </div>
 
-   <div className="container-custom relative z-10">
-    <motion.div
-     className="max-w-3xl mx-auto text-center"
-     initial={{ opacity: 0, y: 30 }}
-     whileInView={{ opacity: 1, y: 0 }}
-     viewport={{ once: true }}
-     transition={{ duration: 0.6 }}
-    >
-     {/* Badge */}
-     <motion.span
-      className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-white/90 mb-6 border border-white/10"
-      initial={{ opacity: 0, scale: 0.9 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.2 }}
-     >
-      <Sparkles className="w-4 h-4 text-accent" />
-      {language === 'bn' ? 'আজই শুরু করুন' : 'Get Started Today'}
-     </motion.span>
+      <div className="container-custom relative z-10">
+        <motion.div
+          className="max-w-2xl mx-auto text-center"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Badge */}
+          <motion.span
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/[0.06] backdrop-blur-md rounded-full text-sm font-medium text-white/90 mb-8 border border-white/10"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+          >
+            <Sparkles className="w-4 h-4 text-accent" />
+            {language === 'bn' ? 'আজই শুরু করুন' : 'Get Started Today'}
+          </motion.span>
 
-     {/* Title */}
-     <motion.h2
-      className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.3 }}
-     >
-      {language === 'bn' ? (
-       <>
-        আপনার <span className="text-gradient">ইকমার্স ব্যবসা</span> শুরু করুন আজই
-       </>
-      ) : (
-       <>
-        Start Your <span className="text-gradient">Ecommerce Business</span> Today
-       </>
-      )}
-     </motion.h2>
+          {/* Headline */}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight mb-6 tracking-tight">
+            {language === 'bn' ? (
+              <>
+                আপনার{' '}
+                <span className="bg-gradient-to-r from-amber-300 to-orange-300 bg-clip-text text-transparent">
+                  ইকমার্স যাত্রা
+                </span>
+                <br />
+                শুরু করুন আজই
+              </>
+            ) : (
+              <>
+                Start Your{' '}
+                <span className="bg-gradient-to-r from-amber-300 to-orange-300 bg-clip-text text-transparent">
+                  Ecommerce Journey
+                </span>
+                <br />
+                Today
+              </>
+            )}
+          </h2>
 
-     {/* Description */}
-     <motion.p
-      className="text-lg md:text-xl text-white/75 mb-10 max-w-2xl mx-auto leading-relaxed"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.4 }}
-     >
-      {language === 'bn'
-       ? 'রেডিমেড ইকমার্স সলিউশনে বিনিয়োগ করুন এবং মিনিটের মধ্যে আপনার অনলাইন স্টোর চালু করুন। সম্পূর্ণ সোর্স কোড ও সাপোর্ট সহ।'
-       : 'Invest in a ready-made ecommerce solution and launch your online store in minutes. Complete source code and support included.'}
-     </motion.p>
+          <p className="text-base md:text-lg text-white/60 mb-10 max-w-lg mx-auto">
+            {language === 'bn'
+              ? 'রেডিমেড ওয়েবসাইট কিনুন, কাস্টমাইজ করুন এবং আপনার ব্যবসা শুরু করুন'
+              : 'Buy a ready-made website, customize it, and launch your business'}
+          </p>
 
-     {/* CTA Buttons */}
-     <motion.div
-      className="flex flex-col sm:flex-row gap-4 justify-center"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.5 }}
-     >
-      <Button
-       asChild
-       size="lg"
-       className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-14 px-10 text-base shadow-lg shadow-accent/25 rounded-xl"
-      >
-       <Link to="/products">
-        {t('hero.cta.products')}
-        <ArrowRight className="ml-2 w-5 h-5" />
-       </Link>
-      </Button>
-      <Button
-       asChild
-       variant="outline"
-       size="lg"
-       className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white h-14 px-10 text-base rounded-xl"
-      >
-       <Link to="/contact">
-        <Phone className="mr-2 w-5 h-5" />
-        {t('hero.cta.contact')}
-       </Link>
-      </Button>
-     </motion.div>
-
-     {/* Trust line */}
-     <motion.p
-      className="mt-8 text-sm text-white/50"
-      initial={{ opacity: 0 }}
-      whileInView={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.7 }}
-     >
-      {language === 'bn'
-       ? '✓ সম্পূর্ণ সোর্স কোড  •  ✓ ফ্রি সাপোর্ট  •  ✓ লাইফটাইম আপডেট'
-       : '✓ Full Source Code  •  ✓ Free Support  •  ✓ Lifetime Updates'}
-     </motion.p>
-    </motion.div>
-   </div>
-  </section>
- );
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              asChild
+              size="lg"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold h-14 px-10 text-base rounded-2xl shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 transition-all hover:scale-[1.02]"
+            >
+              <Link to="/products">
+                {language === 'bn' ? 'প্রোডাক্ট দেখুন' : 'Browse Products'}
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="bg-white/[0.06] border-white/20 text-white hover:bg-white/15 hover:text-white h-14 px-8 text-base rounded-2xl backdrop-blur-sm"
+            >
+              <a href="https://wa.me/8801700000000" target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="mr-2 w-5 h-5" />
+                {language === 'bn' ? 'হোয়াটসঅ্যাপে যোগাযোগ' : 'Chat on WhatsApp'}
+              </a>
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
 };
 
 export default CTASection;
