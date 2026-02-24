@@ -5,17 +5,27 @@ const SkeletonPulse: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 export const ProductCardSkeleton: React.FC = () => (
- <div className="bg-card rounded-2xl border border-border overflow-hidden">
+ <div className="bg-card rounded-2xl border border-border/60 overflow-hidden">
   <SkeletonPulse className="aspect-[4/3] rounded-none" />
   <div className="p-5 space-y-3">
    <SkeletonPulse className="h-5 w-3/4" />
    <SkeletonPulse className="h-4 w-full" />
-   <SkeletonPulse className="h-4 w-1/2" />
-   <div className="flex items-center gap-2 pt-2">
-    <SkeletonPulse className="h-7 w-24" />
-    <SkeletonPulse className="h-5 w-12" />
+   <SkeletonPulse className="h-4 w-2/3" />
+   {/* Feature chips skeleton */}
+   <div className="flex gap-1.5 pt-1">
+    <SkeletonPulse className="h-5 w-20 rounded-full" />
+    <SkeletonPulse className="h-5 w-16 rounded-full" />
+    <SkeletonPulse className="h-5 w-14 rounded-full" />
    </div>
-   <div className="flex gap-2 pt-2">
+   {/* Separator */}
+   <div className="h-px bg-muted" />
+   {/* Price */}
+   <div className="flex items-center gap-2">
+    <SkeletonPulse className="h-7 w-28" />
+    <SkeletonPulse className="h-5 w-12 rounded-md" />
+   </div>
+   {/* Buttons */}
+   <div className="flex gap-2 pt-1">
     <SkeletonPulse className="h-10 flex-1 rounded-xl" />
     <SkeletonPulse className="h-10 w-10 rounded-xl" />
    </div>
