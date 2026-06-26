@@ -18,15 +18,17 @@ function buildHeaders(body = {}) {
   const bodyStr = JSON.stringify(body);
   const bodyHash = crypto.createHash('sha256').update(bodyStr).digest('hex');
 
-  const sigPayload = `${timestamp}${nonce}${SERVICE_ID}${bodyHash}`;
+  // PayVault signature format: HMAC-SHA256(api_key, "service_id:timestamp:nonce:body_sha256")
+  const message = `${SERVICE_ID}:${timestamp}:${nonce}:${bodyHash}`;
   const signature = crypto
     .createHmac('sha256', API_KEY)
-    .update(sigPayload)
+    .update(message)
     .digest('hex');
 
   return {
     'Content-Type': 'application/json',
     'X-Service-Id': SERVICE_ID,
+    'X-Api-Key': API_KEY,
     'X-Timestamp': timestamp,
     'X-Nonce': nonce,
     'X-Body-Hash': bodyHash,

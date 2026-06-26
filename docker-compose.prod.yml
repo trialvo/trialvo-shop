@@ -3,19 +3,19 @@ services:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: Tr1alv0Shop2026Secure!
+      MYSQL_DATABASE: trialvo_shop
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
       - shop_mysql_data:/var/lib/mysql
     networks:
       - shop_internal
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
 
   backend:
     build:
@@ -29,7 +29,6 @@ services:
       - .env.production
     environment:
       DB_HOST: mysql
-      DB_PORT: 3306
     networks:
       - shop_internal
     healthcheck:
