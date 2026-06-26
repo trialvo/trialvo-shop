@@ -29,10 +29,9 @@ services:
       - .env.production
     environment:
       DB_HOST: mysql
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - shop_internal
+      - payvault_net
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/api/health"]
       interval: 15s
@@ -66,6 +65,9 @@ services:
 networks:
   shop_internal:
     driver: bridge
+  payvault_net:
+    external: true
+    name: payvault_payvault_internal
 
 volumes:
   shop_mysql_data:
