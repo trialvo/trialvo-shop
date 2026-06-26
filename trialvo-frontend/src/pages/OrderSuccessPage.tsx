@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, Mail, Download, FileText, Server, Home, Loader2 } from 'lucide-react';
+import { CheckCircle, Mail, Download, FileText, Server, Home, Loader2, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
@@ -13,6 +13,9 @@ const OrderSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('orderId') || 'ORD-XXXXXX';
   const productSlug = searchParams.get('product');
+  // PayVault appends these on redirect back
+  const transactionId = searchParams.get('transaction_id');
+  const billToken = searchParams.get('bill_token');
 
   const { data: product, isLoading } = useProduct(productSlug || undefined);
 
@@ -63,12 +66,23 @@ const OrderSuccessPage: React.FC = () => {
             </p>
 
             {/* Order ID */}
-            <div className="inline-block bg-muted rounded-lg px-6 py-3 mb-8">
+            <div className="inline-block bg-muted rounded-lg px-6 py-3 mb-4">
               <span className="text-sm text-muted-foreground">
                 {t('orderSuccess.orderId')}:
               </span>
               <span className="ml-2 font-mono font-bold text-lg">{orderId}</span>
             </div>
+
+            {/* PayVault Transaction Badge */}
+            {transactionId && (
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <div className="inline-flex items-center gap-2 bg-success/10 border border-success/30 text-success rounded-full px-4 py-1.5 text-sm font-medium">
+                  <ShieldCheck className="w-4 h-4" />
+                  {language === 'bn' ? 'পেমেন্ট নিশ্চিত হয়েছে' : 'Payment Confirmed'}
+                  <span className="font-mono text-xs opacity-70">{transactionId.substring(0, 12)}...</span>
+                </div>
+              </div>
+            )}
 
             {/* Product Info */}
             {product && (

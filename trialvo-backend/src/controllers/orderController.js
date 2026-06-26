@@ -1,7 +1,8 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const { createPayVaultBill } = require('../config/payvault');
 
-// POST /api/orders — public, create order
+// POST /api/orders — public, create order + initiate PayVault payment
 async function createOrder(req, res, next) {
   try {
     const id = uuidv4();
@@ -9,16 +10,17 @@ async function createOrder(req, res, next) {
     const {
       productId, customerName, customerEmail, customerPhone,
       company, needsHosting, notes, paymentMethod, totalBdt,
-      discountAmount, shippingAddress,
+      discountAmount, shippingAddress, productName,
     } = req.body;
 
+    // ── 1. Save order to MySQL ──────────────────────────────────────────
     await pool.execute(
       `INSERT INTO orders (id, order_id, product_id, customer_name, customer_email, customer_phone, company, needs_hosting, notes, payment_method, total_bdt, status, discount_amount, shipping_address)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id, orderId, productId || null, customerName, customerEmail,
         customerPhone, company || '', needsHosting ? 1 : 0,
-        notes || '', paymentMethod, totalBdt || 0, 'pending',
+        notes || '', paymentMethod || 'payvault', totalBdt || 0, 'pending',
         discountAmount || 0, shippingAddress ? JSON.stringify(shippingAddress) : null,
       ]
     );
@@ -29,8 +31,39 @@ async function createOrder(req, res, next) {
       [uuidv4(), id]
     );
 
+    // ── 2. Create PayVault bill & get payment URL ───────────────────────
+    let pay_url = null;
+    let bill_token = null;
+
+    try {
+      const billResult = await createPayVaultBill({
+        orderId,
+        productId,
+        productName: productName || 'Digital Product',
+        amount: totalBdt || 0,
+        customerName,
+        customerEmail,
+        customerPhone,
+        notes,
+      });
+
+      pay_url = billResult.pay_url;
+      bill_token = billResult.bill_token;
+
+      // Store the payment URL and bill token
+      await pool.execute(
+        'UPDATE orders SET pay_url = ?, payvault_bill_token = ? WHERE id = ?',
+        [pay_url, bill_token, id]
+      ).catch(() => {}); // Ignore if columns not migrated yet
+
+      console.log(`[Order] PayVault bill created — order: ${orderId}, token: ${bill_token}`);
+    } catch (pvErr) {
+      console.error(`[Order] PayVault bill creation failed: ${pvErr.message}`);
+      // Return order anyway — frontend shows error
+    }
+
     const [rows] = await pool.execute('SELECT * FROM orders WHERE id = ?', [id]);
-    res.status(201).json(rows[0]);
+    res.status(201).json({ ...rows[0], pay_url, bill_token });
   } catch (error) {
     next(error);
   }

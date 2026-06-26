@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 
 interface CreateOrderInput {
   productId: string;
+  productName: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -26,6 +27,9 @@ interface Order {
   payment_method: string;
   status: string;
   total_bdt: number;
+  pay_url: string | null;
+  bill_token: string | null;
+  payvault_transaction_id: string | null;
   created_at: string;
 }
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CreditCard, Smartphone, Building2, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Loader2, CreditCard } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
@@ -11,25 +11,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
-const paymentMethods = [
-  { id: 'sslcommerz', name: 'SSLCommerz', icon: CreditCard },
-  { id: 'bkash', name: 'bKash', icon: Smartphone },
-  { id: 'nagad', name: 'Nagad', icon: Smartphone },
-  { id: 'aamarpay', name: 'aamarPay', icon: Building2 },
-];
 
 const CheckoutPage: React.FC = () => {
   const { language, t } = useLanguage();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const productSlug = searchParams.get('product');
 
   const { data: product, isLoading: productLoading } = useProduct(productSlug || undefined);
   const createOrder = useCreateOrder();
+
+  // Check for error params from PayVault redirect
+  const errorParam = searchParams.get('error');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -38,8 +33,9 @@ const CheckoutPage: React.FC = () => {
     company: '',
     needsHosting: false,
     notes: '',
-    paymentMethod: 'bkash',
   });
+  const [redirecting, setRedirecting] = useState(false);
+
 
   if (productLoading) {
     return (
@@ -79,29 +75,51 @@ const CheckoutPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setRedirecting(true);
 
     try {
       const order = await createOrder.mutateAsync({
         productId: product.id,
+        productName: product.name[language],
         customerName: formData.name,
         customerEmail: formData.email,
         customerPhone: formData.phone,
         company: formData.company,
         needsHosting: formData.needsHosting,
         notes: formData.notes,
-        paymentMethod: formData.paymentMethod,
+        paymentMethod: 'payvault',
         totalBdt: product.priceBDT,
       });
 
-      navigate(`/order-success?orderId=${order.order_id}&product=${product.slug}`);
+      if (order.pay_url) {
+        // Redirect to PayVault hosted payment page
+        toast.success(
+          language === 'bn'
+            ? 'পেমেন্ট পেজে পাঠানো হচ্ছে...'
+            : 'Redirecting to payment page...'
+        );
+        setTimeout(() => {
+          window.location.href = order.pay_url!;
+        }, 800);
+      } else {
+        // PayVault unreachable — fallback
+        toast.error(
+          language === 'bn'
+            ? 'পেমেন্ট সিস্টেমে সংযোগ করা যায়নি। পরে আবার চেষ্টা করুন।'
+            : 'Could not connect to payment system. Your order was saved — try again shortly.'
+        );
+        setRedirecting(false);
+      }
     } catch (err) {
       toast.error(
         language === 'bn'
           ? 'অর্ডার সাবমিট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'
           : 'Failed to submit order. Please try again.'
       );
+      setRedirecting(false);
     }
   };
+
 
   const seoData = {
     bn: {
@@ -232,52 +250,57 @@ const CheckoutPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Payment Method */}
+                {/* Payment Info */}
                 <div className="bg-card border border-border rounded-xl p-6">
                   <h2 className="font-semibold text-xl mb-4">
-                    {t('checkout.paymentMethod')}
+                    {language === 'bn' ? 'পেমেন্ট' : 'Payment'}
                   </h2>
 
-                  <RadioGroup
-                    value={formData.paymentMethod}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, paymentMethod: value }))
-                    }
-                    className="grid sm:grid-cols-2 gap-3"
-                  >
-                    {paymentMethods.map((method) => (
-                      <div key={method.id}>
-                        <RadioGroupItem
-                          value={method.id}
-                          id={method.id}
-                          className="peer sr-only"
-                        />
-                        <Label
-                          htmlFor={method.id}
-                          className="flex items-center gap-3 p-4 rounded-lg border border-border cursor-pointer transition-colors peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 hover:bg-muted"
-                        >
-                          <method.icon className="w-5 h-5 text-primary" />
-                          <span className="font-medium">{method.name}</span>
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-primary bg-primary/5">
+                    <ShieldCheck className="w-6 h-6 text-primary flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-sm">
+                        {language === 'bn' ? 'নিরাপদ পেমেন্ট গেটওয়ে' : 'Secure Payment Gateway'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {language === 'bn'
+                          ? 'বিকাশ, নগদ, কার্ড সহ সব পদ্ধতি সাপোর্টেড'
+                          : 'bKash, Nagad, Card & more — powered by PayVault'
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  {errorParam && (
+                    <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+                      {errorParam === 'payment_failed'
+                        ? (language === 'bn' ? 'পেমেন্ট ব্যর্থ হয়েছে। আবার চেষ্টা করুন।' : 'Payment failed. Please try again.')
+                        : (language === 'bn' ? 'পেমেন্ট বাতিল হয়েছে।' : 'Payment was cancelled.')}
+                    </div>
+                  )}
                 </div>
+
 
                 {/* Submit Button */}
                 <Button
                   type="submit"
                   size="lg"
                   className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                  disabled={createOrder.isPending}
+                  disabled={createOrder.isPending || redirecting}
                 >
-                  {createOrder.isPending ? (
+                  {(createOrder.isPending || redirecting) ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {t('checkout.processing')}
+                      {redirecting
+                        ? (language === 'bn' ? 'পেমেন্ট পেজে যাচ্ছে...' : 'Going to payment...')
+                        : t('checkout.processing')
+                      }
                     </>
                   ) : (
-                    t('checkout.placeOrder')
+                    <>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      {language === 'bn' ? 'পেমেন্ট করুন' : 'Proceed to Payment'}
+                    </>
                   )}
                 </Button>
               </form>
