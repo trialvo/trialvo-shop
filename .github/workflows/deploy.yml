@@ -1,0 +1,57 @@
+name: Deploy Trialvo Shop
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: 155.248.253.24
+          username: opc
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd /home/opc/trialvo-shop
+
+            echo "=== Pulling latest code ==="
+            git pull origin main
+
+            echo "=== Writing production env ==="
+            cat > .env.production << 'ENVEOF'
+            PORT=5000
+            NODE_ENV=production
+            DB_HOST=mysql
+            DB_PORT=3306
+            DB_USER=root
+            DB_PASSWORD=${{ secrets.SHOP_DB_PASSWORD }}
+            DB_NAME=trialvo_shop
+            CORS_ORIGIN=https://shop.trialvo.com
+            JWT_SECRET=${{ secrets.SHOP_JWT_SECRET }}
+            JWT_EXPIRES_IN=7d
+            PAYVAULT_BASE_URL=https://payvault.trialvo.com
+            PAYVAULT_SERVICE_ID=${{ secrets.PAYVAULT_SERVICE_ID }}
+            PAYVAULT_API_KEY=${{ secrets.PAYVAULT_API_KEY }}
+            PAYVAULT_IPN_SECRET=${{ secrets.PAYVAULT_IPN_SECRET }}
+            FRONTEND_URL=https://shop.trialvo.com
+            IPN_URL=https://shop.trialvo.com/api/payments/ipn
+            ENVEOF
+
+            echo "=== Building & deploying ==="
+            docker compose -f docker-compose.prod.yml build --no-cache
+            docker compose -f docker-compose.prod.yml up -d
+
+            echo "=== Waiting for healthy ==="
+            sleep 15
+            docker compose -f docker-compose.prod.yml ps
+
+            echo "=== Cleaning up ==="
+            docker image prune -f
+
+            echo "✅ Deploy complete"
