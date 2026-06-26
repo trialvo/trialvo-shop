@@ -29,6 +29,8 @@ services:
       - .env.production
     environment:
       DB_HOST: mysql
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - shop_internal
     healthcheck:
