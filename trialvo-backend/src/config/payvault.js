@@ -84,13 +84,24 @@ async function createPayVaultBill(params) {
 
   const headers = buildHeaders(body);
 
-  const response = await axios.post(
-    `${BASE_URL}/api/v1/bills`,
-    body,
-    { headers, timeout: 10000 }
-  );
+  console.log(`[PayVault] Creating bill at ${BASE_URL}/api/v1/bills`);
+  console.log(`[PayVault] Headers: X-Service-Id=${headers['X-Service-Id']}, X-Api-Key=${headers['X-Api-Key']?.substring(0, 12)}...`);
 
-  return response.data; // { success, bill_token, pay_url, expires_at }
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/api/v1/bills`,
+      body,
+      { headers, timeout: 10000 }
+    );
+
+    return response.data; // { success, bill_token, pay_url, expires_at }
+  } catch (err) {
+    if (err.response) {
+      console.error(`[PayVault] API error ${err.response.status}: ${JSON.stringify(err.response.data)}`);
+      console.error(`[PayVault] Response headers:`, JSON.stringify(err.response.headers));
+    }
+    throw err;
+  }
 }
 
 /**
