@@ -29,9 +29,10 @@ services:
       - .env.production
     environment:
       DB_HOST: mysql
+    ports:
+      - "127.0.0.1:5000:5000"
     networks:
       - shop_internal
-      - payvault_net
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/api/health"]
       interval: 15s
@@ -44,30 +45,16 @@ services:
       context: ./trialvo-frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: /api
+        VITE_API_URL: https://shop-api.trialvo.com/api
     restart: always
-    networks:
-      - shop_internal
-
-  nginx:
-    image: nginx:alpine
-    restart: always
-    depends_on:
-      - backend
-      - frontend
     ports:
       - "127.0.0.1:8090:80"
-    volumes:
-      - ./nginx-shop.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - shop_internal
 
 networks:
   shop_internal:
     driver: bridge
-  payvault_net:
-    external: true
-    name: payvault_payvault_internal
 
 volumes:
   shop_mysql_data:
