@@ -11,8 +11,8 @@ async function login(req, res, next) {
    return res.status(400).json({ error: 'Email and password are required' });
   }
 
-  const [rows] = await pool.execute(
-   'SELECT * FROM admin_profiles WHERE email = ?',
+  const { rows } = await pool.query(
+   'SELECT * FROM admin_profiles WHERE email = $1',
    [email]
   );
 
@@ -58,8 +58,8 @@ async function updateProfile(req, res, next) {
  try {
   const { full_name } = req.body;
 
-  await pool.execute(
-   'UPDATE admin_profiles SET full_name = ? WHERE id = ?',
+  await pool.query(
+   'UPDATE admin_profiles SET full_name = $1 WHERE id = $2',
    [full_name, req.admin.id]
   );
 
@@ -80,8 +80,8 @@ async function changePassword(req, res, next) {
 
   const passwordHash = await bcrypt.hash(newPassword, 12);
 
-  await pool.execute(
-   'UPDATE admin_profiles SET password_hash = ? WHERE id = ?',
+  await pool.query(
+   'UPDATE admin_profiles SET password_hash = $1 WHERE id = $2',
    [passwordHash, req.admin.id]
   );
 

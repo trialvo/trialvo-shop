@@ -71,43 +71,48 @@ async function handleIpn(req, res) {
     }
 
     // Update the order in our database
-    const [existing] = await pool.execute(
-      'SELECT id, status FROM orders WHERE order_id = ?',
+    const existing = await pool.query(
+      'SELECT id, status FROM orders WHERE order_id = $1',
       [orderId]
     );
 
-    if (existing.length === 0) {
+    if (existing.rows.length === 0) {
       console.warn(`[IPN] Order not found: ${orderId}`);
       return res.status(200).json({ received: true }); // Acknowledge anyway
     }
 
-    const order = existing[0];
+    const order = existing.rows[0];
 
     // Build update fields
     const updates = [];
     const values = [];
+    let paramIdx = 1;
 
     if (newStatus) {
-      updates.push('status = ?');
+      updates.push(`status = $${paramIdx}`);
       values.push(newStatus);
+      paramIdx++;
     }
     if (paymentStatus) {
-      updates.push('payment_status = ?');
+      updates.push(`payment_status = $${paramIdx}`);
       values.push(paymentStatus);
+      paramIdx++;
     }
     if (transactionId) {
-      updates.push('trialvo_pay_transaction_id = ?');
+      updates.push(`trialvo_pay_transaction_id = $${paramIdx}`);
       values.push(transactionId);
+      paramIdx++;
     }
     if (billToken) {
-      updates.push('trialvo_pay_bill_token = ?');
+      updates.push(`trialvo_pay_bill_token = $${paramIdx}`);
       values.push(billToken);
+      paramIdx++;
     }
 
     if (updates.length > 0) {
       values.push(order.id);
-      await pool.execute(
-        `UPDATE orders SET ${updates.join(', ')} WHERE id = ?`,
+      await pool.query(
+        `UPDATE orders SET ${updates.join(', ')} WHERE id = $${paramIdx}`,
         values
       ).catch(err => {
         // Column might not exist yet if migration not done — log and continue

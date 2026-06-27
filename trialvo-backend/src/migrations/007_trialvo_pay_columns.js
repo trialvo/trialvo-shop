@@ -3,38 +3,30 @@
  */
 module.exports = {
   name: '007_trialvo_pay_columns',
-  async up(connection) {
+  async up(client) {
     // Add payment tracking columns (safe — uses IF NOT EXISTS pattern)
     const columns = [
-      "ALTER TABLE orders ADD COLUMN payment_status VARCHAR(50) NULL DEFAULT NULL COMMENT 'Trialvo Pay payment status: paid, failed, cancelled, expired, refunded'",
-      "ALTER TABLE orders ADD COLUMN trialvo_pay_bill_token VARCHAR(255) NULL DEFAULT NULL COMMENT 'Trialvo Pay bill token for this order'",
-      "ALTER TABLE orders ADD COLUMN trialvo_pay_transaction_id VARCHAR(255) NULL DEFAULT NULL COMMENT 'Trialvo Pay transaction ID after payment'",
-      "ALTER TABLE orders ADD COLUMN pay_url VARCHAR(512) NULL DEFAULT NULL COMMENT 'Trialvo Pay payment redirect URL'",
+      { name: 'payment_status', definition: "VARCHAR(50) DEFAULT NULL" },
+      { name: 'trialvo_pay_bill_token', definition: "VARCHAR(255) DEFAULT NULL" },
+      { name: 'trialvo_pay_transaction_id', definition: "VARCHAR(255) DEFAULT NULL" },
+      { name: 'pay_url', definition: "VARCHAR(512) DEFAULT NULL" },
     ];
 
-    for (const sql of columns) {
-      try {
-        await connection.execute(sql);
-      } catch (err) {
-        if (!err.message.includes('Duplicate column')) {
-          console.warn('[Migration 007] Warning:', err.message);
-        }
-      }
-    }
-
-    // Extend order status ENUM to include 'payment_failed'
-    try {
-      await connection.execute(
-        "ALTER TABLE orders MODIFY COLUMN status ENUM('pending', 'confirmed', 'processing', 'completed', 'cancelled', 'payment_failed') DEFAULT 'pending'"
-      );
-    } catch (err) {
-      console.warn('[Migration 007] ENUM update warning:', err.message);
+    for (const col of columns) {
+      await client.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='${col.name}') THEN
+            ALTER TABLE orders ADD COLUMN ${col.name} ${col.definition};
+          END IF;
+        END $$;
+      `);
     }
 
     console.log('✅ Migration 007: Trialvo Pay columns added to orders');
   },
 
-  async down(connection) {
+  async down(client) {
     const drops = [
       'ALTER TABLE orders DROP COLUMN IF EXISTS payment_status',
       'ALTER TABLE orders DROP COLUMN IF EXISTS trialvo_pay_bill_token',
@@ -42,8 +34,7 @@ module.exports = {
       'ALTER TABLE orders DROP COLUMN IF EXISTS pay_url',
     ];
     for (const sql of drops) {
-      await connection.execute(sql).catch(() => {});
+      await client.query(sql).catch(() => {});
     }
   },
 };
-

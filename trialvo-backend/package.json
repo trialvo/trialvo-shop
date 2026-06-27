@@ -1,7 +1,7 @@
 {
   "name": "trialvo-backend",
   "version": "1.0.0",
-  "description": "Trialvo Shop Backend API - Express/MySQL",
+  "description": "Trialvo Shop Backend API - Express/PostgreSQL",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -16,7 +16,7 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "mysql2": "^3.12.0",
+    "pg": "^8.13.1",
     "uuid": "^11.1.0"
   }
 }

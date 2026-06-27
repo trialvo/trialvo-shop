@@ -1,21 +1,21 @@
 const { pool } = require('../config/db');
 
 async function runMigrations() {
-  const connection = await pool.getConnection();
+  const client = await pool.connect();
 
   try {
     // Create migrations tracking table
-    await connection.execute(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS _migrations (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
-        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        applied_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
 
     // Get already applied migrations
-    const [applied] = await connection.execute('SELECT name FROM _migrations');
-    const appliedNames = new Set(applied.map((r) => r.name));
+    const result = await client.query('SELECT name FROM _migrations');
+    const appliedNames = new Set(result.rows.map((r) => r.name));
 
     // Load migration files in order
     const migrations = [
@@ -35,8 +35,8 @@ async function runMigrations() {
       }
 
       console.log(`  ⏳ Running migration: ${migration.name}`);
-      await migration.up(connection);
-      await connection.execute('INSERT INTO _migrations (name) VALUES (?)', [migration.name]);
+      await migration.up(client);
+      await client.query('INSERT INTO _migrations (name) VALUES ($1)', [migration.name]);
       console.log(`  ✅ Applied: ${migration.name}`);
       count++;
     }
@@ -47,7 +47,7 @@ async function runMigrations() {
       console.log(`✅ ${count} migration(s) applied successfully`);
     }
   } finally {
-    connection.release();
+    client.release();
   }
 }
 

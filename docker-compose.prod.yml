@@ -1,36 +1,71 @@
+# ═══════════════════════════════════════════════════════════
+# Trialvo Shop — Production Docker Compose
+# Single PostgreSQL instance for both services
+# ═══════════════════════════════════════════════════════════
+
 services:
-  mysql:
-    image: mysql:8.0
+  # ─── Single PostgreSQL (both databases) ──────────────────
+  postgres:
+    image: postgres:16-alpine
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: Tr1alv0Shop2026Secure!
-      MYSQL_DATABASE: trialvo_shop
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      POSTGRES_USER: trialvo
+      POSTGRES_PASSWORD: Tr1alv0DB2026Secure!
+      POSTGRES_DB: trialvo
+    command: postgres -c shared_buffers=256MB -c max_connections=100
     volumes:
-      - shop_mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     networks:
       - shop_internal
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "pg_isready -U trialvo"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 40s
+      start_period: 30s
 
+  # ─── Redis (for trialvo-pay) ─────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --requirepass TrialvoPayRedis2026Secure! --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - shop_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "TrialvoPayRedis2026Secure!", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend (Node.js Shop API) ──────────────────────────
   backend:
     build:
       context: ./trialvo-backend
       dockerfile: Dockerfile
     restart: always
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
-    env_file:
-      - ./trialvo-backend/.env.production
     environment:
-      DB_HOST: mysql
-    ports:
-      - "127.0.0.1:5000:5000"
+      PORT: 5000
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: trialvo
+      DB_PASSWORD: Tr1alv0DB2026Secure!
+      DB_NAME: trialvo_shop
+      CORS_ORIGIN: https://shop.trialvo.com
+      JWT_SECRET: supersecretjwt2026
+      JWT_EXPIRES_IN: 7d
+      TRIALVO_PAY_BASE_URL: http://trialvo-pay:8080
+      TRIALVO_PAY_SERVICE_ID: 28280023-008f-4307-83de-5e4eabb57562
+      TRIALVO_PAY_API_KEY: 57359b203a04de4dd57397a2732e3388064941dc926d633fac2ff5146e39e860
+      TRIALVO_PAY_IPN_SECRET: 2119d2d37b84fbbe2f405404818940b70b0729f4cb76ea5b980fff42b242fcd6
+      FRONTEND_URL: https://shop.trialvo.com
+      IPN_URL: https://shop-api.trialvo.com/api/payments/ipn
     networks:
       - shop_internal
     healthcheck:
@@ -40,6 +75,7 @@ services:
       retries: 5
       start_period: 20s
 
+  # ─── Frontend (Vite React static) ───────────────────────
   frontend:
     build:
       context: ./trialvo-frontend
@@ -47,65 +83,30 @@ services:
       args:
         VITE_API_URL: https://shop-api.trialvo.com/api
     restart: always
-    ports:
-      - "127.0.0.1:8090:80"
     networks:
       - shop_internal
 
-  trialvo-pay-postgres:
-    image: postgres:16-alpine
-    restart: always
-    environment:
-      POSTGRES_DB: trialvo_pay
-      POSTGRES_USER: trialvo_pay
-      POSTGRES_PASSWORD: TrialvoPayDB2026Secure!
-    volumes:
-      - trialvo-pay-postgres_data:/var/lib/postgresql/data
-    networks:
-      - shop_internal
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trialvo_pay"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  trialvo-pay-redis:
-    image: redis:7-alpine
-    restart: always
-    command: redis-server --requirepass TrialvoPayRedis2026Secure! --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    volumes:
-      - trialvo-pay-redis_data:/data
-    networks:
-      - shop_internal
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "TrialvoPayRedis2026Secure!", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+  # ─── Trialvo Pay (Rust payment service) ──────────────────
   trialvo-pay:
     build:
       context: ./trialvo-pay
       dockerfile: Dockerfile
     restart: always
     depends_on:
-      trialvo-pay-postgres:
+      postgres:
         condition: service_healthy
-      trialvo-pay-redis:
+      redis:
         condition: service_healthy
-    env_file:
-      - ./trialvo-pay/.env
     environment:
-      DATABASE_URL: postgresql://trialvo_pay:TrialvoPayDB2026Secure!@trialvo-pay-postgres:5432/trialvo_pay
-      REDIS_URL: redis://:TrialvoPayRedis2026Secure!@trialvo-pay-redis:6379
+      DATABASE_URL: postgresql://trialvo:Tr1alv0DB2026Secure!@postgres:5432/trialvo_pay
+      REDIS_URL: redis://:TrialvoPayRedis2026Secure!@redis:6379
+      MASTER_KEY: 45c11faf4c682130ba6610a471e76a5f5bbc4d9028b9d9ef7354d6beae681778
       BASE_URL: https://pay.trialvo.com
       HOST: 0.0.0.0
       PORT: 8080
       RUST_LOG: info
     networks:
       - shop_internal
-    ports:
-      - "127.0.0.1:8088:8080"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 30s
@@ -113,11 +114,25 @@ services:
       start_period: 30s
       retries: 3
 
+  # ─── Nginx Reverse Proxy ─────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    restart: always
+    depends_on:
+      - backend
+      - frontend
+      - trialvo-pay
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - shop_internal
+
 networks:
   shop_internal:
     driver: bridge
 
 volumes:
-  shop_mysql_data:
-  trialvo-pay-postgres_data:
-  trialvo-pay-redis_data:
+  postgres_data:
+  redis_data:

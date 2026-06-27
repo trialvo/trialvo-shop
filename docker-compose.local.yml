@@ -1,39 +1,62 @@
+# ═══════════════════════════════════════════════════════════
+# Trialvo Shop — Local Development Docker Compose
+# Single PostgreSQL instance for both services
+# ═══════════════════════════════════════════════════════════
+
 services:
-  mysql:
-    image: mysql:8.0
+  # ─── Single PostgreSQL (both databases) ──────────────────
+  postgres:
+    image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: localdev2026!
-      MYSQL_DATABASE: trialvo_shop
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      POSTGRES_USER: trialvo
+      POSTGRES_PASSWORD: localdev2026
+      POSTGRES_DB: trialvo
     ports:
-      - "3307:3306"
+      - "5433:5432"
     volumes:
-      - shop_mysql_data_local:/var/lib/mysql
+      - postgres_data_local:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     networks:
       - shop_local
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "pg_isready -U trialvo"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 40s
+      start_period: 30s
 
+  # ─── Redis (for trialvo-pay) ─────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass localdevpassword --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data_local:/data
+    networks:
+      - shop_local
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "localdevpassword", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend (Node.js Shop API) ──────────────────────────
   backend:
     build:
       context: ./trialvo-backend
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
     environment:
       PORT: 5000
       NODE_ENV: development
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: localdev2026!
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: trialvo
+      DB_PASSWORD: localdev2026
       DB_NAME: trialvo_shop
       CORS_ORIGIN: http://localhost:8091
       JWT_SECRET: local-dev-jwt-secret-trialvo-2026
@@ -43,7 +66,7 @@ services:
       TRIALVO_PAY_API_KEY: 2e94d40fc3541163396529d79290b1cc3b303bb13ddd85d4a05c3f2cae8af6ca
       TRIALVO_PAY_IPN_SECRET: 792af9f5937bb7be5ec8bc0722f0d0abe3deb24d8b15841f8e417326cd52684b
       FRONTEND_URL: http://localhost:8091
-      IPN_URL: http://host.docker.internal:8091/api/payments/ipn
+      IPN_URL: http://backend:5000/api/payments/ipn
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -55,6 +78,7 @@ services:
       retries: 5
       start_period: 20s
 
+  # ─── Frontend (Vite React static) ───────────────────────
   frontend:
     build:
       context: ./trialvo-frontend
@@ -65,63 +89,20 @@ services:
     networks:
       - shop_local
 
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    depends_on:
-      - backend
-      - frontend
-    ports:
-      - "8091:80"
-    volumes:
-      - ./nginx-shop.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - shop_local
-
-  trialvo-pay-postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: trialvo_pay
-      POSTGRES_USER: trialvo_pay
-      POSTGRES_PASSWORD: localdevpassword
-    volumes:
-      - trialvo-pay-postgres_data_local:/var/lib/postgresql/data
-    networks:
-      - shop_local
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trialvo_pay"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  trialvo-pay-redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: redis-server --requirepass localdevpassword --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    volumes:
-      - trialvo-pay-redis_data_local:/data
-    networks:
-      - shop_local
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "localdevpassword", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
+  # ─── Trialvo Pay (Rust payment service) ──────────────────
   trialvo-pay:
     build:
       context: ./trialvo-pay
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      trialvo-pay-postgres:
+      postgres:
         condition: service_healthy
-      trialvo-pay-redis:
+      redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://trialvo_pay:localdevpassword@trialvo-pay-postgres:5432/trialvo_pay
-      REDIS_URL: redis://:localdevpassword@trialvo-pay-redis:6379
+      DATABASE_URL: postgresql://trialvo:localdev2026@postgres:5432/trialvo_pay
+      REDIS_URL: redis://:localdevpassword@redis:6379
       MASTER_KEY: 7cdf6bc0d46db841e18b19727e6f2476ee89569bc333df23142d0e136f1e5e1b
       BASE_URL: http://localhost:8088
       HOST: 0.0.0.0
@@ -138,11 +119,24 @@ services:
       start_period: 30s
       retries: 3
 
+  # ─── Nginx (local reverse proxy) ─────────────────────────
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "8091:80"
+    volumes:
+      - ./nginx-shop.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - shop_local
+
 networks:
   shop_local:
     driver: bridge
 
 volumes:
-  shop_mysql_data_local:
-  trialvo-pay-postgres_data_local:
-  trialvo-pay-redis_data_local:
+  postgres_data_local:
+  redis_data_local:

@@ -19,7 +19,7 @@ COPY Cargo.toml Cargo.lock ./
 RUN sed -i '/^\[lib\]/,/^$/d' Cargo.toml 2>/dev/null || true && \
     mkdir -p src && \
     echo "fn main() {}" > src/main.rs
-RUN cargo build --release && rm -rf src target/release/deps/payvault*
+RUN cargo build --release && rm -rf src target/release/deps/trialvo_pay*
 
 # Build actual binary
 COPY src/ src/
@@ -38,22 +38,22 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN groupadd -r payvault && useradd -r -g payvault -d /app -s /sbin/nologin payvault
+RUN groupadd -r trialvo_pay && useradd -r -g trialvo_pay -d /app -s /sbin/nologin trialvo_pay
 
 WORKDIR /app
 
 # Copy binary, migrations, static assets
-COPY --from=builder /app/target/release/payvault ./payvault
+COPY --from=builder /app/target/release/trialvo_pay ./trialvo_pay
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/static ./static
 
-RUN chown -R payvault:payvault /app
+RUN chown -R trialvo_pay:trialvo_pay /app
 
-USER payvault
+USER trialvo_pay
 
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-CMD ["./payvault"]
+CMD ["./trialvo_pay"]

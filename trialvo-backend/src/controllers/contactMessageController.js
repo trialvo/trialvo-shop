@@ -11,12 +11,12 @@ async function createMessage(req, res, next) {
    return res.status(400).json({ error: 'Name, email and message are required' });
   }
 
-  await pool.execute(
-   'INSERT INTO contact_messages (id, name, email, subject, message) VALUES (?, ?, ?, ?, ?)',
+  await pool.query(
+   'INSERT INTO contact_messages (id, name, email, subject, message) VALUES ($1, $2, $3, $4, $5)',
    [id, name, email, subject || '', message]
   );
 
-  const [rows] = await pool.execute('SELECT * FROM contact_messages WHERE id = ?', [id]);
+  const { rows } = await pool.query('SELECT * FROM contact_messages WHERE id = $1', [id]);
   res.status(201).json(rows[0]);
  } catch (error) {
   next(error);
@@ -26,7 +26,7 @@ async function createMessage(req, res, next) {
 // GET /api/admin/messages
 async function adminGetMessages(req, res, next) {
  try {
-  const [rows] = await pool.execute(
+  const { rows } = await pool.query(
    'SELECT * FROM contact_messages ORDER BY created_at DESC'
   );
   res.json(rows);
@@ -41,8 +41,8 @@ async function toggleRead(req, res, next) {
   const { id } = req.params;
   const { is_read } = req.body;
 
-  await pool.execute(
-   'UPDATE contact_messages SET is_read = ? WHERE id = ?',
+  await pool.query(
+   'UPDATE contact_messages SET is_read = $1 WHERE id = $2',
    [is_read ? 1 : 0, id]
   );
   res.json({ message: 'Read status updated' });
@@ -55,7 +55,7 @@ async function toggleRead(req, res, next) {
 async function deleteMessage(req, res, next) {
  try {
   const { id } = req.params;
-  await pool.execute('DELETE FROM contact_messages WHERE id = ?', [id]);
+  await pool.query('DELETE FROM contact_messages WHERE id = $1', [id]);
   res.json({ message: 'Message deleted' });
  } catch (error) {
   next(error);
@@ -65,10 +65,10 @@ async function deleteMessage(req, res, next) {
 // GET /api/admin/messages/unread-count
 async function getUnreadCount(req, res, next) {
  try {
-  const [rows] = await pool.execute(
+  const { rows } = await pool.query(
    'SELECT COUNT(*) as count FROM contact_messages WHERE is_read = 0'
   );
-  res.json({ count: rows[0].count });
+  res.json({ count: parseInt(rows[0].count, 10) });
  } catch (error) {
   next(error);
  }

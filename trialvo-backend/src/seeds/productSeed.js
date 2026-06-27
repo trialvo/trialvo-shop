@@ -132,11 +132,11 @@ const sampleProducts = [
 
 module.exports = {
  table: 'products',
- async run(connection) {
+ async run(client) {
   for (const product of sampleProducts) {
    const id = uuidv4();
-   await connection.execute(
-    `INSERT INTO products (id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+   await client.query(
+    `INSERT INTO products (id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
     [
      id,
      product.slug,

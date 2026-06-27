@@ -13,10 +13,10 @@ async function createOrder(req, res, next) {
       discountAmount, shippingAddress, productName,
     } = req.body;
 
-    // ── 1. Save order to MySQL ──────────────────────────────────────────
-    await pool.execute(
+    // ── 1. Save order to PostgreSQL ──────────────────────────────────
+    await pool.query(
       `INSERT INTO orders (id, order_id, product_id, customer_name, customer_email, customer_phone, company, needs_hosting, notes, payment_method, total_bdt, status, discount_amount, shipping_address)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
       [
         id, orderId, productId || null, customerName, customerEmail,
         customerPhone, company || '', needsHosting ? 1 : 0,
@@ -26,8 +26,8 @@ async function createOrder(req, res, next) {
     );
 
     // Insert initial timeline entry
-    await pool.execute(
-      `INSERT INTO order_timeline (id, order_id, from_status, to_status, changed_by, comment) VALUES (?, ?, NULL, 'pending', 'system', 'Order created')`,
+    await pool.query(
+      `INSERT INTO order_timeline (id, order_id, from_status, to_status, changed_by, comment) VALUES ($1, $2, NULL, 'pending', 'system', 'Order created')`,
       [uuidv4(), id]
     );
 
@@ -51,8 +51,8 @@ async function createOrder(req, res, next) {
       bill_token = billResult.bill_token;
 
       // Store the payment URL and bill token
-      await pool.execute(
-        'UPDATE orders SET pay_url = ?, trialvo_pay_bill_token = ? WHERE id = ?',
+      await pool.query(
+        'UPDATE orders SET pay_url = $1, trialvo_pay_bill_token = $2 WHERE id = $3',
         [pay_url, bill_token, id]
       ).catch(() => {}); // Ignore if columns not migrated yet
 
@@ -62,7 +62,7 @@ async function createOrder(req, res, next) {
       // Return order anyway — frontend shows error
     }
 
-    const [rows] = await pool.execute('SELECT * FROM orders WHERE id = ?', [id]);
+    const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
     res.status(201).json({ ...rows[0], pay_url, bill_token });
   } catch (error) {
     next(error);
@@ -73,8 +73,8 @@ async function createOrder(req, res, next) {
 async function getOrder(req, res, next) {
   try {
     const { orderId } = req.params;
-    const [rows] = await pool.execute(
-      'SELECT * FROM orders WHERE order_id = ?',
+    const { rows } = await pool.query(
+      'SELECT * FROM orders WHERE order_id = $1',
       [orderId]
     );
 
@@ -91,9 +91,9 @@ async function getOrder(req, res, next) {
 // GET /api/admin/orders — with product info
 async function adminGetOrders(req, res, next) {
   try {
-    const [rows] = await pool.execute(`
-      SELECT o.*, 
-        JSON_OBJECT('name', p.name, 'thumbnail', p.thumbnail, 'slug', p.slug) as products
+    const { rows } = await pool.query(`
+      SELECT o.*,
+        json_build_object('name', p.name, 'thumbnail', p.thumbnail, 'slug', p.slug) as products
       FROM orders o
       LEFT JOIN products p ON o.product_id = p.id
       ORDER BY o.created_at DESC
@@ -101,7 +101,6 @@ async function adminGetOrders(req, res, next) {
 
     const result = rows.map((row) => ({
       ...row,
-      products: row.products ? (typeof row.products === 'string' ? JSON.parse(row.products) : row.products) : null,
       shipping_address: row.shipping_address ? (typeof row.shipping_address === 'string' ? JSON.parse(row.shipping_address) : row.shipping_address) : null,
     }));
 
@@ -118,14 +117,14 @@ async function updateOrderStatus(req, res, next) {
     const { status, comment } = req.body;
 
     // Get current status for timeline
-    const [current] = await pool.execute('SELECT status FROM orders WHERE id = ?', [id]);
-    const fromStatus = current.length > 0 ? current[0].status : null;
+    const current = await pool.query('SELECT status FROM orders WHERE id = $1', [id]);
+    const fromStatus = current.rows.length > 0 ? current.rows[0].status : null;
 
-    await pool.execute('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+    await pool.query('UPDATE orders SET status = $1 WHERE id = $2', [status, id]);
 
     // Insert timeline entry
-    await pool.execute(
-      `INSERT INTO order_timeline (id, order_id, from_status, to_status, changed_by, comment) VALUES (?, ?, ?, ?, 'admin', ?)`,
+    await pool.query(
+      `INSERT INTO order_timeline (id, order_id, from_status, to_status, changed_by, comment) VALUES ($1, $2, $3, $4, 'admin', $5)`,
       [uuidv4(), id, fromStatus, status, comment || null]
     );
 
@@ -143,18 +142,19 @@ async function updateOrder(req, res, next) {
 
     const fields = [];
     const values = [];
+    let paramIdx = 1;
 
-    if (tracking_number !== undefined) { fields.push('tracking_number = ?'); values.push(tracking_number); }
-    if (discount_amount !== undefined) { fields.push('discount_amount = ?'); values.push(discount_amount); }
-    if (shipping_address !== undefined) { fields.push('shipping_address = ?'); values.push(JSON.stringify(shipping_address)); }
-    if (admin_note !== undefined) { fields.push('admin_note = ?'); values.push(admin_note); }
+    if (tracking_number !== undefined) { fields.push(`tracking_number = $${paramIdx}`); values.push(tracking_number); paramIdx++; }
+    if (discount_amount !== undefined) { fields.push(`discount_amount = $${paramIdx}`); values.push(discount_amount); paramIdx++; }
+    if (shipping_address !== undefined) { fields.push(`shipping_address = $${paramIdx}`); values.push(JSON.stringify(shipping_address)); paramIdx++; }
+    if (admin_note !== undefined) { fields.push(`admin_note = $${paramIdx}`); values.push(admin_note); paramIdx++; }
 
     if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
 
     values.push(id);
-    await pool.execute(`UPDATE orders SET ${fields.join(', ')} WHERE id = ?`, values);
+    await pool.query(`UPDATE orders SET ${fields.join(', ')} WHERE id = $${paramIdx}`, values);
 
-    const [rows] = await pool.execute('SELECT * FROM orders WHERE id = ?', [id]);
+    const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
     res.json(rows[0]);
   } catch (error) {
     next(error);
@@ -170,18 +170,19 @@ async function bulkUpdateStatus(req, res, next) {
     }
 
     // Get current statuses for timeline
-    const placeholders = ids.map(() => '?').join(',');
-    const [current] = await pool.execute(`SELECT id, status FROM orders WHERE id IN (${placeholders})`, ids);
+    const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
+    const current = await pool.query(`SELECT id, status FROM orders WHERE id IN (${placeholders})`, ids);
     const statusMap = {};
-    current.forEach(o => { statusMap[o.id] = o.status; });
+    current.rows.forEach(o => { statusMap[o.id] = o.status; });
 
     // Update all orders
-    await pool.execute(`UPDATE orders SET status = ? WHERE id IN (${placeholders})`, [status, ...ids]);
+    const updatePlaceholders = ids.map((_, i) => `$${i + 2}`).join(',');
+    await pool.query(`UPDATE orders SET status = $1 WHERE id IN (${updatePlaceholders})`, [status, ...ids]);
 
     // Insert timeline entries for each
     for (const orderId of ids) {
-      await pool.execute(
-        `INSERT INTO order_timeline (id, order_id, from_status, to_status, changed_by, comment) VALUES (?, ?, ?, ?, 'admin', ?)`,
+      await pool.query(
+        `INSERT INTO order_timeline (id, order_id, from_status, to_status, changed_by, comment) VALUES ($1, $2, $3, $4, 'admin', $5)`,
         [uuidv4(), orderId, statusMap[orderId] || null, status, comment || `Bulk updated to ${status}`]
       );
     }
@@ -196,8 +197,8 @@ async function bulkUpdateStatus(req, res, next) {
 async function getOrderTimeline(req, res, next) {
   try {
     const { id } = req.params;
-    const [rows] = await pool.execute(
-      'SELECT * FROM order_timeline WHERE order_id = ? ORDER BY created_at DESC',
+    const { rows } = await pool.query(
+      'SELECT * FROM order_timeline WHERE order_id = $1 ORDER BY created_at DESC',
       [id]
     );
     res.json(rows);
@@ -210,8 +211,8 @@ async function getOrderTimeline(req, res, next) {
 async function getOrderNotes(req, res, next) {
   try {
     const { id } = req.params;
-    const [rows] = await pool.execute(
-      'SELECT * FROM admin_notes WHERE order_id = ? ORDER BY created_at DESC',
+    const { rows } = await pool.query(
+      'SELECT * FROM admin_notes WHERE order_id = $1 ORDER BY created_at DESC',
       [id]
     );
     res.json(rows);
@@ -227,12 +228,12 @@ async function addOrderNote(req, res, next) {
     const { note } = req.body;
     const noteId = uuidv4();
 
-    await pool.execute(
-      'INSERT INTO admin_notes (id, order_id, note, created_by) VALUES (?, ?, ?, ?)',
+    await pool.query(
+      'INSERT INTO admin_notes (id, order_id, note, created_by) VALUES ($1, $2, $3, $4)',
       [noteId, id, note, 'admin']
     );
 
-    const [rows] = await pool.execute('SELECT * FROM admin_notes WHERE id = ?', [noteId]);
+    const { rows } = await pool.query('SELECT * FROM admin_notes WHERE id = $1', [noteId]);
     res.status(201).json(rows[0]);
   } catch (error) {
     next(error);
@@ -243,7 +244,7 @@ async function addOrderNote(req, res, next) {
 async function deleteOrderNote(req, res, next) {
   try {
     const { noteId } = req.params;
-    await pool.execute('DELETE FROM admin_notes WHERE id = ?', [noteId]);
+    await pool.query('DELETE FROM admin_notes WHERE id = $1', [noteId]);
     res.json({ message: 'Note deleted' });
   } catch (error) {
     next(error);
@@ -254,29 +255,33 @@ async function deleteOrderNote(req, res, next) {
 async function exportOrders(req, res, next) {
   try {
     const { status, from, to } = req.query;
-    let query = `SELECT o.*, JSON_OBJECT('name', p.name, 'thumbnail', p.thumbnail, 'slug', p.slug) as products FROM orders o LEFT JOIN products p ON o.product_id = p.id WHERE 1=1`;
+    let query = `SELECT o.*, json_build_object('name', p.name, 'thumbnail', p.thumbnail, 'slug', p.slug) as products FROM orders o LEFT JOIN products p ON o.product_id = p.id WHERE 1=1`;
     const params = [];
+    let paramIdx = 1;
 
     if (status && status !== 'all') {
-      query += ' AND o.status = ?';
       params.push(status);
+      query += ` AND o.status = $${paramIdx}`;
+      paramIdx++;
     }
     if (from) {
-      query += ' AND o.created_at >= ?';
       params.push(from);
+      query += ` AND o.created_at >= $${paramIdx}`;
+      paramIdx++;
     }
     if (to) {
-      query += ' AND o.created_at <= ?';
       params.push(to + ' 23:59:59');
+      query += ` AND o.created_at <= $${paramIdx}`;
+      paramIdx++;
     }
     query += ' ORDER BY o.created_at DESC';
 
-    const [rows] = await pool.execute(query, params);
+    const { rows } = await pool.query(query, params);
 
     // Build CSV
     const headers = ['Order ID', 'Customer', 'Email', 'Phone', 'Product', 'Amount (BDT)', 'Discount', 'Status', 'Payment Method', 'Tracking', 'Date'];
     const csvRows = rows.map((r) => {
-      const product = r.products ? (typeof r.products === 'string' ? JSON.parse(r.products) : r.products) : {};
+      const product = r.products || {};
       const productName = product.name ? (typeof product.name === 'string' ? JSON.parse(product.name) : product.name)?.en || '' : '';
       return [
         r.order_id,
@@ -306,7 +311,8 @@ async function exportOrders(req, res, next) {
 // GET /api/admin/dashboard — enhanced stats
 async function getDashboardStats(req, res, next) {
   try {
-    const [orders] = await pool.execute('SELECT status, total_bdt, created_at FROM orders');
+    const ordersResult = await pool.query('SELECT status, total_bdt, created_at FROM orders');
+    const orders = ordersResult.rows;
 
     const total = orders.length;
     const pending = orders.filter((o) => o.status === 'pending').length;
@@ -350,13 +356,13 @@ async function getDashboardStats(req, res, next) {
       });
     }
 
-    const [products] = await pool.execute('SELECT COUNT(*) as count FROM products');
-    const [messages] = await pool.execute('SELECT COUNT(*) as count FROM contact_messages WHERE is_read = 0');
+    const productsResult = await pool.query('SELECT COUNT(*) as count FROM products');
+    const messagesResult = await pool.query('SELECT COUNT(*) as count FROM contact_messages WHERE is_read = 0');
 
     res.json({
       total, pending, confirmed, completed, cancelled, revenue,
-      totalProducts: products[0].count,
-      unreadMessages: messages[0].count,
+      totalProducts: parseInt(productsResult.rows[0].count, 10),
+      unreadMessages: parseInt(messagesResult.rows[0].count, 10),
       weeklyOrders,
       weeklyRevenue,
       prevWeekOrders,

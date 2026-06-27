@@ -12,8 +12,8 @@ async function authenticate(req, res, next) {
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
   // Fetch admin profile
-  const [rows] = await pool.execute(
-   'SELECT id, email, full_name, avatar_url, role FROM admin_profiles WHERE id = ?',
+  const { rows } = await pool.query(
+   'SELECT id, email, full_name, avatar_url, role FROM admin_profiles WHERE id = $1',
    [decoded.id]
   );
 

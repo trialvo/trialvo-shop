@@ -23,35 +23,33 @@ jobs:
             echo "=== Pulling latest code ==="
             git pull origin main
 
-            echo "=== Writing production env ==="
-            cat > .env.production << 'ENVEOF'
-            PORT=5000
-            NODE_ENV=production
-            DB_HOST=mysql
-            DB_PORT=3306
-            DB_USER=root
-            DB_PASSWORD=${{ secrets.SHOP_DB_PASSWORD }}
-            DB_NAME=trialvo_shop
-            CORS_ORIGIN=https://shop.trialvo.com
-            JWT_SECRET=${{ secrets.SHOP_JWT_SECRET }}
-            JWT_EXPIRES_IN=7d
-            PAYVAULT_BASE_URL=https://payvault.trialvo.com
-            PAYVAULT_SERVICE_ID=${{ secrets.PAYVAULT_SERVICE_ID }}
-            PAYVAULT_API_KEY=${{ secrets.PAYVAULT_API_KEY }}
-            PAYVAULT_IPN_SECRET=${{ secrets.PAYVAULT_IPN_SECRET }}
-            FRONTEND_URL=https://shop.trialvo.com
-            IPN_URL=https://shop.trialvo.com/api/payments/ipn
-            ENVEOF
+            echo "=== Stopping old containers ==="
+            docker compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+
+            echo "=== Cleaning up old MySQL volumes/images ==="
+            docker volume rm trialvo-shop_shop_mysql_data 2>/dev/null || true
+            docker volume rm trialvo-shop_trialvo-pay-postgres_data 2>/dev/null || true
+            docker volume rm trialvo-shop_trialvo-pay-redis_data 2>/dev/null || true
+
+            echo "=== Making init-db.sh executable ==="
+            chmod +x init-db.sh
 
             echo "=== Building & deploying ==="
             docker compose -f docker-compose.prod.yml build --no-cache
             docker compose -f docker-compose.prod.yml up -d
 
             echo "=== Waiting for healthy ==="
-            sleep 15
+            sleep 20
             docker compose -f docker-compose.prod.yml ps
+
+            echo "=== Running seed SQL for trialvo-pay ==="
+            docker compose -f docker-compose.prod.yml exec -T postgres psql -U trialvo -d trialvo_pay < seed.sql 2>/dev/null || echo "Seed already applied or skipped"
 
             echo "=== Cleaning up ==="
             docker image prune -f
+            docker volume prune -f 2>/dev/null || true
 
             echo "✅ Deploy complete"
+            echo "  → shop.trialvo.com"
+            echo "  → shop-api.trialvo.com"
+            echo "  → pay.trialvo.com"

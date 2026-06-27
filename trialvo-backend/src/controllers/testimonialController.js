@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 // GET /api/testimonials — public, active only
 async function getTestimonials(req, res, next) {
  try {
-  const [rows] = await pool.execute(
+  const { rows } = await pool.query(
    'SELECT * FROM testimonials WHERE is_active = 1 ORDER BY created_at DESC'
   );
   res.json(rows);
@@ -16,7 +16,7 @@ async function getTestimonials(req, res, next) {
 // GET /api/admin/testimonials — all
 async function adminGetTestimonials(req, res, next) {
  try {
-  const [rows] = await pool.execute(
+  const { rows } = await pool.query(
    'SELECT * FROM testimonials ORDER BY created_at DESC'
   );
   res.json(rows);
@@ -31,9 +31,9 @@ async function createTestimonial(req, res, next) {
   const id = uuidv4();
   const { name, role, content, rating, avatar, is_active } = req.body;
 
-  await pool.execute(
+  await pool.query(
    `INSERT INTO testimonials (id, name, role, content, rating, avatar, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
    [
     id, JSON.stringify(name), JSON.stringify(role),
     JSON.stringify(content), rating || 5, avatar || '',
@@ -41,7 +41,7 @@ async function createTestimonial(req, res, next) {
    ]
   );
 
-  const [rows] = await pool.execute('SELECT * FROM testimonials WHERE id = ?', [id]);
+  const { rows } = await pool.query('SELECT * FROM testimonials WHERE id = $1', [id]);
   res.status(201).json(rows[0]);
  } catch (error) {
   next(error);
@@ -57,11 +57,13 @@ async function updateTestimonial(req, res, next) {
   const fields = [];
   const values = [];
   const jsonFields = ['name', 'role', 'content'];
+  let paramIdx = 1;
 
   for (const [key, value] of Object.entries(updates)) {
    if (key === 'id') continue;
-   fields.push(`${key} = ?`);
+   fields.push(`${key} = $${paramIdx}`);
    values.push(jsonFields.includes(key) ? JSON.stringify(value) : (key === 'is_active' ? (value ? 1 : 0) : value));
+   paramIdx++;
   }
 
   if (fields.length === 0) {
@@ -69,7 +71,7 @@ async function updateTestimonial(req, res, next) {
   }
 
   values.push(id);
-  await pool.execute(`UPDATE testimonials SET ${fields.join(', ')} WHERE id = ?`, values);
+  await pool.query(`UPDATE testimonials SET ${fields.join(', ')} WHERE id = $${paramIdx}`, values);
   res.json({ message: 'Testimonial updated' });
  } catch (error) {
   next(error);
@@ -80,7 +82,7 @@ async function updateTestimonial(req, res, next) {
 async function deleteTestimonial(req, res, next) {
  try {
   const { id } = req.params;
-  await pool.execute('DELETE FROM testimonials WHERE id = ?', [id]);
+  await pool.query('DELETE FROM testimonials WHERE id = $1', [id]);
   res.json({ message: 'Testimonial deleted' });
  } catch (error) {
   next(error);

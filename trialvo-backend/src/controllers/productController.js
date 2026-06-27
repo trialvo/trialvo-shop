@@ -1,6 +1,11 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 
+// Helper: build parameterized query with $1, $2, ... placeholders
+function pgParams(startIdx, count) {
+    return Array.from({ length: count }, (_, i) => `$${startIdx + i}`).join(', ');
+}
+
 // GET /api/products — public, active products with optional category filter
 async function getProducts(req, res, next) {
     try {
@@ -9,13 +14,13 @@ async function getProducts(req, res, next) {
         const params = [];
 
         if (category) {
-            query += ' AND category = ?';
             params.push(category);
+            query += ` AND category = $${params.length}`;
         }
 
         query += ' ORDER BY created_at DESC';
 
-        const [rows] = await pool.execute(query, params);
+        const { rows } = await pool.query(query, params);
         res.json(rows);
     } catch (error) {
         next(error);
@@ -25,7 +30,7 @@ async function getProducts(req, res, next) {
 // GET /api/products/featured — public
 async function getFeaturedProducts(req, res, next) {
     try {
-        const [rows] = await pool.execute(
+        const { rows } = await pool.query(
             'SELECT * FROM products WHERE is_active = 1 AND is_featured = 1 ORDER BY created_at DESC'
         );
         res.json(rows);
@@ -38,7 +43,7 @@ async function getFeaturedProducts(req, res, next) {
 async function getProductBySlug(req, res, next) {
     try {
         const { slug } = req.params;
-        const [rows] = await pool.execute('SELECT * FROM products WHERE slug = ?', [slug]);
+        const { rows } = await pool.query('SELECT * FROM products WHERE slug = $1', [slug]);
 
         if (rows.length === 0) {
             return res.status(404).json({ error: 'Product not found' });
@@ -54,13 +59,12 @@ async function getProductBySlug(req, res, next) {
 async function getRelatedProducts(req, res, next) {
     try {
         const { slug } = req.params;
-        // First get the product to know its category and id
-        const [product] = await pool.execute('SELECT id, category FROM products WHERE slug = ?', [slug]);
-        if (product.length === 0) return res.json([]);
+        const productResult = await pool.query('SELECT id, category FROM products WHERE slug = $1', [slug]);
+        if (productResult.rows.length === 0) return res.json([]);
 
-        const [rows] = await pool.execute(
-            'SELECT * FROM products WHERE is_active = 1 AND category = ? AND id != ? LIMIT 3',
-            [product[0].category, product[0].id]
+        const { rows } = await pool.query(
+            'SELECT * FROM products WHERE is_active = 1 AND category = $1 AND id != $2 LIMIT 3',
+            [productResult.rows[0].category, productResult.rows[0].id]
         );
         res.json(rows);
     } catch (error) {
@@ -71,7 +75,7 @@ async function getRelatedProducts(req, res, next) {
 // GET /api/admin/products — all products (admin)
 async function adminGetProducts(req, res, next) {
     try {
-        const [rows] = await pool.execute('SELECT * FROM products ORDER BY sort_order ASC, created_at DESC');
+        const { rows } = await pool.query('SELECT * FROM products ORDER BY sort_order ASC, created_at DESC');
         res.json(rows);
     } catch (error) {
         next(error);
@@ -88,9 +92,9 @@ async function createProduct(req, res, next) {
             faq, seo, is_featured, is_active,
         } = req.body;
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO products (id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
             [
                 id, slug, category || 'ecommerce', price_bdt || 0, price_usd || 0,
                 thumbnail || '', JSON.stringify(images || {}), video_url || null,
@@ -101,7 +105,7 @@ async function createProduct(req, res, next) {
             ]
         );
 
-        const [rows] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
+        const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
         res.status(201).json(rows[0]);
     } catch (error) {
         next(error);
@@ -118,11 +122,13 @@ async function updateProduct(req, res, next) {
         const fields = [];
         const values = [];
         const jsonFields = ['images', 'demo', 'name', 'short_description', 'features', 'facilities', 'faq', 'seo'];
+        let paramIdx = 1;
 
         for (const [key, value] of Object.entries(updates)) {
             if (key === 'id') continue;
-            fields.push(`${key} = ?`);
+            fields.push(`${key} = $${paramIdx}`);
             values.push(jsonFields.includes(key) ? JSON.stringify(value) : (key === 'is_featured' || key === 'is_active' ? (value ? 1 : 0) : value));
+            paramIdx++;
         }
 
         if (fields.length === 0) {
@@ -130,9 +136,9 @@ async function updateProduct(req, res, next) {
         }
 
         values.push(id);
-        await pool.execute(`UPDATE products SET ${fields.join(', ')} WHERE id = ?`, values);
+        await pool.query(`UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIdx}`, values);
 
-        const [rows] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
+        const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
         res.json(rows[0]);
     } catch (error) {
         next(error);
@@ -143,33 +149,27 @@ async function updateProduct(req, res, next) {
 async function deleteProduct(req, res, next) {
     try {
         const { id } = req.params;
-        await pool.execute('DELETE FROM products WHERE id = ?', [id]);
+        await pool.query('DELETE FROM products WHERE id = $1', [id]);
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         next(error);
     }
 }
 
-module.exports = {
-    getProducts, getFeaturedProducts, getProductBySlug, getRelatedProducts,
-    adminGetProducts, createProduct, updateProduct, deleteProduct,
-    duplicateProduct, bulkToggleProducts, reorderProducts,
-};
-
 // POST /api/admin/products/:id/duplicate
 async function duplicateProduct(req, res, next) {
     try {
         const { id } = req.params;
-        const [rows] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
+        const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Product not found' });
 
         const product = rows[0];
         const newId = uuidv4();
         const newSlug = product.slug + '-copy-' + Date.now().toString(36);
 
-        await pool.execute(
+        await pool.query(
             `INSERT INTO products (id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 0, $17)`,
             [
                 newId, newSlug, product.category, product.price_bdt, product.price_usd,
                 product.thumbnail, product.images, product.video_url, product.demo,
@@ -179,8 +179,8 @@ async function duplicateProduct(req, res, next) {
             ]
         );
 
-        const [newRows] = await pool.execute('SELECT * FROM products WHERE id = ?', [newId]);
-        res.status(201).json(newRows[0]);
+        const newResult = await pool.query('SELECT * FROM products WHERE id = $1', [newId]);
+        res.status(201).json(newResult.rows[0]);
     } catch (error) {
         next(error);
     }
@@ -197,8 +197,8 @@ async function bulkToggleProducts(req, res, next) {
             return res.status(400).json({ error: 'Invalid field' });
         }
 
-        const placeholders = ids.map(() => '?').join(',');
-        await pool.execute(`UPDATE products SET ${field} = ? WHERE id IN (${placeholders})`, [value ? 1 : 0, ...ids]);
+        const placeholders = ids.map((_, i) => `$${i + 2}`).join(',');
+        await pool.query(`UPDATE products SET ${field} = $1 WHERE id IN (${placeholders})`, [value ? 1 : 0, ...ids]);
         res.json({ message: `${ids.length} products updated` });
     } catch (error) {
         next(error);
@@ -214,10 +214,16 @@ async function reorderProducts(req, res, next) {
         }
 
         for (const item of items) {
-            await pool.execute('UPDATE products SET sort_order = ? WHERE id = ?', [item.sort_order, item.id]);
+            await pool.query('UPDATE products SET sort_order = $1 WHERE id = $2', [item.sort_order, item.id]);
         }
         res.json({ message: 'Products reordered' });
     } catch (error) {
         next(error);
     }
 }
+
+module.exports = {
+    getProducts, getFeaturedProducts, getProductBySlug, getRelatedProducts,
+    adminGetProducts, createProduct, updateProduct, deleteProduct,
+    duplicateProduct, bulkToggleProducts, reorderProducts,
+};
