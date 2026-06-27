@@ -62,9 +62,9 @@ services:
       JWT_SECRET: local-dev-jwt-secret-trialvo-2026
       JWT_EXPIRES_IN: 7d
       TRIALVO_PAY_BASE_URL: http://trialvo-pay:8080
-      TRIALVO_PAY_SERVICE_ID: 33649f24-e397-4a79-b21b-1587867fff8d
-      TRIALVO_PAY_API_KEY: 2e94d40fc3541163396529d79290b1cc3b303bb13ddd85d4a05c3f2cae8af6ca
-      TRIALVO_PAY_IPN_SECRET: 792af9f5937bb7be5ec8bc0722f0d0abe3deb24d8b15841f8e417326cd52684b
+      TRIALVO_PAY_SERVICE_ID: 28280023-008f-4307-83de-5e4eabb57562
+      TRIALVO_PAY_API_KEY: bc6e7275e856e4533b00ff66e9f8404dec7648c30361060ba947f75208eec7b6
+      TRIALVO_PAY_IPN_SECRET: fb2b6a3f3b465fc09b7e3f17f6c4d98082ed0e93f9393467e8ca1d687d2abd01
       FRONTEND_URL: http://localhost:8091
       IPN_URL: http://backend:5000/api/payments/ipn
     extra_hosts:

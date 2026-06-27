@@ -16,6 +16,7 @@ jobs:
           host: 155.248.253.24
           username: opc
           key: ${{ secrets.SSH_KEY }}
+          command_timeout: 30m
           script: |
             set -e
             cd /home/opc/trialvo-shop
@@ -26,7 +27,7 @@ jobs:
             echo "=== Stopping old containers ==="
             docker compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
 
-            echo "=== Cleaning up old MySQL volumes/images ==="
+            echo "=== Cleaning up old MySQL volumes ==="
             docker volume rm trialvo-shop_shop_mysql_data 2>/dev/null || true
             docker volume rm trialvo-shop_trialvo-pay-postgres_data 2>/dev/null || true
             docker volume rm trialvo-shop_trialvo-pay-redis_data 2>/dev/null || true
@@ -38,17 +39,37 @@ jobs:
             docker compose -f docker-compose.prod.yml build --no-cache
             docker compose -f docker-compose.prod.yml up -d
 
-            echo "=== Waiting for healthy ==="
-            sleep 20
-            docker compose -f docker-compose.prod.yml ps
+            echo "=== Waiting for PostgreSQL to be ready ==="
+            for i in $(seq 1 30); do
+              if docker compose -f docker-compose.prod.yml exec -T postgres pg_isready -U trialvo 2>/dev/null; then
+                echo "PostgreSQL is ready!"
+                break
+              fi
+              echo "Waiting for PostgreSQL... ($i/30)"
+              sleep 2
+            done
+
+            echo "=== Running trialvo-pay migrations ==="
+            docker compose -f docker-compose.prod.yml exec -T postgres psql -U trialvo -d trialvo_pay -f /dev/stdin < trialvo-pay/migrations/001_init.sql 2>/dev/null || echo "Migrations already applied"
 
             echo "=== Running seed SQL for trialvo-pay ==="
-            docker compose -f docker-compose.prod.yml exec -T postgres psql -U trialvo -d trialvo_pay < seed.sql 2>/dev/null || echo "Seed already applied or skipped"
+            docker compose -f docker-compose.prod.yml exec -T postgres psql -U trialvo -d trialvo_pay < seed.sql || echo "Seed failed — check logs"
+
+            echo "=== Service health check ==="
+            sleep 10
+            docker compose -f docker-compose.prod.yml ps
+            echo ""
+            echo "--- Backend health ---"
+            docker compose -f docker-compose.prod.yml exec -T backend wget -qO- http://localhost:5000/api/health 2>/dev/null || echo "Backend not healthy yet"
+            echo ""
+            echo "--- Trialvo Pay health ---"
+            docker compose -f docker-compose.prod.yml exec -T trialvo-pay curl -sf http://localhost:8080/health 2>/dev/null || echo "Trialvo Pay not healthy yet"
 
             echo "=== Cleaning up ==="
             docker image prune -f
             docker volume prune -f 2>/dev/null || true
 
+            echo ""
             echo "✅ Deploy complete"
             echo "  → shop.trialvo.com"
             echo "  → shop-api.trialvo.com"
