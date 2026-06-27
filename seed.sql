@@ -16,17 +16,18 @@ ON CONFLICT (email) DO UPDATE SET
   is_active = true;
 
 -- ─── 2. Service Registration ─────────────────────────────────────
-INSERT INTO services (id, slug, display_name, success_url, fail_url, cancel_url, is_sandbox, is_active)
+INSERT INTO services (id, slug, display_name, success_url, fail_url, cancel_url, is_sandbox, is_active, meta)
 VALUES ('28280023-008f-4307-83de-5e4eabb57562', 'trialvo-shop', 'Trialvo Shop',
   'https://shop.trialvo.com/order-success',
   'https://shop.trialvo.com/checkout?error=payment_failed',
   'https://shop.trialvo.com/checkout?error=payment_cancelled',
-  true, true)
+  true, true, '{"skip_preview": true}')
 ON CONFLICT (slug) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   success_url = EXCLUDED.success_url,
   fail_url = EXCLUDED.fail_url,
   cancel_url = EXCLUDED.cancel_url,
+  meta = EXCLUDED.meta,
   is_sandbox = true,
   is_active = true;
 

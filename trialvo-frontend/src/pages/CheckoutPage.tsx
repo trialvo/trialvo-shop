@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ShieldCheck, Loader2, CreditCard } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Loader2, CreditCard, AlertTriangle, XCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
@@ -25,6 +25,7 @@ const CheckoutPage: React.FC = () => {
 
   // Check for error params from Trialvo Pay redirect
   const errorParam = searchParams.get('error');
+  const [showError, setShowError] = useState(!!errorParam);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -151,6 +152,58 @@ const CheckoutPage: React.FC = () => {
           </Button>
 
           <h1 className="text-3xl font-bold mb-8">{t('checkout.title')}</h1>
+
+          {/* Payment Error Banner */}
+          {showError && errorParam && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`mb-6 rounded-xl border p-4 ${
+                errorParam === 'payment_cancelled'
+                  ? 'bg-amber-500/10 border-amber-500/30'
+                  : 'bg-red-500/10 border-red-500/30'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 rounded-full p-1.5 ${
+                  errorParam === 'payment_cancelled'
+                    ? 'bg-amber-500/20 text-amber-500'
+                    : 'bg-red-500/20 text-red-500'
+                }`}>
+                  {errorParam === 'payment_cancelled'
+                    ? <XCircle className="w-5 h-5" />
+                    : <AlertTriangle className="w-5 h-5" />
+                  }
+                </div>
+                <div className="flex-1">
+                  <h3 className={`font-semibold ${
+                    errorParam === 'payment_cancelled' ? 'text-amber-500' : 'text-red-500'
+                  }`}>
+                    {errorParam === 'payment_cancelled'
+                      ? (language === 'bn' ? 'পেমেন্ট বাতিল করা হয়েছে' : 'Payment Cancelled')
+                      : (language === 'bn' ? 'পেমেন্ট ব্যর্থ হয়েছে' : 'Payment Failed')
+                    }
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {errorParam === 'payment_cancelled'
+                      ? (language === 'bn'
+                          ? 'আপনি পেমেন্ট বাতিল করেছেন। আবার চেষ্টা করতে নিচের ফর্ম পূরণ করুন।'
+                          : 'You cancelled the payment. Fill in the form below to try again.')
+                      : (language === 'bn'
+                          ? 'পেমেন্ট সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'
+                          : 'Payment could not be completed. Please try again.')
+                    }
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowError(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <XCircle className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Checkout Form */}
