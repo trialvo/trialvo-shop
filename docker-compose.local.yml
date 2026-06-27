@@ -1,0 +1,86 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: localdev2026!
+      MYSQL_DATABASE: trialvo_shop
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"
+    volumes:
+      - shop_mysql_data_local:/var/lib/mysql
+    networks:
+      - shop_local
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  backend:
+    build:
+      context: ./trialvo-backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 5000
+      NODE_ENV: development
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: localdev2026!
+      DB_NAME: trialvo_shop
+      CORS_ORIGIN: http://localhost:8091
+      JWT_SECRET: local-dev-jwt-secret-trialvo-2026
+      JWT_EXPIRES_IN: 7d
+      PAYVAULT_BASE_URL: http://host.docker.internal:8080
+      PAYVAULT_SERVICE_ID: 33649f24-e397-4a79-b21b-1587867fff8d
+      PAYVAULT_API_KEY: 2e94d40fc3541163396529d79290b1cc3b303bb13ddd85d4a05c3f2cae8af6ca
+      PAYVAULT_IPN_SECRET: 792af9f5937bb7be5ec8bc0722f0d0abe3deb24d8b15841f8e417326cd52684b
+      FRONTEND_URL: http://localhost:8091
+      IPN_URL: http://host.docker.internal:8091/api/payments/ipn
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - shop_local
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./trialvo-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    restart: unless-stopped
+    networks:
+      - shop_local
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "8091:80"
+    volumes:
+      - ./nginx-shop.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - shop_local
+
+networks:
+  shop_local:
+    driver: bridge
+
+volumes:
+  shop_mysql_data_local:

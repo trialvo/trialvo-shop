@@ -1,0 +1,351 @@
+# PayVault System Redesign — Merchant Portal
+
+## Problem Statement
+
+Currently, PayVault has **two actors** but only **one panel**:
+
+| Actor | Has Panel? | Current Reality |
+|-------|-----------|-----------------|
+| **Admin** (Platform Operator) | ✅ Admin Panel | Manages everything: services, keys, IPN endpoints, refunds, config |
+| **Merchant** (Developer Integrating) | ❌ None | Must ask admin for every change — can't self-manage webhooks, URLs, keys |
+
+This is not how a **real payment gateway** works. Stripe, Razorpay, SSLCommerz — they all have a **merchant dashboard** where the integrating developer can:
+- Manage webhooks themselves
+- Set default callback URLs
+- View their own transactions and revenue
+- Rotate API keys
+- Test webhook delivery
+- Submit and track refund requests
+
+---
+
+## Proposed Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        PayVault                                  │
+│                                                                  │
+│  ┌──────────┐   ┌──────────────┐   ┌──────────────────┐        │
+│  │ Landing  │   │  Developer   │   │  Payment Pages   │        │
+│  │ Page  /  │   │  Docs /docs  │   │  /pay/{token}    │        │
+│  └──────────┘   └──────────────┘   └──────────────────┘        │
+│                                                                  │
+│  ┌──────────────────────────┐  ┌───────────────────────────┐    │
+│  │  ADMIN PANEL /admin      │  │ MERCHANT PANEL /merchant   │    │
+│  │  Platform operators only │  │ Service owners / devs      │    │
+│  │                          │  │                             │    │
+│  │  • Create services       │  │  • Dashboard (their txns)  │    │
+│  │  • Approve refunds       │  │  • Webhook management      │    │
+│  │  • Gateway config (EPS)  │  │  • Default URLs             │    │
+│  │  • View ALL services     │  │  • API key rotation         │    │
+│  │  • System settings       │  │  • Transaction history      │    │
+│  │  • Audit logs            │  │  • Refund requests          │    │
+│  │  • Manage merchants      │  │  • Webhook delivery logs    │    │
+│  │  • Override anything     │  │  • Test webhook             │    │
+│  └──────────────────────────┘  │  • Documentation link       │    │
+│                                 └───────────────────────────┘    │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │  SERVICE API  /api/v1  (HMAC-signed, machine-to-machine)│    │
+│  │  • POST /bills   • GET /bills/{token}  • POST /refunds  │    │
+│  └──────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Role Boundary Decision**: The plan separates Admin (platform) from Merchant (integrator) clearly. The merchant can NEVER access another service's data, change gateway config, or approve refunds. If you want merchants to have any admin-level capabilities, let me know.
+
+> [!WARNING]
+> **Database Migration**: This adds a new `merchant_users` table and a `merchant_sessions` table. Existing data is not affected, but the migration must run against the live DB.
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> **1. Merchant Self-Registration?** Should merchants be able to sign up themselves at `/merchant/register`, or should the admin create merchant accounts and send invite links? I recommend **admin-creates-and-invites** for a B2B payment gateway — you don't want random people creating merchant accounts.
+
+> [!IMPORTANT]
+> **2. Multi-User per Service?** Should a single service (e.g., "E-commerce App") have multiple merchant users (e.g., CTO and backend dev)? I recommend **yes, with roles** (owner / developer / viewer) but this adds complexity. We can start with **one merchant user per service** and expand later.
+
+> [!IMPORTANT]
+> **3. Fee / Commission Tracking?** Real payment gateways charge fees. Should we add a `commission_rate` field to services for future billing? Not implementing now, but the schema decision affects the future.
+
+---
+
+## Proposed Changes
+
+### Database — New Tables
+
+#### [NEW] Migration `002_merchant_portal.sql`
+
+```sql
+-- Merchant Users (one per service for now, expandable later)
+CREATE TABLE merchant_users (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    service_id      UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    email           VARCHAR(255) NOT NULL UNIQUE,
+    password_hash   VARCHAR(255) NOT NULL,
+    display_name    VARCHAR(200),
+    role            VARCHAR(50) NOT NULL DEFAULT 'owner',  -- owner | developer | viewer
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    last_login_at   TIMESTAMPTZ,
+    last_login_ip   INET,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_merchant_users_service ON merchant_users(service_id);
+CREATE INDEX idx_merchant_users_email ON merchant_users(email);
+
+-- Merchant Sessions (separate from admin sessions)
+CREATE TABLE merchant_sessions (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    merchant_user_id UUID NOT NULL REFERENCES merchant_users(id) ON DELETE CASCADE,
+    token_hash      VARCHAR(128) NOT NULL UNIQUE,
+    ip_address      INET,
+    user_agent      TEXT,
+    expires_at      TIMESTAMPTZ NOT NULL,
+    revoked_at      TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_merchant_sessions_token ON merchant_sessions(token_hash);
+
+-- Trigger for updated_at
+CREATE TRIGGER trg_merchant_users_updated 
+    BEFORE UPDATE ON merchant_users 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+```
+
+---
+
+### Backend — Rust API
+
+#### [NEW] `src/api/merchant/` — New module tree
+
+```
+src/api/merchant/
+├── mod.rs          # Module declaration
+├── auth.rs         # Login/logout, password change
+├── dashboard.rs    # Service-scoped metrics
+├── webhooks.rs     # CRUD for IPN endpoints
+├── settings.rs     # Default URLs, service profile
+├── keys.rs         # View keys, rotate, reveal
+├── transactions.rs # List/search own transactions
+├── refunds.rs      # Submit/view own refunds
+└── deliveries.rs   # View webhook delivery logs, test ping
+```
+
+#### [NEW] `src/api/middleware/merchant_auth.rs`
+
+Session-based auth (same pattern as admin), but resolves to:
+```rust
+pub struct AuthenticatedMerchant {
+    pub merchant_user_id: Uuid,
+    pub service_id: Uuid,   // The service this merchant owns
+    pub role: String,       // "owner" | "developer" | "viewer"
+}
+```
+
+**Every merchant endpoint** uses `service_id` from the session — merchants can NEVER access another service's data.
+
+#### [NEW] `src/db/merchants.rs`
+
+CRUD for `merchant_users` and `merchant_sessions`.
+
+#### [MODIFY] `src/main.rs`
+
+Add new route scope:
+```rust
+// Merchant API (session auth)
+.service(
+    web::scope("/api/merchant")
+        .configure(api::merchant::auth::routes)
+        .service(
+            web::scope("")
+                .wrap(api::middleware::merchant_auth::MerchantAuthMiddleware)
+                .configure(api::merchant::dashboard::routes)
+                .configure(api::merchant::webhooks::routes)
+                .configure(api::merchant::settings::routes)
+                .configure(api::merchant::keys::routes)
+                .configure(api::merchant::transactions::routes)
+                .configure(api::merchant::refunds::routes)
+                .configure(api::merchant::deliveries::routes)
+        )
+)
+// Merchant SPA
+.service(
+    web::resource("/merchant/{tail:.*}")
+        .route(web::get().to(serve_merchant_spa))
+)
+```
+
+#### [MODIFY] `src/api/admin/services.rs`
+
+Add endpoint to **create a merchant account** when creating a service:
+- `POST /api/admin/merchants` — create merchant user, send credentials
+- `GET /api/admin/merchants` — list all merchant users
+- `PATCH /api/admin/merchants/{id}` — deactivate, reset password
+
+---
+
+### Merchant API Endpoints (Detailed)
+
+| Method | Path | Permission | Description |
+|--------|------|------------|-------------|
+| `POST` | `/api/merchant/auth/login` | Public | Email + password login |
+| `POST` | `/api/merchant/auth/logout` | Auth | Destroy session |
+| `POST` | `/api/merchant/auth/change-password` | Auth | Change own password |
+| `GET` | `/api/merchant/dashboard` | Auth | Revenue, txn count, recent activity |
+| `GET` | `/api/merchant/settings` | Auth | Current service profile + URLs |
+| `PATCH` | `/api/merchant/settings` | owner | Update default URLs, contact info |
+| `GET` | `/api/merchant/keys` | Auth | List API keys (prefix + last used) |
+| `POST` | `/api/merchant/keys` | owner | Generate new key (returns raw key once) |
+| `POST` | `/api/merchant/keys/{id}/reveal` | owner | Reveal full key |
+| `DELETE` | `/api/merchant/keys/{id}` | owner | Revoke a key |
+| `GET` | `/api/merchant/webhooks` | Auth | List IPN endpoints |
+| `POST` | `/api/merchant/webhooks` | owner/dev | Create new endpoint + select events |
+| `PATCH` | `/api/merchant/webhooks/{id}` | owner/dev | Update URL, events, toggle active |
+| `DELETE` | `/api/merchant/webhooks/{id}` | owner/dev | Delete endpoint |
+| `POST` | `/api/merchant/webhooks/{id}/test` | owner/dev | Send test ping |
+| `GET` | `/api/merchant/webhooks/{id}/deliveries` | Auth | View delivery history |
+| `GET` | `/api/merchant/transactions` | Auth | List own transactions (paginated) |
+| `GET` | `/api/merchant/transactions/{id}` | Auth | Transaction detail + events |
+| `GET` | `/api/merchant/refunds` | Auth | List own refunds |
+| `POST` | `/api/merchant/refunds` | owner/dev | Submit refund request |
+
+---
+
+### Frontend — Merchant SPA
+
+#### [NEW] `static/merchant/index.html` — Merchant SPA shell
+
+Dark-mode, glassmorphism design matching the admin panel aesthetic but with a distinct color accent (e.g., teal/cyan vs purple) to make it visually obvious which panel you're in.
+
+#### [NEW] `static/assets/js/merchant/` — SPA JavaScript
+
+Same architecture as admin (vanilla JS SPA with hash routing):
+```
+static/assets/js/merchant/
+├── api.js          # Fetch wrapper for /api/merchant/*
+├── app.js          # Router, auth state, shell
+├── components.js   # Shared UI components (tables, cards, modals)
+└── pages.js        # Page renderers (dashboard, webhooks, keys, etc.)
+```
+
+#### [NEW] `static/assets/css/merchant.css` — Merchant panel styles
+
+**Merchant Panel Pages:**
+
+1. **Login** — Email + password
+2. **Dashboard** — Revenue chart, recent transactions, webhook health
+3. **Settings** — Edit service profile, default success/fail/cancel URLs
+4. **API Keys** — Generate, reveal, revoke keys
+5. **Webhooks** — CRUD endpoints, select events, view delivery logs, test ping
+6. **Transactions** — Searchable list with filters (status, date range)
+7. **Refunds** — Submit new refund, view status of existing ones
+8. **Integration Guide** — **Dynamic, live code examples** (see below)
+
+#### Dynamic Code Examples in Merchant Panel
+
+> [!IMPORTANT]
+> This is a key differentiator. When a merchant views the Integration page, the code examples are **pre-filled with their real values** — not generic placeholders.
+
+The Integration page fetches the merchant's service data from the API and injects it into code examples:
+
+```javascript
+// What the merchant sees (auto-filled):
+SERVICE_ID = "f47ac10b-58cc-4372-a567-0e02b2c3d479"   // Their actual UUID
+API_KEY    = "pvk_a1b2c3d4..."                          // Their key prefix (reveal to copy full key)
+BASE_URL   = "https://payvault.trialvo.com/api/v1"      // Actual production URL from system_config
+```
+
+- `SERVICE_ID` → fetched from `GET /api/merchant/settings` (their service UUID)
+- `BASE_URL` → fetched from `GET /api/merchant/settings` (reads `system_config.general.base_url`)
+- `API_KEY` → shows key prefix with a "Reveal Full Key" button; merchant copies the real key
+- Code tabs for Python, Node.js, PHP, cURL — all pre-filled
+- Includes a **"Copy Full Script"** button that copies a ready-to-run script
+- Shows the merchant's registered webhook URLs and IPN secret inline
+
+#### Public Docs (`/docs`) — Fixed Domain
+
+The public `/docs` page will also be updated to use `payvault.trialvo.com` everywhere (not `your-payvault-domain.com`). The base URL is read from `system_config.general.base_url` where possible, but for the static HTML docs page, it will be hardcoded to `payvault.trialvo.com` since we know the production domain.
+
+---
+
+### Admin Panel Changes
+
+#### [MODIFY] Admin sidebar + pages
+
+Add a "Merchants" section to the admin panel:
+- List all merchant users across all services
+- Create merchant account (linked to a service)
+- Reset merchant password
+- Deactivate merchant account
+
+This lets the admin **onboard a new developer** by:
+1. Creating a service (already exists)
+2. Creating a merchant account linked to that service (new)
+3. Sharing the email + temporary password
+
+---
+
+## What This Enables (Developer Workflow)
+
+```
+1. Admin creates service "my-ecommerce" in admin panel
+2. Admin creates merchant account (dev@company.com) linked to service
+3. Developer logs into /merchant with their credentials
+4. Developer sets:
+   - success_url: https://shop.com/payment/success
+   - fail_url: https://shop.com/payment/failed
+   - cancel_url: https://shop.com/payment/cancelled
+5. Developer creates webhook:
+   - URL: https://shop.com/api/payvault-webhook
+   - Events: payment.success, payment.failed, refund.completed
+6. Developer generates API key and copies it
+7. Developer integrates using /docs examples
+8. Developer sends a test webhook to verify endpoint works
+9. Developer monitors transaction history and webhook deliveries
+10. If refund needed, developer submits refund request → admin approves
+```
+
+---
+
+## Implementation Order
+
+1. **Database migration** — merchant_users + merchant_sessions tables
+2. **DB layer** — `src/db/merchants.rs` CRUD functions
+3. **Merchant auth middleware** — `src/api/middleware/merchant_auth.rs`
+4. **Merchant auth routes** — login/logout/change-password
+5. **Merchant API routes** — dashboard, webhooks, settings, keys, transactions, refunds, deliveries
+6. **Main.rs routing** — wire up the new scope
+7. **Admin API** — merchant management endpoints
+8. **Merchant SPA** — HTML shell + CSS + JavaScript (login, dashboard, all pages including Integration Guide with dynamic code)
+9. **Admin panel update** — add Merchants section
+10. **Public docs fix** — replace all `your-payvault-domain.com` with `payvault.trialvo.com`
+11. **Docs update** — add "Getting Started" for merchant self-service flow
+
+---
+
+## Verification Plan
+
+### Automated Tests
+```bash
+cargo test -- --test-threads=1
+```
+
+### Manual Verification
+1. Admin creates a service + merchant account
+2. Merchant logs in at `/merchant`
+3. Merchant sets default URLs, creates webhook, generates key
+4. Merchant opens Integration Guide — code examples show their real `service_id` and `payvault.trialvo.com`
+5. Merchant sends test webhook and verifies delivery
+6. Merchant views transaction history
+7. Verify merchant CANNOT see another service's data (403 test)
+8. Admin can see all merchants, reset passwords, deactivate accounts
+9. Public `/docs` page shows `payvault.trialvo.com` everywhere (no generic placeholders)

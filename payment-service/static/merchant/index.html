@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayVault — Merchant Portal</title>
+    <meta name="description" content="PayVault Merchant Portal — Manage your payment integration, webhooks, API keys, and transactions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+              mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+            },
+            colors: {
+              brand: { 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e' },
+            },
+          },
+        },
+      }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="/assets/css/merchant.css?v=10">
+</head>
+<body class="bg-gray-50 font-sans text-slate-800 antialiased">
+    <div id="app"></div>
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+    <!-- Modal container -->
+    <div id="modal-backdrop" class="modal-backdrop hidden">
+      <div id="modal-container"></div>
+    </div>
+    <script src="/assets/js/shared/ui.js?v=10"></script>
+    <script src="/assets/js/merchant/api.js?v=10"></script>
+    <script src="/assets/js/merchant/components.js?v=10"></script>
+    <script src="/assets/js/merchant/pages.js?v=10"></script>
+    <script src="/assets/js/merchant/app.js?v=10"></script>
+</body>
+</html>

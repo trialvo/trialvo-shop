@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Failed — PayVault</title>
+<meta http-equiv="refresh" content="4;url={{REDIRECT_URL}}">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: #f7f8fa; color: #1e293b; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+.card { background: #fff; border: 1px solid #fecaca; border-radius: 20px; padding: 48px; max-width: 440px; width: 100%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.06); }
+.icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #ef4444, #b91c1c); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+.icon svg { width: 40px; height: 40px; color: white; }
+h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 12px; }
+p { color: #475569; line-height: 1.6; }
+.redirect-notice { margin-top: 24px; font-size: 0.875rem; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  </div>
+  <h1>Payment Failed</h1>
+  <p>We were unable to process your payment. Please try again or use a different payment method.</p>
+  <div class="redirect-notice">You will be redirected back shortly...</div>
+</div>
+</body>
+</html>

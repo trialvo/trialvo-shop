@@ -1,0 +1,98 @@
+[package]
+name = "payvault"
+version = "0.1.0"
+edition = "2021"
+authors = ["PayVault Team"]
+description = "Centralized payment microservice for Trialvo ecosystem"
+
+[[bin]]
+name = "payvault"
+path = "src/main.rs"
+
+[dependencies]
+# Web framework
+actix-web = "4"
+actix-rt = "2"
+actix-files = "0.6"
+actix-cors = "0.7"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+futures-util = "0.3"
+
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json", "bigdecimal"] }
+
+# Redis
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Crypto
+ring = "0.17"
+argon2 = "0.5"
+base64 = "0.21"
+sha2 = "0.10"
+
+
+# TOTP
+totp-rs = { version = "5", features = ["qr"] }
+
+# UUID
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# HTTP client (for EPS API calls)
+reqwest = { version = "0.11", features = ["json", "rustls-tls"], default-features = false }
+
+# Decimal — must match sqlx 0.7's internal bigdecimal version (0.3)
+bigdecimal = { version = "0.3", features = ["serde"] }
+
+
+# Config
+dotenvy = "0.15"
+config = "0.14"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-actix-web = "0.7"
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Random
+rand = "0.8"
+
+# Base32 encoding (for TOTP secrets)
+base32 = "0.4"
+
+# Email
+lettre = { version = "0.11", features = ["tokio1-rustls-tls", "smtp-transport", "builder"], default-features = false }
+
+# Templating (for HTML pages)
+tera = "1"
+
+# AES encryption
+aes-gcm = "0.10"
+hex = "0.4"
+
+# HMAC (for service auth — separate from EPS x-hash)
+hmac = "0.12"
+
+[dev-dependencies]
+actix-test = "0.1"
+tokio = { version = "1", features = ["full"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
