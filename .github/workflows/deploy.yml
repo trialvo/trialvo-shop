@@ -21,13 +21,16 @@ jobs:
             set -e
             cd /home/opc/trialvo-shop
 
-            echo "=== Pulling latest code ==="
-            git pull origin main
+            echo "=== Force resetting to match remote ==="
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
 
             echo "=== Stopping old containers ==="
             docker compose -f docker-compose.prod.yml down --remove-orphans 2>/dev/null || true
+            docker compose down --remove-orphans 2>/dev/null || true
 
-            echo "=== Cleaning up old MySQL volumes ==="
+            echo "=== Cleaning up old volumes ==="
             docker volume rm trialvo-shop_shop_mysql_data 2>/dev/null || true
             docker volume rm trialvo-shop_trialvo-pay-postgres_data 2>/dev/null || true
             docker volume rm trialvo-shop_trialvo-pay-redis_data 2>/dev/null || true
@@ -52,7 +55,7 @@ jobs:
             echo "=== Running trialvo-pay migrations ==="
             docker compose -f docker-compose.prod.yml exec -T postgres psql -U trialvo -d trialvo_pay -f /dev/stdin < trialvo-pay/migrations/001_init.sql 2>/dev/null || echo "Migrations already applied"
 
-            echo "=== Running seed SQL for trialvo-pay ==="
+            echo "=== Running seed SQL ==="
             docker compose -f docker-compose.prod.yml exec -T postgres psql -U trialvo -d trialvo_pay < seed.sql || echo "Seed failed — check logs"
 
             echo "=== Service health check ==="
