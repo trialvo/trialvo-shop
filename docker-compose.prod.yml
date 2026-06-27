@@ -26,7 +26,7 @@ services:
       mysql:
         condition: service_healthy
     env_file:
-      - .env.production
+      - ./trialvo-backend/.env.production
     environment:
       DB_HOST: mysql
     ports:
@@ -52,9 +52,72 @@ services:
     networks:
       - shop_internal
 
+  trialvo-pay-postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: trialvo_pay
+      POSTGRES_USER: trialvo_pay
+      POSTGRES_PASSWORD: TrialvoPayDB2026Secure!
+    volumes:
+      - trialvo-pay-postgres_data:/var/lib/postgresql/data
+    networks:
+      - shop_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trialvo_pay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  trialvo-pay-redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --requirepass TrialvoPayRedis2026Secure! --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - trialvo-pay-redis_data:/data
+    networks:
+      - shop_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "TrialvoPayRedis2026Secure!", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  trialvo-pay:
+    build:
+      context: ./trialvo-pay
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      trialvo-pay-postgres:
+        condition: service_healthy
+      trialvo-pay-redis:
+        condition: service_healthy
+    env_file:
+      - ./trialvo-pay/.env
+    environment:
+      DATABASE_URL: postgresql://trialvo_pay:TrialvoPayDB2026Secure!@trialvo-pay-postgres:5432/trialvo_pay
+      REDIS_URL: redis://:TrialvoPayRedis2026Secure!@trialvo-pay-redis:6379
+      BASE_URL: https://pay.trialvo.com
+      HOST: 0.0.0.0
+      PORT: 8080
+      RUST_LOG: info
+    networks:
+      - shop_internal
+    ports:
+      - "127.0.0.1:8088:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
 networks:
   shop_internal:
     driver: bridge
 
 volumes:
   shop_mysql_data:
+  trialvo-pay-postgres_data:
+  trialvo-pay-redis_data:

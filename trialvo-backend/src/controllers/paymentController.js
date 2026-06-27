@@ -1,16 +1,16 @@
 const { pool } = require('../config/db');
-const { verifyIpnSignature } = require('../config/payvault');
+const { verifyIpnSignature } = require('../config/trialvo_pay');
 
 /**
  * POST /api/payments/ipn
- * Receives IPN (Instant Payment Notification) from PayVault
+ * Receives IPN (Instant Payment Notification) from Trialvo Pay
  * Updates the local order status based on payment result
  */
 async function handleIpn(req, res) {
   try {
     // Get raw body for signature verification
     const rawBody = JSON.stringify(req.body);
-    const signature = req.headers['x-payvault-signature'];
+    const signature = req.headers['x-trialvo-pay-signature'];
 
     console.log('[IPN] Received notification:', {
       event: req.body?.event,
@@ -41,7 +41,7 @@ async function handleIpn(req, res) {
       return res.status(200).json({ received: true }); // Acknowledge but skip
     }
 
-    // Map PayVault events to order statuses
+    // Map Trialvo Pay events to order statuses
     let newStatus = null;
     let paymentStatus = null;
 
@@ -96,11 +96,11 @@ async function handleIpn(req, res) {
       values.push(paymentStatus);
     }
     if (transactionId) {
-      updates.push('payvault_transaction_id = ?');
+      updates.push('trialvo_pay_transaction_id = ?');
       values.push(transactionId);
     }
     if (billToken) {
-      updates.push('payvault_bill_token = ?');
+      updates.push('trialvo_pay_bill_token = ?');
       values.push(billToken);
     }
 
@@ -120,7 +120,7 @@ async function handleIpn(req, res) {
 
   } catch (error) {
     console.error('[IPN] Error:', error.message);
-    // Always return 200 to PayVault to prevent retries for our bugs
+    // Always return 200 to Trialvo Pay to prevent retries for our bugs
     return res.status(200).json({ received: true, error: 'Processing error' });
   }
 }

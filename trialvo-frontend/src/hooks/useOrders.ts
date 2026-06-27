@@ -29,7 +29,7 @@ interface Order {
   total_bdt: number;
   pay_url: string | null;
   bill_token: string | null;
-  payvault_transaction_id: string | null;
+  trialvo_pay_transaction_id: string | null;
   created_at: string;
 }
 

@@ -13,7 +13,7 @@ const OrderSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('orderId') || 'ORD-XXXXXX';
   const productSlug = searchParams.get('product');
-  // PayVault appends these on redirect back
+  // Trialvo Pay appends these on redirect back
   const transactionId = searchParams.get('transaction_id');
   const billToken = searchParams.get('bill_token');
 
@@ -73,7 +73,7 @@ const OrderSuccessPage: React.FC = () => {
               <span className="ml-2 font-mono font-bold text-lg">{orderId}</span>
             </div>
 
-            {/* PayVault Transaction Badge */}
+            {/* Trialvo Pay Transaction Badge */}
             {transactionId && (
               <div className="flex items-center justify-center gap-2 mb-6">
                 <div className="inline-flex items-center gap-2 bg-success/10 border border-success/30 text-success rounded-full px-4 py-1.5 text-sm font-medium">

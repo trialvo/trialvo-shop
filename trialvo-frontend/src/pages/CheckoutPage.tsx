@@ -23,7 +23,7 @@ const CheckoutPage: React.FC = () => {
   const { data: product, isLoading: productLoading } = useProduct(productSlug || undefined);
   const createOrder = useCreateOrder();
 
-  // Check for error params from PayVault redirect
+  // Check for error params from Trialvo Pay redirect
   const errorParam = searchParams.get('error');
 
   const [formData, setFormData] = useState({
@@ -87,12 +87,12 @@ const CheckoutPage: React.FC = () => {
         company: formData.company,
         needsHosting: formData.needsHosting,
         notes: formData.notes,
-        paymentMethod: 'payvault',
+        paymentMethod: 'trialvo_pay',
         totalBdt: product.priceBDT,
       });
 
       if (order.pay_url) {
-        // Redirect to PayVault hosted payment page
+        // Redirect to Trialvo Pay hosted payment page
         toast.success(
           language === 'bn'
             ? 'পেমেন্ট পেজে পাঠানো হচ্ছে...'
@@ -102,7 +102,7 @@ const CheckoutPage: React.FC = () => {
           window.location.href = order.pay_url!;
         }, 800);
       } else {
-        // PayVault unreachable — fallback
+        // Trialvo Pay unreachable — fallback
         toast.error(
           language === 'bn'
             ? 'পেমেন্ট সিস্টেমে সংযোগ করা যায়নি। পরে আবার চেষ্টা করুন।'
@@ -265,7 +265,7 @@ const CheckoutPage: React.FC = () => {
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {language === 'bn'
                           ? 'বিকাশ, নগদ, কার্ড সহ সব পদ্ধতি সাপোর্টেড'
-                          : 'bKash, Nagad, Card & more — powered by PayVault'
+                          : 'bKash, Nagad, Card & more — powered by Trialvo Pay'
                         }
                       </p>
                     </div>

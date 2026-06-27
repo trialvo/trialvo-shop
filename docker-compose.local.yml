@@ -38,10 +38,10 @@ services:
       CORS_ORIGIN: http://localhost:8091
       JWT_SECRET: local-dev-jwt-secret-trialvo-2026
       JWT_EXPIRES_IN: 7d
-      PAYVAULT_BASE_URL: http://host.docker.internal:8080
-      PAYVAULT_SERVICE_ID: 33649f24-e397-4a79-b21b-1587867fff8d
-      PAYVAULT_API_KEY: 2e94d40fc3541163396529d79290b1cc3b303bb13ddd85d4a05c3f2cae8af6ca
-      PAYVAULT_IPN_SECRET: 792af9f5937bb7be5ec8bc0722f0d0abe3deb24d8b15841f8e417326cd52684b
+      TRIALVO_PAY_BASE_URL: http://trialvo-pay:8080
+      TRIALVO_PAY_SERVICE_ID: 33649f24-e397-4a79-b21b-1587867fff8d
+      TRIALVO_PAY_API_KEY: 2e94d40fc3541163396529d79290b1cc3b303bb13ddd85d4a05c3f2cae8af6ca
+      TRIALVO_PAY_IPN_SECRET: 792af9f5937bb7be5ec8bc0722f0d0abe3deb24d8b15841f8e417326cd52684b
       FRONTEND_URL: http://localhost:8091
       IPN_URL: http://host.docker.internal:8091/api/payments/ipn
     extra_hosts:
@@ -78,9 +78,71 @@ services:
     networks:
       - shop_local
 
+  trialvo-pay-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: trialvo_pay
+      POSTGRES_USER: trialvo_pay
+      POSTGRES_PASSWORD: localdevpassword
+    volumes:
+      - trialvo-pay-postgres_data_local:/var/lib/postgresql/data
+    networks:
+      - shop_local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trialvo_pay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  trialvo-pay-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass localdevpassword --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - trialvo-pay-redis_data_local:/data
+    networks:
+      - shop_local
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "localdevpassword", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  trialvo-pay:
+    build:
+      context: ./trialvo-pay
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      trialvo-pay-postgres:
+        condition: service_healthy
+      trialvo-pay-redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://trialvo_pay:localdevpassword@trialvo-pay-postgres:5432/trialvo_pay
+      REDIS_URL: redis://:localdevpassword@trialvo-pay-redis:6379
+      MASTER_KEY: 7cdf6bc0d46db841e18b19727e6f2476ee89569bc333df23142d0e136f1e5e1b
+      BASE_URL: http://localhost:8088
+      HOST: 0.0.0.0
+      PORT: 8080
+      RUST_LOG: info
+    networks:
+      - shop_local
+    ports:
+      - "8088:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
 networks:
   shop_local:
     driver: bridge
 
 volumes:
   shop_mysql_data_local:
+  trialvo-pay-postgres_data_local:
+  trialvo-pay-redis_data_local:

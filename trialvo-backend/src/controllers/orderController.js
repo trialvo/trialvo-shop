@@ -1,8 +1,8 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
-const { createPayVaultBill } = require('../config/payvault');
+const { createTrialvoPayBill } = require('../config/trialvo_pay');
 
-// POST /api/orders — public, create order + initiate PayVault payment
+// POST /api/orders — public, create order + initiate Trialvo Pay payment
 async function createOrder(req, res, next) {
   try {
     const id = uuidv4();
@@ -20,7 +20,7 @@ async function createOrder(req, res, next) {
       [
         id, orderId, productId || null, customerName, customerEmail,
         customerPhone, company || '', needsHosting ? 1 : 0,
-        notes || '', paymentMethod || 'payvault', totalBdt || 0, 'pending',
+        notes || '', paymentMethod || 'trialvo_pay', totalBdt || 0, 'pending',
         discountAmount || 0, shippingAddress ? JSON.stringify(shippingAddress) : null,
       ]
     );
@@ -31,12 +31,12 @@ async function createOrder(req, res, next) {
       [uuidv4(), id]
     );
 
-    // ── 2. Create PayVault bill & get payment URL ───────────────────────
+    // ── 2. Create Trialvo Pay bill & get payment URL ───────────────────────
     let pay_url = null;
     let bill_token = null;
 
     try {
-      const billResult = await createPayVaultBill({
+      const billResult = await createTrialvoPayBill({
         orderId,
         productId,
         productName: productName || 'Digital Product',
@@ -52,13 +52,13 @@ async function createOrder(req, res, next) {
 
       // Store the payment URL and bill token
       await pool.execute(
-        'UPDATE orders SET pay_url = ?, payvault_bill_token = ? WHERE id = ?',
+        'UPDATE orders SET pay_url = ?, trialvo_pay_bill_token = ? WHERE id = ?',
         [pay_url, bill_token, id]
       ).catch(() => {}); // Ignore if columns not migrated yet
 
-      console.log(`[Order] PayVault bill created — order: ${orderId}, token: ${bill_token}`);
+      console.log(`[Order] Trialvo Pay bill created — order: ${orderId}, token: ${bill_token}`);
     } catch (pvErr) {
-      console.error(`[Order] PayVault bill creation failed: ${pvErr.message}`);
+      console.error(`[Order] Trialvo Pay bill creation failed: ${pvErr.message}`);
       // Return order anyway — frontend shows error
     }
 
