@@ -1,14 +1,14 @@
 /**
  * Trialvo Shop ↔ Trialvo Pay Credential Seeder
  * 
- * This script generates proper AES-256-GCM encrypted credentials
- * for the trialvo-pay database. It uses the same MASTER_KEY and
- * crypto algorithms as the Rust service.
+ * Generates proper AES-256-GCM encrypted credentials + Argon2id admin hash.
+ * Uses the same MASTER_KEY and crypto algorithms as the Rust service.
  * 
  * Usage: node generate_seed.js
  */
 
 const crypto = require('crypto');
+const argon2 = require('argon2');
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
@@ -20,12 +20,16 @@ const SERVICE_ID = '28280023-008f-4307-83de-5e4eabb57562';
 const SERVICE_SLUG = 'trialvo-shop';
 const SERVICE_NAME = 'Trialvo Shop';
 
-// EPS Live Gateway credentials (provided by user)
-const EPS_LIVE_USERNAME = 'antorboss.bd@gmail.com';
-const EPS_LIVE_PASSWORD = 'Antor@8010';
-const EPS_LIVE_HASH_KEY = 'FHZxyzeps56789gfhg678ygu876o='; // From EPS docs — update if you have a different one
+// Trialvo Pay Admin credentials
+const ADMIN_EMAIL = 'antorboss.bd@gmail.com';
+const ADMIN_PASSWORD = 'Antor@8010';
+const ADMIN_DISPLAY_NAME = 'Antor Boss';
 
-// EPS Sandbox Gateway credentials
+// ─── EPS SANDBOX Credentials (from EPS documentation) ─────────────────────────
+// Source: trialvo-pay/Trialvo 12/Trialvo/Trialvo/SandBox_Credentials(Eps_Demo)
+const EPS_SANDBOX_BASE_URL = 'https://sandboxpgapi.eps.com.bd/v1';
+const EPS_SANDBOX_MERCHANT_ID = '29e86e70-0ac6-45eb-ba04-9fcb0aaed12a';
+const EPS_SANDBOX_STORE_ID = 'd44e705f-9e3a-41de-98b1-1674631637da';
 const EPS_SANDBOX_USERNAME = 'Epsdemo@gmail.com';
 const EPS_SANDBOX_PASSWORD = 'Epsdemo258@';
 const EPS_SANDBOX_HASH_KEY = 'FHZxyzeps56789gfhg678ygu876o=';
@@ -34,169 +38,168 @@ const EPS_SANDBOX_HASH_KEY = 'FHZxyzeps56789gfhg678ygu876o=';
 
 /**
  * AES-256-GCM encrypt (matches trialvo-pay's crypto::aes::encrypt)
- * Output: hex(nonce_12_bytes + ciphertext_with_tag)
+ * Output: hex(nonce_12_bytes + ciphertext + tag_16_bytes)
  */
 function aesEncrypt(masterKeyHex, plaintext) {
   const keyBytes = Buffer.from(masterKeyHex, 'hex');
   if (keyBytes.length !== 32) throw new Error('Master key must be 32 bytes');
 
-  const nonce = crypto.randomBytes(12); // 12-byte nonce for GCM
+  const nonce = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', keyBytes, nonce);
-
   const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
-  const tag = cipher.getAuthTag(); // 16-byte auth tag
+  const tag = cipher.getAuthTag();
 
-  // Combine: nonce + ciphertext + tag (this is what Rust's aes-gcm produces)
-  const combined = Buffer.concat([nonce, encrypted, tag]);
-  return combined.toString('hex');
+  // nonce + ciphertext + tag (matches Rust aes-gcm crate output)
+  return Buffer.concat([nonce, encrypted, tag]).toString('hex');
 }
 
 /**
- * AES-256-GCM decrypt (verify our encryption matches Rust's decryption)
+ * AES-256-GCM decrypt (verify roundtrip)
  */
 function aesDecrypt(masterKeyHex, encryptedHex) {
   const keyBytes = Buffer.from(masterKeyHex, 'hex');
   const combined = Buffer.from(encryptedHex, 'hex');
-
-  if (combined.length < 28) throw new Error('Encrypted data too short'); // 12 nonce + 16 tag minimum
-
   const nonce = combined.subarray(0, 12);
   const ciphertext = combined.subarray(12, combined.length - 16);
   const tag = combined.subarray(combined.length - 16);
 
   const decipher = crypto.createDecipheriv('aes-256-gcm', keyBytes, nonce);
   decipher.setAuthTag(tag);
-
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
 }
 
-/**
- * SHA-256 hash for key lookup (matches hmac::hash_key_for_lookup)
- */
 function hashKeyForLookup(rawKey) {
   return crypto.createHash('sha256').update(rawKey).digest('hex');
 }
 
-/**
- * Generate a 32-byte random hex key (matches hmac::generate_service_secret)
- */
 function generateSecret() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-// ─── Generate Credentials ─────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
-// Generate the API key that the shop backend will use
-const apiKey = generateSecret();
-const apiKeyHash = hashKeyForLookup(apiKey);
-const apiKeyPrefix = apiKey.substring(0, 8);
+async function main() {
+  // Generate API key
+  const apiKey = generateSecret();
+  const apiKeyHash = hashKeyForLookup(apiKey);
+  const apiKeyPrefix = apiKey.substring(0, 8);
+  const encryptedApiKey = aesEncrypt(MASTER_KEY, apiKey);
 
-// The API key is used as both the "key sent in header" AND the "secret for HMAC signing"
-// In trialvo-pay, the decrypted_key from encrypted_key is compared against the HMAC
-const encryptedApiKey = aesEncrypt(MASTER_KEY, apiKey);
+  // IPN secret
+  const ipnSecret = generateSecret();
 
-// IPN secret for webhook signature verification
-const ipnSecret = generateSecret();
+  // Encrypt EPS sandbox credentials
+  const encSandboxUsername = aesEncrypt(MASTER_KEY, EPS_SANDBOX_USERNAME);
+  const encSandboxPassword = aesEncrypt(MASTER_KEY, EPS_SANDBOX_PASSWORD);
+  const encSandboxHashKey = aesEncrypt(MASTER_KEY, EPS_SANDBOX_HASH_KEY);
 
-// Encrypt EPS credentials
-const encLiveUsername = aesEncrypt(MASTER_KEY, EPS_LIVE_USERNAME);
-const encLivePassword = aesEncrypt(MASTER_KEY, EPS_LIVE_PASSWORD);
-const encLiveHashKey = aesEncrypt(MASTER_KEY, EPS_LIVE_HASH_KEY);
-const encSandboxUsername = aesEncrypt(MASTER_KEY, EPS_SANDBOX_USERNAME);
-const encSandboxPassword = aesEncrypt(MASTER_KEY, EPS_SANDBOX_PASSWORD);
-const encSandboxHashKey = aesEncrypt(MASTER_KEY, EPS_SANDBOX_HASH_KEY);
+  // Hash admin password with Argon2id (same params as Rust: m=65536, t=3, p=4)
+  const adminHash = await argon2.hash(ADMIN_PASSWORD, {
+    type: argon2.argon2id,
+    memoryCost: 65536,  // 64 MiB
+    timeCost: 3,
+    parallelism: 4,
+  });
 
-// ─── Verify Encryption Works ──────────────────────────────────────────────────
+  // ─── Verify ─────────────────────────────────────────────────────────────
+  console.log('=== Verification ===');
+  console.log(`AES roundtrip: ${aesDecrypt(MASTER_KEY, encryptedApiKey) === apiKey ? '✅' : '❌'}`);
+  console.log(`Sandbox username: ${aesDecrypt(MASTER_KEY, encSandboxUsername) === EPS_SANDBOX_USERNAME ? '✅' : '❌'}`);
+  const argonOk = await argon2.verify(adminHash, ADMIN_PASSWORD);
+  console.log(`Argon2 verify: ${argonOk ? '✅' : '❌'}`);
+  console.log();
 
-console.log('=== Verifying AES encryption/decryption ===');
-const testDecrypt = aesDecrypt(MASTER_KEY, encryptedApiKey);
-console.log(`API Key matches after decrypt: ${testDecrypt === apiKey ? '✅ YES' : '❌ NO'}`);
-const testUsername = aesDecrypt(MASTER_KEY, encLiveUsername);
-console.log(`Live username matches: ${testUsername === EPS_LIVE_USERNAME ? '✅ YES' : '❌ NO'}`);
-console.log();
+  // ─── Backend env values ─────────────────────────────────────────────────
+  console.log('=== Backend environment values ===');
+  console.log(`TRIALVO_PAY_SERVICE_ID=${SERVICE_ID}`);
+  console.log(`TRIALVO_PAY_API_KEY=${apiKey}`);
+  console.log(`TRIALVO_PAY_IPN_SECRET=${ipnSecret}`);
+  console.log();
 
-// ─── Print Credentials for .env ───────────────────────────────────────────────
-
-console.log('=== Backend .env / docker-compose credentials ===');
-console.log(`TRIALVO_PAY_SERVICE_ID=${SERVICE_ID}`);
-console.log(`TRIALVO_PAY_API_KEY=${apiKey}`);
-console.log(`TRIALVO_PAY_IPN_SECRET=${ipnSecret}`);
-console.log();
-
-// ─── Generate SQL ─────────────────────────────────────────────────────────────
-
-const sql = `-- ═══════════════════════════════════════════════════════════════════
+  // ─── Generate SQL ───────────────────────────────────────────────────────
+  const sql = `-- ═══════════════════════════════════════════════════════════════════
 -- Trialvo Pay Seed SQL — Auto-generated
 -- Generated at: ${new Date().toISOString()}
--- MASTER_KEY: ${MASTER_KEY.substring(0, 8)}...
+-- Mode: SANDBOX
 -- ═══════════════════════════════════════════════════════════════════
 
--- ─── 1. Service Registration ──────────────────────────────────────
+-- ─── 1. Admin User ────────────────────────────────────────────────
+-- Email: ${ADMIN_EMAIL}
+-- Password: ${ADMIN_PASSWORD}
+INSERT INTO admins (email, password_hash, display_name, role, is_active)
+VALUES ('${ADMIN_EMAIL}', '${adminHash}', '${ADMIN_DISPLAY_NAME}', 'super_admin', true)
+ON CONFLICT (email) DO UPDATE SET
+  password_hash = EXCLUDED.password_hash,
+  display_name = EXCLUDED.display_name,
+  role = 'super_admin',
+  is_active = true;
+
+-- ─── 2. Service Registration ─────────────────────────────────────
 INSERT INTO services (id, slug, display_name, success_url, fail_url, cancel_url, is_sandbox, is_active)
 VALUES ('${SERVICE_ID}', '${SERVICE_SLUG}', '${SERVICE_NAME}',
   'https://shop.trialvo.com/order-success',
   'https://shop.trialvo.com/checkout?error=payment_failed',
   'https://shop.trialvo.com/checkout?error=payment_cancelled',
-  false, true)
+  true, true)
 ON CONFLICT (slug) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   success_url = EXCLUDED.success_url,
   fail_url = EXCLUDED.fail_url,
   cancel_url = EXCLUDED.cancel_url,
+  is_sandbox = true,
   is_active = true;
 
--- ─── 2. API Key (AES-256-GCM encrypted) ──────────────────────────
+-- ─── 3. API Key (AES-256-GCM encrypted) ──────────────────────────
 -- Raw API Key: ${apiKey}
--- Key Hash (SHA-256): ${apiKeyHash}
--- Key Prefix: ${apiKeyPrefix}
+-- Key Hash: ${apiKeyHash}
 DELETE FROM service_keys WHERE service_id = '${SERVICE_ID}';
 INSERT INTO service_keys (service_id, key_hash, encrypted_key, key_prefix, is_primary, is_active)
 VALUES ('${SERVICE_ID}', '${apiKeyHash}', decode('${encryptedApiKey}', 'hex'), '${apiKeyPrefix}', true, true);
 
--- ─── 3. IPN Endpoint ─────────────────────────────────────────────
--- Uses internal Docker hostname for reliability
+-- ─── 4. IPN Endpoint ─────────────────────────────────────────────
 DELETE FROM ipn_endpoints WHERE service_id = '${SERVICE_ID}';
 INSERT INTO ipn_endpoints (service_id, url, secret, is_active)
 VALUES ('${SERVICE_ID}', 'http://backend:5000/api/payments/ipn', '${ipnSecret}', true);
 
--- ─── 4. EPS Gateway Credentials (AES-256-GCM encrypted) ──────────
--- Sandbox credentials
+-- ─── 5. EPS Gateway — Sandbox Mode ───────────────────────────────
+-- Sandbox URL: ${EPS_SANDBOX_BASE_URL}
+-- Sandbox Merchant ID: ${EPS_SANDBOX_MERCHANT_ID}
+-- Sandbox Store ID: ${EPS_SANDBOX_STORE_ID}
+-- Sandbox Username: ${EPS_SANDBOX_USERNAME}
+-- Sandbox Password: ${EPS_SANDBOX_PASSWORD}
+-- Sandbox Hash Key: ${EPS_SANDBOX_HASH_KEY}
 UPDATE system_config SET value = '${encSandboxUsername}' WHERE category = 'eps' AND key_name = 'sandbox_username';
 UPDATE system_config SET value = '${encSandboxPassword}' WHERE category = 'eps' AND key_name = 'sandbox_password';
 UPDATE system_config SET value = '${encSandboxHashKey}' WHERE category = 'eps' AND key_name = 'sandbox_hash_key';
+UPDATE system_config SET value = '${EPS_SANDBOX_MERCHANT_ID}' WHERE category = 'eps' AND key_name = 'sandbox_merchant_id';
+UPDATE system_config SET value = '${EPS_SANDBOX_STORE_ID}' WHERE category = 'eps' AND key_name = 'sandbox_store_id';
+UPDATE system_config SET value = '${EPS_SANDBOX_BASE_URL}' WHERE category = 'eps' AND key_name = 'sandbox_base_url';
 
--- Live credentials (antorboss.bd@gmail.com)
-UPDATE system_config SET value = '${encLiveUsername}' WHERE category = 'eps' AND key_name = 'live_username';
-UPDATE system_config SET value = '${encLivePassword}' WHERE category = 'eps' AND key_name = 'live_password';
-UPDATE system_config SET value = '${encLiveHashKey}' WHERE category = 'eps' AND key_name = 'live_hash_key';
-
--- Set mode to live (use sandbox for testing)
-UPDATE system_config SET value = 'live' WHERE category = 'eps' AND key_name = 'mode';
+-- Set mode to SANDBOX
+UPDATE system_config SET value = 'sandbox' WHERE category = 'eps' AND key_name = 'mode';
 
 -- ═══════════════════════════════════════════════════════════════════
--- IMPORTANT: Update your backend environment with these values:
+-- Backend env:
 --   TRIALVO_PAY_API_KEY=${apiKey}
 --   TRIALVO_PAY_IPN_SECRET=${ipnSecret}
+--
+-- Admin login:
+--   Email: ${ADMIN_EMAIL}
+--   Password: ${ADMIN_PASSWORD}
 -- ═══════════════════════════════════════════════════════════════════
 `;
 
-console.log('=== Generated seed.sql ===');
-console.log(sql);
+  console.log(sql);
 
-// Write to file
-const fs = require('fs');
-const path = require('path');
-fs.writeFileSync(path.join(__dirname, 'seed.sql'), sql);
-console.log('✅ seed.sql written successfully');
+  // Write files
+  const fs = require('fs');
+  const path = require('path');
+  fs.writeFileSync(path.join(__dirname, 'seed.sql'), sql);
+  console.log('✅ seed.sql written');
 
-// Also output the env values needed for docker-compose
-const envUpdate = {
-  TRIALVO_PAY_API_KEY: apiKey,
-  TRIALVO_PAY_IPN_SECRET: ipnSecret,
-  TRIALVO_PAY_SERVICE_ID: SERVICE_ID,
-};
-fs.writeFileSync(
-  path.join(__dirname, '.generated_credentials.json'),
-  JSON.stringify(envUpdate, null, 2)
-);
-console.log('✅ .generated_credentials.json written');
+  const creds = { TRIALVO_PAY_API_KEY: apiKey, TRIALVO_PAY_IPN_SECRET: ipnSecret, TRIALVO_PAY_SERVICE_ID: SERVICE_ID };
+  fs.writeFileSync(path.join(__dirname, '.generated_credentials.json'), JSON.stringify(creds, null, 2));
+  console.log('✅ .generated_credentials.json written');
+}
+
+main().catch(console.error);
