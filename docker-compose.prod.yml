@@ -1,6 +1,7 @@
 # ═══════════════════════════════════════════════════════════
 # Trialvo Shop — Production Docker Compose
 # Single PostgreSQL instance for both services
+# Host nginx handles reverse proxy (port 80/443)
 # ═══════════════════════════════════════════════════════════
 
 services:
@@ -41,6 +42,7 @@ services:
       retries: 5
 
   # ─── Backend (Node.js Shop API) ──────────────────────────
+  # Host nginx: shop-api.trialvo.com → 127.0.0.1:5000
   backend:
     build:
       context: ./trialvo-backend
@@ -49,6 +51,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    ports:
+      - "127.0.0.1:5000:5000"
     environment:
       PORT: 5000
       NODE_ENV: production
@@ -65,7 +69,7 @@ services:
       TRIALVO_PAY_API_KEY: daf90c493bf0c883fc5d766ffd3033a6bce160dfcd8dceee9e6e514e0ac6e9a9
       TRIALVO_PAY_IPN_SECRET: 41215d634fe61aa1693bebbd9e85b935b84a7a4d2be0d4718aca335e3570177b
       FRONTEND_URL: https://shop.trialvo.com
-      IPN_URL: https://shop-api.trialvo.com/api/payments/ipn
+      IPN_URL: http://backend:5000/api/payments/ipn
     networks:
       - shop_internal
     healthcheck:
@@ -76,6 +80,7 @@ services:
       start_period: 20s
 
   # ─── Frontend (Vite React static) ───────────────────────
+  # Host nginx: shop.trialvo.com → 127.0.0.1:8090
   frontend:
     build:
       context: ./trialvo-frontend
@@ -83,10 +88,13 @@ services:
       args:
         VITE_API_URL: https://shop-api.trialvo.com/api
     restart: always
+    ports:
+      - "127.0.0.1:8090:80"
     networks:
       - shop_internal
 
   # ─── Trialvo Pay (Rust payment service) ──────────────────
+  # Host nginx: pay.trialvo.com → 127.0.0.1:8088
   trialvo-pay:
     build:
       context: ./trialvo-pay
@@ -97,6 +105,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    ports:
+      - "127.0.0.1:8088:8080"
     environment:
       DATABASE_URL: postgresql://trialvo:Tr1alv0DB2026Secure!@postgres:5432/trialvo_pay
       REDIS_URL: redis://:TrialvoPayRedis2026Secure!@redis:6379
@@ -113,21 +123,6 @@ services:
       timeout: 10s
       start_period: 30s
       retries: 3
-
-  # ─── Nginx Reverse Proxy ─────────────────────────────────
-  nginx:
-    image: nginx:alpine
-    restart: always
-    depends_on:
-      - backend
-      - frontend
-      - trialvo-pay
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - shop_internal
 
 networks:
   shop_internal:
