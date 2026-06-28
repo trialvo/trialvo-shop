@@ -14,4 +14,4 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'trialvo_pay')\gexec
 EOSQL
 
-echo "✅ Both databases (trialvo_shop, trialvo_pay) created successfully"
+echo "Both databases (trialvo_shop, trialvo_pay) created successfully"

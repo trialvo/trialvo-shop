@@ -36,7 +36,7 @@ ON CONFLICT (slug) DO UPDATE SET
 -- Key Hash: 5b5e5c798ddf332cde6c450a8be264395f8c5dd78897a36a4154a42098bb4918
 DELETE FROM service_keys WHERE service_id = '28280023-008f-4307-83de-5e4eabb57562';
 INSERT INTO service_keys (service_id, key_hash, encrypted_key, key_prefix, is_primary, is_active)
-VALUES ('28280023-008f-4307-83de-5e4eabb57562', '5b5e5c798ddf332cde6c450a8be264395f8c5dd78897a36a4154a42098bb4918', decode('f6cb4b04f76b46c41e2eed7de32af9dbe5218cd1b9699671e7fd5aa6d131684f63ba4bcbc6bf4734f2de5d5a07a64b27046f8b0f87c656f93e093c4eed2fc0726717960881959fa10c68bd3d61ec28897f522ad9efddb22b33665091', 'hex'), 'daf90c49', true, true);
+VALUES ('28280023-008f-4307-83de-5e4eabb57562', '5b5e5c798ddf332cde6c450a8be264395f8c5dd78897a36a4154a42098bb4918', convert_to('f6cb4b04f76b46c41e2eed7de32af9dbe5218cd1b9699671e7fd5aa6d131684f63ba4bcbc6bf4734f2de5d5a07a64b27046f8b0f87c656f93e093c4eed2fc0726717960881959fa10c68bd3d61ec28897f522ad9efddb22b33665091', 'UTF8'), 'daf90c49', true, true);
 
 -- ─── 4. IPN Endpoint ─────────────────────────────────────────────
 DELETE FROM ipn_endpoints WHERE service_id = '28280023-008f-4307-83de-5e4eabb57562';
