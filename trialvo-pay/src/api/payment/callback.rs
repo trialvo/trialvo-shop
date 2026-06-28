@@ -2,7 +2,7 @@ use actix_web::{web, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 
 use crate::cache::{cache_eps_token, get_cached_eps_token, get_token_ttl};
-use crate::db::bills::{get_bill_by_token, update_bill_status};
+use crate::db::bills::{get_bill_by_token, get_bill_items, update_bill_status};
 use crate::db::config::get_eps_credentials;
 use crate::db::customers::update_customer_stats_on_payment;
 use crate::db::services::get_service_by_id;
@@ -116,6 +116,17 @@ pub async fn callback_handler(
         let _ = update_bill_status(&state.db, bill.id, "cancelled").await;
 
         // ── Dispatch payment.cancelled IPN ─────────────────────────────────
+        // Load bill items for enriched payload
+        let items_json = match get_bill_items(&state.db, bill.id).await {
+            Ok(items) => serde_json::json!(items.iter().map(|i| serde_json::json!({
+                "product_name": i.product_name,
+                "external_product_id": i.external_product_id,
+                "quantity": i.quantity,
+                "unit_final_price": i.unit_final_price,
+            })).collect::<Vec<_>>()),
+            Err(_) => serde_json::json!([]),
+        };
+
         if let Err(e) = dispatch_event(
             &state.db,
             &state.ipn_client,
@@ -123,14 +134,24 @@ pub async fn callback_handler(
             "payment.cancelled",
             &serde_json::json!({
                 "event": "payment.cancelled",
-                "bill_token": bill.bill_token,
-                "amount": bill.final_amount,
-                "currency": bill.currency,
-                "status": "cancelled",
-                "external_order_id": bill.external_order_id,
-                "external_subscription_id": bill.external_subscription_id,
-                "gateway_provider": query.financial_entity,
-                "timestamp": chrono::Utc::now().to_rfc3339(),
+                "data": {
+                    "bill_token": bill.bill_token,
+                    "bill_id": bill.id,
+                    "external_order_id": bill.external_order_id,
+                    "external_subscription_id": bill.external_subscription_id,
+                    "status": "cancelled",
+                    "amount": bill.final_amount,
+                    "subtotal": bill.subtotal,
+                    "final_amount": bill.final_amount,
+                    "currency": bill.currency,
+                    "gateway_provider": query.financial_entity,
+                    "customer_name": bill.customer_name,
+                    "customer_email": bill.customer_email,
+                    "customer_phone": bill.customer_phone,
+                    "meta": bill.service_meta,
+                    "items": items_json,
+                    "timestamp": chrono::Utc::now().to_rfc3339(),
+                }
             }),
             Some(tx.id),
             None,
@@ -232,6 +253,17 @@ pub async fn callback_handler(
     // ── Dispatch IPN event (payment.success or payment.failed) ────────────
     let ipn_event = if is_success { "payment.success" } else { "payment.failed" };
 
+    // Load bill items for enriched payload
+    let items_json = match get_bill_items(&state.db, bill.id).await {
+        Ok(items) => serde_json::json!(items.iter().map(|i| serde_json::json!({
+            "product_name": i.product_name,
+            "external_product_id": i.external_product_id,
+            "quantity": i.quantity,
+            "unit_final_price": i.unit_final_price,
+        })).collect::<Vec<_>>()),
+        Err(_) => serde_json::json!([]),
+    };
+
     if let Err(e) = dispatch_event(
         &state.db,
         &state.ipn_client,
@@ -239,24 +271,31 @@ pub async fn callback_handler(
         ipn_event,
         &serde_json::json!({
             "event": ipn_event,
-            "bill_token": bill.bill_token,
-            "transaction_id": tx.eps_merchant_tx_id,
-            "eps_transaction_id": query.transaction_id,
-            "amount": tx.amount,
-            "currency": tx.currency,
-            "status": new_bill_status,
-            "financial_entity": query.financial_entity,
-            "gateway_provider": query.financial_entity,
-            "customer_id": query.customer_id,
-            "payment_reference": query.payment_reference,
-            "transaction_date": query.transaction_date,
-            "external_order_id": bill.external_order_id,
-            "external_subscription_id": bill.external_subscription_id,
-            "eps_verified_status": verified_status,
-            "value_a": query.value_a,
-            "value_b": query.value_b,
-            "value_c": query.value_c,
-            "timestamp": chrono::Utc::now().to_rfc3339(),
+            "data": {
+                "id": tx.eps_merchant_tx_id,
+                "bill_token": bill.bill_token,
+                "bill_id": bill.id,
+                "external_order_id": bill.external_order_id,
+                "external_subscription_id": bill.external_subscription_id,
+                "status": new_bill_status,
+                "amount": tx.amount,
+                "subtotal": bill.subtotal,
+                "final_amount": bill.final_amount,
+                "currency": tx.currency,
+                "payment_method": query.financial_entity,
+                "gateway_provider": query.financial_entity,
+                "gateway_transaction_id": query.transaction_id,
+                "payment_reference": query.payment_reference,
+                "transaction_date": query.transaction_date,
+                "paid_at": if is_success { Some(chrono::Utc::now().to_rfc3339()) } else { None },
+                "customer_name": bill.customer_name,
+                "customer_email": bill.customer_email,
+                "customer_phone": bill.customer_phone,
+                "meta": bill.service_meta,
+                "items": items_json,
+                "eps_verified_status": verified_status,
+                "timestamp": chrono::Utc::now().to_rfc3339(),
+            }
         }),
         Some(tx.id),
         None,

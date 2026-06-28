@@ -46,46 +46,70 @@ async function createTrialvoPayBill(params) {
     orderId,
     productName,
     productId,
-    amount,           // BDT amount (number)
+    productSlug,
+    amount,           // BDT final amount (after discount)
+    subtotal,         // BDT subtotal (before discount)
+    discountAmount,   // BDT discount
     customerName,
     customerEmail,
     customerPhone,
+    shippingAddress,  // { address, city, state, postcode, country }
     notes,
+    items,            // [{ id, name, category, quantity, price, discount, finalPrice }]
   } = params;
+
+  // Build items array — multiple products or fallback single
+  const billItems = (items && items.length > 0) ? items.map((item) => ({
+    external_product_id: item.id || productId || 'product-1',
+    product_name: item.name || productName,
+    product_category: item.category || 'Digital Product',
+    quantity: item.quantity || 1,
+    unit_selling_price: item.price || amount,
+    unit_discount: item.discount || 0,
+    unit_final_price: item.finalPrice || item.price || amount,
+  })) : [{
+    external_product_id: productId || 'product-1',
+    product_name: productName,
+    product_category: 'Digital Product',
+    quantity: 1,
+    unit_selling_price: subtotal || amount,
+    unit_discount: discountAmount || 0,
+    unit_final_price: amount,
+  }];
+
+  // Resolve address — use shipping data or defaults
+  const addr = shippingAddress || {};
+  const productParam = productSlug ? `&product=${productSlug}` : '';
 
   const body = {
     external_order_id: orderId,
     currency: 'BDT',
-    subtotal: amount,
+    subtotal: subtotal || amount,
+    total_discount: discountAmount || 0,
     final_amount: amount,
     customer_name: customerName,
     customer_email: customerEmail,
     customer_phone: customerPhone,
-    customer_address: 'Bangladesh',
-    customer_city: 'Dhaka',
-    customer_state: 'Dhaka',
-    customer_postcode: '1000',
-    customer_country: 'BD',
-    success_url: `${FRONTEND_URL}/order-success?orderId=${orderId}`,
-    fail_url: `${FRONTEND_URL}/checkout?error=payment_failed`,
-    cancel_url: `${FRONTEND_URL}/checkout?error=payment_cancelled`,
-    meta: { order_id: orderId, notes: notes || '' },
-    items: [
-      {
-        external_product_id: productId || 'product-1',
-        product_name: productName,
-        product_category: 'Digital Product',
-        quantity: 1,
-        unit_selling_price: amount,
-        unit_final_price: amount,
-      },
-    ],
+    customer_address: addr.address || 'Bangladesh',
+    customer_city: addr.city || 'Dhaka',
+    customer_state: addr.state || 'Dhaka',
+    customer_postcode: addr.postcode || '1000',
+    customer_country: addr.country || 'BD',
+    success_url: `${FRONTEND_URL}/order-success?orderId=${orderId}${productParam}`,
+    fail_url: `${FRONTEND_URL}/checkout?error=payment_failed${productParam ? `${productParam}` : ''}`,
+    cancel_url: `${FRONTEND_URL}/checkout?error=payment_cancelled${productParam ? `${productParam}` : ''}`,
+    meta: {
+      order_id: orderId,
+      product_slug: productSlug || null,
+      notes: notes || '',
+    },
+    items: billItems,
   };
 
   const headers = buildHeaders(body);
 
   console.log(`[Trialvo Pay] Creating bill at ${BASE_URL}/api/v1/bills`);
-  console.log(`[Trialvo Pay] Headers: X-Service-Id=${headers['X-Service-Id']}, X-Api-Key=${headers['X-Api-Key']?.substring(0, 12)}...`);
+  console.log(`[Trialvo Pay] Order: ${orderId}, Items: ${billItems.length}, Amount: ${amount} BDT`);
 
   try {
     const response = await axios.post(

@@ -35,16 +35,51 @@ async function createOrder(req, res, next) {
     let pay_url = null;
     let bill_token = null;
 
+    // Parse shipping address if available
+    let parsedShipping = null;
+    if (shippingAddress) {
+      try {
+        parsedShipping = typeof shippingAddress === 'string' ? JSON.parse(shippingAddress) : shippingAddress;
+      } catch { parsedShipping = null; }
+    }
+
+    // Load product details for enriched bill
+    let productSlug = null;
+    let productCategory = 'Digital Product';
+    if (productId) {
+      const prodResult = await pool.query('SELECT slug, category FROM products WHERE id = $1', [productId]).catch(() => ({ rows: [] }));
+      if (prodResult.rows.length > 0) {
+        productSlug = prodResult.rows[0].slug;
+        productCategory = prodResult.rows[0].category || 'Digital Product';
+      }
+    }
+
+    const finalAmount = totalBdt || 0;
+    const subtotalAmount = (discountAmount && discountAmount > 0) ? finalAmount + discountAmount : finalAmount;
+
     try {
       const billResult = await createTrialvoPayBill({
         orderId,
         productId,
         productName: productName || 'Digital Product',
-        amount: totalBdt || 0,
+        productSlug,
+        amount: finalAmount,
+        subtotal: subtotalAmount,
+        discountAmount: discountAmount || 0,
         customerName,
         customerEmail,
         customerPhone,
+        shippingAddress: parsedShipping,
         notes,
+        items: [{
+          id: productId,
+          name: productName || 'Digital Product',
+          category: productCategory,
+          quantity: 1,
+          price: subtotalAmount,
+          discount: discountAmount || 0,
+          finalPrice: finalAmount,
+        }],
       });
 
       pay_url = billResult.pay_url;

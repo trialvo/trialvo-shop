@@ -14,7 +14,7 @@ async function handleIpn(req, res) {
 
     console.log('[IPN] Received notification:', {
       event: req.body?.event,
-      order_id: req.body?.data?.meta?.order_id,
+      order_id: req.body?.data?.meta?.order_id || req.body?.data?.external_order_id,
       status: req.body?.data?.status,
     });
 
@@ -25,19 +25,26 @@ async function handleIpn(req, res) {
     }
 
     const event = req.body?.event;
-    const data = req.body?.data;
+    // Support both nested (data wrapper) and flat payload formats
+    const data = req.body?.data || req.body;
 
-    if (!event || !data) {
-      return res.status(400).json({ error: 'Missing event or data' });
+    if (!event) {
+      return res.status(400).json({ error: 'Missing event' });
     }
 
-    // Extract our order_id from meta
+    // Extract our order_id — try meta first, then external_order_id
     const orderId = data?.meta?.order_id || data?.external_order_id;
-    const transactionId = data?.id;
+    const transactionId = data?.id || data?.transaction_id;
     const billToken = data?.bill_token;
 
+    // Extract enriched payment details
+    const paymentMethod = data?.payment_method || data?.gateway_provider || data?.financial_entity || null;
+    const paymentReference = data?.payment_reference || null;
+    const paidAt = data?.paid_at || data?.timestamp || null;
+    const gatewayTxId = data?.gateway_transaction_id || data?.eps_transaction_id || null;
+
     if (!orderId) {
-      console.warn('[IPN] No order_id in meta:', JSON.stringify(data?.meta));
+      console.warn('[IPN] No order_id in payload:', JSON.stringify(data?.meta));
       return res.status(200).json({ received: true }); // Acknowledge but skip
     }
 
@@ -63,6 +70,7 @@ async function handleIpn(req, res) {
         paymentStatus = 'expired';
         break;
       case 'refund.success':
+      case 'refund.approved':
         paymentStatus = 'refunded';
         break;
       default:
@@ -100,12 +108,33 @@ async function handleIpn(req, res) {
     }
     if (transactionId) {
       updates.push(`trialvo_pay_transaction_id = $${paramIdx}`);
-      values.push(transactionId);
+      values.push(String(transactionId));
       paramIdx++;
     }
     if (billToken) {
       updates.push(`trialvo_pay_bill_token = $${paramIdx}`);
       values.push(billToken);
+      paramIdx++;
+    }
+    // Enriched fields
+    if (paymentMethod) {
+      updates.push(`payment_method = $${paramIdx}`);
+      values.push(paymentMethod);
+      paramIdx++;
+    }
+    if (paymentReference) {
+      updates.push(`payment_reference = $${paramIdx}`);
+      values.push(paymentReference);
+      paramIdx++;
+    }
+    if (paidAt && event === 'payment.success') {
+      updates.push(`paid_at = $${paramIdx}`);
+      values.push(paidAt);
+      paramIdx++;
+    }
+    if (gatewayTxId) {
+      updates.push(`gateway_transaction_id = $${paramIdx}`);
+      values.push(gatewayTxId);
       paramIdx++;
     }
 
@@ -120,7 +149,7 @@ async function handleIpn(req, res) {
       });
     }
 
-    console.log(`[IPN] ✅ Order ${orderId} updated — event: ${event}, status: ${newStatus || 'unchanged'}`);
+    console.log(`[IPN] ✅ Order ${orderId} updated — event: ${event}, status: ${newStatus || 'unchanged'}, method: ${paymentMethod || 'N/A'}, ref: ${paymentReference || 'N/A'}`);
     return res.status(200).json({ received: true });
 
   } catch (error) {
