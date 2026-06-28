@@ -24,3 +24,10 @@ desktop.ini
 
 # Logs
 *.log
+
+# Archives & large assets
+*.zip
+Trialvo*/
+
+# Dev-only artifacts
+implementation_plan.md

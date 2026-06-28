@@ -1,0 +1,35 @@
+# Build artifacts
+target/
+*.pdb
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Development files
+examples/
+tests/
+scripts/
+nginx/
+*.md
+*.bat
+*.sql
+!migrations/*.sql
+
+# Docker files (avoid recursive build context)
+docker-compose*.yml
+Dockerfile
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Zip archives & misc
+*.zip
