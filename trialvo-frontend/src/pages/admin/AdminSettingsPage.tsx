@@ -17,6 +17,7 @@ const AdminSettingsPage: React.FC = () => {
  const [fullName, setFullName] = useState(adminProfile?.full_name || '');
  const [nameLoading, setNameLoading] = useState(false);
 
+ const [currentPassword, setCurrentPassword] = useState('');
  const [newPassword, setNewPassword] = useState('');
  const [confirmPassword, setConfirmPassword] = useState('');
  const [passLoading, setPassLoading] = useState(false);
@@ -33,6 +34,10 @@ const AdminSettingsPage: React.FC = () => {
  };
 
  const handleChangePassword = async () => {
+  if (!currentPassword) {
+   toast({ title: 'Current password is required', variant: 'destructive' });
+   return;
+  }
   if (newPassword !== confirmPassword) {
    toast({ title: 'Passwords do not match', variant: 'destructive' });
    return;
@@ -44,8 +49,9 @@ const AdminSettingsPage: React.FC = () => {
 
   setPassLoading(true);
   try {
-   await api.put('/auth/password', { newPassword });
+   await api.put('/auth/password', { currentPassword, newPassword });
    toast({ title: 'Password changed successfully' });
+   setCurrentPassword('');
    setNewPassword('');
    setConfirmPassword('');
   } catch (err: any) {
@@ -144,6 +150,11 @@ const AdminSettingsPage: React.FC = () => {
 
       <div className="space-y-4">
        <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">Current Password</Label>
+        <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+       </div>
+
+       <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground font-medium">New Password</Label>
         <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
        </div>
@@ -153,7 +164,7 @@ const AdminSettingsPage: React.FC = () => {
         <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
        </div>
 
-       <Button onClick={handleChangePassword} disabled={passLoading || !newPassword || !confirmPassword} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm h-9 text-sm">
+       <Button onClick={handleChangePassword} disabled={passLoading || !currentPassword || !newPassword || !confirmPassword} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm h-9 text-sm">
         {passLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Lock className="w-4 h-4 mr-1.5" />}
         Change Password
        </Button>

@@ -23,6 +23,9 @@ const Components = {
 
     return `
       <div class="admin-layout">
+        <!-- Mobile Sidebar Backdrop -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
           <div class="sidebar-header">
@@ -41,6 +44,9 @@ const Components = {
                 <div class="logo-sub">Admin Console</div>
               </div>
             </div>
+            <button class="sidebar-close-btn" id="sidebar-close" aria-label="Close sidebar">
+              <i data-lucide="x"></i>
+            </button>
           </div>
           <nav class="sidebar-nav">
             ${navHTML}
@@ -61,7 +67,7 @@ const Components = {
         <main class="main-content">
           <!-- Top Header -->
           <header class="top-header">
-            <button class="btn-icon" id="sidebar-toggle">
+            <button class="btn-icon" id="sidebar-toggle" aria-label="Toggle navigation">
               <i data-lucide="menu"></i>
             </button>
             <div class="header-right">

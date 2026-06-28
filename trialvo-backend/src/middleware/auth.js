@@ -5,7 +5,7 @@ async function authenticate(req, res, next) {
  try {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-   return res.status(401).json({ error: 'Access denied. No token provided.' });
+   return res.status(401).json({ error: 'Access denied. No token provided.', code: 'NO_TOKEN' });
   }
 
   const token = authHeader.split(' ')[1];
@@ -18,20 +18,21 @@ async function authenticate(req, res, next) {
   );
 
   if (rows.length === 0) {
-   return res.status(401).json({ error: 'Invalid token. Admin not found.' });
+   return res.status(401).json({ error: 'Invalid token. Admin not found.', code: 'TOKEN_INVALID' });
   }
 
   req.admin = rows[0];
   next();
  } catch (error) {
   if (error.name === 'JsonWebTokenError') {
-   return res.status(401).json({ error: 'Invalid token.' });
+   return res.status(401).json({ error: 'Invalid token.', code: 'TOKEN_INVALID' });
   }
   if (error.name === 'TokenExpiredError') {
-   return res.status(401).json({ error: 'Token expired.' });
+   return res.status(401).json({ error: 'Token expired.', code: 'TOKEN_EXPIRED' });
   }
   next(error);
  }
 }
 
 module.exports = { authenticate };
+

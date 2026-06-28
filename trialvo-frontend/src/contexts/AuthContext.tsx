@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api, setToken, removeToken } from '@/lib/api';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { api, setToken, removeToken, isTokenExpired } from '@/lib/api';
 
 interface AdminProfile {
  id: string;
@@ -26,10 +26,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
  const [isLoading, setIsLoading] = useState(true);
 
+ // Centralized sign-out logic
+ const signOut = useCallback(async () => {
+  removeToken();
+  setSession(null);
+  setUser(null);
+  setAdminProfile(null);
+ }, []);
+
  // On mount, check if token exists and fetch profile
  useEffect(() => {
   const token = localStorage.getItem('auth_token');
   if (token) {
+   // Client-side expiry check first — avoid unnecessary API call
+   if (isTokenExpired()) {
+    removeToken();
+    setIsLoading(false);
+    return;
+   }
+
    setSession({ token });
    api.get<{ admin: AdminProfile }>('/auth/me')
     .then(({ admin }) => {
@@ -49,6 +64,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
  }, []);
 
+ // Listen for 'auth:expired' event from api.ts (triggered on 401 responses)
+ useEffect(() => {
+  const handleAuthExpired = () => {
+   signOut();
+   // Redirect to login with expired flag (only if on admin page)
+   if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+    window.location.href = '/admin/login?expired=true';
+   }
+  };
+
+  window.addEventListener('auth:expired', handleAuthExpired);
+  return () => window.removeEventListener('auth:expired', handleAuthExpired);
+ }, [signOut]);
+
+ // Periodic token expiry check (every 60 seconds)
+ useEffect(() => {
+  if (!session) return;
+
+  const interval = setInterval(() => {
+   if (isTokenExpired()) {
+    signOut();
+    if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+     window.location.href = '/admin/login?expired=true';
+    }
+   }
+  }, 60_000); // Check every 60 seconds
+
+  return () => clearInterval(interval);
+ }, [session, signOut]);
+
  const signIn = async (email: string, password: string) => {
   try {
    const data = await api.post<{ token: string; admin: AdminProfile }>('/auth/login', { email, password });
@@ -60,13 +105,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   } catch (err: any) {
    return { error: err.message || 'Login failed' };
   }
- };
-
- const signOut = async () => {
-  removeToken();
-  setSession(null);
-  setUser(null);
-  setAdminProfile(null);
  };
 
  return (
@@ -81,3 +119,4 @@ export const useAuth = () => {
  if (!context) throw new Error('useAuth must be used within AuthProvider');
  return context;
 };
+

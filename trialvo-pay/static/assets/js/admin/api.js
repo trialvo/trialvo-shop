@@ -23,7 +23,18 @@ const API = {
     const res = await fetch(`${API_BASE}${path}`, opts);
 
     if (res.status === 401) {
-      throw new Error('Unauthorized — session expired');
+      // Auto-logout: clear session and redirect to login
+      if (typeof Auth !== 'undefined') Auth.clear();
+      if (typeof Toast !== 'undefined') Toast.warning('Session expired. Please sign in again.');
+      // Redirect to login with expired flag (avoid loop if already on login)
+      if (!location.pathname.includes('/admin/login')) {
+        if (typeof Router !== 'undefined') {
+          Router.navigate('/admin/login?expired=true', true);
+        } else {
+          location.href = '/admin/login?expired=true';
+        }
+      }
+      throw new Error('Session expired — please sign in again');
     }
 
     const data = await res.json().catch(() => ({}));

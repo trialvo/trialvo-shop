@@ -112,14 +112,20 @@ async function createTrialvoPayBill(params) {
  */
 function verifyIpnSignature(rawBody, receivedSig) {
   if (!receivedSig || !IPN_SECRET) return false;
-  const expected = crypto
-    .createHmac('sha256', IPN_SECRET)
-    .update(rawBody)
-    .digest('hex');
-  return crypto.timingSafeEqual(
-    Buffer.from(expected, 'hex'),
-    Buffer.from(receivedSig, 'hex')
-  );
+  try {
+    const expected = crypto
+      .createHmac('sha256', IPN_SECRET)
+      .update(rawBody)
+      .digest('hex');
+    const expectedBuf = Buffer.from(expected, 'hex');
+    const receivedBuf = Buffer.from(receivedSig, 'hex');
+    // timingSafeEqual throws RangeError if buffers have different lengths
+    if (expectedBuf.length !== receivedBuf.length) return false;
+    return crypto.timingSafeEqual(expectedBuf, receivedBuf);
+  } catch {
+    // Catch any parsing errors (e.g. invalid hex in receivedSig)
+    return false;
+  }
 }
 
 module.exports = { createTrialvoPayBill, verifyIpnSignature };

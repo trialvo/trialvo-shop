@@ -12,11 +12,52 @@ export function removeToken(): void {
   localStorage.removeItem("auth_token");
 }
 
+/**
+ * Decode JWT payload without verification (client-side expiry check only).
+ * Returns the expiry timestamp in ms, or null if token is invalid/missing.
+ */
+export function getTokenExpiry(): number | null {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check if the stored token is expired (client-side, no API call).
+ */
+export function isTokenExpired(): boolean {
+  const expiry = getTokenExpiry();
+  if (!expiry) return true;
+  return Date.now() >= expiry;
+}
+
+/**
+ * Trigger auto-logout by clearing the token and dispatching a custom event.
+ * AuthContext listens for this event to perform cleanup and redirect.
+ */
+function triggerAuthExpired(): void {
+  removeToken();
+  window.dispatchEvent(new CustomEvent("auth:expired"));
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
   const token = getToken();
+
+  // Proactive client-side check: don't even make the request if token is expired
+  // (skip for login/public endpoints)
+  if (token && isTokenExpired() && !endpoint.startsWith("/auth/login")) {
+    triggerAuthExpired();
+    throw new Error("Session expired. Please log in again.");
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),
@@ -33,6 +74,13 @@ async function request<T>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
+
+    // Auto-logout on 401 — token expired or invalid
+    if (res.status === 401 && !endpoint.startsWith("/auth/login")) {
+      triggerAuthExpired();
+      throw new Error(body.error || "Session expired. Please log in again.");
+    }
+
     throw new Error(body.error || `Request failed: ${res.status}`);
   }
 

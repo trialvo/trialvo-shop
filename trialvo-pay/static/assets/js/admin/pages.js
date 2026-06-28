@@ -11,6 +11,10 @@ const Pages = {
   // ═══════════════════════════════════════════════════════════════════════════
 
   async login(container) {
+    const isExpired = new URLSearchParams(location.search).get('expired') === 'true';
+    // Clean up URL after reading
+    if (isExpired) history.replaceState({}, '', '/admin/login');
+
     container.innerHTML = `
       <div class="auth-page">
         <div class="auth-card">
@@ -27,6 +31,12 @@ const Pages = {
               <div class="auth-subtitle">Admin Console</div>
             </div>
           </div>
+          ${isExpired ? `
+            <div class="session-expired-banner">
+              <i data-lucide="alert-triangle"></i>
+              <span>Your session has expired. Please sign in again.</span>
+            </div>
+          ` : ''}
           <h2 class="auth-heading">Sign In</h2>
           <form id="login-form" class="auth-form">
             <div class="form-group">

@@ -137,6 +137,21 @@ const Router = {
   },
 
   _initShell() {
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+
+    // ── Mobile sidebar helpers ──────────────────────────────────────────
+    const openMobileSidebar = () => {
+      sidebar?.classList.add('open');
+      backdrop?.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    };
+    const closeMobileSidebar = () => {
+      sidebar?.classList.remove('open');
+      backdrop?.classList.remove('visible');
+      document.body.style.overflow = '';
+    };
+
     // Sidebar nav clicks
     document.querySelectorAll('.nav-item').forEach(el => {
       el.addEventListener('click', () => {
@@ -144,21 +159,40 @@ const Router = {
         if (el.dataset.external === 'true') {
           window.open(path, '_blank');
         } else {
+          closeMobileSidebar();
           this.navigate(path);
         }
       });
     });
 
-    // Mobile sidebar toggle
+    // Mobile sidebar toggle (hamburger)
     const toggle = document.getElementById('sidebar-toggle');
     if (toggle) {
       toggle.addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('open');
+        if (sidebar?.classList.contains('open')) {
+          closeMobileSidebar();
+        } else {
+          openMobileSidebar();
+        }
       });
     }
 
+    // Mobile sidebar close button (X inside sidebar)
+    document.getElementById('sidebar-close')?.addEventListener('click', closeMobileSidebar);
+
+    // Backdrop click to close
+    backdrop?.addEventListener('click', closeMobileSidebar);
+
+    // ESC key to close sidebar
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && sidebar?.classList.contains('open')) {
+        closeMobileSidebar();
+      }
+    });
+
     // Logout
     document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      closeMobileSidebar();
       try { await API.logout(); } catch (e) {}
       Auth.clear();
       Router.navigate('/admin/login', true);
@@ -231,8 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Global error handler for unhandled API errors
 window.addEventListener('unhandledrejection', (e) => {
-  if (e.reason?.message?.includes('401') || e.reason?.message?.includes('Unauthorized')) {
-    Auth.clear();
-    Router.navigate('/admin/login', true);
+  const msg = e.reason?.message || '';
+  if (msg.includes('Session expired') || msg.includes('Unauthorized') || msg.includes('401')) {
+    // api.js already handles the redirect — just prevent console noise
+    e.preventDefault();
   }
 });

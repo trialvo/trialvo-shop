@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, Mail, Eye, EyeOff, LogIn, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, LogIn, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,15 @@ const AdminLoginPage: React.FC = () => {
  const [password, setPassword] = useState('');
  const [showPassword, setShowPassword] = useState(false);
  const [isLoading, setIsLoading] = useState(false);
+ const [searchParams] = useSearchParams();
+ const isSessionExpired = searchParams.get('expired') === 'true';
+
+ // Clean up the URL query param after reading it
+ React.useEffect(() => {
+  if (isSessionExpired) {
+   window.history.replaceState({}, '', '/admin/login');
+  }
+ }, [isSessionExpired]);
 
  // Redirect if already logged in
  React.useEffect(() => {
@@ -72,6 +81,13 @@ const AdminLoginPage: React.FC = () => {
       </CardDescription>
      </CardHeader>
      <CardContent className="px-6 pb-8">
+      {/* Session expired banner */}
+      {isSessionExpired && (
+       <div className="mb-4 flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">
+        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+        <p className="text-sm font-medium">Your session has expired. Please sign in again.</p>
+       </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-5">
        <div className="space-y-1.5">
         <Label htmlFor="email" className="text-xs text-muted-foreground font-medium">Email</Label>
