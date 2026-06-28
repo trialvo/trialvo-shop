@@ -476,7 +476,7 @@ CREATE TABLE audit_logs (
     resource_id     VARCHAR(100),
     old_values      JSONB,
     new_values      JSONB,
-    ip_address      INET,
+    ip_address      TEXT,
     user_agent      TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
