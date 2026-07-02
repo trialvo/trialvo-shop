@@ -1,4 +1,4 @@
-﻿use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 use actix_web::HttpMessage;
 use serde::Deserialize;
 use crate::api::middleware::admin_auth::AuthenticatedAdmin;
@@ -32,7 +32,7 @@ pub async fn list_admins_handler(state: web::Data<AppState>) -> HttpResponse {
 
 pub async fn create_admin_handler(req: HttpRequest, state: web::Data<AppState>, body: web::Json<CreateAdminBody>) -> HttpResponse {
     let auth = req.extensions().get::<AuthenticatedAdmin>().cloned().unwrap();
-    if auth.role != "superadmin" {
+    if auth.role != "superadmin" && auth.role != "super_admin" {
         return HttpResponse::Forbidden().json(serde_json::json!({"error": "Only superadmin can create admins"}));
     }
     let hash = match hash_password(&body.password) {

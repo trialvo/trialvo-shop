@@ -1,4 +1,4 @@
-﻿use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 use actix_web::HttpMessage;
 use serde::Deserialize;
 use crate::api::middleware::admin_auth::AuthenticatedAdmin;
@@ -37,7 +37,7 @@ pub async fn update(
     let (category, key) = path.into_inner();
 
     // Only superadmin can update EPS credentials and security settings
-    if (category == "eps" || category == "security") && auth.role != "superadmin" {
+    if (category == "eps" || category == "security") && auth.role != "superadmin" && auth.role != "super_admin" {
         return HttpResponse::Forbidden().json(serde_json::json!({"error": "Insufficient permissions"}));
     }
 
