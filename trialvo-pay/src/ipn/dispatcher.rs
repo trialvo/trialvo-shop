@@ -64,7 +64,7 @@ pub async fn dispatch_event(
 /// Single delivery attempt to an IPN endpoint.
 /// Updates delivery status in DB (success or failure) after the attempt.
 /// Status starts as "sending" — transitions to "delivered", "failed", or "exhausted".
-async fn attempt_delivery(
+pub async fn attempt_delivery(
     pool: &PgPool,
     client: &reqwest::Client,
     delivery_id: i64,

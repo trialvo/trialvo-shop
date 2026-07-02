@@ -1702,3 +1702,52 @@ code.code-tag { all: unset; font-family: 'JetBrains Mono', monospace; background
   color: var(--color-text-2);
   line-height: 1.6;
 }
+
+/* ─── IPN Page Enhanced UI ──────────────────────────────────────────────── */
+.service-cell { display: flex; flex-direction: column; gap: 2px; }
+.events-wrap { display: flex; flex-wrap: wrap; gap: 4px; max-width: 300px; }
+.event-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: var(--color-surface-3);
+  color: var(--color-text-2);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.status-cell { display: flex; align-items: center; gap: 8px; }
+.health-cell { display: flex; flex-direction: column; gap: 2px; }
+.health-pulse {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  position: relative;
+}
+.health-pulse::after {
+  content: '';
+  position: absolute; inset: -2px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  opacity: 0;
+}
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.pulse-success { background: var(--color-success); }
+.pulse-success::after { background: var(--color-success); }
+.pulse-warning { background: var(--color-warning); }
+.pulse-warning::after { background: var(--color-warning); }
+.pulse-danger { background: var(--color-danger); }
+.pulse-danger::after { background: var(--color-danger); }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.color-text { color: var(--color-text); }
+.fw-600 { font-weight: 600; }
+.xs { font-size: 0.75rem; }
+.icon-xs { width: 14px !important; height: 14px !important; vertical-align: middle; margin-top: -2px; }
+

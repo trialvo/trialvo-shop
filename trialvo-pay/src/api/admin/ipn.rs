@@ -109,6 +109,9 @@ pub async fn update_endpoint(req: HttpRequest, state: web::Data<AppState>, path:
 
     // Validate events if provided
     if let Some(ref events) = body.events {
+        if events.is_empty() {
+            return HttpResponse::BadRequest().json(serde_json::json!({"error": "At least one event is required"}));
+        }
         for event in events {
             if !VALID_EVENTS.contains(&event.as_str()) {
                 return HttpResponse::BadRequest().json(serde_json::json!({
@@ -118,32 +121,35 @@ pub async fn update_endpoint(req: HttpRequest, state: web::Data<AppState>, path:
         }
     }
 
-    let mut sets: Vec<String> = vec![];
+    // Use sqlx QueryBuilder for dynamic updates if many fields, 
+    // but here we only have 3, so a simple approach is fine.
+    // However, to be safe and clean, let's use a more structured way.
 
-    if let Some(ref url) = body.url {
-        sets.push(format!("url = '{}'", url.replace('\'', "''")));
-    }
-    if let Some(ref events) = body.events {
-        let ev_str: Vec<String> = events.iter().map(|e| format!("'{}'", e.replace('\'', "''"))).collect();
-        sets.push(format!("events = ARRAY[{}]::text[]", ev_str.join(",")));
-    }
-    if let Some(is_active) = body.is_active {
-        sets.push(format!("is_active = {}", is_active));
-    }
+    let res = sqlx::query(
+        r#"UPDATE ipn_endpoints SET 
+            url = COALESCE($1, url),
+            events = COALESCE($2, events),
+            is_active = COALESCE($3, is_active),
+            updated_at = NOW()
+        WHERE id = $4 RETURNING id"#
+    )
+    .bind(&body.url)
+    .bind(&body.events)
+    .bind(body.is_active)
+    .bind(endpoint_id)
+    .fetch_optional(&state.db)
+    .await;
 
-    if sets.is_empty() {
-        return HttpResponse::BadRequest().json(serde_json::json!({"error": "No fields to update"}));
-    }
-
-    sets.push("updated_at = NOW()".to_string());
-    let sql = format!("UPDATE ipn_endpoints SET {} WHERE id = $1 RETURNING id", sets.join(", "));
-
-    match sqlx::query(&sql).bind(endpoint_id).fetch_one(&state.db).await {
-        Ok(_) => {
+    match res {
+        Ok(Some(_)) => {
             let _ = audit::log(&state.db, "admin", Some(&auth.admin_id.to_string()), "ipn.endpoint_updated", Some("ipn_endpoint"), Some(&endpoint_id.to_string()), None, None, None, None).await;
             HttpResponse::Ok().json(serde_json::json!({"success": true}))
         }
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({"error": format!("Update failed: {}", e)})),
+        Ok(None) => HttpResponse::NotFound().json(serde_json::json!({"error": "Endpoint not found"})),
+        Err(e) => {
+            tracing::error!("Update failed: {}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({"error": format!("Update failed: {}", e)}))
+        }
     }
 }
 
@@ -212,18 +218,38 @@ pub async fn test_endpoint(req: HttpRequest, state: web::Data<AppState>, path: w
         Ok(resp) => {
             let status = resp.status().as_u16();
             let body = resp.text().await.unwrap_or_default();
+            let success = status >= 200 && status < 300;
+
+            if success {
+                let _ = sqlx::query("UPDATE ipn_endpoints SET last_success_at = NOW(), failure_count = 0 WHERE id = $1")
+                    .bind(endpoint_id)
+                    .execute(&state.db)
+                    .await;
+            } else {
+                let _ = sqlx::query("UPDATE ipn_endpoints SET last_failure_at = NOW(), failure_count = failure_count + 1 WHERE id = $1")
+                    .bind(endpoint_id)
+                    .execute(&state.db)
+                    .await;
+            }
+
             HttpResponse::Ok().json(serde_json::json!({
-                "success": status >= 200 && status < 300,
+                "success": success,
                 "http_status": status,
                 "response_body": body.chars().take(500).collect::<String>(),
                 "endpoint_url": endpoint.url,
             }))
         }
-        Err(e) => HttpResponse::Ok().json(serde_json::json!({
-            "success": false,
-            "error": format!("Connection failed: {}", e),
-            "endpoint_url": endpoint.url,
-        })),
+        Err(e) => {
+            let _ = sqlx::query("UPDATE ipn_endpoints SET last_failure_at = NOW(), failure_count = failure_count + 1 WHERE id = $1")
+                .bind(endpoint_id)
+                .execute(&state.db)
+                .await;
+            HttpResponse::Ok().json(serde_json::json!({
+                "success": false,
+                "error": format!("Connection failed: {}", e),
+                "endpoint_url": endpoint.url,
+            }))
+        }
     }
 }
 
@@ -258,6 +284,78 @@ pub async fn recent_deliveries(state: web::Data<AppState>) -> HttpResponse {
     }
 }
 
+// ─── Retry a specific delivery ───────────────────────────────────────────────
+
+pub async fn retry_delivery(req: HttpRequest, state: web::Data<AppState>, path: web::Path<i64>) -> HttpResponse {
+    let delivery_id = path.into_inner();
+    let auth = req.extensions().get::<AuthenticatedAdmin>().cloned().unwrap();
+
+    let delivery = match sqlx::query_as::<_, IpnDelivery>("SELECT * FROM ipn_deliveries WHERE id = $1")
+        .bind(delivery_id)
+        .fetch_optional(&state.db)
+        .await
+    {
+        Ok(Some(d)) => d,
+        Ok(None) => return HttpResponse::NotFound().json(serde_json::json!({"error": "Delivery not found"})),
+        Err(_) => return HttpResponse::InternalServerError().json(serde_json::json!({"error": "Lookup failed"})),
+    };
+
+    let endpoint = match sqlx::query_as::<_, IpnEndpoint>("SELECT * FROM ipn_endpoints WHERE id = $1")
+        .bind(delivery.ipn_endpoint_id)
+        .fetch_optional(&state.db)
+        .await
+    {
+        Ok(Some(ep)) => ep,
+        Ok(None) => return HttpResponse::NotFound().json(serde_json::json!({"error": "Endpoint no longer exists"})),
+        Err(_) => return HttpResponse::InternalServerError().json(serde_json::json!({"error": "Endpoint lookup failed"})),
+    };
+
+    let payload_str = delivery.payload.to_string();
+    let signature = crate::crypto::hmac::sign_ipn_payload(&endpoint.secret, &payload_str);
+
+    // Run attempt immediately
+    crate::ipn::dispatcher::attempt_delivery(
+        &state.db,
+        &state.ipn_client,
+        delivery_id,
+        &endpoint.url,
+        &payload_str,
+        &signature,
+        &delivery.event_type
+    ).await;
+
+    let _ = audit::log(&state.db, "admin", Some(&auth.admin_id.to_string()), "ipn.delivery_retried", Some("ipn_delivery"), Some(&delivery_id.to_string()), None, None, None, None).await;
+
+    HttpResponse::Ok().json(serde_json::json!({"success": true}))
+}
+
+// ─── Rotate endpoint secret ──────────────────────────────────────────────────
+
+pub async fn rotate_endpoint_secret(req: HttpRequest, state: web::Data<AppState>, path: web::Path<Uuid>) -> HttpResponse {
+    let endpoint_id = path.into_inner();
+    let auth = req.extensions().get::<AuthenticatedAdmin>().cloned().unwrap();
+
+    let new_secret = crate::crypto::hmac::generate_service_secret();
+
+    match sqlx::query("UPDATE ipn_endpoints SET secret = $1, updated_at = NOW() WHERE id = $2 RETURNING id")
+        .bind(&new_secret)
+        .bind(endpoint_id)
+        .fetch_optional(&state.db)
+        .await
+    {
+        Ok(Some(_)) => {
+            let _ = audit::log(&state.db, "admin", Some(&auth.admin_id.to_string()), "ipn.secret_rotated", Some("ipn_endpoint"), Some(&endpoint_id.to_string()), None, None, None, None).await;
+            HttpResponse::Ok().json(serde_json::json!({
+                "success": true,
+                "new_secret": new_secret,
+                "warning": "Save this secret now — it won't be shown again."
+            }))
+        }
+        Ok(None) => HttpResponse::NotFound().json(serde_json::json!({"error": "Endpoint not found"})),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({"error": format!("Rotation failed: {}", e)})),
+    }
+}
+
 pub fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/ipn")
@@ -267,8 +365,10 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .route("/endpoints/{id}", web::patch().to(update_endpoint))
             .route("/endpoints/{id}", web::delete().to(delete_endpoint))
             .route("/endpoints/{id}/test", web::post().to(test_endpoint))
+            .route("/endpoints/{id}/rotate-secret", web::post().to(rotate_endpoint_secret))
             .route("/endpoints/{id}/deliveries", web::get().to(endpoint_deliveries))
             .route("/deliveries/recent", web::get().to(recent_deliveries))
+            .route("/deliveries/{id}/retry", web::post().to(retry_delivery))
             // Per-service (kept for backward compat)
             .route("/services/{service_id}/endpoints", web::get().to(list_endpoints))
     );

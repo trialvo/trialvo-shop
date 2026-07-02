@@ -1165,6 +1165,37 @@ const Pages = {
   // IPN ENDPOINTS
   // ═══════════════════════════════════════════════════════════════════════════
 
+  _IPN_EVENTS: [
+    'payment.success', 'payment.failed', 'payment.expired', 'payment.cancelled',
+    'refund.requested', 'refund.approved', 'refund.rejected',
+    'bill.created', 'bill.cancelled'
+  ],
+
+  async _loadRecentIpnActivity() {
+    const feed = document.getElementById('recent-ipn-feed');
+    if (!feed) return;
+    try {
+      const res = await API.getRecentDeliveries();
+      const items = res.data || [];
+      if (items.length === 0) {
+        feed.innerHTML = '<div class="p-16 text-center text-muted">No recent activity</div>';
+        return;
+      }
+      feed.innerHTML = items.map(d => `
+        <div class="recent-tx-item">
+          <div class="tx-service" style="width:120px"><code class="event-tag">${d.event_type}</code></div>
+          <div class="tx-info">
+            <span class="tx-entity truncate" style="max-width:140px">${d.ipn_endpoint_id.slice(0,8)}...</span>
+            ${d.status === 'delivered' ? '<span class="badge badge-success sm">OK</span>' : '<span class="badge badge-danger sm">FAIL</span>'}
+          </div>
+          <div class="tx-amount xs text-muted">${formatDate(d.created_at)}</div>
+        </div>
+      `).join('');
+    } catch (e) {
+      feed.innerHTML = `<div class="p-16 text-center text-danger">Error loading activity</div>`;
+    }
+  },
+
   async ipn(container) {
     try {
       container.innerHTML = Components.renderSkeleton();
@@ -1183,25 +1214,46 @@ const Pages = {
   _renderIpnPage(container, endpoints, services, serviceMap) {
     const rows = endpoints.map(ep => {
       const svc = serviceMap[ep.service_id];
+      const isHealthy = ep.failure_count === 0;
+      const statusClass = ep.is_active ? (isHealthy ? 'status-success' : 'status-warning') : 'status-muted';
+      
       return {
-        service: `<div class="fw-500">${svc?.display_name || '—'}</div><code class="code-tag sm">${svc?.slug || ep.service_id.slice(0,8)}</code>`,
-        url: `<code class="code-tag sm" title="${ep.url}">${ep.url.length > 45 ? ep.url.slice(0,45)+'…' : ep.url}</code>`,
-        events: `<div class="events-tags">${(ep.events||[]).map(e => `<span class="badge badge-info sm">${e}</span>`).join('')}</div>`,
-        status: statusBadge(ep.is_active ? 'active' : 'inactive'),
-        failures: ep.failure_count > 0
-          ? `<span class="badge badge-danger">${ep.failure_count}</span>`
-          : `<span class="text-muted">0</span>`,
-        last_ok: ep.last_success_at ? formatDate(ep.last_success_at) : '<span class="text-muted">Never</span>',
+        service: `
+          <div class="service-cell">
+            <div class="fw-600 color-text">${svc?.display_name || '—'}</div>
+            <code class="code-tag sm">${svc?.slug || ep.service_id.slice(0,8)}</code>
+          </div>
+        `,
+        url: `<code class="code-tag sm truncate" title="${ep.url}" style="max-width:280px">${ep.url}</code>`,
+        events: `
+          <div class="events-wrap">
+            ${(ep.events||[]).map(e => `<span class="event-tag">${e}</span>`).join('')}
+          </div>
+        `,
+        status: `
+          <div class="status-cell">
+            ${statusBadge(ep.is_active ? 'active' : 'inactive')}
+            ${ep.is_active && ep.failure_count > 0 ? `<span class="health-pulse pulse-warning" title="Endpoint has failures"></span>` : ''}
+          </div>
+        `,
+        health: `
+          <div class="health-cell">
+            ${ep.failure_count > 0 
+              ? `<span class="text-danger fw-600"><i data-lucide="alert-circle" class="icon-xs"></i> ${ep.failure_count}</span>` 
+              : `<span class="text-success"><i data-lucide="check-circle" class="icon-xs"></i> Healthy</span>`}
+            <div class="text-muted xs">${ep.last_failure_at ? 'Last fail: ' + formatDate(ep.last_failure_at) : ''}</div>
+          </div>
+        `,
         actions: `
           <div class="action-btns">
             <button class="btn btn-ghost sm" title="Edit" onclick="Pages._editIpnModal('${ep.id}','${ep.url.replace(/'/g,"\\'")}',${JSON.stringify(ep.events)},${ep.is_active})">
-              <i data-lucide="edit-2"></i>
+              <i data-lucide="edit-3"></i>
             </button>
             <button class="btn btn-ghost sm" title="Test ping" onclick="Pages._testIpnEndpoint('${ep.id}')">
-              <i data-lucide="send"></i>
+              <i data-lucide="zap"></i>
             </button>
             <button class="btn btn-ghost sm" title="Delivery logs" onclick="Pages._viewIpnDeliveries('${ep.id}','${ep.url.replace(/'/g,"\\'")}')">
-              <i data-lucide="list"></i>
+              <i data-lucide="bar-chart-2"></i>
             </button>
             <button class="btn btn-ghost sm danger" title="Delete" onclick="Pages._deleteIpnEndpoint('${ep.id}')">
               <i data-lucide="trash-2"></i>
@@ -1214,22 +1266,39 @@ const Pages = {
     container.innerHTML = `
       ${Components.renderPageHeader('IPN Endpoints', 'Webhook endpoints across all services — admin has full control',
         `<button class="btn btn-primary" id="add-ipn-btn"><i data-lucide="plus"></i> Add Endpoint</button>`)}
-      <div class="card">
-        ${Components.renderTable(
-          [
-            { label: 'Service', key: 'service' },
-            { label: 'URL', key: 'url' },
-            { label: 'Events', key: 'events' },
-            { label: 'Status', key: 'status' },
-            { label: 'Failures', key: 'failures' },
-            { label: 'Last OK', key: 'last_ok' },
-            { label: 'Actions', key: 'actions' },
-          ],
-          rows,
-          'No IPN endpoints configured across any service.'
-        )}
+      
+      <div class="dashboard-grid">
+        <div class="card overflow-hidden">
+          <div class="card-header">
+            <h3 class="card-title"><i data-lucide="server"></i> Configured Endpoints</h3>
+          </div>
+          ${Components.renderTable(
+            [
+              { label: 'Service', key: 'service' },
+              { label: 'URL', key: 'url' },
+              { label: 'Status', key: 'status' },
+              { label: 'Health', key: 'health' },
+              { label: 'Actions', key: 'actions' },
+            ],
+            rows,
+            'No IPN endpoints configured across any service.'
+          )}
+        </div>
+
+        <div class="card overflow-hidden">
+          <div class="card-header">
+            <h3 class="card-title"><i data-lucide="activity"></i> Recent Activity</h3>
+            <button class="btn btn-ghost sm" id="refresh-ipn-recent"><i data-lucide="refresh-cw"></i></button>
+          </div>
+          <div id="recent-ipn-feed" class="recent-tx-list">
+            <div class="p-16 text-center text-muted"><span class="spinner-sm"></span> Loading activity...</div>
+          </div>
+        </div>
       </div>
     `;
+
+    Pages._loadRecentIpnActivity();
+    document.getElementById('refresh-ipn-recent')?.addEventListener('click', () => Pages._loadRecentIpnActivity());
 
     // Store services for modal use
     container.__ipnServices = services;
@@ -1238,7 +1307,6 @@ const Pages = {
   },
 
   _addIpnModal(services) {
-    const ALL_EVENTS = ['payment.success','payment.failed','payment.expired','payment.cancelled','refund.requested','refund.approved','refund.completed','refund.rejected','bill.created','bill.cancelled'];
     Modal.show('Add IPN Endpoint', `
       <form id="add-ipn-form">
         <div class="form-group">
@@ -1251,7 +1319,7 @@ const Pages = {
         <div class="form-group">
           <label class="form-label">Events (select all that apply)</label>
           <div class="checkbox-group">
-            ${ALL_EVENTS.map(ev => `
+            ${Pages._IPN_EVENTS.map(ev => `
               <label class="checkbox-label">
                 <input type="checkbox" name="ipn-events" value="${ev}" checked> ${ev}
               </label>
@@ -1308,14 +1376,13 @@ const Pages = {
   },
 
   _editIpnModal(id, url, events, isActive) {
-    const ALL_EVENTS = ['payment.success','payment.failed','payment.expired','payment.cancelled','refund.requested','refund.approved','refund.completed','refund.rejected','bill.created','bill.cancelled'];
     Modal.show('Edit IPN Endpoint', `
       <form id="edit-ipn-form">
         ${Components.renderInput('edit-ipn-url', 'Webhook URL', 'url', '', url, true)}
         <div class="form-group">
           <label class="form-label">Events</label>
           <div class="checkbox-group">
-            ${ALL_EVENTS.map(ev => `
+            ${Pages._IPN_EVENTS.map(ev => `
               <label class="checkbox-label">
                 <input type="checkbox" name="edit-ipn-events" value="${ev}" ${events.includes(ev) ? 'checked' : ''}> ${ev}
               </label>
@@ -1330,9 +1397,15 @@ const Pages = {
         <div id="edit-ipn-error" class="form-error hidden"></div>
       </form>
     `, [
-      `<button class="btn btn-ghost" onclick="Modal.close()">Cancel</button>`,
-      `<button class="btn btn-primary" onclick="Pages._submitEditIpn('${id}')"><i data-lucide="save"></i> Save Changes</button>`
+      `<div style="display:flex;justify-content:space-between;width:100%;gap:12px">
+        <button class="btn btn-ghost danger" onclick="Pages._rotateIpnSecret('${id}')"><i data-lucide="refresh-cw"></i> Rotate Secret</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" onclick="Modal.close()">Cancel</button>
+          <button class="btn btn-primary" onclick="Pages._submitEditIpn('${id}')"><i data-lucide="save"></i> Save Changes</button>
+        </div>
+      </div>`
     ]);
+    if (window.lucide) lucide.createIcons();
   },
 
   async _submitEditIpn(id) {
@@ -1364,6 +1437,29 @@ const Pages = {
       } else {
         Toast.error(`Test failed: ${res.error || `HTTP ${res.http_status}`}`);
       }
+      Pages.ipn(document.getElementById('page-content'));
+    } catch (e) {
+      Toast.error(e.message);
+    }
+  },
+
+  async _rotateIpnSecret(id) {
+    if (!confirm('Rotate webhook secret? Old secret will stop working immediately.')) return;
+    try {
+      const res = await API.rotateIpnSecret(id);
+      Modal.show('⚠️ New Webhook Secret', `
+        <div class="alert-warning p-16 rounded-8 mb-16">
+          <strong>Save this now!</strong> It will never be shown again.
+        </div>
+        <div class="key-reveal">
+          <div class="key-display">
+            <code>${res.new_secret}</code>
+            <button class="btn btn-ghost sm" onclick="navigator.clipboard.writeText('${res.new_secret}').then(()=>Toast.success('Copied!'))">
+              <i data-lucide="copy"></i>
+            </button>
+          </div>
+        </div>
+      `, [`<button class="btn btn-primary" onclick="Modal.close();Pages.ipn(document.getElementById('page-content'))">Done</button>`]);
     } catch (e) {
       Toast.error(e.message);
     }
@@ -1393,9 +1489,9 @@ const Pages = {
               [
                 { label: 'Event', key: 'event' },
                 { label: 'Status', key: 'status' },
-                { label: 'HTTP', key: 'http' },
                 { label: 'Attempts', key: 'attempts' },
                 { label: 'Time', key: 'time' },
+                { label: 'Retry', key: 'actions' },
               ],
               deliveries.map(d => ({
                 event: `<code class="code-tag sm">${d.event_type}</code>`,
@@ -1407,6 +1503,9 @@ const Pages = {
                 http: d.http_status ? `<code>${d.http_status}</code>` : '—',
                 attempts: `${d.attempt_count}/${d.max_attempts}`,
                 time: formatDate(d.created_at),
+                actions: d.status !== 'delivered' 
+                  ? `<button class="btn btn-ghost sm" onclick="Pages._retryIpnDelivery('${d.id}', '${endpointId}', '${url.replace(/'/g,"\\'")}')"><i data-lucide="refresh-cw"></i></button>`
+                  : '—',
               })),
               'No deliveries'
             )
@@ -1419,9 +1518,17 @@ const Pages = {
     }
   },
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // AUDIT LOGS
-  // ═══════════════════════════════════════════════════════════════════════════
+  async _retryIpnDelivery(deliveryId, endpointId, url) {
+    try {
+      Toast.info('Retrying delivery…');
+      await API.retryIpnDelivery(deliveryId);
+      Toast.success('Retry attempt initiated');
+      // Refresh logs modal
+      Pages._viewIpnDeliveries(endpointId, url);
+    } catch (e) {
+      Toast.error(e.message);
+    }
+  },
 
   async audit(container) {
     let page = 1, limit = 50;

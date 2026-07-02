@@ -139,8 +139,10 @@ const API = {
   updateIpnEndpoint: (id, data) => API._patch(`/ipn/endpoints/${id}`, data),
   deleteIpnEndpoint: (id) => API._request('DELETE', `/ipn/endpoints/${id}`),
   testIpnEndpoint: (id) => API._post(`/ipn/endpoints/${id}/test`, {}),
+  rotateIpnSecret: (id) => API._post(`/ipn/endpoints/${id}/rotate-secret`, {}),
   getIpnDeliveries: (endpointId) => API._get(`/ipn/endpoints/${endpointId}/deliveries`),
   getRecentDeliveries: () => API._get('/ipn/deliveries/recent'),
+  retryIpnDelivery: (deliveryId) => API._post(`/ipn/deliveries/${deliveryId}/retry`, {}),
 
   // ─── Audit ─────────────────────────────────────────────────────────────────
   getAuditLogs: ({ limit = 50, offset = 0 } = {}) =>
