@@ -130,7 +130,6 @@ impl EpsGateway {
         Self {
             client: Client::builder()
                 .timeout(std::time::Duration::from_secs(30))
-                .danger_accept_invalid_certs(true)
                 .build()
                 .expect("HTTP client init failed"),
             creds,

@@ -5,26 +5,26 @@
 
 services:
   # ─── Single PostgreSQL (both databases) ──────────────────
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: trialvo
-      POSTGRES_PASSWORD: localdev2026
-      POSTGRES_DB: trialvo
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data_local:/var/lib/postgresql/data
-      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
-    networks:
-      - shop_local
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trialvo"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+#  postgres:
+#    image: postgres:16-alpine
+#    restart: unless-stopped
+#    environment:
+#      POSTGRES_USER: trialvo
+#      POSTGRES_PASSWORD: localdev2026
+#      POSTGRES_DB: trialvo
+#    ports:
+#      - "5433:5432"
+#    volumes:
+#      - postgres_data_local:/var/lib/postgresql/data
+#      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+#    networks:
+#      - shop_local
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U trialvo"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 10
+#      start_period: 30s
 
   # ─── Redis (for trialvo-pay) ─────────────────────────────
   redis:
@@ -46,17 +46,13 @@ services:
     build:
       context: ./trialvo-backend
       dockerfile: Dockerfile
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       PORT: 5000
       NODE_ENV: development
-      DB_HOST: postgres
+      DB_HOST: 155.248.253.24
       DB_PORT: 5432
       DB_USER: trialvo
-      DB_PASSWORD: localdev2026
+      DB_PASSWORD: Tr1alv0DB2026Secure!
       DB_NAME: trialvo_shop
       CORS_ORIGIN: http://localhost:8091
       JWT_SECRET: local-dev-jwt-secret-trialvo-2026
@@ -96,14 +92,12 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://trialvo:localdev2026@postgres:5432/trialvo_pay
+      DATABASE_URL: postgresql://trialvo:Tr1alv0DB2026Secure!@155.248.253.24:5432/trialvo_pay
       REDIS_URL: redis://:localdevpassword@redis:6379
-      MASTER_KEY: 7cdf6bc0d46db841e18b19727e6f2476ee89569bc333df23142d0e136f1e5e1b
+      MASTER_KEY: 45c11faf4c682130ba6610a471e76a5f5bbc4d9028b9d9ef7354d6beae681778
       BASE_URL: http://localhost:8088
       HOST: 0.0.0.0
       PORT: 8080

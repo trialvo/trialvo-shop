@@ -31,6 +31,18 @@ async fn main() -> std::io::Result<()> {
 
     tracing::info!("Starting Trialvo Pay on {}:{}", config.host, config.port);
 
+    println!("🚀 Trialvo Pay starting on http://{}:{}", config.host, config.port);
+
+    // ─── Redis ────────────────────────────────────────────────────────────────
+    let redis_client = redis::Client::open(config.redis_url.clone())
+        .expect("Invalid Redis URL");
+    let redis_manager = ConnectionManager::new(redis_client)
+        .await
+        .expect("Failed to connect to Redis");
+    let redis = Arc::new(Mutex::new(redis_manager));
+
+    tracing::info!("Redis connected");
+
     // ─── Database ─────────────────────────────────────────────────────────────
     let pool = create_pool(&config.database_url)
         .await
@@ -44,13 +56,6 @@ async fn main() -> std::io::Result<()> {
 
     tracing::info!("Database connected and migrations applied");
 
-    // ─── Redis ────────────────────────────────────────────────────────────────
-    let redis_client = redis::Client::open(config.redis_url.clone())
-        .expect("Invalid Redis URL");
-    let redis_manager = ConnectionManager::new(redis_client)
-        .await
-        .expect("Failed to connect to Redis");
-    let redis = Arc::new(Mutex::new(redis_manager));
 
     tracing::info!("Redis connected");
 
