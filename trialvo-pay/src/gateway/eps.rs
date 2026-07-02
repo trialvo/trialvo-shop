@@ -198,6 +198,7 @@ impl EpsGateway {
             .map_err(|e| anyhow!("ProductList serialization failed: {}", e))?;
 
         let mut body = json!({
+            "merchantId": self.creds.merchant_id,
             "storeId": self.creds.store_id,
             "merchantTransactionId": params.merchant_transaction_id,
             "transactionTypeId": params.transaction_type_id,
@@ -226,10 +227,9 @@ impl EpsGateway {
             "noOfItem": params.products.len().to_string(),
         });
 
-        // Optional fields
-        if let Some(v) = &params.customer_order_id {
-            body["CustomerOrderId"] = json!(v);
-        }
+        // CustomerOrderId — required by EPS, fallback to merchantTransactionId
+        body["CustomerOrderId"] = json!(params.customer_order_id.as_deref()
+            .unwrap_or(&params.merchant_transaction_id));
         if let Some(v) = &params.customer_address2 {
             body["customerAddress2"] = json!(v);
         }

@@ -167,7 +167,7 @@ async fn perform_eps_init(
     let params = EpsPaymentParams {
         merchant_transaction_id: tx.eps_merchant_tx_id.clone(),
         amount: bill.final_amount.clone(),
-        customer_order_id: bill.external_order_id.clone().or_else(|| Some(tx.eps_merchant_tx_id.clone())),
+        customer_order_id: bill.external_order_id.clone(),
         customer_name: bill.customer_name.clone().unwrap_or_default(),
         customer_email: bill.customer_email.clone().unwrap_or_default(),
         customer_phone: bill.customer_phone.clone().unwrap_or_default(),
