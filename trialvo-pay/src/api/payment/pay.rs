@@ -388,7 +388,8 @@ fn render_skip_preview_error(error_msg: &str, bill_token: &str) -> HttpResponse 
 <div class="error-card">
   <div class="error-icon">⚠️</div>
   <h1>Payment Temporarily Unavailable</h1>
-  <p>We couldn't connect to the payment gateway. Please try again in a moment.</p>
+  <p>We couldn't connect to the payment gateway. Error: {error_msg}</p>
+  <p style="font-size: 12px; margin-top: -15px;">Please try again in a moment or contact support.</p>
   <a href="/pay/{bill_token}" class="retry-btn">Try Again</a>
   <div class="footer">Secured by Trialvo Pay</div>
 </div>
