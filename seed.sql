@@ -33,9 +33,11 @@ ON CONFLICT (slug) DO UPDATE SET
 -- ─── 3. API Key (AES-256-GCM encrypted) ──────────────────────────
 -- Raw API Key: 0aedfa5c0374153aa3453d06fa3b5a402eb069165742774aeaf8fec9fedc5a70
 -- Key Hash: 137a3e3c6bf1df82f82b9d7e0c328b2c864dfb69bff5c43538487eb206194dae
+-- MASTER_KEY used: 7cdf6bc0d46db841e18b19727e6f2476ee89569bc333df23142d0e136f1e5e1b
+-- NOTE: encrypted_key must be stored as UTF-8 bytes of the hex string, NOT raw binary
 DELETE FROM service_keys WHERE service_id = '28280023-008f-4307-83de-5e4eabb57562';
 INSERT INTO service_keys (service_id, key_hash, encrypted_key, key_prefix, is_primary, is_active)
-VALUES ('28280023-008f-4307-83de-5e4eabb57562', '137a3e3c6bf1df82f82b9d7e0c328b2c864dfb69bff5c43538487eb206194dae', decode('d0da439193dc5e052f9f7321ffcaf0ea97677aea13c3ace1db61d9b136af6591b4f260b7f8f1df965fd30cfe16d26b09848e01ea7ff2dcc44e1fad36217be3b2a867a18d5a6b8ec10e68c556c8604cff015fe8cca451ff8bd2c4d408', 'hex'), '0aedfa5c', true, true);
+VALUES ('28280023-008f-4307-83de-5e4eabb57562', '137a3e3c6bf1df82f82b9d7e0c328b2c864dfb69bff5c43538487eb206194dae', convert_to('ac7c5dbc5f4cebe0c623e21ca6289e86a047f15eadda4a7067f780db5d58df029999360f0e84262b1c8fbfd65077772d7119fd1d090c0bbb198bd1fc6ab05f65cee8dc4bd804907e5f16d37dcdf4b167c7358bcac3da04d05c516e58', 'UTF8'), '0aedfa5c', true, true);
 
 -- ─── 4. IPN Endpoint ─────────────────────────────────────────────
 DELETE FROM ipn_endpoints WHERE service_id = '28280023-008f-4307-83de-5e4eabb57562';

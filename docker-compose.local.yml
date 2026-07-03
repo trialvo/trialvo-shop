@@ -33,6 +33,8 @@ services:
     command: redis-server --requirepass localdevpassword --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data_local:/data
+    ports:
+      - "6380:6379"
     networks:
       - shop_local
     healthcheck:
