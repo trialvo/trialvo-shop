@@ -2834,6 +2834,24 @@ const Pages = {
       const statusIcon = res.success ? 'check-circle' : 'x-circle';
       const statusTitle = res.success ? 'Ping Successful' : 'Ping Failed';
 
+      // Try to parse response body if it's JSON
+      let parsedBody = null;
+      let jsonRows = '';
+      if (res.response_body) {
+        try {
+          parsedBody = JSON.parse(res.response_body);
+          if (parsedBody && typeof parsedBody === 'object') {
+            jsonRows = Object.entries(parsedBody).map(([k, v]) => {
+              const val = typeof v === 'object' ? JSON.stringify(v) : v;
+              return Components.renderDetailRow(
+                k.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '), 
+                `<span style="font-weight:600; color:var(--color-primary)">${val}</span>`
+              );
+            }).join('');
+          }
+        } catch (e) { /* Not JSON */ }
+      }
+
       Modal.show('Test Ping Result', `
         <div class="svc-detail-header">
           <div class="svc-detail-avatar ${res.success ? 'svc-avatar-primary' : 'svc-avatar-rose'}">
@@ -2848,16 +2866,25 @@ const Pages = {
         </div>
         
         <div class="detail-grid">
-          ${Components.renderDetailRow('Target URL', `<code style="word-break:break-all">${res.endpoint_url || '—'}</code>`)}
-          ${res.error ? Components.renderDetailRow('Error', `<span style="color:var(--color-danger)">${res.error}</span>`) : ''}
-          ${Components.renderDetailRow('Success', res.success ? '✅ Yes' : '❌ No')}
+          ${Components.renderDetailRow('Target URL', `<code style="word-break:break-all; font-size:11px">${res.endpoint_url || '—'}</code>`)}
+          ${res.error ? Components.renderDetailRow('Connection Error', `<span style="color:var(--color-danger); font-weight:600">${res.error}</span>`) : ''}
+          ${Components.renderDetailRow('Success Status', res.success ? '<span class="text-success font-bold">✅ Yes</span>' : '<span class="text-danger font-bold">❌ No</span>')}
         </div>
 
+        ${jsonRows ? `
+          <div class="section-header" style="margin-top:20px">
+            <div class="section-title"><i data-lucide="info"></i> Response Summary</div>
+          </div>
+          <div class="detail-grid" style="background:var(--color-surface-2); padding:12px; border-radius:12px; border:1px solid var(--color-border)">
+            ${jsonRows}
+          </div>
+        ` : ''}
+
         <div class="section-header" style="margin-top:20px">
-          <div class="section-title"><i data-lucide="code"></i> Response Body</div>
+          <div class="section-title"><i data-lucide="code"></i> Raw Response Body</div>
         </div>
-        <div class="tx-json-viewer" style="background:var(--color-surface-2); padding: 12px; border: 1px solid var(--color-border); border-radius: 8px;">
-          <pre style="color:var(--color-text); white-space: pre-wrap; font-size: 13px;">${res.response_body || 'No response body'}</pre>
+        <div class="tx-json-viewer" style="background:var(--color-surface-3); padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; max-height:200px; overflow-y:auto">
+          <pre style="color:var(--color-text); white-space: pre-wrap; font-size: 12px; font-family:var(--font-mono)">${res.response_body || 'No response body'}</pre>
         </div>
       `);
       
