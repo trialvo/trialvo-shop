@@ -177,6 +177,8 @@ impl EpsGateway {
             return Err(anyhow!("EPS GetToken returned failure: code={:?} msg={:?}", parsed.error_code, parsed.error_message));
         }
 
+        tracing::info!("EPS GetToken success: token_len={} token_prefix={}", parsed.token.len(), &parsed.token[..10.min(parsed.token.len())]);
+
         Ok((parsed.token, parsed.expire_date))
     }
 
