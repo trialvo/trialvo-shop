@@ -66,13 +66,13 @@ pub async fn update_settings(req: HttpRequest, state: web::Data<AppState>, body:
 
     // ─── Handle is_sandbox toggle separately ────────────────────────────────
     if let Some(want_sandbox) = body.is_sandbox {
-        // Guard: if switching to live, check that live EPS credentials are configured
-        if !want_sandbox {
-            if get_config_required(&state.db, "eps", "live_base_url").await.is_err() {
-                return HttpResponse::BadRequest().json(serde_json::json!({
-                    "error": "Live EPS credentials are not configured. Contact your administrator."
-                }));
-            }
+        // Guard: check that the target mode's EPS credentials are configured
+        let check_key = if want_sandbox { "sandbox_base_url" } else { "live_base_url" };
+        let mode_label = if want_sandbox { "Sandbox" } else { "Live" };
+        if get_config_required(&state.db, "eps", check_key).await.is_err() {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": format!("{} EPS credentials are not configured. Contact your administrator.", mode_label)
+            }));
         }
 
         let _ = sqlx::query("UPDATE services SET is_sandbox = $1, updated_at = NOW() WHERE id = $2")

@@ -81,11 +81,12 @@ async fn perform_eps_init(
     req: &HttpRequest,
 ) -> Result<EpsInitResult, String> {
     // Get EPS credentials
+    let mode_label = if service.is_sandbox { "Sandbox" } else { "Live" };
     let creds = match get_eps_credentials(&state.db, &state.config.master_key, service.is_sandbox).await {
         Ok(c) => c,
         Err(e) => {
-            tracing::error!("EPS credentials error: {}", e);
-            return Err("Payment gateway not configured".to_string());
+            tracing::error!("EPS credentials error ({}): {}", mode_label, e);
+            return Err(format!("{} payment gateway is not configured. Contact your payment administrator.", mode_label));
         }
     };
 
