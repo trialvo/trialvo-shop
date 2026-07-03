@@ -82,9 +82,7 @@ pub async fn get_all_config(pool: &PgPool) -> Result<Vec<ConfigEntry>> {
     Ok(entries)
 }
 
-pub async fn get_eps_mode(pool: &PgPool) -> Result<String> {
-    get_config(pool, "eps", "mode").await?.ok_or_else(|| anyhow::anyhow!("EPS mode not configured"))
-}
+
 
 pub struct EpsCredentials {
     pub base_url: String,

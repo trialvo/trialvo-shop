@@ -2,7 +2,7 @@ use actix_web::{web, HttpRequest, HttpResponse, HttpMessage};
 use serde::Deserialize;
 use crate::api::middleware::merchant_auth::AuthenticatedMerchant;
 use crate::db::services::get_service_by_id;
-use crate::db::config::get_config;
+use crate::db::config::{get_config, get_config_required};
 use crate::AppState;
 
 #[derive(Deserialize)]
@@ -16,6 +16,7 @@ pub struct UpdateSettingsBody {
     pub fail_url: Option<String>,
     pub cancel_url: Option<String>,
     pub skip_preview: Option<bool>,
+    pub is_sandbox: Option<bool>,
 }
 
 pub async fn get_settings(req: HttpRequest, state: web::Data<AppState>) -> HttpResponse {
@@ -63,7 +64,37 @@ pub async fn update_settings(req: HttpRequest, state: web::Data<AppState>, body:
         return HttpResponse::Forbidden().json(serde_json::json!({"error": "Viewers cannot modify settings"}));
     }
 
-    // Build dynamic UPDATE query
+    // ─── Handle is_sandbox toggle separately ────────────────────────────────
+    if let Some(want_sandbox) = body.is_sandbox {
+        // Guard: if switching to live, check that live EPS credentials are configured
+        if !want_sandbox {
+            if get_config_required(&state.db, "eps", "live_base_url").await.is_err() {
+                return HttpResponse::BadRequest().json(serde_json::json!({
+                    "error": "Live EPS credentials are not configured. Contact your administrator."
+                }));
+            }
+        }
+
+        let _ = sqlx::query("UPDATE services SET is_sandbox = $1, updated_at = NOW() WHERE id = $2")
+            .bind(want_sandbox)
+            .bind(auth.service_id)
+            .execute(&state.db)
+            .await;
+
+        let mode_str = if want_sandbox { "sandbox" } else { "live" };
+        let _ = crate::db::audit::log(
+            &state.db, "merchant",
+            Some(&auth.merchant_user_id.to_string()),
+            "merchant.mode_changed",
+            Some("service"),
+            Some(&auth.service_id.to_string()),
+            None,
+            Some(serde_json::json!({"mode": mode_str})),
+            None, None,
+        ).await;
+    }
+
+    // ─── Build dynamic UPDATE query for other fields ────────────────────────
     let mut sets = vec![];
     let mut param_idx = 1u32;
     let mut params: Vec<Option<String>> = vec![];
@@ -87,36 +118,35 @@ pub async fn update_settings(req: HttpRequest, state: web::Data<AppState>, body:
     maybe_set!(fail_url, "fail_url");
     maybe_set!(cancel_url, "cancel_url");
 
-    if sets.is_empty() {
-        return HttpResponse::BadRequest().json(serde_json::json!({"error": "No fields to update"}));
-    }
-
-    let sql = format!("UPDATE services SET {} WHERE id = $1 RETURNING id", sets.join(", "));
-
-    let mut query = sqlx::query(&sql).bind(auth.service_id);
-    for p in &params {
-        query = query.bind(p);
-    }
-
-    match query.fetch_one(&state.db).await {
-        Ok(_) => {
-            // Update meta.skip_preview if provided
-            if let Some(skip) = body.skip_preview {
-                let _ = sqlx::query(
-                    "UPDATE services SET meta = jsonb_set(COALESCE(meta, '{}'), '{skip_preview}', $1::jsonb), updated_at = NOW() WHERE id = $2"
-                )
-                .bind(serde_json::json!(skip))
-                .bind(auth.service_id)
-                .execute(&state.db)
-                .await;
-            }
-
-            let _ = crate::db::audit::log(&state.db, "merchant", Some(&auth.merchant_user_id.to_string()), "merchant.settings_updated", Some("service"), Some(&auth.service_id.to_string()), None, None, None, None).await;
-            // Return the updated settings
-            get_settings(req, state).await
+    if !sets.is_empty() {
+        let sql = format!("UPDATE services SET {} WHERE id = $1 RETURNING id", sets.join(", "));
+        let mut query = sqlx::query(&sql).bind(auth.service_id);
+        for p in &params {
+            query = query.bind(p);
         }
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({"error": format!("Update failed: {}", e)})),
+        if let Err(e) = query.fetch_one(&state.db).await {
+            return HttpResponse::InternalServerError().json(serde_json::json!({"error": format!("Update failed: {}", e)}));
+        }
     }
+
+    // Update meta.skip_preview if provided
+    if let Some(skip) = body.skip_preview {
+        let _ = sqlx::query(
+            "UPDATE services SET meta = jsonb_set(COALESCE(meta, '{}'), '{skip_preview}', $1::jsonb), updated_at = NOW() WHERE id = $2"
+        )
+        .bind(serde_json::json!(skip))
+        .bind(auth.service_id)
+        .execute(&state.db)
+        .await;
+    }
+
+    // Audit log for general settings update (if any non-mode fields changed)
+    if !sets.is_empty() || body.skip_preview.is_some() {
+        let _ = crate::db::audit::log(&state.db, "merchant", Some(&auth.merchant_user_id.to_string()), "merchant.settings_updated", Some("service"), Some(&auth.service_id.to_string()), None, None, None, None).await;
+    }
+
+    // Return the updated settings
+    get_settings(req, state).await
 }
 
 pub fn routes(cfg: &mut web::ServiceConfig) {

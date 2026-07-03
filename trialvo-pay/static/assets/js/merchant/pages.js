@@ -105,12 +105,33 @@ async dashboard() {
 async settings() {
     const s = await MerchantAPI.getSettings();
     return `<div class="page-header"><h1>Settings</h1><p>Manage your service integration settings</p></div>
+
+    <div class="card">
+        <div class="card-header"><span class="card-title">Gateway Mode</span></div>
+        <div class="toggle-setting">
+            <div class="toggle-setting-info">
+                <div class="toggle-setting-label">${s.is_sandbox ? '● Sandbox Mode' : '● Live Mode'}</div>
+                <div class="toggle-setting-desc">${s.is_sandbox
+                    ? 'Your service is using the EPS sandbox gateway. Payments are simulated and no real money is processed.'
+                    : '<strong style="color:var(--danger)">Your service is using the Live EPS gateway. All payments are real.</strong>'
+                }</div>
+            </div>
+            <label class="toggle-switch">
+                <input type="checkbox" id="s-mode-toggle" ${s.is_sandbox ? '' : 'checked'} onchange="MerchantPages.toggleMode(this.checked)">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--text-muted)">
+            <i data-lucide="info" style="width:14px;height:14px"></i>
+            <span>Toggle right for <strong>Live</strong> (real payments), left for <strong>Sandbox</strong> (testing)</span>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header"><span class="card-title">Service Profile</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px;margin-bottom:20px">
             <div><span style="color:var(--text-muted)">Service ID:</span></div><div style="font-family:monospace;color:var(--accent)">${s.service_id} <button class="btn btn-sm btn-secondary" onclick="MUI.copyToClipboard('${s.service_id}')">Copy</button></div>
             <div><span style="color:var(--text-muted)">Slug:</span></div><div>${s.slug}</div>
-            <div><span style="color:var(--text-muted)">Mode:</span></div><div>${s.is_sandbox ? MUI.badge('sandbox') : MUI.badge('live')}</div>
             <div><span style="color:var(--text-muted)">Commission:</span></div><div>${s.commission_rate}% (${s.commission_type})</div>
             <div><span style="color:var(--text-muted)">API Base URL:</span></div><div style="font-family:monospace;color:var(--accent)">${s.api_base_url}</div>
         </div>
@@ -138,6 +159,24 @@ async settings() {
             </div>
         </form>
     </div>`;
+},
+
+async toggleMode(wantLive) {
+    if (wantLive) {
+        if (!confirm('⚠️ Switch to Live Mode?\n\nSwitching to Live mode will process REAL payments through the EPS gateway. All transactions will involve real money.\n\nAre you sure you want to continue?')) {
+            document.getElementById('s-mode-toggle').checked = false;
+            return;
+        }
+    }
+    try {
+        await MerchantAPI.updateSettings({ is_sandbox: !wantLive });
+        MUI.toast(wantLive ? 'Switched to Live mode' : 'Switched to Sandbox mode', 'success');
+        MerchantApp.navigate('#/settings');
+    } catch(e) {
+        const toggle = document.getElementById('s-mode-toggle');
+        if (toggle) toggle.checked = !wantLive;
+        MUI.toast(e.message, 'error');
+    }
 },
 
 async saveSettings() {
