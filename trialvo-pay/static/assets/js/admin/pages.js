@@ -3605,12 +3605,34 @@ const Pages = {
   // ═══════════════════════════════════════════════════════════════════════════
 
   async flow(container) {
+    const SVG = {
+      setup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`,
+      mail: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
+      security: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+      key: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-4.5-4.5-3 3z"/></svg>`,
+      code: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+      layout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="21" y2="9"/></svg>`,
+      gateway: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" x2="6" y1="6" y2="6"/><line x1="6" x2="6" y1="18" y2="18"/></svg>`,
+      database: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`,
+      refund: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
+      decision: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>`,
+      webhook: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M18 22a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M8.6 12.5h6.8"/><path d="m15.4 12.5-2.5-2.5"/><path d="m15.4 12.5-2.5 2.5"/></svg>`,
+      lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+      retry: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="m7 12 5 5 5-5"/></svg>`,
+      alert: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`,
+      globe: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+      payment: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`,
+      user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+      send: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+      clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    };
+
     const step = (opts) => `
       <div class="af-step">
         <div class="af-step-dot ${opts.pulse ? 'pulse' : ''}"></div>
         <div class="af-step-content">
           <div class="af-step-icon af-icon-${opts.color || 'brand'}">
-            <i data-lucide="${opts.icon}"></i>
+            ${SVG[opts.icon] || SVG.alert}
           </div>
           <div class="af-step-card">
             <div class="af-step-header">
@@ -3620,17 +3642,19 @@ const Pages = {
             <p class="af-step-desc">${opts.desc}</p>
             ${opts.pills ? `
               <div class="af-step-meta">
-                ${opts.pills.map(p => `<div class="af-pill"><i data-lucide="${p.icon}"></i> ${p.text}</div>`).join('')}
+                ${opts.pills.map(p => `<div class="af-pill">${SVG[p.icon] || ''} ${p.text}</div>`).join('')}
               </div>
             ` : ''}
           </div>
         </div>
       </div>`;
 
-    const phase = (num, title, subtitle, stepsHtml, extraHtml = '') => `
+    const phase = (num, title, subtitle, stepsHtml, extraHtml = '', phaseIcon = 'setup') => `
       <div class="af-phase">
         <div class="af-phase-header">
-          <div class="af-phase-number">${num}</div>
+          <div class="af-phase-icon-wrap">
+            ${SVG[phaseIcon]}
+          </div>
           <div class="af-phase-title">
             <h2>${title}</h2>
             <p>${subtitle}</p>
@@ -3655,9 +3679,9 @@ const Pages = {
           <!-- Phase 1: Onboarding -->
           ${phase(1, 'Onboarding & Setup', 'Preparing merchants for integration', `
             ${step({
-              icon: 'user-cog', title: 'Admin Creates Service', tag: 'ADMIN', color: 'brand', pulse: true,
+              icon: 'setup', title: 'Admin Creates Service', tag: 'ADMIN', color: 'brand', pulse: true,
               desc: 'Admin defines the service parameters including slug, commission, and environment mode.',
-              pills: [{icon: 'settings', text: 'Service ID'}, {icon: 'globe', text: 'Slug'}]
+              pills: [{icon: 'setup', text: 'Service ID'}, {icon: 'globe', text: 'Slug'}]
             })}
             ${step({
               icon: 'mail', title: 'Merchant Credentialing', tag: 'ADMIN', color: 'warning',
@@ -3665,76 +3689,76 @@ const Pages = {
               pills: [{icon: 'key', text: 'One-time Pass'}]
             })}
             ${step({
-              icon: 'shield-check', title: 'Merchant Security Setup', tag: 'MERCHANT', color: 'success',
+              icon: 'security', title: 'Merchant Security Setup', tag: 'MERCHANT', color: 'success',
               desc: 'Merchant logs in, resets password, and enables security features.',
               pills: [{icon: 'lock', text: 'Password Reset'}]
             })}
             ${step({
-              icon: 'key-round', title: 'API Authentication', tag: 'MERCHANT', color: 'success',
+              icon: 'key', title: 'API Authentication', tag: 'MERCHANT', color: 'success',
               desc: 'Merchant generates Master API Key and configures IPN endpoints for webhooks.',
               pills: [{icon: 'webhook', text: 'IPN Secret'}, {icon: 'code', text: 'API Key'}]
             })}
-          `)}
+          `, '', 'user')}
 
           <!-- Phase 2: Payment Lifecycle -->
           ${phase(2, 'Payment Lifecycle', 'From bill creation to successful capture', `
             ${step({
-              icon: 'code-2', title: 'Bill Initialization', tag: 'API', color: 'brand', pulse: true,
+              icon: 'code', title: 'Bill Initialization', tag: 'API', color: 'brand', pulse: true,
               desc: 'Merchant backend sends POST request to /api/v1/bills with order details.',
-              pills: [{icon: 'file-text', text: 'JSON Payload'}, {icon: 'shield', text: 'X-Signature'}]
+              pills: [{icon: 'layout', text: 'JSON Payload'}, {icon: 'security', text: 'X-Signature'}]
             })}
             ${step({
               icon: 'layout', title: 'Gateway Redirection', tag: 'UX', color: 'info',
               desc: 'Customer is redirected to Trialvo Pay hosted page to select payment method.',
-              pills: [{icon: 'smartphone', text: 'bKash/Nagad'}, {icon: 'credit-card', text: 'SSL Commerz'}]
+              pills: [{icon: 'payment', text: 'bKash/Nagad'}, {icon: 'payment', text: 'SSL Commerz'}]
             })}
             ${step({
-              icon: 'building-2', title: 'External Processing', tag: 'GATEWAY', color: 'warning',
+              icon: 'gateway', title: 'External Processing', tag: 'GATEWAY', color: 'warning',
               desc: 'Payment is processed by EPS/Gateway. Trialvo Pay listens for synchronous callbacks.',
-              pills: [{icon: 'zap', text: 'EPS Callback'}]
+              pills: [{icon: 'webhook', text: 'EPS Callback'}]
             })}
             ${step({
               icon: 'database', title: 'Integrity Verification', tag: 'CORE', color: 'brand',
               desc: 'Trialvo Pay verifies payment status directly with the gateway API to prevent spoofing.',
-              pills: [{icon: 'check-circle', text: 'check_status'}]
+              pills: [{icon: 'security', text: 'check_status'}]
             })}
           `, `
             <div class="docs-callout warn" style="margin:20px 0 0 48px">
               <div class="docs-callout-title"><i data-lucide="alert-triangle"></i> Critical: IPN Authoritative</div>
               <p>The customer redirect is for UX only. The IPN webhook is the authoritative payment confirmation. Never fulfill orders based on the redirect alone.</p>
             </div>
-          `)}
+          `, 'payment')}
 
           <!-- Phase 3: Refunds & Decisions -->
           ${phase(3, 'Refunds & Disputes', 'Handling post-payment adjustments', `
             ${step({
-              icon: 'rotate-ccw', title: 'Refund Request', tag: 'MERCHANT', color: 'warning', pulse: true,
+              icon: 'refund', title: 'Refund Request', tag: 'MERCHANT', color: 'warning', pulse: true,
               desc: 'Merchant requests a refund via API or Portal. Requires original transaction reference.',
-              pills: [{icon: 'hash', text: 'Tx Reference'}]
+              pills: [{icon: 'code', text: 'Tx Reference'}]
             })}
             ${step({
-              icon: 'user-cog', title: 'Admin Review', tag: 'ADMIN', color: 'brand',
+              icon: 'decision', title: 'Admin Review', tag: 'ADMIN', color: 'brand',
               desc: 'Admin reviews the refund request in the dashboard and makes a decision.',
-              pills: [{icon: 'check', text: 'Approve'}, {icon: 'x', text: 'Reject'}]
+              pills: [{icon: 'security', text: 'Approve'}, {icon: 'alert', text: 'Reject'}]
             })}
             ${step({
               icon: 'webhook', title: 'Refund Notification', tag: 'WEBHOOK', color: 'success',
               desc: 'System sends refund.approved or refund.rejected IPN to merchant.',
               pills: [{icon: 'send', text: 'IPN Event'}]
             })}
-          `)}
+          `, '', 'refund')}
 
           <!-- Phase 4: IPN Webhook Architecture -->
           ${phase(4, 'IPN Webhook Architecture', 'Authoritative push notification system', `
             ${step({
-              icon: 'shield', title: 'Payload Signing', tag: 'SECURITY', color: 'brand', pulse: true,
+              icon: 'lock', title: 'Payload Signing', tag: 'SECURITY', color: 'brand', pulse: true,
               desc: 'Every IPN includes X-Trialvo-Pay-Signature header using HMAC-SHA256.',
-              pills: [{icon: 'lock', text: 'HMAC-SHA256'}]
+              pills: [{icon: 'security', text: 'HMAC-SHA256'}]
             })}
             ${step({
-              icon: 'clock', title: 'Retry Strategy', tag: 'RELIABILITY', color: 'warning',
+              icon: 'retry', title: 'Retry Strategy', tag: 'RELIABILITY', color: 'warning',
               desc: 'If merchant responds with non-2xx, system retries: 30s → 2m → 8m → 30m → 2h.',
-              pills: [{icon: 'refresh-cw', text: '5 Max Retries'}]
+              pills: [{icon: 'clock', text: '5 Max Retries'}]
             })}
           `, `
             <div style="margin:24px 0 0 48px">
@@ -3756,7 +3780,7 @@ const Pages = {
                 <div class="flow-list-item" style="border:none;padding:8px 0"><div class="flow-list-num">3</div><div class="flow-list-content"><p>Compare hex digest with X-Trialvo-Pay-Signature header using timing-safe equal.</p></div></div>
               </div>
             </div>
-          `)}
+          `, 'webhook')}
         </div>
       </div>
     `;

@@ -3863,3 +3863,45 @@ code.code-tag { all: unset; font-family: 'JetBrains Mono', monospace; background
   .af-step-icon { width: 36px; height: 36px; }
   .af-step-icon i { width: 16px; height: 16px; }
 }
+
+/* ─── Premium SVG Icon Styling ─────────────────────────────────────── */
+.af-step-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.5;
+  transition: transform 0.3s ease;
+}
+
+.af-step:hover .af-step-icon svg {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.af-phase-number svg {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.af-pill svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ─── Enhanced Phase Header ────────────────────────────────────────── */
+.af-phase-icon-wrap {
+  width: 48px;
+  height: 48px;
+  background: var(--color-brand-gradient);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(13,148,136,0.2);
+  flex-shrink: 0;
+}
+
+.af-phase-icon-wrap svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
