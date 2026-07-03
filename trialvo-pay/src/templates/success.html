@@ -5,29 +5,103 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Payment Successful — Trialvo Pay</title>
 <meta http-equiv="refresh" content="3;url={{REDIRECT_URL}}">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: #f7f8fa; color: #1e293b; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 48px; max-width: 440px; width: 100%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.06); }
-.icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; animation: pulse 2s infinite; }
-.icon svg { width: 40px; height: 40px; color: white; }
-h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 12px; }
-p { color: #475569; line-height: 1.6; }
-.redirect-notice { margin-top: 24px; font-size: 0.875rem; color: #94a3b8; }
-@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.3); } 70% { box-shadow: 0 0 0 20px rgba(34,197,94,0); } }
+  :root {
+    --brand: #0d9488;
+    --brand-light: #14b8a6;
+    --bg: #f7f8fa;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-2: #475569;
+    --text-muted: #94a3b8;
+    --success: #10b981;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(13,148,136,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(20,184,166,0.05) 0%, transparent 50%);
+  }
+  .container { width: 100%; max-width: 440px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 40px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--success), var(--brand-light));
+  }
+  .icon-wrap {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, var(--success), var(--brand));
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    color: white;
+    box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+    animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); opacity: 1; }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+  }
+  h1 { font-size: 1.625rem; font-weight: 700; color: var(--text); margin-bottom: 12px; letter-spacing: -0.02em; }
+  p { font-size: 0.9375rem; color: var(--text-2); line-height: 1.6; margin-bottom: 28px; }
+  .redirect-notice {
+    font-size: 0.8125rem; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px; background: #f8fafc; border-radius: 12px;
+  }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,0.05);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .footer {
+    margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 0.75rem; color: var(--text-muted);
+  }
+  .footer svg { opacity: 0.6; }
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="icon">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
+<div class="container">
+  <div class="card">
+    <div class="icon-wrap">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h1>Payment Successful!</h1>
+    <p>Your transaction was completed securely. We've notified the merchant of your payment.</p>
+    <div class="redirect-notice">
+      <div class="spinner"></div>
+      Returning you to the merchant...
+    </div>
   </div>
-  <h1>Payment Successful!</h1>
-  <p>Your payment has been processed and confirmed. Thank you for your purchase.</p>
-  <div class="redirect-notice">You will be redirected automatically in a moment...</div>
+  <div class="footer">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Secured by <strong>Trialvo Pay</strong>
+  </div>
 </div>
 </body>
 </html>

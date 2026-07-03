@@ -180,6 +180,7 @@ pub async fn test_webhook(req: HttpRequest, state: web::Data<AppState>, path: we
 
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
+        .user_agent("TrialvoPay/1.0")
         .build()
         .unwrap();
 

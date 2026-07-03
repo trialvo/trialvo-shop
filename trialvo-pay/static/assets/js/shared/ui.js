@@ -283,23 +283,32 @@ const UI = {
       container.className = 'ui-toast-container';
       document.body.appendChild(container);
     }
-    const id = `toast-${Date.now()}`;
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
     const icons = { success: 'check-circle', error: 'x-circle', info: 'info', warning: 'alert-triangle' };
+    const titles = { success: 'Success', error: 'Error', info: 'Info', warning: 'Warning' };
     const toast = document.createElement('div');
     toast.className = `ui-toast ui-toast-${type}`;
     toast.id = id;
     toast.innerHTML = `
-      <i data-lucide="${icons[type] || 'info'}" class="ui-toast-icon"></i>
-      <span class="ui-toast-message">${message}</span>
-      <button class="ui-toast-close" onclick="document.getElementById('${id}').remove()">
+      <div class="ui-toast-icon-wrap">
+        <i data-lucide="${icons[type] || 'info'}"></i>
+      </div>
+      <div class="ui-toast-content">
+        <div class="ui-toast-title">${titles[type] || 'Notification'}</div>
+        <div class="ui-toast-message">${message}</div>
+      </div>
+      <button class="ui-toast-close" onclick="document.getElementById('${id}')?.remove()">
         <i data-lucide="x"></i>
-      </button>`;
+      </button>
+      <div class="ui-toast-progress" style="--duration: ${duration}ms"></div>`;
     container.appendChild(toast);
     if (window.lucide) lucide.createIcons({ nodes: [toast] });
-    setTimeout(() => toast.classList.add('visible'), 10);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => toast.classList.add('visible'));
+    });
     setTimeout(() => {
       toast.classList.remove('visible');
-      setTimeout(() => toast.remove(), 300);
+      setTimeout(() => toast.remove(), 400);
     }, duration);
   },
 
@@ -324,22 +333,44 @@ const UI = {
       </div>`;
     backdrop.classList.remove('hidden');
     if (window.lucide) lucide.createIcons({ nodes: [container] });
-    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) UI.closeModal(); });
+
+    // Animate in
+    requestAnimationFrame(() => {
+      backdrop.classList.add('visible');
+      container.querySelector('.ui-modal')?.classList.add('open');
+    });
+
+    // Close on backdrop click
+    backdrop.onclick = (e) => { if (e.target === backdrop) UI.closeModal(); };
+
+    // Close on Escape
+    const _esc = (e) => { if (e.key === 'Escape') { UI.closeModal(); document.removeEventListener('keydown', _esc); } };
+    document.addEventListener('keydown', _esc);
   },
 
   closeModal() {
-    document.getElementById('modal-backdrop')?.classList.add('hidden');
+    const backdrop = document.getElementById('modal-backdrop');
+    const modal = backdrop?.querySelector('.ui-modal');
+    if (modal) modal.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('visible');
+    setTimeout(() => {
+      backdrop?.classList.add('hidden');
+      const container = document.getElementById('modal-container');
+      if (container) container.innerHTML = '';
+    }, 300);
   },
 
   /**
    * Show a confirmation dialog
    */
-  confirm(title, message, onConfirmFn) {
+  confirm(title, message, onConfirmFn, type = 'danger') {
+    const btnClass = type === 'danger' ? 'ui-btn-danger' : type === 'success' ? 'ui-btn-primary' : 'ui-btn-primary';
+    const btnLabel = type === 'danger' ? 'Confirm' : 'Approve';
     this.modal(title, `
       <p class="ui-confirm-message">${message}</p>
     `, [
       `<button class="ui-btn ui-btn-ghost" onclick="UI.closeModal()">Cancel</button>`,
-      `<button class="ui-btn ui-btn-danger" onclick="(${onConfirmFn})(); UI.closeModal()">Confirm</button>`,
+      `<button class="ui-btn ${btnClass}" onclick="(${onConfirmFn})(); UI.closeModal()">${btnLabel}</button>`,
     ]);
   },
 
@@ -475,6 +506,76 @@ const UI = {
   _esc(str) {
     if (str === null || str === undefined) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROMPT MODAL, CSV EXPORT & DATE HELPERS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Show a styled prompt modal with an input field and confirm/cancel buttons.
+   * @param {string} title - Modal title
+   * @param {string} message - Descriptive message
+   * @param {object} inputOpts - { label, placeholder, type, required }
+   * @param {Function} onConfirmFn - Callback receiving the input value
+   */
+  promptModal(title, message, inputOpts = {}, onConfirmFn) {
+    const { label = '', placeholder = '', type = 'text', required = true } = inputOpts;
+    const inputId = 'prompt-modal-input';
+    this.modal(title, `
+      <p class="ui-confirm-message">${message}</p>
+      <div class="ui-form-group" style="margin-top:16px">
+        ${label ? `<label class="ui-label" for="${inputId}">${label}</label>` : ''}
+        <input class="ui-input" id="${inputId}" type="${type}" placeholder="${placeholder}" ${required ? 'required' : ''}>
+      </div>
+    `, [
+      `<button class="ui-btn ui-btn-ghost" onclick="UI.closeModal()">Cancel</button>`,
+      `<button class="ui-btn ui-btn-primary" id="prompt-modal-confirm">Confirm</button>`,
+    ]);
+    document.getElementById('prompt-modal-confirm').addEventListener('click', () => {
+      const val = document.getElementById(inputId).value;
+      if (required && !val.trim()) { document.getElementById(inputId).focus(); return; }
+      onConfirmFn(val);
+      UI.closeModal();
+    });
+  },
+
+  /**
+   * Export data as a CSV file
+   * @param {string} filename - Download filename (e.g. 'transactions.csv')
+   * @param {Array<{label,key}>} columns - Column definitions
+   * @param {Array<Object>} rows - Data rows
+   */
+  exportCSV(filename, columns, rows) {
+    const header = columns.map(c => `"${c.label}"`).join(',');
+    const body = rows.map(row => columns.map(c => {
+      let val = row[c.key] ?? '';
+      val = String(val).replace(/"/g, '""');
+      // Strip HTML tags
+      val = val.replace(/<[^>]*>/g, '');
+      return `"${val}"`;
+    }).join(',')).join('\n');
+    const csv = header + '\n' + body;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    this.toast(`Exported ${rows.length} rows to ${filename}`, 'success', 3000);
+  },
+
+  /**
+   * Format a date range for display
+   * @param {string|null} from - Start date
+   * @param {string|null} to - End date
+   * @returns {string} Formatted date range text
+   */
+  dateRangeText(from, to) {
+    if (!from && !to) return 'All time';
+    const f = from ? new Date(from).toLocaleDateString('en-BD', { dateStyle: 'medium' }) : '…';
+    const t = to ? new Date(to).toLocaleDateString('en-BD', { dateStyle: 'medium' }) : '…';
+    return `${f} → ${t}`;
   },
 
 };

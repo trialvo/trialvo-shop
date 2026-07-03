@@ -4,17 +4,47 @@ window.MerchantPages = {
 // ─── LOGIN ──────────────────────────────────────────────────────────────────
 login() {
     return `<div class="login-wrapper">
+        <div class="login-bg-orbs">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+        </div>
         <div class="login-card">
-            <div class="logo"><h1>Trialvo Pay</h1><p>Merchant Portal</p></div>
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+                        <path d="M12 20h16M20 12v16" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h1>Trialvo Pay</h1>
+                <p>Merchant Portal</p>
+            </div>
             <div class="error" id="login-error"></div>
             <form id="login-form">
-                <div class="form-group"><label>Email</label><input type="email" id="login-email" required placeholder="you@company.com"></div>
-                <div class="form-group"><label>Password</label><input type="password" id="login-password" required placeholder="••••••••"></div>
-                <button type="submit" class="btn-login">Sign In</button>
+                <div class="form-group">
+                    <label>Email</label>
+                    <div class="input-wrap">
+                        <i data-lucide="mail" class="input-icon"></i>
+                        <input type="email" id="login-email" required placeholder="you@company.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <i data-lucide="lock" class="input-icon"></i>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                        <button type="button" class="toggle-password" id="toggle-pw-btn" title="Show/hide password">
+                            <i data-lucide="eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login">
+                    <i data-lucide="log-in" style="width:16px;height:16px"></i>
+                    Sign In
+                </button>
             </form>
         </div>
     </div>`;
-},
 
 initLogin() {
     document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -32,6 +62,17 @@ initLogin() {
             errEl.style.display = 'block';
         }
     });
+    // Password show/hide toggle
+    const toggleBtn = document.getElementById('toggle-pw-btn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            const pwInput = document.getElementById('login-password');
+            const isPassword = pwInput.type === 'password';
+            pwInput.type = isPassword ? 'text' : 'password';
+            toggleBtn.innerHTML = `<i data-lucide="${isPassword ? 'eye-off' : 'eye'}"></i>`;
+            if (window.lucide) lucide.createIcons({ nodes: [toggleBtn] });
+        });
+    }
 },
 
 // ─── DASHBOARD ──────────────────────────────────────────────────────────────
@@ -45,17 +86,18 @@ async dashboard() {
     </tr>`);
 
     return `<div class="page-header"><h1>Dashboard</h1><p>Your payment service overview</p></div>
+    <div class="section-header"><i data-lucide="bar-chart-2"></i> Revenue & Stats</div>
     <div class="stat-grid">
-        <div class="stat-card accent"><div class="stat-label">Total Revenue</div><div class="stat-value">৳${MUI.formatAmount(d.total_revenue)}</div></div>
-        <div class="stat-card success"><div class="stat-label">Today</div><div class="stat-value">৳${MUI.formatAmount(d.today_revenue)}</div></div>
-        <div class="stat-card"><div class="stat-label">Total Bills</div><div class="stat-value">${d.total_bills}</div><div class="stat-sub">${d.paid_bills} paid</div></div>
-        <div class="stat-card warning"><div class="stat-label">Pending Refunds</div><div class="stat-value">${d.pending_refunds}</div></div>
-        <div class="stat-card ${d.failed_webhooks_24h > 0 ? 'danger' : ''}"><div class="stat-label">Failed Webhooks (24h)</div><div class="stat-value">${d.failed_webhooks_24h}</div></div>
+        <div class="stat-card"><div class="stat-icon cyan"><i data-lucide="trending-up"></i></div><div class="stat-body"><div class="stat-label">Total Revenue</div><div class="stat-value">৳${MUI.formatAmount(d.total_revenue)}</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i data-lucide="calendar"></i></div><div class="stat-body"><div class="stat-label">Today</div><div class="stat-value">৳${MUI.formatAmount(d.today_revenue)}</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i data-lucide="receipt"></i></div><div class="stat-body"><div class="stat-label">Total Bills</div><div class="stat-value">${d.total_bills}</div><div class="stat-sub">${d.paid_bills} paid</div></div></div>
+        <div class="stat-card"><div class="stat-icon amber"><i data-lucide="rotate-ccw"></i></div><div class="stat-body"><div class="stat-label">Pending Refunds</div><div class="stat-value">${d.pending_refunds}</div></div></div>
+        <div class="stat-card"><div class="stat-icon ${d.failed_webhooks_24h > 0 ? 'red' : 'green'}"><i data-lucide="${d.failed_webhooks_24h > 0 ? 'alert-triangle' : 'check-circle'}"></i></div><div class="stat-body"><div class="stat-label">Failed Webhooks (24h)</div><div class="stat-value">${d.failed_webhooks_24h}</div></div></div>
     </div>
+    <div class="section-header"><i data-lucide="activity"></i> Recent Transactions</div>
     <div class="card"><div class="card-header"><span class="card-title">Recent Transactions</span></div>
         ${MUI.table(['Transaction ID', 'Amount', 'Status', 'Date'], rows)}
     </div>`;
-},
 
 // ─── SETTINGS ───────────────────────────────────────────────────────────────
 async settings() {
@@ -82,12 +124,15 @@ async settings() {
             <div class="form-group"><label>Success URL</label><input id="s-success" placeholder="https://yoursite.com/payment/success" value="${s.success_url || ''}"></div>
             <div class="form-group"><label>Fail URL</label><input id="s-fail" placeholder="https://yoursite.com/payment/failed" value="${s.fail_url || ''}"></div>
             <div class="form-group"><label>Cancel URL</label><input id="s-cancel" placeholder="https://yoursite.com/payment/cancelled" value="${s.cancel_url || ''}"></div>
-            <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-                <label class="checkbox-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                    <input type="checkbox" id="s-skip-preview" ${s.skip_preview ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--accent)">
-                    <span>Skip Payment Preview</span>
+            <div class="toggle-setting">
+                <div class="toggle-setting-info">
+                    <div class="toggle-setting-label">Skip Payment Preview</div>
+                    <div class="toggle-setting-desc">When enabled, customers are redirected directly to the payment gateway without seeing the order summary page. Your service UI will be completely bypassed.</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="s-skip-preview" ${s.skip_preview ? 'checked' : ''}>
+                    <span class="toggle-slider"></span>
                 </label>
-                <small style="color:var(--text-muted);display:block;margin-top:6px">When enabled, customers are redirected directly to the payment gateway without seeing the order summary page. Your service UI will be completely bypassed.</small>
             </div>
         </form>
     </div>`;
@@ -154,8 +199,9 @@ async revealKey(id) {
 },
 
 async revokeKey(id) {
-    if (!confirm('Are you sure you want to revoke this key? This cannot be undone.')) return;
-    try { await MerchantAPI.revokeKey(id); MUI.toast('Key revoked', 'success'); MerchantApp.navigate('#/keys'); } catch(e) { MUI.toast(e.message, 'error'); }
+    UI.confirm('Revoke API Key', 'Are you sure you want to revoke this key? This action cannot be undone and any integration using this key will stop working immediately.', async () => {
+        try { await MerchantAPI.revokeKey(id); MUI.toast('Key revoked', 'success'); MerchantApp.navigate('#/keys'); } catch(e) { MUI.toast(e.message, 'error'); }
+    }, 'danger');
 },
 
 // ─── WEBHOOKS ───────────────────────────────────────────────────────────────
@@ -234,8 +280,9 @@ async testWebhook(id) {
 },
 
 async deleteWebhook(id) {
-    if (!confirm('Delete this webhook endpoint?')) return;
-    try { await MerchantAPI.deleteWebhook(id); MUI.toast('Webhook deleted', 'success'); MerchantApp.navigate('#/webhooks'); } catch(e) { MUI.toast(e.message, 'error'); }
+    UI.confirm('Delete Webhook', 'Delete this webhook endpoint? This action cannot be undone and all delivery history for this endpoint will be lost.', async () => {
+        try { await MerchantAPI.deleteWebhook(id); MUI.toast('Webhook deleted', 'success'); MerchantApp.navigate('#/webhooks'); } catch(e) { MUI.toast(e.message, 'error'); }
+    }, 'danger');
 },
 
 toggleSecret(id, secret) {

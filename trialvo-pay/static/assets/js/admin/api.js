@@ -85,6 +85,7 @@ const API = {
   createService: (data) => API._post('/services', data),
   updateService: (id, data) => API._patch(`/services/${id}`, data),
   toggleService: (id, isActive) => API._patch(`/services/${id}/active/${isActive}`, {}),
+  deleteService: (id) => API._delete(`/services/${id}`),
   rotateServiceKey: (id) => API._post(`/services/${id}/rotate-key`),
   getServiceKeys: (id) => API._get(`/services/${id}/keys`),
   generateServiceKey: (id) => API._post(`/services/${id}/keys`, {}),
@@ -99,6 +100,7 @@ const API = {
     return API._get(`/transactions?${q}`);
   },
   getTransaction: (id) => API._get(`/transactions/${id}`),
+  deleteTransaction: (id) => API._delete(`/transactions/${id}`),
 
   // ─── Bills ─────────────────────────────────────────────────────────────────
   getBills: ({ limit = 25, offset = 0, status = '' } = {}) => {

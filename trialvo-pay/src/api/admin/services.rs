@@ -322,6 +322,34 @@ pub async fn update_service(req: HttpRequest, state: web::Data<AppState>, path: 
 }
 
 
+pub async fn delete(req: HttpRequest, state: web::Data<AppState>, path: web::Path<Uuid>) -> HttpResponse {
+    let auth = req.extensions().get::<AuthenticatedAdmin>().cloned().unwrap();
+    let service_id = path.into_inner();
+
+    // Verify service exists
+    match get_service_by_id(&state.db, service_id).await {
+        Ok(Some(s)) => {
+            tracing::info!("Admin {} deleting service {} ({})", auth.admin_id, service_id, s.display_name);
+        },
+        Ok(None) => return HttpResponse::NotFound().json(serde_json::json!({"error": "Service not found"})),
+        Err(_) => return HttpResponse::InternalServerError().json(serde_json::json!({"error": "Internal error"})),
+    };
+
+    // Delete service and all related data
+    match delete_service(&state.db, service_id).await {
+        Ok(true) => {
+            let _ = audit::log(&state.db, "admin", Some(&auth.admin_id.to_string()), "service.deleted", Some("service"), Some(&service_id.to_string()), None, None, None, None).await;
+            HttpResponse::Ok().json(serde_json::json!({"success": true, "message": "Service and all related data deleted permanently"}))
+        },
+        Ok(false) => HttpResponse::NotFound().json(serde_json::json!({"error": "Service not found"})),
+        Err(e) => {
+            tracing::error!("delete_service error: {:?}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({"error": format!("Failed to delete service: {}", e)}))
+        },
+    }
+}
+
+
 pub fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/services")
@@ -329,6 +357,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .route("", web::post().to(create))
             .route("/{id}", web::get().to(get))
             .route("/{id}", web::patch().to(update_service))
+            .route("/{id}", web::delete().to(delete))
             .route("/{id}/active/{active}", web::patch().to(toggle_active))
             .route("/{id}/keys", web::get().to(list_keys))
             .route("/{id}/keys", web::post().to(generate_key))
@@ -336,3 +365,4 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .route("/{id}/keys/{key_id}/reveal", web::get().to(reveal_key))
     );
 }
+

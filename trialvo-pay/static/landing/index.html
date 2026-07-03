@@ -58,6 +58,40 @@ body {
   transition: color 0.2s;
 }
 .navbar-links a:hover { color: var(--text); }
+
+/* ─── Hamburger Menu Toggle ───────────────────────────────────────────────── */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px; height: 40px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s;
+}
+.menu-toggle:hover { background: var(--bg-2); }
+.menu-toggle span {
+  display: block;
+  width: 20px; height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.menu-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 10px 22px;
@@ -284,13 +318,89 @@ body {
 .footer a { color: var(--text-2); text-decoration: none; }
 .footer a:hover { color: var(--text); }
 
-/* ─── Responsive ──────────────────────────────────────────────────────────── */
+/* ─── Scroll Reveal ───────────────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Stagger delays for feature cards */
+.feature-card.reveal:nth-child(1) { transition-delay: 0s; }
+.feature-card.reveal:nth-child(2) { transition-delay: 0.1s; }
+.feature-card.reveal:nth-child(3) { transition-delay: 0.15s; }
+.feature-card.reveal:nth-child(4) { transition-delay: 0.2s; }
+.feature-card.reveal:nth-child(5) { transition-delay: 0.25s; }
+.feature-card.reveal:nth-child(6) { transition-delay: 0.3s; }
+/* Stagger delays for steps */
+.step.reveal:nth-child(1) { transition-delay: 0s; }
+.step.reveal:nth-child(2) { transition-delay: 0.12s; }
+.step.reveal:nth-child(3) { transition-delay: 0.24s; }
+.step.reveal:nth-child(4) { transition-delay: 0.36s; }
+/* Stagger delays for stats */
+.stat.reveal:nth-child(1) { transition-delay: 0s; }
+.stat.reveal:nth-child(2) { transition-delay: 0.1s; }
+.stat.reveal:nth-child(3) { transition-delay: 0.2s; }
+.stat.reveal:nth-child(4) { transition-delay: 0.3s; }
+
+/* ─── Responsive — 768px ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .navbar { padding: 12px 20px; }
+  .navbar-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(16px);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .navbar-links.open { display: flex; }
+  .menu-toggle { display: flex; }
+  .stats-bar { flex-direction: column; gap: 24px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 2rem; }
+  .hero p { font-size: 1rem; }
+  .features-header h2,
+  .how-it-works h2,
+  .cta h2 { font-size: 1.5rem; }
+  .features, .how-it-works, .cta { padding-left: 20px; padding-right: 20px; }
+}
+
+/* ─── Responsive — 640px ─────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .navbar { padding: 12px 16px; }
-  .navbar-links { gap: 16px; }
-  .features, .how-it-works, .cta { padding-left: 20px; padding-right: 20px; }
   .hero { padding: 100px 16px 60px; }
-  .footer { flex-direction: column; gap: 12px; text-align: center; }
+  .footer {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+    padding: 28px 20px;
+  }
+  .footer > div {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* ─── Responsive — 480px ─────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .hero { padding: 80px 16px 48px; min-height: auto; }
+  .hero p { font-size: 0.95rem; }
+  .hero h1 { font-size: 1.75rem; }
+  .feature-card { padding: 24px 20px; }
+  .footer { padding: 24px 20px; }
+  .stats-bar { padding: 36px 20px; gap: 20px; }
+  .step { gap: 16px; }
+  .step-num { width: 42px; height: 42px; font-size: 0.88rem; }
+  .hero-actions { flex-direction: column; align-items: center; }
+  .hero-actions .btn { width: 100%; justify-content: center; }
 }
 
 /* ─── Animated glow ring in hero ──────────────────────────────────────────── */
@@ -338,6 +448,11 @@ body {
 <!-- ═══ Navbar ══════════════════════════════════════════════════════════════ -->
 <nav class="navbar">
   <a href="/" class="navbar-logo">Trialvo Pay</a>
+  <button class="menu-toggle" aria-label="Toggle navigation menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
   <div class="navbar-links">
     <a href="#features">Features</a>
     <a href="#how-it-works">How It Works</a>
@@ -369,19 +484,19 @@ body {
 
 <!-- ═══ Stats ═══════════════════════════════════════════════════════════════ -->
 <div class="stats-bar">
-  <div class="stat">
+  <div class="stat reveal">
     <div class="stat-value">AES-256</div>
     <div class="stat-label">Encryption</div>
   </div>
-  <div class="stat">
+  <div class="stat reveal">
     <div class="stat-value">HMAC</div>
     <div class="stat-label">API Signing</div>
   </div>
-  <div class="stat">
+  <div class="stat reveal">
     <div class="stat-value">Real-Time</div>
     <div class="stat-label">IPN Webhooks</div>
   </div>
-  <div class="stat">
+  <div class="stat reveal">
     <div class="stat-value">Isolated</div>
     <div class="stat-label">Per-Service Funds</div>
   </div>
@@ -395,32 +510,32 @@ body {
   </div>
 
   <div class="features-grid">
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon"><i data-lucide="credit-card"></i></div>
       <h3>EPS Payment Processing</h3>
       <p>Accept payments through EPS with full support for bKash, Nagad, card payments, and mobile banking channels.</p>
     </div>
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon" style="background: rgba(34,197,94,0.08); color: var(--green);"><i data-lucide="shield-check"></i></div>
       <h3>HMAC-SHA256 Authentication</h3>
       <p>Every API request is cryptographically signed with replay protection, nonce validation, and timestamp verification.</p>
     </div>
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon" style="background: rgba(245,158,11,0.08); color: var(--amber);"><i data-lucide="bell-ring"></i></div>
       <h3>Instant IPN Webhooks</h3>
       <p>Real-time payment notifications with automatic retries, configurable endpoints, and signature verification.</p>
     </div>
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon"><i data-lucide="layers"></i></div>
       <h3>Multi-Service Isolation</h3>
       <p>Each service has its own API keys, transactions, and revenue tracking. Complete financial isolation between services.</p>
     </div>
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon" style="background: rgba(34,197,94,0.08); color: var(--green);"><i data-lucide="undo-2"></i></div>
       <h3>Refund Management</h3>
       <p>All refunds require manual admin approval. Full and partial refunds with configurable refund windows.</p>
     </div>
-    <div class="feature-card">
+    <div class="feature-card reveal">
       <div class="feature-icon" style="background: rgba(245,158,11,0.08); color: var(--amber);"><i data-lucide="bar-chart-3"></i></div>
       <h3>Real-Time Dashboard</h3>
       <p>Monitor revenue, track success rates, view recent transactions, and manage services from a beautiful admin panel.</p>
@@ -432,28 +547,28 @@ body {
 <section class="how-it-works" id="how-it-works">
   <h2>How It Works</h2>
   <div class="steps">
-    <div class="step">
+    <div class="step reveal">
       <div class="step-num">1</div>
       <div class="step-content">
         <h4>Create a Service</h4>
         <p>Register your application in the admin panel and generate an API key. Each service gets isolated credentials and transaction history.</p>
       </div>
     </div>
-    <div class="step">
+    <div class="step reveal">
       <div class="step-num">2</div>
       <div class="step-content">
         <h4>Integrate the API</h4>
         <p>Use our documented API to create bills from your backend. Sign requests with HMAC-SHA256 and redirect customers to the payment URL.</p>
       </div>
     </div>
-    <div class="step">
+    <div class="step reveal">
       <div class="step-num">3</div>
       <div class="step-content">
         <h4>Process Payments</h4>
         <p>Customers complete payment on the EPS-secured page. Trialvo Pay handles the callback, verifies the payment, and updates the bill status.</p>
       </div>
     </div>
-    <div class="step">
+    <div class="step reveal">
       <div class="step-num">4</div>
       <div class="step-content">
         <h4>Receive Notifications</h4>
@@ -485,7 +600,59 @@ body {
   </div>
 </footer>
 
-<script>if (window.lucide) lucide.createIcons();</script>
+<script>
+// Initialize Lucide icons
+if (window.lucide) lucide.createIcons();
+
+// ─── Hamburger Menu Toggle ─────────────────────────────────────────────────
+const menuToggle = document.querySelector('.menu-toggle');
+const navbarLinks = document.querySelector('.navbar-links');
+
+if (menuToggle && navbarLinks) {
+  menuToggle.addEventListener('click', () => {
+    menuToggle.classList.toggle('active');
+    navbarLinks.classList.toggle('open');
+  });
+
+  // Close menu when a nav link is clicked
+  navbarLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      menuToggle.classList.remove('active');
+      navbarLinks.classList.remove('open');
+    });
+  });
+
+  // Close menu when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!menuToggle.contains(e.target) && !navbarLinks.contains(e.target)) {
+      menuToggle.classList.remove('active');
+      navbarLinks.classList.remove('open');
+    }
+  });
+}
+
+// ─── Scroll Reveal (IntersectionObserver) ──────────────────────────────────
+const revealElements = document.querySelectorAll('.reveal');
+
+if ('IntersectionObserver' in window) {
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.15,
+    rootMargin: '0px 0px -40px 0px'
+  });
+
+  revealElements.forEach(el => revealObserver.observe(el));
+} else {
+  // Fallback: reveal everything immediately
+  revealElements.forEach(el => el.classList.add('revealed'));
+}
+</script>
 
 </body>
 </html>

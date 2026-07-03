@@ -201,6 +201,7 @@ pub async fn test_endpoint(req: HttpRequest, state: web::Data<AppState>, path: w
 
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
+        .user_agent("TrialvoPay/1.0")
         .build()
         .unwrap();
 

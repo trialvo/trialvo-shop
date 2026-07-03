@@ -170,7 +170,10 @@ const Pages = {
 
   async dashboard(container) {
     container.innerHTML = `
-      ${Components.renderPageHeader('Dashboard', 'Revenue overview and recent activity')}
+      ${Components.renderPageHeader('Dashboard', 'Revenue overview and recent activity',
+        `<button class="auto-refresh-toggle" id="dash-auto-refresh" title="Auto-refresh every 30s">
+          <i data-lucide="refresh-cw"></i> Auto
+        </button>`)}
       <div id="dash-content">
         ${Components.renderSkeleton(1)}
       </div>
@@ -201,6 +204,22 @@ const Pages = {
         ${Components.renderStatCard('Active Services', active_services, 'layers', 'blue')}
         ${Components.renderStatCard('Pending Refunds', pending_refunds, 'rotate-ccw', pending_refunds > 0 ? 'warning' : 'emerald')}
         ${Components.renderStatCard('IPN Failures (24h)', ipn_failures_24h, 'alert-triangle', ipn_failures_24h > 0 ? 'danger' : 'emerald')}
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button class="quick-action-btn" onclick="Router.navigate('/admin/services')">
+          <i data-lucide="plus-circle"></i> Create Service
+        </button>
+        <button class="quick-action-btn" onclick="Router.navigate('/admin/refunds')">
+          <i data-lucide="rotate-ccw"></i> Pending Refunds ${pending_refunds > 0 ? `<span class="badge badge-warning">${pending_refunds}</span>` : ''}
+        </button>
+        <button class="quick-action-btn" onclick="Router.navigate('/admin/transactions')">
+          <i data-lucide="receipt"></i> All Transactions
+        </button>
+        <button class="quick-action-btn" onclick="Router.navigate('/admin/ipn')">
+          <i data-lucide="webhook"></i> IPN Endpoints
+        </button>
       </div>
 
       <!-- Chart + Recent Transactions -->
@@ -288,6 +307,17 @@ const Pages = {
 
     if (window.lucide) lucide.createIcons();
 
+    // Auto-refresh toggle
+    let autoRefreshInterval = null;
+    document.getElementById('dash-auto-refresh')?.addEventListener('click', function() {
+      this.classList.toggle('active');
+      if (this.classList.contains('active')) {
+        autoRefreshInterval = setInterval(() => Pages.dashboard(container), 30000);
+      } else {
+        clearInterval(autoRefreshInterval);
+      }
+    });
+
     // Load Recent IPN Activity on dashboard
     Pages._loadDashboardIpnActivity();
     document.getElementById('refresh-dash-ipn')?.addEventListener('click', () => Pages._loadDashboardIpnActivity());
@@ -296,6 +326,12 @@ const Pages = {
   // ═══════════════════════════════════════════════════════════════════════════
   // SERVICES
   // ═══════════════════════════════════════════════════════════════════════════
+
+  _svcAvatarColors: ['primary', 'violet', 'blue', 'amber', 'rose'],
+  _getSvcColor(name) {
+    const hash = (name || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    return this._svcAvatarColors[hash % this._svcAvatarColors.length];
+  },
 
   async services(container) {
     let page = 1, limit = 20;
@@ -308,34 +344,47 @@ const Pages = {
 
     const renderList = (services, total) => {
       container.innerHTML = `
-        ${Components.renderPageHeader('Services', 'Manage connected services and API keys',
+        ${Components.renderPageHeader('Services', `${total} connected services`,
           `<button class="btn btn-primary" id="add-service-btn"><i data-lucide="plus"></i> Add Service</button>`)}
         <div class="card">
           ${Components.renderTable(
             [
               { label: 'Service', key: 'name' },
-              { label: 'Slug', key: 'slug_badge' },
-              { label: 'Status', key: 'status_badge' },
               { label: 'Mode', key: 'mode_badge' },
               { label: 'Created', key: 'created' },
-              { label: 'Actions', key: 'actions' },
+              { label: 'Active', key: 'toggle' },
+              { label: '', key: 'actions' },
             ],
-            services.map(s => ({
-              name: `<div class="service-name">${s.display_name}</div><div class="service-desc">${s.description || ''}</div>`,
-              slug_badge: `<code class="code-tag">${s.slug}</code>`,
-              status_badge: statusBadge(s.is_active ? 'active' : 'inactive'),
-              mode_badge: s.is_sandbox ? '<span class="badge badge-warning">Sandbox</span>' : '<span class="badge badge-success">Live</span>',
-              created: formatDate(s.created_at),
-              actions: `
-                <div class="action-btns">
-                  <button class="btn btn-ghost sm" onclick="Pages._viewService('${s.id}')"><i data-lucide="eye"></i></button>
-                  <button class="btn btn-ghost sm" onclick="Pages._rotateKey('${s.id}')"><i data-lucide="key"></i></button>
-                  <button class="btn btn-ghost sm ${s.is_active ? 'danger' : 'success'}" onclick="Pages._toggleService('${s.id}', ${!s.is_active})">
-                    <i data-lucide="${s.is_active ? 'pause-circle' : 'play-circle'}"></i>
+            services.map(s => {
+              const color = Pages._getSvcColor(s.display_name);
+              const initial = (s.display_name || 'S').charAt(0).toUpperCase();
+              return {
+                name: `<div class="svc-name-cell">
+                  <div class="svc-avatar svc-avatar-${color}">${initial}</div>
+                  <div class="svc-name-text">
+                    <span class="name">${s.display_name}</span>
+                    <span class="slug">${s.slug}</span>
+                  </div>
+                </div>`,
+                mode_badge: s.is_sandbox
+                  ? '<span class="badge badge-warning">Sandbox</span>'
+                  : '<span class="badge badge-success">Live</span>',
+                created: formatDate(s.created_at),
+                toggle: `<label class="toggle-switch">
+                  <input type="checkbox" ${s.is_active ? 'checked' : ''}
+                    onchange="Pages._toggleService('${s.id}', this.checked)">
+                  <span class="toggle-slider"></span>
+                </label>`,
+                actions: `<div class="action-btns" style="display:flex;gap:4px">
+                  <button class="btn btn-ghost sm" onclick="Pages._viewService('${s.id}')" title="View details">
+                    <i data-lucide="eye"></i>
                   </button>
-                </div>
-              `,
-            })),
+                  <button class="btn btn-ghost sm danger" onclick="event.stopPropagation();Pages._confirmDeleteService('${s.id}', '${(s.display_name || '').replace(/'/g, "\\'")}', '${s.slug}')" title="Delete service">
+                    <i data-lucide="trash-2"></i>
+                  </button>
+                </div>`,
+              };
+            }),
             'No services found. Add your first service!'
           )}
           ${renderPagination(page, total, limit, `(p) => { page=p; Pages.services(container); }`)}
@@ -368,17 +417,17 @@ const Pages = {
         ])}
         <hr class="divider">
         <div style="margin-bottom:12px">
-          <h4 style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">🔐 Merchant Account (Optional)</h4>
-          <p style="font-size:12px;color:var(--text-muted);margin:0">Create a merchant portal login along with the service. Leave blank to skip.</p>
+          <h4 style="font-size:14px;font-weight:600;color:var(--color-text);margin-bottom:4px">🔐 Merchant Account (Optional)</h4>
+          <p style="font-size:12px;color:var(--color-text-3);margin:0">Create a merchant portal login along with the service. Leave blank to skip.</p>
         </div>
         ${Components.renderInput('svc-merchant-email', 'Merchant Email', 'email', 'merchant@example.com')}
         <div class="form-group">
-          <label>Merchant Password</label>
+          <label class="ui-label">Merchant Password</label>
           <div style="display:flex;gap:8px">
-            <input type="text" id="svc-merchant-password" placeholder="Min 8 chars or auto-generate" style="flex:1">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="Pages._autoGenPassword()" style="white-space:nowrap">🎲 Auto Generate</button>
+            <input class="ui-input" type="text" id="svc-merchant-password" placeholder="Min 8 chars or auto-generate" style="flex:1">
+            <button type="button" class="btn btn-secondary sm" onclick="Pages._autoGenPassword()" style="white-space:nowrap">🎲 Generate</button>
           </div>
-          <small style="color:var(--text-muted);display:block;margin-top:4px">If left empty, a secure password will be auto-generated.</small>
+          <small style="color:var(--color-text-3);display:block;margin-top:4px">If left empty, a secure password will be auto-generated.</small>
         </div>
         <div id="add-svc-error" class="form-error hidden"></div>
       </form>
@@ -404,7 +453,6 @@ const Pages = {
     const merchantEmail = document.getElementById('svc-merchant-email')?.value?.trim();
     const merchantPassword = document.getElementById('svc-merchant-password')?.value;
 
-    // Validate: if password provided, must be >= 8 chars
     if (merchantPassword && merchantPassword.length > 0 && merchantPassword.length < 8) {
       errEl.textContent = 'Merchant password must be at least 8 characters (or leave empty to auto-generate).';
       errEl.classList.remove('hidden');
@@ -422,22 +470,18 @@ const Pages = {
         is_sandbox: document.getElementById('svc-mode').value === 'true',
       };
 
-      // Add merchant fields if email provided
       if (merchantEmail) {
         payload.merchant_email = merchantEmail;
-        if (merchantPassword) {
-          payload.merchant_password = merchantPassword;
-        }
+        if (merchantPassword) payload.merchant_password = merchantPassword;
       }
 
       const result = await API.createService(payload);
 
-      // If merchant was created, show credentials in a modal
       if (result.merchant && result.merchant.email) {
         Modal.show('✅ Service & Merchant Created', `
-          <div style="background:var(--bg-secondary);border-radius:12px;padding:20px;margin-bottom:16px">
-            <h4 style="margin:0 0 12px;font-size:14px;color:var(--text-muted)">Service</h4>
-            <div style="font-size:15px;font-weight:600;color:var(--text)">${result.service?.display_name || 'Created'}</div>
+          <div style="background:var(--color-surface-2);border-radius:12px;padding:20px;margin-bottom:16px">
+            <h4 style="margin:0 0 12px;font-size:14px;color:var(--color-text-3)">Service</h4>
+            <div style="font-size:15px;font-weight:600;color:var(--color-text)">${result.service?.display_name || 'Created'}</div>
           </div>
           <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px;padding:20px;margin-bottom:16px">
             <h4 style="margin:0 0 4px;font-size:14px;color:#92400e">⚠️ Merchant Credentials (save now!)</h4>
@@ -448,7 +492,7 @@ const Pages = {
             </div>
           </div>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('Email: ${result.merchant.email}\nPassword: ${result.merchant.password}');Toast.success('Copied!')">📋 Copy Credentials</button>
+            <button class="btn btn-secondary sm" onclick="navigator.clipboard.writeText('Email: ${result.merchant.email}\nPassword: ${result.merchant.password}');Toast.success('Copied!')">📋 Copy Credentials</button>
           </div>
         `, [
           `<button class="btn btn-primary" onclick="Modal.close();Pages.services(document.getElementById('page-content'))">Done</button>`
@@ -472,128 +516,412 @@ const Pages = {
       ]);
       const keys = keysRes.data || keysRes || [];
       const primaryKey = keys.find(k => k.is_primary) || keys[0];
+      const color = Pages._getSvcColor(s.display_name);
+      const initial = (s.display_name || 'S').charAt(0).toUpperCase();
 
-      const keyCardHtml = !primaryKey
-        ? `<div class="key-card empty">
-            <p>No API key configured.</p>
-            <button class="btn btn-primary sm" onclick="Pages._generateServiceKey('${id}')">
-              <i data-lucide="plus"></i> Generate API Key
-            </button>
-          </div>`
-        : `<div class="key-card">
-            <div class="key-card-row">
-              <div class="key-card-info">
-                <code class="code-tag">${primaryKey.key_prefix}••••••••</code>
-                ${primaryKey.is_primary ? '<span class="badge badge-success">Primary</span>' : ''}
-              </div>
-              <div class="key-card-actions">
-                <button class="btn btn-ghost sm" onclick="Pages._revealServiceKey('${id}', '${primaryKey.id}')" title="Reveal full key">
-                  <i data-lucide="eye"></i>
-                </button>
-                <button class="btn btn-ghost sm danger" onclick="Pages._revokeServiceKey('${id}', '${primaryKey.id}')" title="Revoke key">
-                  <i data-lucide="trash-2"></i>
-                </button>
+      // ── Helper ─────────────────────────────────────────────────────────
+      const dRow = (label, value, copyable = false) => {
+        const copyBtn = copyable && value && value !== '—'
+          ? `<button class="tx-copy-btn" onclick="event.stopPropagation();UI.copyToClipboard('${String(value).replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"><i data-lucide="copy"></i></button>`
+          : '';
+        return `<div class="svc-detail-row"><span class="svc-d-label">${label}</span><span class="svc-d-value">${value ?? '—'}${copyBtn}</span></div>`;
+      };
+
+      // Remove any existing panel
+      document.getElementById('svc-detail-backdrop')?.remove();
+      document.getElementById('svc-detail-panel')?.remove();
+
+      // ── Build Panel HTML ─────────────────────────────────────────────
+      const panelHTML = `
+        <div class="svc-panel-backdrop" id="svc-detail-backdrop"></div>
+        <div class="svc-panel" id="svc-detail-panel">
+          <!-- Header -->
+          <div class="svc-panel-header">
+            <div class="svc-panel-header-left">
+              <div class="svc-detail-avatar svc-avatar-${color}" style="width:36px;height:36px;font-size:0.875rem;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700">${initial}</div>
+              <div>
+                <h3>${s.display_name}</h3>
+                <div style="display:flex;gap:6px;align-items:center;margin-top:2px">
+                  <code class="code-tag sm">${s.slug}</code>
+                  ${statusBadge(s.is_active ? 'active' : 'inactive')}
+                  ${s.is_sandbox ? '<span class="badge badge-warning">Sandbox</span>' : '<span class="badge badge-success">Live</span>'}
+                </div>
               </div>
             </div>
-            <div class="key-card-meta">
-              <span>Created ${formatDate(primaryKey.created_at)}</span>
-              <span>Last used: ${primaryKey.last_used_at ? formatDate(primaryKey.last_used_at) : 'Never'}</span>
+            <div class="svc-panel-header-actions">
+              <button class="tx-action-btn" id="svc-panel-edit" title="Edit Settings">
+                <i data-lucide="edit-2"></i>
+              </button>
+              <button class="tx-action-btn danger" id="svc-panel-delete" title="Delete service">
+                <i data-lucide="trash-2"></i>
+              </button>
+              <button class="tx-action-btn" id="svc-panel-close" title="Close">
+                <i data-lucide="x"></i>
+              </button>
             </div>
-            <div id="key-reveal-area" class="hidden"></div>
-          </div>`;
+          </div>
 
-      Modal.show(`Service: ${s.display_name}`, `
-        <div class="detail-grid">
-          ${Components.renderDetailRow('ID', `<code>${s.id}</code>`)}
-          ${Components.renderDetailRow('Slug', `<code class="code-tag">${s.slug}</code>`)}
-          ${Components.renderDetailRow('Status', statusBadge(s.is_active ? 'active' : 'inactive'))}
-          ${Components.renderDetailRow('Mode', s.is_sandbox ? '<span class="badge badge-warning">Sandbox</span>' : '<span class="badge badge-success">Live</span>')}
-          ${Components.renderDetailRow('Contact', s.contact_email || '—')}
-          ${Components.renderDetailRow('Success URL', s.success_url ? `<a href="${s.success_url}" target="_blank">${s.success_url}</a>` : '—')}
-          ${Components.renderDetailRow('Fail URL', s.fail_url || '—')}
-          ${Components.renderDetailRow('Cancel URL', s.cancel_url || '—')}
-          ${Components.renderDetailRow('Created', formatDate(s.created_at))}
-        </div>
+          <!-- Tabs -->
+          <div class="svc-tabs">
+            <button class="svc-tab active" data-tab="svc-overview">Overview</button>
+            <button class="svc-tab" data-tab="svc-keys">API & Keys</button>
+            <button class="svc-tab" data-tab="svc-commission">Commission</button>
+            <button class="svc-tab" data-tab="svc-danger">Danger Zone</button>
+            <button class="svc-tab" data-tab="svc-settings">Edit Settings</button>
+          </div>
 
-        <div class="keys-section mt-16">
-          <div class="keys-section-header">
-            <h4 class="keys-section-title"><i data-lucide="settings"></i> Service Settings</h4>
-            <button class="btn btn-ghost sm" onclick="Pages._editServiceSettingsModal('${s.id}')">
-              <i data-lucide="edit-2"></i> Edit
-            </button>
+          <!-- Tab Content -->
+          <div class="svc-panel-body">
+            <!-- Overview Tab -->
+            <div class="svc-tab-content active" id="stab-svc-overview">
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title"><i data-lucide="info"></i> Service Info</div>
+                <div class="svc-detail-grid">
+                  ${dRow('Service ID', `<code>${s.id}</code>`, true)}
+                  ${dRow('Display Name', s.display_name)}
+                  ${dRow('Slug', `<code>${s.slug}</code>`, true)}
+                  ${dRow('Description', s.description || '—')}
+                  ${dRow('Contact Email', s.contact_email || '—')}
+                  ${dRow('Contact Phone', s.contact_phone || '—')}
+                  ${dRow('Logo URL', s.logo_url ? `<img src="${s.logo_url}" alt="" style="height:20px;border-radius:4px"> <a href="${s.logo_url}" target="_blank" style="font-size:0.75rem">View</a>` : '—')}
+                  ${dRow('Created', formatDate(s.created_at))}
+                  ${dRow('Updated', formatDate(s.updated_at))}
+                </div>
+              </div>
+
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title">
+                  <i data-lucide="link"></i> Redirect URLs
+                  <button class="tx-action-btn" id="svc-url-edit-toggle" title="Edit URLs" style="margin-left:auto">
+                    <i data-lucide="edit-2"></i>
+                  </button>
+                </div>
+
+                <!-- Display Mode -->
+                <div id="svc-url-display">
+                  <div class="svc-url-card">
+                    <div class="svc-url-card-icon success"><i data-lucide="check-circle"></i></div>
+                    <div class="svc-url-card-body">
+                      <div class="svc-url-card-label">Success URL</div>
+                      <div class="svc-url-card-value ${!s.success_url ? 'empty' : ''}">${s.success_url || 'Not configured'}</div>
+                    </div>
+                  </div>
+                  <div class="svc-url-card">
+                    <div class="svc-url-card-icon danger"><i data-lucide="x-circle"></i></div>
+                    <div class="svc-url-card-body">
+                      <div class="svc-url-card-label">Fail URL</div>
+                      <div class="svc-url-card-value ${!s.fail_url ? 'empty' : ''}">${s.fail_url || 'Not configured'}</div>
+                    </div>
+                  </div>
+                  <div class="svc-url-card">
+                    <div class="svc-url-card-icon warning"><i data-lucide="ban"></i></div>
+                    <div class="svc-url-card-body">
+                      <div class="svc-url-card-label">Cancel URL</div>
+                      <div class="svc-url-card-value ${!s.cancel_url ? 'empty' : ''}">${s.cancel_url || 'Not configured'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Edit Mode (hidden by default) -->
+                <div id="svc-url-edit" class="hidden">
+                  <div class="svc-url-edit-row">
+                    <label>Success</label>
+                    <input id="svc-edit-success-url" type="url" placeholder="https://yourapp.com/success" value="${s.success_url || ''}">
+                  </div>
+                  <div class="svc-url-edit-row">
+                    <label>Fail</label>
+                    <input id="svc-edit-fail-url" type="url" placeholder="https://yourapp.com/fail" value="${s.fail_url || ''}">
+                  </div>
+                  <div class="svc-url-edit-row">
+                    <label>Cancel</label>
+                    <input id="svc-edit-cancel-url" type="url" placeholder="https://yourapp.com/cancel" value="${s.cancel_url || ''}">
+                  </div>
+                  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:var(--space-sm)">
+                    <button class="btn btn-ghost sm" id="svc-url-cancel">Cancel</button>
+                    <button class="btn btn-primary sm" id="svc-url-save"><i data-lucide="save"></i> Save URLs</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title"><i data-lucide="settings"></i> Configuration</div>
+                <div class="svc-detail-grid">
+                  ${dRow('Sandbox Mode', `<label class="toggle-switch" style="pointer-events:none"><input type="checkbox" ${s.is_sandbox ? 'checked' : ''} disabled><span class="toggle-slider"></span></label>`)}
+                  ${dRow('Skip Preview', `<label class="toggle-switch" style="pointer-events:none"><input type="checkbox" ${s.meta?.skip_preview ? 'checked' : ''} disabled><span class="toggle-slider"></span></label>`)}
+                  ${dRow('Active', `<label class="toggle-switch"><input type="checkbox" ${s.is_active ? 'checked' : ''} onchange="Pages._toggleService('${s.id}', this.checked)"><span class="toggle-slider"></span></label>`)}
+                </div>
+              </div>
+            </div>
+
+            <!-- API & Keys Tab -->
+            <div class="svc-tab-content" id="stab-svc-keys">
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title">
+                  <i data-lucide="key-round"></i> API Key
+                  ${primaryKey ? `<button class="tx-action-btn" onclick="Pages._generateServiceKey('${s.id}')" title="Regenerate" style="margin-left:auto">
+                    <i data-lucide="refresh-cw"></i>
+                  </button>` : ''}
+                </div>
+                ${!primaryKey
+                  ? `<div style="text-align:center;padding:var(--space-lg);background:var(--color-surface-2);border-radius:var(--radius-sm);border:1px solid var(--color-border)">
+                      <p style="color:var(--color-text-3);margin-bottom:12px;font-size:0.8125rem">No API key configured.</p>
+                      <button class="btn btn-primary sm" onclick="Pages._generateServiceKey('${s.id}')">
+                        <i data-lucide="plus"></i> Generate API Key
+                      </button>
+                    </div>`
+                  : `<div class="svc-key-card">
+                      <div class="svc-key-header">
+                        <div style="display:flex;align-items:center;gap:8px">
+                          <code class="code-tag">${primaryKey.key_prefix}••••••••</code>
+                          ${primaryKey.is_primary ? '<span class="badge badge-success">Primary</span>' : ''}
+                        </div>
+                        <div style="display:flex;gap:4px">
+                          <button class="tx-action-btn" onclick="Pages._revealServiceKey('${s.id}', '${primaryKey.id}')" title="Reveal">
+                            <i data-lucide="eye"></i>
+                          </button>
+                          <button class="tx-action-btn danger" onclick="Pages._revokeServiceKey('${s.id}', '${primaryKey.id}')" title="Revoke">
+                            <i data-lucide="trash-2"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="svc-key-meta">
+                        <span>Created ${formatDate(primaryKey.created_at)}</span>
+                        <span>Last used: ${primaryKey.last_used_at ? formatDate(primaryKey.last_used_at) : 'Never'}</span>
+                      </div>
+                      <div id="key-reveal-area" class="hidden"></div>
+                    </div>`}
+                <div id="new-key-reveal" class="hidden"></div>
+              </div>
+            </div>
+
+            <!-- Commission Tab -->
+            <div class="svc-tab-content" id="stab-svc-commission">
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title"><i data-lucide="percent"></i> Commission</div>
+                <div class="svc-commission-display">
+                  <div class="svc-commission-value">${parseFloat(s.commission_rate || 0).toFixed(2)}${(s.commission_type || 'percentage') === 'percentage' ? '%' : ' BDT'}</div>
+                  <div class="svc-commission-type">${s.commission_type || 'percentage'}</div>
+                </div>
+              </div>
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title"><i data-lucide="edit-2"></i> Update Commission</div>
+                <div class="svc-url-edit-row">
+                  <label>Rate</label>
+                  <input id="svc-commission-rate" type="number" min="0" max="100" step="0.01" value="${parseFloat(s.commission_rate || 0).toFixed(2)}" placeholder="0.00">
+                </div>
+                <div class="svc-url-edit-row">
+                  <label>Type</label>
+                  <select id="svc-commission-type" style="flex:1;padding:8px 12px;border:1px solid var(--color-border);border-radius:6px;font-size:0.8125rem;background:var(--color-surface);color:var(--color-text)">
+                    <option value="percentage" ${(s.commission_type || 'percentage') === 'percentage' ? 'selected' : ''}>Percentage (%)</option>
+                    <option value="flat" ${s.commission_type === 'flat' ? 'selected' : ''}>Flat (BDT)</option>
+                  </select>
+                </div>
+                <div style="display:flex;justify-content:flex-end;margin-top:var(--space-md)">
+                  <button class="btn btn-primary sm" id="svc-save-commission"><i data-lucide="save"></i> Save Commission</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Danger Zone Tab -->
+            <div class="svc-tab-content" id="stab-svc-danger">
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title" style="color:var(--color-danger)"><i data-lucide="alert-triangle"></i> Danger Zone</div>
+                <div style="background:var(--color-danger-bg);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:var(--space-lg)">
+                  <h4 style="font-size:0.875rem;font-weight:600;color:var(--color-danger);margin:0 0 4px">Delete Service</h4>
+                  <p style="font-size:0.8125rem;color:var(--color-text-3);margin:0 0 var(--space-md);line-height:1.5">
+                    Permanently delete <strong>${s.display_name}</strong> and all associated data including bills, transactions, API keys, and webhook endpoints. This action is <strong>irreversible</strong>.
+                  </p>
+                  <button class="tx-delete-btn confirm enabled" id="svc-danger-delete" style="opacity:1;pointer-events:auto">
+                    <i data-lucide="trash-2"></i> Delete This Service
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edit Settings Tab -->
+            <div class="svc-tab-content" id="stab-svc-settings">
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title"><i data-lucide="settings"></i> Service Settings</div>
+                <form id="svc-settings-form">
+                  <div class="svc-url-edit-row"><label>Display Name</label><input id="es-display-name" type="text" value="${s.display_name || ''}"></div>
+                  <div class="svc-url-edit-row"><label>Description</label><input id="es-description" type="text" value="${s.description || ''}"></div>
+                  <div class="svc-url-edit-row"><label>Email</label><input id="es-contact-email" type="email" value="${s.contact_email || ''}" placeholder="dev@example.com"></div>
+                  <div class="svc-url-edit-row"><label>Phone</label><input id="es-contact-phone" type="tel" value="${s.contact_phone || ''}" placeholder="+880..."></div>
+                  <div class="svc-url-edit-row"><label>Logo URL</label><input id="es-logo-url" type="url" value="${s.logo_url || ''}" placeholder="https://..."></div>
+                </form>
+              </div>
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title"><i data-lucide="link"></i> Redirect URLs</div>
+                <div class="svc-url-edit-row"><label>Success</label><input id="es-success-url" type="url" value="${s.success_url || ''}" placeholder="https://yourapp.com/success"></div>
+                <div class="svc-url-edit-row"><label>Fail</label><input id="es-fail-url" type="url" value="${s.fail_url || ''}" placeholder="https://yourapp.com/fail"></div>
+                <div class="svc-url-edit-row"><label>Cancel</label><input id="es-cancel-url" type="url" value="${s.cancel_url || ''}" placeholder="https://yourapp.com/cancel"></div>
+              </div>
+              <div class="svc-panel-section">
+                <div class="svc-panel-section-title"><i data-lucide="toggle-left"></i> Toggles</div>
+                <div style="display:flex;flex-direction:column;gap:16px">
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div>
+                      <div style="font-weight:500;font-size:0.875rem;color:var(--color-text)">Sandbox Mode</div>
+                      <div style="font-size:0.75rem;color:var(--color-text-3)">Use test environment</div>
+                    </div>
+                    <label class="toggle-switch"><input type="checkbox" id="es-sandbox" ${s.is_sandbox ? 'checked' : ''}><span class="toggle-slider"></span></label>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div>
+                      <div style="font-weight:500;font-size:0.875rem;color:var(--color-text)">Skip Payment Preview</div>
+                      <div style="font-size:0.75rem;color:var(--color-text-3)">Redirect directly to gateway</div>
+                    </div>
+                    <label class="toggle-switch"><input type="checkbox" id="es-skip-preview" ${s.meta?.skip_preview ? 'checked' : ''}><span class="toggle-slider"></span></label>
+                  </div>
+                </div>
+              </div>
+              <div class="svc-panel-section">
+                <div id="es-error" class="form-error hidden" style="margin-bottom:var(--space-md)"></div>
+                <div style="display:flex;gap:8px;justify-content:flex-end">
+                  <button class="btn btn-primary" id="svc-save-settings"><i data-lucide="save"></i> Save All Settings</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      `;
 
-        <div class="keys-section mt-16">
-          <div class="keys-section-header">
-            <h4 class="keys-section-title"><i data-lucide="percent"></i> Commission</h4>
-            <button class="btn btn-ghost sm" onclick="Pages._editCommission('${s.id}', '${s.commission_rate}', '${s.commission_type || 'percentage'}')">
-              <i data-lucide="edit-2"></i> Edit
-            </button>
-          </div>
-          <div class="detail-grid" id="commission-display">
-            ${Components.renderDetailRow('Rate', `<strong>${parseFloat(s.commission_rate || 0).toFixed(2)}%</strong>`)}
-            ${Components.renderDetailRow('Type', `<span class="badge badge-info">${s.commission_type || 'percentage'}</span>`)}
-          </div>
-        </div>
-
-        <div class="keys-section mt-16">
-          <div class="keys-section-header">
-            <h4 class="keys-section-title"><i data-lucide="key-round"></i> API Key</h4>
-            ${primaryKey ? `<button class="btn btn-primary sm" onclick="Pages._generateServiceKey('${s.id}')">
-              <i data-lucide="refresh-cw"></i> Regenerate
-            </button>` : ''}
-          </div>
-          <div id="service-key-card">
-            ${keyCardHtml}
-          </div>
-        </div>
-
-        <div id="new-key-reveal" class="hidden"></div>
-      `);
+      // ── Mount Panel ────────────────────────────────────────────────────
+      document.body.insertAdjacentHTML('beforeend', panelHTML);
       if (window.lucide) lucide.createIcons();
+
+      const backdrop = document.getElementById('svc-detail-backdrop');
+      const panel = document.getElementById('svc-detail-panel');
+
+      requestAnimationFrame(() => {
+        backdrop.classList.add('visible');
+        panel.classList.add('open');
+      });
+
+      // ── Close ──────────────────────────────────────────────────────────
+      const closePanel = () => {
+        panel.classList.remove('open');
+        backdrop.classList.remove('visible');
+        setTimeout(() => { backdrop.remove(); panel.remove(); }, 300);
+      };
+
+      document.getElementById('svc-panel-close')?.addEventListener('click', closePanel);
+      backdrop.addEventListener('click', closePanel);
+      document.addEventListener('keydown', function _esc(e) {
+        if (e.key === 'Escape') { closePanel(); document.removeEventListener('keydown', _esc); }
+      });
+
+      // ── Tab switching ──────────────────────────────────────────────────
+      panel.querySelectorAll('.svc-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          panel.querySelectorAll('.svc-tab').forEach(t => t.classList.remove('active'));
+          panel.querySelectorAll('.svc-tab-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(`stab-${tab.dataset.tab}`)?.classList.add('active');
+          if (window.lucide) lucide.createIcons();
+        });
+      });
+
+      // ── Edit settings → switch to settings tab ─────────────────────────
+      document.getElementById('svc-panel-edit')?.addEventListener('click', () => {
+        const settingsTab = panel.querySelector('.svc-tab[data-tab="svc-settings"]');
+        if (settingsTab) settingsTab.click();
+      });
+
+      // ── Save settings from settings tab ────────────────────────────────
+      document.getElementById('svc-save-settings')?.addEventListener('click', async () => {
+        const errEl = document.getElementById('es-error');
+        errEl?.classList.add('hidden');
+        const payload = {};
+        const fields = [
+          ['es-display-name', 'display_name'],
+          ['es-description', 'description'],
+          ['es-contact-email', 'contact_email'],
+          ['es-contact-phone', 'contact_phone'],
+          ['es-logo-url', 'logo_url'],
+          ['es-success-url', 'success_url'],
+          ['es-fail-url', 'fail_url'],
+          ['es-cancel-url', 'cancel_url'],
+        ];
+        for (const [elId, key] of fields) {
+          const val = document.getElementById(elId)?.value?.trim();
+          if (val !== undefined && val !== '') payload[key] = val;
+          else payload[key] = null;
+        }
+        payload.is_sandbox = document.getElementById('es-sandbox')?.checked ?? false;
+        payload.skip_preview = document.getElementById('es-skip-preview')?.checked ?? false;
+        try {
+          await API.updateService(id, payload);
+          Toast.success('Service settings updated!');
+          closePanel();
+          setTimeout(() => Pages._viewService(id), 350);
+        } catch (e) {
+          if (errEl) { errEl.textContent = e.message; errEl.classList.remove('hidden'); }
+          else Toast.error(e.message);
+        }
+      });
+
+      // ── Delete from panel or danger zone ───────────────────────────────
+      const triggerDelete = () => {
+        closePanel();
+        setTimeout(() => Pages._confirmDeleteService(s.id, s.display_name, s.slug), 350);
+      };
+      document.getElementById('svc-panel-delete')?.addEventListener('click', triggerDelete);
+      document.getElementById('svc-danger-delete')?.addEventListener('click', triggerDelete);
+
+      // ── URL edit toggle ────────────────────────────────────────────────
+      document.getElementById('svc-url-edit-toggle')?.addEventListener('click', () => {
+        document.getElementById('svc-url-display')?.classList.add('hidden');
+        document.getElementById('svc-url-edit')?.classList.remove('hidden');
+      });
+      document.getElementById('svc-url-cancel')?.addEventListener('click', () => {
+        document.getElementById('svc-url-edit')?.classList.add('hidden');
+        document.getElementById('svc-url-display')?.classList.remove('hidden');
+      });
+      document.getElementById('svc-url-save')?.addEventListener('click', async () => {
+        const payload = {
+          success_url: document.getElementById('svc-edit-success-url')?.value?.trim() || null,
+          fail_url: document.getElementById('svc-edit-fail-url')?.value?.trim() || null,
+          cancel_url: document.getElementById('svc-edit-cancel-url')?.value?.trim() || null,
+        };
+        try {
+          await API.updateService(id, payload);
+          Toast.success('Redirect URLs updated!');
+          closePanel();
+          setTimeout(() => Pages._viewService(id), 350);
+        } catch (e) {
+          Toast.error(e.message);
+        }
+      });
+
+      // ── Save commission ────────────────────────────────────────────────
+      document.getElementById('svc-save-commission')?.addEventListener('click', async () => {
+        const rate = document.getElementById('svc-commission-rate')?.value;
+        const type = document.getElementById('svc-commission-type')?.value;
+        if (!rate) return Toast.error('Enter a commission rate');
+        try {
+          await API.updateServiceCommission(id, parseFloat(rate), type);
+          Toast.success('Commission updated!');
+          closePanel();
+          setTimeout(() => Pages._viewService(id), 350);
+        } catch (e) {
+          Toast.error(e.message);
+        }
+      });
 
     } catch (e) {
       Toast.error(e.message);
     }
   },
 
-  _editCommission(serviceId, currentRate, currentType) {
-    const display = document.getElementById('commission-display');
-    if (!display) return;
-    display.innerHTML = `
-      <div class="form-row" style="align-items:flex-end;gap:12px;margin:8px 0">
-        <div class="form-group" style="flex:1;margin:0">
-          <label class="form-label">Rate (%)</label>
-          <input class="form-input" id="commission-rate-input" type="number" min="0" max="100" step="0.01"
-            value="${parseFloat(currentRate || 0).toFixed(2)}" placeholder="2.50">
-        </div>
-        <div class="form-group" style="flex:1;margin:0">
-          <label class="form-label">Type</label>
-          <select class="form-input" id="commission-type-input">
-            <option value="percentage" ${currentType === 'percentage' ? 'selected' : ''}>Percentage</option>
-            <option value="flat" ${currentType === 'flat' ? 'selected' : ''}>Flat (BDT)</option>
-          </select>
-        </div>
-        <button class="btn btn-primary sm" onclick="Pages._saveCommission('${serviceId}')" style="margin-bottom:0">
-          <i data-lucide="save"></i> Save
-        </button>
-        <button class="btn btn-ghost sm" onclick="Pages._viewService('${serviceId}')" style="margin-bottom:0">
-          Cancel
-        </button>
-      </div>
-    `;
-    if (window.lucide) lucide.createIcons({ nodes: [display] });
-  },
-
   async _saveCommission(serviceId) {
     const rate = document.getElementById('commission-rate-input')?.value;
     const type = document.getElementById('commission-type-input')?.value;
-    if (!rate) return Toast.error('Enter a commission rate');
+    if (rate === '' || rate === undefined) return Toast.error('Enter a commission rate');
     try {
       await API.updateServiceCommission(serviceId, parseFloat(rate), type);
       Toast.success('Commission updated!');
-      Modal.close();
+      Pages._viewService(serviceId); // Refresh modal
     } catch (e) {
       Toast.error(e.message);
     }
@@ -613,16 +941,28 @@ const Pages = {
           ${Components.renderInput('es-success-url', 'Success URL', 'url', 'https://yourapp.com/success', s.success_url || '')}
           ${Components.renderInput('es-fail-url', 'Fail URL', 'url', 'https://yourapp.com/fail', s.fail_url || '')}
           ${Components.renderInput('es-cancel-url', 'Cancel URL', 'url', 'https://yourapp.com/cancel', s.cancel_url || '')}
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="es-sandbox" ${s.is_sandbox ? 'checked' : ''}> Sandbox Mode
-            </label>
-          </div>
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input type="checkbox" id="es-skip-preview" ${s.meta?.skip_preview ? 'checked' : ''}> Skip Payment Preview
-            </label>
-            <small style="color:var(--text-muted);display:block;margin-top:4px">When enabled, customers are redirected directly to the payment gateway without seeing the order summary page.</small>
+          <hr class="divider">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-weight:500;font-size:0.875rem;color:var(--color-text)">Sandbox Mode</div>
+                <div style="font-size:0.75rem;color:var(--color-text-3)">Use test environment</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="es-sandbox" ${s.is_sandbox ? 'checked' : ''}>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-weight:500;font-size:0.875rem;color:var(--color-text)">Skip Payment Preview</div>
+                <div style="font-size:0.75rem;color:var(--color-text-3)">Redirect directly to payment gateway</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="es-skip-preview" ${s.meta?.skip_preview ? 'checked' : ''}>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
           </div>
           <div id="es-error" class="form-error hidden"></div>
         </form>
@@ -665,9 +1005,8 @@ const Pages = {
 
     try {
       await API.updateService(serviceId, payload);
-      Modal.close();
       Toast.success('Service settings updated!');
-      Pages.services(document.getElementById('page-content'));
+      Pages._viewService(serviceId);
     } catch (e) {
       errEl.textContent = e.message;
       errEl.classList.remove('hidden');
@@ -698,173 +1037,780 @@ const Pages = {
   },
 
   async _generateServiceKey(serviceId) {
-    if (!confirm('Generate a new API key? The current key will be replaced.')) return;
-    try {
-      const res = await API.generateServiceKey(serviceId);
-      const reveal = document.getElementById('new-key-reveal');
-      if (reveal) {
-        reveal.classList.remove('hidden');
-        reveal.innerHTML = `
-          <div class="key-reveal mt-16">
-            <div class="key-reveal-warning">
-              <i data-lucide="alert-triangle"></i>
-              <span>Copy this key now — it will <strong>never</strong> be shown again.</span>
+    UI.confirm('Generate New API Key', 'The current key will be replaced. Existing integrations using the old key will break.', async () => {
+      try {
+        const res = await API.generateServiceKey(serviceId);
+        const reveal = document.getElementById('new-key-reveal');
+        if (reveal) {
+          reveal.classList.remove('hidden');
+          reveal.innerHTML = `
+            <div class="commission-panel" style="margin-top:16px;border-color:#f59e0b">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;color:#d97706">
+                <i data-lucide="alert-triangle"></i>
+                <span style="font-weight:600;font-size:0.875rem">Copy this key now — it will never be shown again.</span>
+              </div>
+              <div class="key-display">
+                <code id="new-key-value">${res.raw_key}</code>
+                <button class="btn btn-ghost sm" onclick="navigator.clipboard.writeText('${res.raw_key}').then(()=>Toast.success('Copied!'))">
+                  <i data-lucide="copy"></i> Copy
+                </button>
+              </div>
             </div>
-            <div class="key-display">
-              <code id="new-key-value">${res.raw_key}</code>
-              <button class="btn btn-ghost sm" onclick="navigator.clipboard.writeText('${res.raw_key}').then(()=>Toast.success('Copied to clipboard!'))">
-                <i data-lucide="copy"></i> Copy
-              </button>
+          `;
+          if (window.lucide) lucide.createIcons({ nodes: [reveal] });
+        } else {
+          // If not in view modal context, show in a new modal
+          Modal.show('New API Key', `
+            <div class="commission-panel" style="border-color:#f59e0b">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;color:#d97706">
+                <i data-lucide="alert-triangle"></i>
+                <span style="font-weight:600;font-size:0.875rem">Copy this key now — it will never be shown again.</span>
+              </div>
+              <div class="key-display">
+                <code>${res.raw_key}</code>
+                <button class="btn btn-ghost sm" onclick="navigator.clipboard.writeText('${res.raw_key}').then(()=>Toast.success('Copied!'))">
+                  <i data-lucide="copy"></i> Copy
+                </button>
+              </div>
             </div>
-          </div>
-        `;
-        if (window.lucide) lucide.createIcons({ nodes: [reveal] });
+          `);
+        }
+        Toast.success('New API key generated!');
+      } catch (e) {
+        Toast.error(e.message);
       }
-      Toast.success('New API key generated!');
-    } catch (e) {
-      Toast.error(e.message);
-    }
+    }, 'danger');
   },
 
   async _revokeServiceKey(serviceId, keyId) {
-    if (!confirm('Revoke this API key? This action cannot be undone.')) return;
-    try {
-      await API.revokeServiceKey(serviceId, keyId, 'Admin revoked from panel');
-      Toast.success('Key revoked');
-      Pages._viewService(serviceId);
-    } catch (e) {
-      Toast.error(e.message);
-    }
+    UI.confirm('Revoke API Key', 'This action cannot be undone. Any integration using this key will stop working immediately.', async () => {
+      try {
+        await API.revokeServiceKey(serviceId, keyId, 'Admin revoked from panel');
+        Toast.success('Key revoked');
+        Pages._viewService(serviceId);
+      } catch (e) {
+        Toast.error(e.message);
+      }
+    }, 'danger');
   },
 
   async _rotateKey(serviceId) {
-    if (!confirm('Rotate API key? The old key will have a 24-hour grace period.')) return;
-    try {
-      const res = await API.rotateServiceKey(serviceId);
-      Toast.success('Key rotated! Store your new key safely.');
-      Modal.show('New API Key', `
-        <div class="key-reveal">
-          <p class="text-warning">⚠️ Copy this key now — it will not be shown again.</p>
-          <div class="key-display">
-            <code>${res.api_key}</code>
-            <button class="btn btn-ghost sm" onclick="navigator.clipboard.writeText('${res.api_key}').then(()=>Toast.success('Copied!'))">
-              <i data-lucide="copy"></i>
-            </button>
+    UI.confirm('Rotate API Key', 'The old key will have a 24-hour grace period before it stops working.', async () => {
+      try {
+        const res = await API.rotateServiceKey(serviceId);
+        Toast.success('Key rotated! Store your new key safely.');
+        Modal.show('New API Key', `
+          <div class="commission-panel" style="border-color:#f59e0b">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;color:#d97706">
+              <i data-lucide="alert-triangle"></i>
+              <span style="font-weight:600;font-size:0.875rem">Copy this key now — it will not be shown again.</span>
+            </div>
+            <div class="key-display">
+              <code>${res.api_key}</code>
+              <button class="btn btn-ghost sm" onclick="navigator.clipboard.writeText('${res.api_key}').then(()=>Toast.success('Copied!'))">
+                <i data-lucide="copy"></i>
+              </button>
+            </div>
           </div>
-        </div>
-      `);
-    } catch (e) {
-      Toast.error(e.message);
-    }
+        `);
+      } catch (e) {
+        Toast.error(e.message);
+      }
+    }, 'danger');
   },
 
   async _toggleService(id, isActive) {
     try {
       await API.toggleService(id, isActive);
       Toast.success(`Service ${isActive ? 'activated' : 'deactivated'}`);
-      Pages.services(document.getElementById('page-content'));
     } catch (e) {
       Toast.error(e.message);
+      // Revert toggle
+      Pages.services(document.getElementById('page-content'));
     }
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SERVICE DELETE CONFIRMATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  _confirmDeleteService(id, displayName, slug) {
+    Modal.show('Delete Service', `
+      <div class="tx-delete-modal">
+        <div class="tx-delete-icon"><i data-lucide="alert-triangle"></i></div>
+        <div class="tx-delete-title">Permanently Delete Service?</div>
+        <div class="tx-delete-desc">
+          This action is <strong>irreversible</strong>. The service and <strong>all associated data</strong> will be permanently removed.
+        </div>
+        <div class="svc-delete-warning">
+          <i data-lucide="alert-triangle"></i>
+          <strong>The following will be deleted:</strong><br>
+          • All bills created for this service<br>
+          • All transactions and payment records<br>
+          • All API keys and webhook endpoints<br>
+          • All refund records
+        </div>
+        <div class="tx-delete-details">
+          <div class="tx-delete-detail-row">
+            <span>Service</span>
+            <span>${displayName}</span>
+          </div>
+          <div class="tx-delete-detail-row">
+            <span>Slug</span>
+            <span><code style="font-family:monospace;font-size:0.8em;background:var(--color-surface-3);padding:2px 6px;border-radius:4px">${slug}</code></span>
+          </div>
+        </div>
+        <div class="tx-delete-confirm-wrap">
+          <div class="tx-delete-confirm-label">Type <strong>DELETE</strong> to confirm</div>
+          <input class="tx-delete-confirm-input" id="svc-delete-confirm-input" type="text" placeholder="DELETE" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="tx-delete-actions">
+          <button class="tx-delete-btn cancel" onclick="Modal.close()">Cancel</button>
+          <button class="tx-delete-btn confirm" id="svc-delete-confirm-btn" disabled>
+            <i data-lucide="trash-2"></i> Delete Service
+          </button>
+        </div>
+      </div>
+    `);
+
+    if (window.lucide) lucide.createIcons();
+
+    const input = document.getElementById('svc-delete-confirm-input');
+    const btn = document.getElementById('svc-delete-confirm-btn');
+
+    input?.addEventListener('input', () => {
+      const matched = input.value.trim() === 'DELETE';
+      input.classList.toggle('matched', matched);
+      btn.classList.toggle('enabled', matched);
+      btn.disabled = !matched;
+    });
+
+    input?.focus();
+
+    btn?.addEventListener('click', async () => {
+      if (input.value.trim() !== 'DELETE') return;
+      btn.classList.add('loading');
+      btn.innerHTML = '<i data-lucide="loader" style="animation:spin 1s linear infinite"></i> Deleting…';
+      if (window.lucide) lucide.createIcons();
+
+      try {
+        await API.deleteService(id);
+        Modal.close();
+        Toast.success('Service deleted successfully');
+        const content = document.getElementById('page-content');
+        if (content) Pages.services(content);
+      } catch (e) {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i data-lucide="trash-2"></i> Delete Service';
+        if (window.lucide) lucide.createIcons();
+        Toast.error(e.message || 'Failed to delete service');
+      }
+    });
+  },
+
 
   // ═══════════════════════════════════════════════════════════════════════════
   // TRANSACTIONS
   // ═══════════════════════════════════════════════════════════════════════════
 
   async transactions(container) {
-    let page = 1, limit = 25, statusFilter = '', serviceFilter = '';
+    let page = 1, limit = 25, statusFilter = '', serviceFilter = '', searchQ = '', dateFrom = '', dateTo = '';
+    let selectedIds = new Set();
+    let currentTxs = [];
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    const _txDetailRow = (label, value, copyable = false) => {
+      const copyBtn = copyable && value && value !== '—'
+        ? `<button class="tx-copy-btn" onclick="event.stopPropagation();UI.copyToClipboard('${String(value).replace(/'/g, "\\'")}')"><i data-lucide="copy"></i></button>`
+        : '';
+      return `<div class="tx-detail-row"><span class="tx-detail-label">${label}</span><span class="tx-detail-value">${value ?? '—'}${copyBtn}</span></div>`;
+    };
+
+    const _syntaxHighlightJSON = (obj) => {
+      if (!obj) return '<span class="json-null">null</span>';
+      const json = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+        let cls = 'json-number';
+        if (/^"/.test(match)) {
+          cls = /:$/.test(match) ? 'json-key' : 'json-string';
+        } else if (/true|false/.test(match)) {
+          cls = 'json-bool';
+        } else if (/null/.test(match)) {
+          cls = 'json-null';
+        }
+        return `<span class="${cls}">${match}</span>`;
+      });
+    };
+
+    // ── Compute stats from current page data ─────────────────────────────
+    const _computeStats = (txs, total) => {
+      const totalAmount = txs.reduce((s, tx) => s + parseFloat(tx.amount || 0), 0);
+      const successCount = txs.filter(t => t.status === 'success').length;
+      const processingCount = txs.filter(t => t.status === 'processing').length;
+      const failedCount = txs.filter(t => t.status === 'failed').length;
+      const rate = txs.length > 0 ? Math.round((successCount / txs.length) * 100) : 0;
+      return { totalAmount, successCount, processingCount, failedCount, rate, total };
+    };
+
+    // ── Load data ────────────────────────────────────────────────────────
     const load = async () => {
-      const data = await API.getTransactions({ limit, offset: (page-1)*limit, status: statusFilter, service_id: serviceFilter });
+      const params = { limit, offset: (page - 1) * limit, status: statusFilter, service_id: serviceFilter };
+      if (searchQ) params.search = searchQ;
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo) params.date_to = dateTo;
+      const data = await API.getTransactions(params);
       const items = data.data || data.transactions || data;
       renderList(items, data.total || items.length || 0);
     };
 
+    // ── Render ────────────────────────────────────────────────────────────
     const renderList = (txs, total) => {
+      currentTxs = txs;
+      const stats = _computeStats(txs, total);
+      const allChecked = txs.length > 0 && txs.every(t => selectedIds.has(t.id));
+
       container.innerHTML = `
-        ${Components.renderPageHeader('Transactions', `${total.toLocaleString()} total transactions`)}
-        ${Components.renderFilterBar([
-          { id: 'status', type: 'select', onChange: `statusFilter=this.value;page=1;Pages.transactions(document.getElementById('page-content'))`,
-            options: [
-              { value: '', label: 'All Statuses' },
-              { value: 'success', label: '✓ Success' },
-              { value: 'processing', label: '↻ Processing' },
-              { value: 'failed', label: '✗ Failed' },
-              { value: 'cancelled', label: 'Cancelled' },
-            ]
-          },
-        ])}
+        ${Components.renderPageHeader('Transactions', `${total.toLocaleString()} total transactions`,
+          `<button class="btn-export" id="export-tx-csv">
+            <i data-lucide="download"></i> Export CSV
+          </button>`)}
+
+        <!-- Stats Summary Bar -->
+        <div class="tx-stats-bar">
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon brand"><i data-lucide="banknote"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${formatCurrency(stats.totalAmount)}</div>
+              <div class="tx-stat-mini-label">Page Total</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon success"><i data-lucide="check-circle-2"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${stats.successCount} <small style="font-size:0.7em;color:var(--color-text-3)">(${stats.rate}%)</small></div>
+              <div class="tx-stat-mini-label">Success</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon info"><i data-lucide="loader"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${stats.processingCount}</div>
+              <div class="tx-stat-mini-label">Processing</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon danger"><i data-lucide="x-circle"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${stats.failedCount}</div>
+              <div class="tx-stat-mini-label">Failed</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Controls Bar -->
+        <div class="tx-table-controls">
+          <div class="tx-table-controls-left">
+            <div class="search-input-wrap" style="min-width:200px;flex:1;max-width:320px">
+              <i data-lucide="search" class="search-icon"></i>
+              <input class="form-input" id="filter-search" type="text" placeholder="Search transactions…" value="${searchQ}">
+            </div>
+            <select class="form-select sm" id="filter-status">
+              <option value="">All Statuses</option>
+              <option value="success" ${statusFilter === 'success' ? 'selected' : ''}>✓ Success</option>
+              <option value="processing" ${statusFilter === 'processing' ? 'selected' : ''}>↻ Processing</option>
+              <option value="failed" ${statusFilter === 'failed' ? 'selected' : ''}>✗ Failed</option>
+              <option value="cancelled" ${statusFilter === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+              <option value="initiated" ${statusFilter === 'initiated' ? 'selected' : ''}>Initiated</option>
+              <option value="expired" ${statusFilter === 'expired' ? 'selected' : ''}>Expired</option>
+            </select>
+            <div class="date-range-group">
+              <input class="form-input" id="filter-date-from" type="date" value="${dateFrom}" title="From date">
+              <span class="date-range-sep">→</span>
+              <input class="form-input" id="filter-date-to" type="date" value="${dateTo}" title="To date">
+            </div>
+          </div>
+          <div class="tx-table-controls-right">
+            <div class="tx-per-page">
+              <span>Show</span>
+              <select id="tx-limit-select">
+                <option value="10" ${limit === 10 ? 'selected' : ''}>10</option>
+                <option value="25" ${limit === 25 ? 'selected' : ''}>25</option>
+                <option value="50" ${limit === 50 ? 'selected' : ''}>50</option>
+                <option value="100" ${limit === 100 ? 'selected' : ''}>100</option>
+              </select>
+              <span>per page</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Table -->
         <div class="card">
-          ${Components.renderTable(
-            [
-              { label: 'Merchant TX ID', key: 'merchant_id' },
-              { label: 'Amount', key: 'amount' },
-              { label: 'Status', key: 'status' },
-              { label: 'Method', key: 'method' },
-              { label: 'Date', key: 'date' },
-              { label: '', key: 'actions' },
-            ],
-            txs.map(tx => ({
-              merchant_id: `<code class="code-tag sm">${tx.eps_merchant_tx_id || tx.id?.slice(0,8)}</code>`,
-              amount: `<span class="amount">${formatCurrency(tx.amount)}</span>`,
-              status: statusBadge(tx.status),
-              method: tx.eps_financial_entity || '—',
-              date: formatDate(tx.created_at),
-              actions: `<button class="btn btn-ghost sm" onclick="Pages._viewTransaction('${tx.id}')"><i data-lucide="eye"></i></button>`,
-              _onclick: `Pages._viewTransaction('${tx.id}')`,
-            })),
-            'No transactions found'
-          )}
+          <div class="ui-table-wrapper">
+            <table class="ui-table">
+              <thead>
+                <tr>
+                  <th style="width:44px;text-align:center"><input type="checkbox" class="tx-checkbox" id="tx-select-all" ${allChecked ? 'checked' : ''}></th>
+                  <th>Merchant TX ID</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Method</th>
+                  <th>Customer</th>
+                  <th>Date</th>
+                  <th style="width:80px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${txs.length === 0 ? `<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--color-text-3)"><i data-lucide="inbox" style="width:32px;height:32px;margin:0 auto 8px;display:block;opacity:0.4"></i>No transactions found</td></tr>` :
+                  txs.map(tx => `
+                    <tr class="ui-table-row ${selectedIds.has(tx.id) ? 'selected' : ''}" data-tx-id="${tx.id}">
+                      <td style="text-align:center" onclick="event.stopPropagation()">
+                        <input type="checkbox" class="tx-checkbox tx-row-check" data-id="${tx.id}" ${selectedIds.has(tx.id) ? 'checked' : ''}>
+                      </td>
+                      <td><code class="code-tag sm">${tx.eps_merchant_tx_id || tx.id?.slice(0, 8)}</code></td>
+                      <td><span class="tx-amount ${tx.status === 'success' ? 'success' : ''}">${formatCurrency(tx.amount)}</span></td>
+                      <td>${statusBadge(tx.status)}</td>
+                      <td>${tx.eps_financial_entity || '—'}</td>
+                      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tx.eps_customer_id || '—'}</td>
+                      <td>${formatDate(tx.created_at)}</td>
+                      <td>
+                        <div class="tx-row-actions">
+                          <button class="tx-action-btn" onclick="event.stopPropagation();Pages._viewTransaction('${tx.id}')" title="View details">
+                            <i data-lucide="eye"></i>
+                          </button>
+                          <button class="tx-action-btn danger" onclick="event.stopPropagation();Pages._confirmDeleteTransaction('${tx.id}', '${tx.eps_merchant_tx_id || ''}', '${tx.amount}', '${tx.status}')" title="Delete">
+                            <i data-lucide="trash-2"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join('')}
+              </tbody>
+            </table>
+          </div>
           ${renderPagination(page, total, limit, `(p) => { page=p; Pages.transactions(document.getElementById('page-content')); }`)}
         </div>
       `;
       if (window.lucide) lucide.createIcons();
+
+      // ── Wire up events ──────────────────────────────────────────────────
+      // Search
+      document.getElementById('filter-search')?.addEventListener('input', (e) => {
+        searchQ = e.target.value; page = 1;
+        clearTimeout(window._tx_t);
+        window._tx_t = setTimeout(load, 400);
+      });
+      // Status filter
+      document.getElementById('filter-status')?.addEventListener('change', (e) => {
+        statusFilter = e.target.value; page = 1; load();
+      });
+      // Date filters
+      document.getElementById('filter-date-from')?.addEventListener('change', (e) => {
+        dateFrom = e.target.value; page = 1; load();
+      });
+      document.getElementById('filter-date-to')?.addEventListener('change', (e) => {
+        dateTo = e.target.value; page = 1; load();
+      });
+      // Per-page limit
+      document.getElementById('tx-limit-select')?.addEventListener('change', (e) => {
+        limit = parseInt(e.target.value); page = 1; load();
+      });
+      // Select all checkbox
+      document.getElementById('tx-select-all')?.addEventListener('change', (e) => {
+        txs.forEach(tx => {
+          if (e.target.checked) selectedIds.add(tx.id);
+          else selectedIds.delete(tx.id);
+        });
+        renderList(txs, total);
+      });
+      // Individual checkboxes
+      document.querySelectorAll('.tx-row-check').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          if (e.target.checked) selectedIds.add(e.target.dataset.id);
+          else selectedIds.delete(e.target.dataset.id);
+          const row = e.target.closest('.ui-table-row');
+          row?.classList.toggle('selected', e.target.checked);
+          const allCb = document.getElementById('tx-select-all');
+          if (allCb) allCb.checked = txs.every(t => selectedIds.has(t.id));
+        });
+      });
+      // Row click → open detail panel
+      document.querySelectorAll('.ui-table-row[data-tx-id]').forEach(row => {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('.tx-row-actions') || e.target.closest('.tx-checkbox')) return;
+          Pages._viewTransaction(row.dataset.txId);
+        });
+      });
+      // CSV Export
+      document.getElementById('export-tx-csv')?.addEventListener('click', () => {
+        UI.exportCSV('transactions.csv',
+          [
+            { label: 'Merchant TX ID', key: 'raw_merchant_id' },
+            { label: 'Amount', key: 'raw_amount' },
+            { label: 'Status', key: 'raw_status' },
+            { label: 'Method', key: 'raw_method' },
+            { label: 'Customer ID', key: 'raw_customer' },
+            { label: 'Date', key: 'raw_date' },
+          ],
+          currentTxs.map(tx => ({
+            raw_merchant_id: tx.eps_merchant_tx_id || tx.id?.slice(0, 8),
+            raw_amount: tx.amount,
+            raw_status: tx.status,
+            raw_method: tx.eps_financial_entity || '',
+            raw_customer: tx.eps_customer_id || '',
+            raw_date: tx.created_at,
+          }))
+        );
+      });
     };
 
     try {
-      container.innerHTML = Components.renderSkeleton();
+      container.innerHTML = Components.renderSkeleton(8);
       await load();
     } catch (e) {
       container.innerHTML = Components.renderError(e.message);
     }
   },
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TRANSACTION DETAIL — SLIDE-OUT PANEL
+  // ═══════════════════════════════════════════════════════════════════════════
+
   async _viewTransaction(id) {
     try {
       const res = await API.getTransaction(id);
       const tx = res.transaction || res;
       const events = res.events || [];
-      Modal.show('Transaction Details', `
-        <div class="detail-grid">
-          ${Components.renderDetailRow('Transaction ID', `<code>${tx.id}</code>`)}
-          ${Components.renderDetailRow('EPS TX ID', tx.eps_transaction_id || '—')}
-          ${Components.renderDetailRow('Merchant TX ID', `<code>${tx.eps_merchant_tx_id}</code>`)}
-          ${Components.renderDetailRow('Amount', formatCurrency(tx.amount))}
-          ${Components.renderDetailRow('Status', statusBadge(tx.status))}
-          ${Components.renderDetailRow('Payment Method', tx.eps_financial_entity || '—')}
-          ${Components.renderDetailRow('Customer ID', tx.eps_customer_id || '—')}
-          ${Components.renderDetailRow('Payment Ref', tx.eps_payment_ref || '—')}
-          ${Components.renderDetailRow('Created', formatDate(tx.created_at))}
-          ${Components.renderDetailRow('Completed', formatDate(tx.completed_at))}
-        </div>
-        ${events.length ? `
-          <div class="event-timeline">
-            <h4>Event Log</h4>
-            ${events.map(ev => `
-              <div class="event-item">
-                <div class="event-dot"></div>
-                <div class="event-content">
-                  <span class="event-type">${ev.event_type}</span>
-                  <span class="event-time">${formatDate(ev.created_at)}</span>
+      const bill = res.bill || null;
+
+      // ── Helper for detail rows ──────────────────────────────────────────
+      const dRow = (label, value, copyable = false) => {
+        const copyBtn = copyable && value && value !== '—'
+          ? `<button class="tx-copy-btn" onclick="event.stopPropagation();UI.copyToClipboard('${String(value).replace(/'/g, "\\'").replace(/"/g, '&quot;')}')"><i data-lucide="copy"></i></button>`
+          : '';
+        return `<div class="tx-detail-row"><span class="tx-detail-label">${label}</span><span class="tx-detail-value">${value ?? '—'}${copyBtn}</span></div>`;
+      };
+
+      // ── Syntax-highlighted JSON ──────────────────────────────────────────
+      const syntaxJSON = (obj) => {
+        if (!obj) return '<span class="json-null">null</span>';
+        const json = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+          let cls = 'json-number';
+          if (/^"/.test(match)) { cls = /:$/.test(match) ? 'json-key' : 'json-string'; }
+          else if (/true|false/.test(match)) { cls = 'json-bool'; }
+          else if (/null/.test(match)) { cls = 'json-null'; }
+          return `<span class="${cls}">${match}</span>`;
+        });
+      };
+
+      // Remove any existing panel
+      document.getElementById('tx-detail-backdrop')?.remove();
+      document.getElementById('tx-detail-panel')?.remove();
+
+      // ── Build Panel HTML ────────────────────────────────────────────────
+      const panelHTML = `
+        <div class="tx-panel-backdrop" id="tx-detail-backdrop"></div>
+        <div class="tx-panel" id="tx-detail-panel">
+          <!-- Header -->
+          <div class="tx-panel-header">
+            <div class="tx-panel-header-left">
+              <h3>Transaction Details</h3>
+              <span class="tx-panel-status">${statusBadge(tx.status)}</span>
+            </div>
+            <div class="tx-panel-header-actions">
+              <button class="tx-action-btn danger" id="tx-panel-delete" title="Delete transaction">
+                <i data-lucide="trash-2"></i>
+              </button>
+              <button class="tx-action-btn" id="tx-panel-close" title="Close">
+                <i data-lucide="x"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="tx-tabs">
+            <button class="tx-tab active" data-tab="overview">Overview</button>
+            <button class="tx-tab" data-tab="bill">Bill Info</button>
+            <button class="tx-tab" data-tab="timeline">Timeline (${events.length})</button>
+            <button class="tx-tab" data-tab="technical">Technical</button>
+          </div>
+
+          <!-- Tab Content -->
+          <div class="tx-panel-body">
+            <!-- Overview Tab -->
+            <div class="tx-tab-content active" id="tab-overview">
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="credit-card"></i> Transaction Info</div>
+                <div class="tx-detail-grid">
+                  ${dRow('Transaction ID', `<code>${tx.id}</code>`, true)}
+                  ${dRow('EPS TX ID', tx.eps_transaction_id ? `<code>${tx.eps_transaction_id}</code>` : '—', !!tx.eps_transaction_id)}
+                  ${dRow('Merchant TX ID', `<code>${tx.eps_merchant_tx_id}</code>`, true)}
+                  ${dRow('Amount', `<span class="tx-amount ${tx.status === 'success' ? 'success' : ''}">${formatCurrency(tx.amount)}</span>`)}
+                  ${dRow('Currency', tx.currency || 'BDT')}
+                  ${dRow('Status', statusBadge(tx.status))}
+                  ${dRow('Gateway Provider', tx.gateway_provider || '—')}
+                  ${dRow('Payment Method', tx.eps_financial_entity || '—')}
+                  ${dRow('Customer ID', tx.eps_customer_id || '—', !!tx.eps_customer_id)}
+                  ${dRow('Payment Ref', tx.eps_payment_ref || '—', !!tx.eps_payment_ref)}
+                  ${dRow('Customer Order ID', tx.eps_customer_order_id || '—')}
                 </div>
               </div>
-            `).join('')}
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="clock"></i> Timestamps</div>
+                <div class="tx-detail-grid">
+                  ${dRow('Created', formatDate(tx.created_at))}
+                  ${dRow('Initiated', formatDate(tx.initiated_at))}
+                  ${dRow('Redirected', formatDate(tx.redirected_at))}
+                  ${dRow('Callback Received', formatDate(tx.callback_received_at))}
+                  ${dRow('Verified', formatDate(tx.verified_at))}
+                  ${dRow('Completed', formatDate(tx.completed_at))}
+                  ${tx.failed_at ? dRow('Failed', formatDate(tx.failed_at)) : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Bill Info Tab -->
+            <div class="tx-tab-content" id="tab-bill">
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="receipt"></i> Bill Details</div>
+                ${bill ? `
+                  <div class="tx-detail-grid">
+                    ${dRow('Bill ID', `<code>${bill.id}</code>`, true)}
+                    ${dRow('Bill Token', `<code>${bill.bill_token?.slice(0, 20)}…</code>`, true)}
+                    ${dRow('Service ID', `<code>${bill.service_id}</code>`, true)}
+                    ${dRow('Payment Type', bill.payment_type || '—')}
+                    ${dRow('Status', statusBadge(bill.status))}
+                  </div>
+                ` : '<p style="color:var(--color-text-3);font-size:0.8125rem">No bill data available</p>'}
+              </div>
+              ${bill ? `
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="user"></i> Customer</div>
+                <div class="tx-detail-grid">
+                  ${dRow('Name', bill.customer_name || '—')}
+                  ${dRow('Email', bill.customer_email || '—')}
+                  ${dRow('Phone', bill.customer_phone || '—')}
+                  ${dRow('Address', bill.customer_address || '—')}
+                  ${dRow('City', bill.customer_city || '—')}
+                  ${dRow('Country', bill.customer_country || '—')}
+                </div>
+              </div>
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="calculator"></i> Amount Breakdown</div>
+                <div class="tx-detail-grid">
+                  ${dRow('Subtotal', formatCurrency(bill.subtotal))}
+                  ${dRow('Discount', formatCurrency(bill.total_discount))}
+                  ${dRow('Tax', formatCurrency(bill.tax_amount))}
+                  ${dRow('Shipping', formatCurrency(bill.shipping_amount))}
+                  ${dRow('Final Amount', `<strong>${formatCurrency(bill.final_amount)}</strong>`)}
+                </div>
+              </div>
+              ` : ''}
+            </div>
+
+            <!-- Timeline Tab -->
+            <div class="tx-tab-content" id="tab-timeline">
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="git-commit"></i> Event Timeline</div>
+                ${events.length === 0
+                  ? '<p style="color:var(--color-text-3);font-size:0.8125rem">No events recorded</p>'
+                  : `<div class="tx-timeline">
+                      ${events.map((ev, i) => {
+                        const evClass = ev.new_status === 'success' ? 'success' : ev.new_status === 'failed' ? 'failed' : '';
+                        return `
+                          <div class="tx-timeline-item ${evClass}">
+                            <div class="tx-timeline-dot"></div>
+                            <div>
+                              <div class="tx-timeline-event-type">${ev.event_type}</div>
+                              <div class="tx-timeline-meta">
+                                <span class="tx-timeline-time">${formatDate(ev.created_at)}</span>
+                                ${ev.old_status || ev.new_status ? `
+                                  <span class="tx-timeline-status-change">
+                                    ${ev.old_status || '—'} <i data-lucide="arrow-right"></i> ${ev.new_status || '—'}
+                                  </span>
+                                ` : ''}
+                                <span class="tx-timeline-source">${ev.source}</span>
+                              </div>
+                            </div>
+                          </div>`;
+                      }).join('')}
+                    </div>`
+                }
+              </div>
+            </div>
+
+            <!-- Technical Tab -->
+            <div class="tx-tab-content" id="tab-technical">
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="globe"></i> Client Info</div>
+                <div class="tx-detail-grid">
+                  ${dRow('Client IP', tx.client_ip || '—', !!tx.client_ip)}
+                  ${dRow('User Agent', tx.user_agent ? `<span style="font-size:0.7rem;max-width:280px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(tx.user_agent || '').replace(/"/g, '&quot;')}">${tx.user_agent}</span>` : '—')}
+                  ${dRow('Transaction Type ID', tx.transaction_type_id)}
+                  ${dRow('Redirect URL', tx.eps_redirect_url ? `<a href="${tx.eps_redirect_url}" target="_blank" style="font-size:0.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block">${tx.eps_redirect_url}</a>` : '—')}
+                </div>
+              </div>
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="box"></i> Custom Values</div>
+                <div class="tx-detail-grid">
+                  ${dRow('Value A', tx.value_a || '—')}
+                  ${dRow('Value B', tx.value_b || '—')}
+                  ${dRow('Value C', tx.value_c || '—')}
+                  ${dRow('Value D', tx.value_d || '—')}
+                </div>
+              </div>
+              ${tx.gateway_error_code || tx.gateway_error_message ? `
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="alert-triangle"></i> Error Info</div>
+                <div class="tx-detail-grid">
+                  ${dRow('Error Code', tx.gateway_error_code || '—')}
+                  ${dRow('Error Message', tx.gateway_error_message || '—')}
+                </div>
+              </div>
+              ` : ''}
+              <div class="tx-panel-section">
+                <div class="tx-panel-section-title"><i data-lucide="code-2"></i> Gateway Raw Response</div>
+                ${tx.gateway_response_raw ? `
+                  <div class="tx-json-viewer">
+                    <button class="tx-json-copy" onclick="UI.copyToClipboard(JSON.stringify(${JSON.stringify(tx.gateway_response_raw).replace(/'/g, "\\'")}, null, 2))">
+                      <i data-lucide="copy"></i> Copy
+                    </button>
+                    <pre>${syntaxJSON(tx.gateway_response_raw)}</pre>
+                  </div>
+                ` : '<p style="color:var(--color-text-3);font-size:0.8125rem">No gateway response data</p>'}
+              </div>
+            </div>
           </div>
-        ` : ''}
-      `);
+        </div>
+      `;
+
+      // ── Mount Panel ──────────────────────────────────────────────────────
+      document.body.insertAdjacentHTML('beforeend', panelHTML);
+      if (window.lucide) lucide.createIcons();
+
+      const backdrop = document.getElementById('tx-detail-backdrop');
+      const panel = document.getElementById('tx-detail-panel');
+
+      // Animate in
+      requestAnimationFrame(() => {
+        backdrop.classList.add('visible');
+        panel.classList.add('open');
+      });
+
+      // ── Close panel ──────────────────────────────────────────────────────
+      const closePanel = () => {
+        panel.classList.remove('open');
+        backdrop.classList.remove('visible');
+        setTimeout(() => {
+          backdrop.remove();
+          panel.remove();
+        }, 300);
+      };
+
+      document.getElementById('tx-panel-close')?.addEventListener('click', closePanel);
+      backdrop.addEventListener('click', closePanel);
+      document.addEventListener('keydown', function _esc(e) {
+        if (e.key === 'Escape') { closePanel(); document.removeEventListener('keydown', _esc); }
+      });
+
+      // ── Tab switching ──────────────────────────────────────────────────
+      panel.querySelectorAll('.tx-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          panel.querySelectorAll('.tx-tab').forEach(t => t.classList.remove('active'));
+          panel.querySelectorAll('.tx-tab-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(`tab-${tab.dataset.tab}`)?.classList.add('active');
+          if (window.lucide) lucide.createIcons();
+        });
+      });
+
+      // ── Delete from panel ──────────────────────────────────────────────
+      document.getElementById('tx-panel-delete')?.addEventListener('click', () => {
+        closePanel();
+        setTimeout(() => {
+          Pages._confirmDeleteTransaction(tx.id, tx.eps_merchant_tx_id, tx.amount, tx.status);
+        }, 350);
+      });
+
     } catch (e) {
       Toast.error(e.message);
     }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DELETE CONFIRMATION MODAL
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  _confirmDeleteTransaction(id, merchantTxId, amount, status) {
+    Modal.show('Delete Transaction', `
+      <div class="tx-delete-modal">
+        <div class="tx-delete-icon"><i data-lucide="alert-triangle"></i></div>
+        <div class="tx-delete-title">Permanently Delete Transaction?</div>
+        <div class="tx-delete-desc">
+          This action is <strong>irreversible</strong>. The transaction and all its event history will be permanently removed from the database.
+        </div>
+        <div class="tx-delete-details">
+          <div class="tx-delete-detail-row">
+            <span>Merchant TX ID</span>
+            <span><code style="font-family:monospace;font-size:0.8em;background:var(--color-surface-3);padding:2px 6px;border-radius:4px">${merchantTxId || id?.slice(0, 8)}</code></span>
+          </div>
+          <div class="tx-delete-detail-row">
+            <span>Amount</span>
+            <span>${formatCurrency(amount)}</span>
+          </div>
+          <div class="tx-delete-detail-row">
+            <span>Status</span>
+            <span>${statusBadge(status)}</span>
+          </div>
+        </div>
+        <div class="tx-delete-confirm-wrap">
+          <div class="tx-delete-confirm-label">Type <strong>DELETE</strong> to confirm</div>
+          <input class="tx-delete-confirm-input" id="tx-delete-confirm-input" type="text" placeholder="DELETE" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="tx-delete-actions">
+          <button class="tx-delete-btn cancel" onclick="Modal.close()">Cancel</button>
+          <button class="tx-delete-btn confirm" id="tx-delete-confirm-btn" disabled>
+            <i data-lucide="trash-2"></i> Delete Permanently
+          </button>
+        </div>
+      </div>
+    `);
+
+    if (window.lucide) lucide.createIcons();
+
+    const input = document.getElementById('tx-delete-confirm-input');
+    const btn = document.getElementById('tx-delete-confirm-btn');
+
+    input?.addEventListener('input', () => {
+      const matched = input.value.trim() === 'DELETE';
+      input.classList.toggle('matched', matched);
+      btn.classList.toggle('enabled', matched);
+      btn.disabled = !matched;
+    });
+
+    input?.focus();
+
+    btn?.addEventListener('click', async () => {
+      if (input.value.trim() !== 'DELETE') return;
+      btn.classList.add('loading');
+      btn.innerHTML = '<i data-lucide="loader" style="animation:spin 1s linear infinite"></i> Deleting…';
+      if (window.lucide) lucide.createIcons();
+
+      try {
+        await API.deleteTransaction(id);
+        Modal.close();
+        Toast.success('Transaction deleted successfully');
+        // Refresh the table
+        const content = document.getElementById('page-content');
+        if (content) Pages.transactions(content);
+      } catch (e) {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<i data-lucide="trash-2"></i> Delete Permanently';
+        if (window.lucide) lucide.createIcons();
+        Toast.error(e.message || 'Failed to delete transaction');
+      }
+    });
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -872,41 +1818,117 @@ const Pages = {
   // ═══════════════════════════════════════════════════════════════════════════
 
   async bills(container) {
-    let page = 1, limit = 25;
+    let page = 1, limit = 25, statusFilter = '';
     const load = async () => {
-      const data = await API.getBills({ limit, offset: (page-1)*limit });
+      const offset = (page - 1) * limit;
+      const params = { limit, offset };
+      if (statusFilter) params.status = statusFilter;
+      const data = await API.getBills(params);
       const items = data.data || data.bills || data;
-      renderList(items, data.total || items.length || 0);
+      renderList(items, data.total || items.length);
     };
 
     const renderList = (bills, total) => {
+      const paid = bills.filter(b => b.status === 'paid' || b.status === 'success');
+      const pending = bills.filter(b => b.status === 'pending' || b.status === 'processing');
+      const expired = bills.filter(b => b.status === 'expired');
+      const totalPaid = paid.reduce((s, b) => s + (parseFloat(b.amount || b.final_amount) || 0), 0);
+
       container.innerHTML = `
-        ${Components.renderPageHeader('Bills', `${total.toLocaleString()} total bills`)}
+        ${Components.renderPageHeader('Bills', `${total.toLocaleString()} total bills`,
+          `<div style="display:flex;gap:8px">
+            <button class="btn btn-ghost sm" onclick="Pages.bills(document.getElementById('page-content'))" title="Refresh">
+              <i data-lucide="refresh-cw"></i>
+            </button>
+            <button class="btn btn-ghost sm" id="export-bills-csv">
+              <i data-lucide="download"></i> Export
+            </button>
+          </div>`)}
+        <div class="tx-stats-bar">
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon brand"><i data-lucide="receipt"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${total.toLocaleString()}</div>
+              <div class="tx-stat-mini-label">Total Bills</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon success"><i data-lucide="check-circle"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${formatCurrency(totalPaid)}</div>
+              <div class="tx-stat-mini-label">Paid</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon warning"><i data-lucide="clock"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${pending.length}</div>
+              <div class="tx-stat-mini-label">Pending</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon danger"><i data-lucide="x-circle"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${expired.length}</div>
+              <div class="tx-stat-mini-label">Expired</div>
+            </div>
+          </div>
+        </div>
+        ${Components.renderFilterBar([
+          { id: 'bill-status', type: 'select', value: statusFilter,
+            onChange: `statusFilter=this.value;page=1;Pages.bills(document.getElementById('page-content'))`,
+            options: [
+              { value: '', label: 'All Statuses' },
+              { value: 'pending', label: '⏳ Pending' },
+              { value: 'paid', label: '✓ Paid' },
+              { value: 'expired', label: '✗ Expired' },
+              { value: 'cancelled', label: 'Cancelled' },
+            ]
+          },
+        ])}
         <div class="card">
           ${Components.renderTable(
             [
-              { label: 'Token', key: 'token' },
+              { label: 'Bill Token', key: 'token' },
               { label: 'Customer', key: 'customer' },
               { label: 'Amount', key: 'amount' },
               { label: 'Status', key: 'status' },
-              { label: 'Type', key: 'type' },
-              { label: 'Expires', key: 'expires' },
+              { label: 'Created', key: 'created' },
               { label: '', key: 'actions' },
             ],
             bills.map(b => ({
-              token: `<code class="code-tag sm">${b.bill_token?.slice(0, 16)}…</code>`,
-              customer: b.customer_name || b.customer_email || '—',
-              amount: formatCurrency(b.final_amount),
+              token: `<code class="code-tag sm">${(b.bill_token || b.id || '').slice(0, 12)}…</code>`,
+              customer: b.customer_name || b.customer_email || b.customer_id?.slice(0,8) || '—',
+              amount: `<span class="tx-amount">${formatCurrency(b.amount || b.final_amount)}</span>`,
               status: statusBadge(b.status),
-              type: b.payment_type,
-              expires: formatDate(b.expires_at),
-              actions: `<button class="btn btn-ghost sm" onclick="Pages._viewBill('${b.id}')"><i data-lucide="eye"></i></button>`,
+              created: formatDate(b.created_at),
+              actions: `<button class="btn btn-ghost sm" onclick="Pages._viewBill('${b.id}')" title="View details"><i data-lucide="eye"></i></button>`,
             })),
             'No bills found'
           )}
           ${renderPagination(page, total, limit, `(p) => { page=p; Pages.bills(document.getElementById('page-content')); }`)}
         </div>
       `;
+
+      document.getElementById('export-bills-csv')?.addEventListener('click', () => {
+        UI.exportCSV('bills.csv',
+          [
+            { label: 'Token', key: 'token' },
+            { label: 'Customer', key: 'customer' },
+            { label: 'Amount', key: 'amount' },
+            { label: 'Status', key: 'status' },
+            { label: 'Created', key: 'created' },
+          ],
+          bills.map(b => ({
+            token: b.bill_token || b.id || '',
+            customer: b.customer_name || b.customer_email || '',
+            amount: b.amount || b.final_amount,
+            status: b.status,
+            created: b.created_at,
+          }))
+        );
+      });
+
       if (window.lucide) lucide.createIcons();
     };
 
@@ -916,35 +1938,56 @@ const Pages = {
 
   async _viewBill(id) {
     try {
-      const res = await API.getBill(id);
-      const b = res.bill || res;
-      const items = res.items || [];
+      const bill = await API.getBill(id);
+      const b = bill.bill || bill;
       Modal.show('Bill Details', `
+        <div class="svc-detail-header">
+          <div class="svc-detail-avatar svc-avatar-blue"><i data-lucide="receipt" style="width:24px;height:24px;color:white"></i></div>
+          <div class="svc-detail-info">
+            <div class="svc-detail-name">${formatCurrency(b.amount || b.final_amount)}</div>
+            <div class="svc-detail-meta">
+              ${statusBadge(b.status)}
+              <code class="code-tag sm">${(b.bill_token || b.id || '').slice(0, 16)}</code>
+            </div>
+          </div>
+        </div>
         <div class="detail-grid">
-          ${Components.renderDetailRow('Token', `<code class="code-tag">${b.bill_token}</code>`)}
+          ${Components.renderDetailRow('Bill ID', `<code>${b.id}</code>`)}
+          ${Components.renderDetailRow('Token', `<code class="code-tag">${b.bill_token || '—'}</code>`)}
+          ${Components.renderDetailRow('Amount', `<strong>${formatCurrency(b.amount || b.final_amount)}</strong>`)}
+          ${Components.renderDetailRow('Currency', b.currency || 'BDT')}
           ${Components.renderDetailRow('Status', statusBadge(b.status))}
-          ${Components.renderDetailRow('Type', b.payment_type)}
-          ${Components.renderDetailRow('Amount', formatCurrency(b.final_amount))}
-          ${Components.renderDetailRow('Customer', b.customer_name || '—')}
-          ${Components.renderDetailRow('Email', b.customer_email || '—')}
-          ${Components.renderDetailRow('Phone', b.customer_phone || '—')}
+          ${Components.renderDetailRow('Customer', b.customer_name || b.customer_email || b.customer_id || '—')}
+          ${Components.renderDetailRow('Service', b.service_name || b.service_id?.slice(0,8) || '—')}
+          ${Components.renderDetailRow('Description', b.description || '—')}
+          ${Components.renderDetailRow('Payment Type', b.payment_type || '—')}
           ${Components.renderDetailRow('Created', formatDate(b.created_at))}
           ${Components.renderDetailRow('Expires', formatDate(b.expires_at))}
+          ${b.paid_at ? Components.renderDetailRow('Paid At', formatDate(b.paid_at)) : ''}
         </div>
-        ${items.length ? `
-          <table class="data-table mt-16">
-            <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
-            <tbody>
-              ${items.map(it => `<tr>
-                <td>${it.product_name}</td>
-                <td>${it.quantity}</td>
-                <td>${formatCurrency(it.unit_final_price)}</td>
-                <td>${formatCurrency(it.line_total)}</td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
+        ${b.items && b.items.length ? `
+          <div class="section-header" style="margin-top:20px">
+            <div class="section-title"><i data-lucide="list"></i> Line Items</div>
+          </div>
+          ${Components.renderTable(
+            [{ label: 'Item', key: 'name' }, { label: 'Qty', key: 'qty' }, { label: 'Price', key: 'price' }],
+            b.items.map(item => ({
+              name: item.name || item.product_name || item.description || '—',
+              qty: item.quantity || 1,
+              price: formatCurrency(item.price || item.unit_final_price || item.amount || 0),
+            })),
+            'No items'
+          )}` : ''}
+        ${b.success_url ? `
+          <div class="section-header" style="margin-top:20px">
+            <div class="section-title"><i data-lucide="link"></i> Redirect URLs</div>
+          </div>
+          ${b.success_url ? `<div class="url-display" style="margin-bottom:8px"><i data-lucide="check-circle"></i> ${b.success_url}</div>` : ''}
+          ${b.fail_url ? `<div class="url-display" style="margin-bottom:8px"><i data-lucide="x-circle"></i> ${b.fail_url}</div>` : ''}
+          ${b.cancel_url ? `<div class="url-display"><i data-lucide="ban"></i> ${b.cancel_url}</div>` : ''}
         ` : ''}
       `);
+      if (window.lucide) lucide.createIcons();
     } catch (e) { Toast.error(e.message); }
   },
 
@@ -963,7 +2006,12 @@ const Pages = {
     const renderList = (refunds, total) => {
       container.innerHTML = `
         ${Components.renderPageHeader('Refunds', 'Manual approval required for all refunds',
-          `<span class="badge badge-warning"><i data-lucide="alert-triangle"></i> Manual Approval Only</span>`)}
+          `<div style="display:flex;gap:8px;align-items:center">
+            <span class="badge badge-warning"><i data-lucide="alert-triangle"></i> Manual Approval Only</span>
+            <button class="btn btn-ghost sm" onclick="Pages.refunds(document.getElementById('page-content'))" title="Refresh">
+              <i data-lucide="refresh-cw"></i>
+            </button>
+          </div>`)}
         ${Components.renderFilterBar([
           { id: 'status', type: 'select',
             onChange: `statusFilter=this.value;page=1;Pages.refunds(document.getElementById('page-content'))`,
@@ -986,7 +2034,7 @@ const Pages = {
               { label: 'Actions', key: 'actions' },
             ],
             refunds.map(r => ({
-              amount: `<span class="amount">${formatCurrency(r.refund_amount)}</span>`,
+              amount: `<a href="#" onclick="event.preventDefault();Pages._viewRefund('${r.id}')" style="text-decoration:none"><span class="amount" style="cursor:pointer;color:var(--color-primary)">${formatCurrency(r.refund_amount)}</span></a>`,
               reason: r.refund_reason?.slice(0, 40) || '—',
               req_by: r.requested_by,
               status: statusBadge(r.status),
@@ -1015,22 +2063,62 @@ const Pages = {
   },
 
   async _approveRefund(id) {
-    const notes = prompt('Admin notes (optional):');
-    if (notes === null) return; // cancelled
-    try {
-      await API.approveRefund(id, notes);
-      Toast.success('Refund approved and queued for processing');
-      Pages.refunds(document.getElementById('page-content'));
-    } catch (e) { Toast.error(e.message); }
+    UI.promptModal('Approve Refund', 'This refund will be queued for processing via EPS.', {
+      label: 'Admin Notes (optional)',
+      placeholder: 'Add notes about this approval…',
+      required: false,
+    }, async (notes) => {
+      try {
+        await API.approveRefund(id, notes);
+        Toast.success('Refund approved and queued for processing');
+        Pages.refunds(document.getElementById('page-content'));
+      } catch (e) { Toast.error(e.message); }
+    });
   },
 
   async _rejectRefund(id) {
-    const reason = prompt('Rejection reason:');
-    if (!reason) return;
+    UI.promptModal('Reject Refund', 'Please provide a reason for rejecting this refund request.', {
+      label: 'Rejection Reason',
+      placeholder: 'Enter rejection reason…',
+      required: true,
+    }, async (reason) => {
+      try {
+        await API.rejectRefund(id, reason);
+        Toast.success('Refund rejected');
+        Pages.refunds(document.getElementById('page-content'));
+      } catch (e) { Toast.error(e.message); }
+    });
+  },
+
+  async _viewRefund(id) {
     try {
-      await API.rejectRefund(id, reason);
-      Toast.success('Refund rejected');
-      Pages.refunds(document.getElementById('page-content'));
+      const data = await API.getRefund(id);
+      const r = data.refund || data;
+      Modal.show('Refund Details', `
+        <div class="svc-detail-header">
+          <div class="svc-detail-avatar svc-avatar-rose"><i data-lucide="rotate-ccw" style="width:24px;height:24px;color:white"></i></div>
+          <div class="svc-detail-info">
+            <div class="svc-detail-name">${formatCurrency(r.refund_amount)}</div>
+            <div class="svc-detail-meta">
+              ${statusBadge(r.status)}
+            </div>
+          </div>
+        </div>
+        <div class="detail-grid">
+          ${Components.renderDetailRow('Refund ID', `<code>${r.id}</code>`)}
+          ${Components.renderDetailRow('Amount', `<strong>${formatCurrency(r.refund_amount)}</strong>`)}
+          ${Components.renderDetailRow('Reason', r.refund_reason || '—')}
+          ${Components.renderDetailRow('Requested By', r.requested_by || '—')}
+          ${Components.renderDetailRow('Status', statusBadge(r.status))}
+          ${Components.renderDetailRow('Requested', formatDate(r.requested_at || r.created_at))}
+          ${r.approved_at ? Components.renderDetailRow('Approved', formatDate(r.approved_at)) : ''}
+          ${r.rejected_at ? Components.renderDetailRow('Rejected', formatDate(r.rejected_at)) : ''}
+          ${r.admin_notes ? Components.renderDetailRow('Admin Notes', r.admin_notes) : ''}
+          ${r.rejection_reason ? Components.renderDetailRow('Rejection Reason', `<span style="color:var(--color-danger)">${r.rejection_reason}</span>`) : ''}
+          ${Components.renderDetailRow('Transaction', r.transaction_id ? `<code class="code-tag sm">${r.transaction_id.slice(0,12)}…</code>` : '—')}
+        </div>
+      `);
+      if (window.lucide) lucide.createIcons();
     } catch (e) { Toast.error(e.message); }
   },
 
@@ -1050,7 +2138,10 @@ const Pages = {
 
     const renderList = (customers, total) => {
       container.innerHTML = `
-        ${Components.renderPageHeader('Customers', `${total.toLocaleString()} customers`)}
+        ${Components.renderPageHeader('Customers', `${total.toLocaleString()} customers`,
+          `<button class="btn btn-ghost sm" onclick="Pages.customers(document.getElementById('page-content'))" title="Refresh">
+            <i data-lucide="refresh-cw"></i>
+          </button>`)}
         ${Components.renderFilterBar([
           { id: 'q', type: 'search', placeholder: 'Search by name, email, phone…',
             onChange: `searchQ=this.value;page=1;clearTimeout(window._cust_t);window._cust_t=setTimeout(()=>Pages.customers(document.getElementById('page-content')),400)` }
@@ -1066,7 +2157,7 @@ const Pages = {
               { label: '', key: 'actions' },
             ],
             customers.map(c => ({
-              name: `<div>${c.display_name || c.canonical_name || 'Unknown'}</div>`,
+              name: `<div style="cursor:pointer;color:var(--color-brand);font-weight:500" onclick="event.stopPropagation();Pages._viewCustomer('${c.id}')">${c.display_name || c.canonical_name || 'Unknown'}</div>`,
               spent: formatCurrency(c.total_spent),
               tx_count: c.transaction_count,
               status: c.is_blocked ? '<span class="badge badge-danger">Blocked</span>' : '<span class="badge badge-success">Active</span>',
@@ -1093,13 +2184,17 @@ const Pages = {
   },
 
   async _blockCustomer(id) {
-    const reason = prompt('Block reason:');
-    if (!reason) return;
-    try {
-      await API.blockCustomer(id, reason);
-      Toast.success('Customer blocked');
-      Pages.customers(document.getElementById('page-content'));
-    } catch (e) { Toast.error(e.message); }
+    UI.promptModal('Block Customer', 'This customer will be blocked from making payments.', {
+      label: 'Block Reason',
+      placeholder: 'Enter reason for blocking…',
+      required: true,
+    }, async (reason) => {
+      try {
+        await API.blockCustomer(id, reason);
+        Toast.success('Customer blocked');
+        Pages.customers(document.getElementById('page-content'));
+      } catch (e) { Toast.error(e.message); }
+    });
   },
 
   async _unblockCustomer(id) {
@@ -1110,9 +2205,82 @@ const Pages = {
     } catch (e) { Toast.error(e.message); }
   },
 
+  async _viewCustomer(id) {
+    try {
+      const data = await API.getCustomer(id);
+      const c = data.customer || data;
+      Modal.show('Customer Details', `
+        <div class="customer-detail-stats">
+          <div class="customer-mini-stat">
+            <div class="customer-mini-stat-value">${formatCurrency(c.total_spent || 0)}</div>
+            <div class="customer-mini-stat-label">Total Spent</div>
+          </div>
+          <div class="customer-mini-stat">
+            <div class="customer-mini-stat-value">${c.transaction_count || 0}</div>
+            <div class="customer-mini-stat-label">Transactions</div>
+          </div>
+          <div class="customer-mini-stat">
+            <div class="customer-mini-stat-value">${c.is_blocked ? '<span style="color:var(--color-danger)">Blocked</span>' : '<span style="color:var(--color-success)">Active</span>'}</div>
+            <div class="customer-mini-stat-label">Status</div>
+          </div>
+        </div>
+        <div class="detail-grid">
+          ${Components.renderDetailRow('Customer ID', `<code>${c.id}</code>`)}
+          ${Components.renderDetailRow('Display Name', c.display_name || c.canonical_name || '—')}
+          ${Components.renderDetailRow('EPS Customer ID', c.eps_customer_id || '—')}
+          ${Components.renderDetailRow('First Seen', formatDate(c.first_seen_at || c.created_at))}
+          ${Components.renderDetailRow('Last Seen', formatDate(c.last_seen_at))}
+          ${c.blocked_reason ? Components.renderDetailRow('Block Reason', c.blocked_reason) : ''}
+        </div>
+      `);
+    } catch (e) { Toast.error(e.message); }
+  },
+
   // ═══════════════════════════════════════════════════════════════════════════
   // CONFIGURATION
   // ═══════════════════════════════════════════════════════════════════════════
+
+  _configCategoryMeta: {
+    eps: {
+      icon: 'icon-eps',
+      lucide: 'credit-card',
+      title: 'EPS Gateway',
+      desc: 'Electronic Payment Service credentials and gateway configuration',
+    },
+    system: {
+      icon: 'icon-system',
+      lucide: 'settings',
+      title: 'System Settings',
+      desc: 'Core platform configuration and operational parameters',
+    },
+    email: {
+      icon: 'icon-email',
+      lucide: 'mail',
+      title: 'Email Configuration',
+      desc: 'SMTP settings and email notification preferences',
+    },
+    payment: {
+      icon: 'icon-payment',
+      lucide: 'banknote',
+      title: 'Payment Settings',
+      desc: 'Payment processing defaults and fee configuration',
+    },
+    security: {
+      icon: 'icon-security',
+      lucide: 'shield',
+      title: 'Security',
+      desc: 'Authentication, encryption, and access control settings',
+    },
+  },
+
+  _getConfigMeta(category) {
+    return this._configCategoryMeta[category] || {
+      icon: 'icon-default',
+      lucide: 'sliders-horizontal',
+      title: category.charAt(0).toUpperCase() + category.slice(1),
+      desc: `${category} configuration settings`,
+    };
+  },
 
   async config(container) {
     try {
@@ -1128,55 +2296,120 @@ const Pages = {
       });
 
       container.innerHTML = `
-        ${Components.renderPageHeader('Configuration', 'System settings and EPS credentials',
-          `<button class="btn btn-primary" onclick="Pages._saveAllConfig()"><i data-lucide="save"></i> Save Changes</button>`)}
+        ${Components.renderPageHeader('Configuration', 'System settings and credentials',
+          `<div style="display:flex;gap:8px">
+            <button class="btn btn-ghost sm" onclick="Pages.config(document.getElementById('page-content'))" title="Refresh">
+              <i data-lucide="refresh-cw"></i>
+            </button>
+            <button class="btn btn-primary" id="cfg-save-all-btn" disabled>
+              <i data-lucide="save"></i> Save Changes
+            </button>
+          </div>`)}
         <div class="config-sections">
-          ${Object.entries(grouped).map(([cat, items]) => `
-            <div class="card config-section">
-              <div class="card-header">
-                <h3 class="card-title"><i data-lucide="${cat === 'eps' ? 'credit-card' : 'settings'}"></i> ${cat.toUpperCase()}</h3>
-              </div>
-              <div class="config-grid">
-                ${items.map(item => `
-                  <div class="config-item">
-                    <label class="form-label">
-                      ${item.key_name}
-                      ${item.is_secret ? '<i data-lucide="lock" style="width:12px;height:12px;opacity:.5"></i>' : ''}
-                    </label>
-                    ${item.description ? `<div class="config-desc">${item.description}</div>` : ''}
-                    <input class="form-input" 
-                      type="${item.is_secret ? 'password' : 'text'}"
-                      id="cfg-${cat}-${item.key_name}"
-                      data-category="${cat}"
-                      data-key="${item.key_name}"
-                      value="${item.is_secret ? '' : (item.value || '')}"
-                      placeholder="${item.is_secret ? '(encrypted — leave blank to keep)' : (item.value || '')}">
+          ${Object.entries(grouped).map(([cat, items]) => {
+            const meta = Pages._getConfigMeta(cat);
+            return `
+              <div class="config-card">
+                <div class="config-card-header">
+                  <div class="config-card-icon ${meta.icon}">
+                    <i data-lucide="${meta.lucide}"></i>
                   </div>
-                `).join('')}
+                  <div class="config-card-title">
+                    <h3>${meta.title}</h3>
+                    <p>${meta.desc}</p>
+                  </div>
+                  <span class="config-card-count">${items.length} setting${items.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div class="config-card-body">
+                  ${items.map(item => `
+                    <div class="config-row">
+                      <div class="config-row-info">
+                        <div class="config-row-label">
+                          ${item.key_name}
+                          ${item.is_secret ? '<i data-lucide="lock" class="lock-icon"></i>' : ''}
+                        </div>
+                        ${item.description ? `<div class="config-row-desc">${item.description}</div>` : ''}
+                      </div>
+                      <div class="config-row-input">
+                        <input class="form-input cfg-input"
+                          type="${item.is_secret ? 'password' : 'text'}"
+                          id="cfg-${cat}-${item.key_name}"
+                          data-category="${cat}"
+                          data-key="${item.key_name}"
+                          data-original="${item.is_secret ? '' : (item.value || '').replace(/"/g, '&quot;')}"
+                          value="${item.is_secret ? '' : (item.value || '')}"
+                          placeholder="${item.is_secret ? '(encrypted — leave blank to keep)' : 'Not set'}">
+                        ${item.is_secret ? `<button type="button" class="toggle-password" onclick="Pages._toggleConfigPassword(this)" title="Show/hide">
+                          <i data-lucide="eye" style="width:16px;height:16px"></i>
+                        </button>` : ''}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
               </div>
-            </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       `;
+
+      // Track changes
+      document.querySelectorAll('.cfg-input').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const isModified = inp.value !== (inp.dataset.original || '');
+          inp.classList.toggle('config-input-modified', isModified);
+          Pages._updateConfigSaveBtn();
+        });
+      });
+
+      // Save all button
+      document.getElementById('cfg-save-all-btn')?.addEventListener('click', () => Pages._saveAllConfig());
+
       if (window.lucide) lucide.createIcons();
     } catch (e) { container.innerHTML = Components.renderError(e.message); }
   },
 
+  _toggleConfigPassword(btn) {
+    const input = btn.previousElementSibling;
+    if (!input) return;
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+      if (window.lucide) lucide.createIcons({ nodes: [btn] });
+    }
+  },
+
+  _updateConfigSaveBtn() {
+    const modified = document.querySelectorAll('.config-input-modified');
+    const btn = document.getElementById('cfg-save-all-btn');
+    if (btn) {
+      btn.disabled = modified.length === 0;
+      btn.innerHTML = modified.length > 0
+        ? `<i data-lucide="save"></i> Save ${modified.length} Change${modified.length !== 1 ? 's' : ''}`
+        : `<i data-lucide="save"></i> Save Changes`;
+      if (window.lucide) lucide.createIcons({ nodes: [btn] });
+    }
+  },
+
   async _saveAllConfig() {
-    const inputs = document.querySelectorAll('[data-category][data-key]');
+    const inputs = document.querySelectorAll('.cfg-input');
     const updates = [];
     inputs.forEach(inp => {
-      if (inp.value) {
+      if (inp.value && inp.value !== (inp.dataset.original || '')) {
         updates.push({ category: inp.dataset.category, key: inp.dataset.key, value: inp.value });
       }
     });
 
     if (!updates.length) { Toast.info('No changes to save'); return; }
-    try {
-      for (const u of updates) await API.updateConfig(u.category, u.key, u.value);
-      Toast.success(`${updates.length} configuration value(s) saved`);
-      Pages.config(document.getElementById('page-content'));
-    } catch (e) { Toast.error(e.message); }
+
+    UI.confirm('Save Configuration', `You are about to update <strong>${updates.length}</strong> configuration value${updates.length !== 1 ? 's' : ''}. This will take effect immediately.`, async () => {
+      try {
+        for (const u of updates) await API.updateConfig(u.category, u.key, u.value);
+        Toast.success(`${updates.length} configuration value${updates.length !== 1 ? 's' : ''} saved successfully`);
+        Pages.config(document.getElementById('page-content'));
+      } catch (e) { Toast.error(e.message); }
+    }, 'success');
   },
 
 
@@ -1596,43 +2829,72 @@ const Pages = {
     Toast.info('Sending test ping\u2026');
     try {
       const res = await API.testIpnEndpoint(id);
-      if (res.success) {
-        Toast.success('Test ping delivered! HTTP ' + res.http_status);
-      } else {
-        Toast.error('Test failed: ' + (res.error || 'HTTP ' + res.http_status));
-      }
+      
+      const statusClass = res.success ? 'badge-success' : 'badge-danger';
+      const statusIcon = res.success ? 'check-circle' : 'x-circle';
+      const statusTitle = res.success ? 'Ping Successful' : 'Ping Failed';
+
+      Modal.show('Test Ping Result', `
+        <div class="svc-detail-header">
+          <div class="svc-detail-avatar ${res.success ? 'svc-avatar-primary' : 'svc-avatar-rose'}">
+            <i data-lucide="${statusIcon}" style="width:24px;height:24px;color:white"></i>
+          </div>
+          <div class="svc-detail-info">
+            <div class="svc-detail-name">${statusTitle}</div>
+            <div class="svc-detail-meta">
+              <span class="badge ${statusClass}">HTTP ${res.http_status || 'Error'}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="detail-grid">
+          ${Components.renderDetailRow('Target URL', `<code style="word-break:break-all">${res.endpoint_url || '—'}</code>`)}
+          ${res.error ? Components.renderDetailRow('Error', `<span style="color:var(--color-danger)">${res.error}</span>`) : ''}
+          ${Components.renderDetailRow('Success', res.success ? '✅ Yes' : '❌ No')}
+        </div>
+
+        <div class="section-header" style="margin-top:20px">
+          <div class="section-title"><i data-lucide="code"></i> Response Body</div>
+        </div>
+        <div class="tx-json-viewer" style="background:var(--color-surface-2); padding: 12px; border: 1px solid var(--color-border); border-radius: 8px;">
+          <pre style="color:var(--color-text); white-space: pre-wrap; font-size: 13px;">${res.response_body || 'No response body'}</pre>
+        </div>
+      `);
+      
+      if (window.lucide) lucide.createIcons();
       Pages.ipn(document.getElementById('page-content'));
     } catch (e) { Toast.error(e.message); }
   },
 
   async _rotateIpnSecret(id) {
-    if (!confirm('Rotate webhook secret? Old secret will stop working immediately.')) return;
-    try {
-      const res = await API.rotateIpnSecret(id);
-      Modal.show('\uD83D\uDD11 New Webhook Secret', `
-        <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <i data-lucide="alert-triangle" style="width:16px;height:16px;color:#d97706"></i>
-            <strong style="color:#92400e;font-size:13px">Save this now! The old secret has been invalidated.</strong>
+    UI.confirm('Rotate Webhook Secret', 'Old secret will stop working immediately. Make sure to update your application with the new secret.', async () => {
+      try {
+        const res = await API.rotateIpnSecret(id);
+        Modal.show('\uD83D\uDD11 New Webhook Secret', `
+          <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <i data-lucide="alert-triangle" style="width:16px;height:16px;color:#d97706"></i>
+              <strong style="color:#92400e;font-size:13px">Save this now! The old secret has been invalidated.</strong>
+            </div>
           </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;padding:14px 16px;border-radius:10px;border:1px solid #e2e8f0">
-          <i data-lucide="key" style="width:16px;height:16px;color:#0d9488;flex-shrink:0"></i>
-          <code style="font-size:13px;word-break:break-all;flex:1;font-weight:600;color:#0f172a">${res.new_secret}</code>
-          <button class="btn btn-ghost sm" id="copy-rotated-secret-btn">
-            <i data-lucide="copy"></i>
-          </button>
-        </div>
-      `, ['<button class="btn btn-primary" id="done-rotated-secret-btn">Done \u2014 I saved my secret</button>']);
-      if (window.lucide) lucide.createIcons();
-      document.getElementById('copy-rotated-secret-btn')?.addEventListener('click', () => {
-        navigator.clipboard.writeText(res.new_secret).then(() => Toast.success('Copied!'));
-      });
-      document.getElementById('done-rotated-secret-btn')?.addEventListener('click', () => {
-        Modal.close();
-        Pages.ipn(document.getElementById('page-content'));
-      });
-    } catch (e) { Toast.error(e.message); }
+          <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;padding:14px 16px;border-radius:10px;border:1px solid #e2e8f0">
+            <i data-lucide="key" style="width:16px;height:16px;color:#0d9488;flex-shrink:0"></i>
+            <code style="font-size:13px;word-break:break-all;flex:1;font-weight:600;color:#0f172a">${res.new_secret}</code>
+            <button class="btn btn-ghost sm" id="copy-rotated-secret-btn">
+              <i data-lucide="copy"></i>
+            </button>
+          </div>
+        `, ['<button class="btn btn-primary" id="done-rotated-secret-btn">Done \u2014 I saved my secret</button>']);
+        if (window.lucide) lucide.createIcons();
+        document.getElementById('copy-rotated-secret-btn')?.addEventListener('click', () => {
+          navigator.clipboard.writeText(res.new_secret).then(() => Toast.success('Copied!'));
+        });
+        document.getElementById('done-rotated-secret-btn')?.addEventListener('click', () => {
+          Modal.close();
+          Pages.ipn(document.getElementById('page-content'));
+        });
+      } catch (e) { Toast.error(e.message); }
+    }, 'danger');
   },
 
   _toggleIpnSecret(id, secret) {
@@ -1648,39 +2910,41 @@ const Pages = {
   },
 
   async _regenerateIpnSecret(id) {
-    if (!confirm('Regenerate webhook secret? The old secret will stop working immediately.')) return;
-    try {
-      const res = await API.rotateIpnSecret(id);
-      Modal.show('\uD83D\uDD11 New Webhook Secret', `
-        <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px">
-          <strong style="color:#92400e;font-size:13px">Update your application with this new secret.</strong>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;padding:14px 16px;border-radius:10px;border:1px solid #e2e8f0">
-          <i data-lucide="key" style="width:16px;height:16px;color:#0d9488;flex-shrink:0"></i>
-          <code style="font-size:13px;word-break:break-all;flex:1;font-weight:600">${res.new_secret}</code>
-          <button class="btn btn-ghost sm" id="copy-regen-secret-btn">
-            <i data-lucide="copy"></i>
-          </button>
-        </div>
-      `, ['<button class="btn btn-primary" id="done-regen-secret-btn">Done</button>']);
-      if (window.lucide) lucide.createIcons();
-      document.getElementById('copy-regen-secret-btn')?.addEventListener('click', () => {
-        navigator.clipboard.writeText(res.new_secret).then(() => Toast.success('Copied!'));
-      });
-      document.getElementById('done-regen-secret-btn')?.addEventListener('click', () => {
-        Modal.close();
-        Pages.ipn(document.getElementById('page-content'));
-      });
-    } catch (e) { Toast.error(e.message); }
+    UI.confirm('Regenerate Webhook Secret', 'The old secret will stop working immediately. Update your application with the new secret.', async () => {
+      try {
+        const res = await API.rotateIpnSecret(id);
+        Modal.show('\uD83D\uDD11 New Webhook Secret', `
+          <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px">
+            <strong style="color:#92400e;font-size:13px">Update your application with this new secret.</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;padding:14px 16px;border-radius:10px;border:1px solid #e2e8f0">
+            <i data-lucide="key" style="width:16px;height:16px;color:#0d9488;flex-shrink:0"></i>
+            <code style="font-size:13px;word-break:break-all;flex:1;font-weight:600">${res.new_secret}</code>
+            <button class="btn btn-ghost sm" id="copy-regen-secret-btn">
+              <i data-lucide="copy"></i>
+            </button>
+          </div>
+        `, ['<button class="btn btn-primary" id="done-regen-secret-btn">Done</button>']);
+        if (window.lucide) lucide.createIcons();
+        document.getElementById('copy-regen-secret-btn')?.addEventListener('click', () => {
+          navigator.clipboard.writeText(res.new_secret).then(() => Toast.success('Copied!'));
+        });
+        document.getElementById('done-regen-secret-btn')?.addEventListener('click', () => {
+          Modal.close();
+          Pages.ipn(document.getElementById('page-content'));
+        });
+      } catch (e) { Toast.error(e.message); }
+    }, 'danger');
   },
 
   async _deleteIpnEndpoint(id) {
-    if (!confirm('Delete this IPN endpoint? This cannot be undone.')) return;
-    try {
-      await API.deleteIpnEndpoint(id);
-      Toast.success('Endpoint deleted');
-      Pages.ipn(document.getElementById('page-content'));
-    } catch (e) { Toast.error(e.message); }
+    UI.confirm('Delete IPN Endpoint', 'This action cannot be undone. All delivery history for this endpoint will be lost.', async () => {
+      try {
+        await API.deleteIpnEndpoint(id);
+        Toast.success('Endpoint deleted');
+        Pages.ipn(document.getElementById('page-content'));
+      } catch (e) { Toast.error(e.message); }
+    }, 'danger');
   },
 
   async _viewIpnDeliveries(endpointId, url) {
@@ -1739,42 +3003,156 @@ const Pages = {
   },
 
   async audit(container) {
-    let page = 1, limit = 50;
+    let page = 1, limit = 50, actionFilter = '', actorFilter = '';
     const load = async () => {
-      const data = await API.getAuditLogs({ limit, offset: (page-1)*limit });
+      const offset = (page - 1) * limit;
+      const data = await API.getAuditLogs({ limit, offset });
       const items = data.data || data.logs || data;
-      renderList(items, data.total || items.length || 0);
+      renderList(items, data.total || items.length);
+    };
+
+    const actionColors = {
+      create: 'success', created: 'success',
+      update: 'info', updated: 'info',
+      delete: 'danger', deleted: 'danger',
+      login: 'brand', logout: 'warning',
+      approve: 'success', reject: 'danger',
+      block: 'danger', unblock: 'success',
+      generate: 'info', revoke: 'danger', rotate: 'warning',
+    };
+
+    const getActionColor = (action) => {
+      const lower = (action || '').toLowerCase();
+      for (const [key, color] of Object.entries(actionColors)) {
+        if (lower.includes(key)) return color;
+      }
+      return 'default';
     };
 
     const renderList = (logs, total) => {
+      // Filter locally if filters are set
+      let filtered = logs;
+      if (actionFilter) filtered = filtered.filter(l => (l.action || '').toLowerCase().includes(actionFilter.toLowerCase()));
+      if (actorFilter) filtered = filtered.filter(l => (l.actor_email || l.actor || '').toLowerCase().includes(actorFilter.toLowerCase()));
+
+      const uniqueActors = [...new Set(logs.map(l => l.actor_email || l.actor || l.actor_id || 'System'))].length;
+      const today = new Date().toDateString();
+      const todayCount = logs.filter(l => new Date(l.created_at).toDateString() === today).length;
+
       container.innerHTML = `
-        ${Components.renderPageHeader('Audit Logs', `${total.toLocaleString()} events logged`)}
+        ${Components.renderPageHeader('Audit Logs', `${total.toLocaleString()} log entries`,
+          `<div style="display:flex;gap:8px">
+            <button class="btn btn-ghost sm" onclick="Pages.audit(document.getElementById('page-content'))" title="Refresh">
+              <i data-lucide="refresh-cw"></i>
+            </button>
+            <button class="btn btn-ghost sm" id="export-audit-csv">
+              <i data-lucide="download"></i> Export
+            </button>
+          </div>`)}
+        <div class="tx-stats-bar">
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon brand"><i data-lucide="scroll-text"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${total.toLocaleString()}</div>
+              <div class="tx-stat-mini-label">Total Logs</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon success"><i data-lucide="calendar-check"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${todayCount}</div>
+              <div class="tx-stat-mini-label">Today</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon info"><i data-lucide="users"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${uniqueActors}</div>
+              <div class="tx-stat-mini-label">Unique Actors</div>
+            </div>
+          </div>
+        </div>
+        ${Components.renderFilterBar([
+          { id: 'audit-action', type: 'search', placeholder: 'Filter by action...',
+            onChange: `actionFilter=this.value;load()` },
+          { id: 'audit-actor', type: 'search', placeholder: 'Filter by actor...',
+            onChange: `actorFilter=this.value;load()` },
+        ])}
         <div class="card">
           ${Components.renderTable(
             [
               { label: 'Action', key: 'action' },
               { label: 'Actor', key: 'actor' },
               { label: 'Resource', key: 'resource' },
-              { label: 'IP', key: 'ip' },
+              { label: 'IP Address', key: 'ip' },
               { label: 'Time', key: 'time' },
+              { label: '', key: 'detail_btn' },
             ],
-            logs.map(l => ({
-              action: `<code class="code-tag sm">${l.action}</code>`,
-              actor: `<span class="badge badge-info">${l.actor_type}</span> ${l.actor_id?.slice(0, 8) || '—'}`,
-              resource: l.resource_type ? `${l.resource_type}:${l.resource_id?.slice(0,8)}` : '—',
-              ip: l.ip_address || '—',
-              time: formatDate(l.created_at),
-            })),
-            'No audit events'
+            filtered.map(l => {
+              const color = getActionColor(l.action);
+              return {
+                action: `<span class="badge badge-${color}">${l.action || '—'}</span>`,
+                actor: `<div style="display:flex;flex-direction:column"><span style="font-weight:500;color:var(--color-text)">${l.actor_email || l.actor || l.actor_id?.slice(0,8) || 'System'}</span>${l.actor_role || l.actor_type ? `<span style="font-size:0.6875rem;color:var(--color-text-3)">${l.actor_role || l.actor_type}</span>` : ''}</div>`,
+                resource: `<code class="code-tag sm">${l.resource_type || ''}${l.resource_id ? ':' + l.resource_id.slice(0,8) : ''}</code>`,
+                ip: `<span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--color-text-3)">${l.ip_address || '—'}</span>`,
+                time: formatDate(l.created_at),
+                detail_btn: l.details || l.changes ? `<button class="btn btn-ghost sm" onclick="Pages._viewAuditDetail(${JSON.stringify(l).replace(/"/g, '&quot;')})" title="View details"><i data-lucide="eye"></i></button>` : '',
+              };
+            }),
+            'No audit logs found'
           )}
           ${renderPagination(page, total, limit, `(p) => { page=p; Pages.audit(document.getElementById('page-content')); }`)}
         </div>
       `;
+
+      // CSV export
+      document.getElementById('export-audit-csv')?.addEventListener('click', () => {
+        UI.exportCSV('audit_logs.csv',
+          [
+            { label: 'Action', key: 'action' },
+            { label: 'Actor', key: 'actor' },
+            { label: 'Resource', key: 'resource' },
+            { label: 'IP', key: 'ip' },
+            { label: 'Time', key: 'time' },
+          ],
+          filtered.map(l => ({
+            action: l.action || '',
+            actor: l.actor_email || l.actor || l.actor_id || 'System',
+            resource: `${l.resource_type || ''}:${l.resource_id || ''}`,
+            ip: l.ip_address || '',
+            time: l.created_at || '',
+          }))
+        );
+      });
+
       if (window.lucide) lucide.createIcons();
     };
 
     try { container.innerHTML = Components.renderSkeleton(); await load(); }
     catch (e) { container.innerHTML = Components.renderError(e.message); }
+  },
+
+  _viewAuditDetail(log) {
+    const detailJson = log.details || log.changes || log;
+    Modal.show('Audit Log Detail', `
+      <div class="detail-grid">
+        ${Components.renderDetailRow('Action', `<span class="badge">${log.action || '—'}</span>`)}
+        ${Components.renderDetailRow('Actor', log.actor_email || log.actor || log.actor_id || 'System')}
+        ${Components.renderDetailRow('Resource', `<code>${log.resource_type || ''}:${log.resource_id || ''}</code>`)}
+        ${Components.renderDetailRow('IP Address', log.ip_address || '—')}
+        ${Components.renderDetailRow('User Agent', `<span style="font-size:0.75rem;word-break:break-all">${log.user_agent || '—'}</span>`)}
+        ${Components.renderDetailRow('Time', formatDate(log.created_at))}
+      </div>
+      ${detailJson && typeof detailJson === 'object' ? `
+        <div class="section-header" style="margin-top:20px">
+          <div class="section-title"><i data-lucide="code"></i> Details</div>
+        </div>
+        <div class="tx-json-viewer">
+          <pre>${JSON.stringify(detailJson, null, 2)}</pre>
+        </div>
+      ` : ''}
+    `);
+    if (window.lucide) lucide.createIcons();
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1787,27 +3165,79 @@ const Pages = {
       const data = await API.getAdmins();
       const admins = data.data || data.admins || data;
 
+      const _getAdminColor = (name) => {
+        const colors = ['primary', 'violet', 'blue', 'amber', 'rose'];
+        const hash = (name || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+        return colors[hash % colors.length];
+      };
+
+      const _getInitials = (name, email) => {
+        if (name && name !== '—') {
+          return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        }
+        return (email || '?').slice(0, 2).toUpperCase();
+      };
+
+      const roleColors = { super_admin: 'danger', admin: 'info', viewer: 'default' };
+
+      const activeCount = admins.filter(a => a.is_active).length;
+      const twofaCount = admins.filter(a => a.is_2fa_enabled).length;
+
       container.innerHTML = `
-        ${Components.renderPageHeader('Administrators', 'Admin accounts and 2FA management',
+        ${Components.renderPageHeader('Administrators', `${admins.length} admin accounts`,
           `<button class="btn btn-primary" id="add-admin-btn"><i data-lucide="user-plus"></i> Add Admin</button>`)}
+        <div class="tx-stats-bar">
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon brand"><i data-lucide="users"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${admins.length}</div>
+              <div class="tx-stat-mini-label">Total Admins</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon success"><i data-lucide="user-check"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${activeCount}</div>
+              <div class="tx-stat-mini-label">Active</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon info"><i data-lucide="shield-check"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${twofaCount}</div>
+              <div class="tx-stat-mini-label">2FA Enabled</div>
+            </div>
+          </div>
+        </div>
         <div class="card">
           ${Components.renderTable(
             [
-              { label: 'Email', key: 'email' },
-              { label: 'Name', key: 'name' },
+              { label: 'Admin', key: 'admin' },
               { label: 'Role', key: 'role' },
               { label: '2FA', key: 'twofa' },
               { label: 'Status', key: 'status' },
               { label: 'Last Login', key: 'last_login' },
             ],
-            admins.map(a => ({
-              email: a.email,
-              name: a.display_name || '—',
-              role: `<span class="badge badge-info">${a.role}</span>`,
-              twofa: a.is_2fa_enabled ? '<span class="badge badge-success"><i data-lucide="shield-check"></i> Enabled</span>' : '<span class="badge badge-neutral">Disabled</span>',
-              status: statusBadge(a.is_active ? 'active' : 'inactive'),
-              last_login: formatDate(a.last_login_at),
-            })),
+            admins.map(a => {
+              const color = _getAdminColor(a.display_name || a.email);
+              const initials = _getInitials(a.display_name, a.email);
+              const roleColor = roleColors[a.role] || 'default';
+              return {
+                admin: `<div style="display:flex;align-items:center;gap:12px">
+                  <div class="svc-avatar svc-avatar-${color}" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white">${initials}</div>
+                  <div style="display:flex;flex-direction:column">
+                    <span style="font-weight:600;color:var(--color-text)">${a.display_name || '—'}</span>
+                    <span style="font-size:0.6875rem;color:var(--color-text-3)">${a.email}</span>
+                  </div>
+                </div>`,
+                role: `<span class="badge badge-${roleColor}">${(a.role || '').replace(/_/g, ' ')}</span>`,
+                twofa: a.is_2fa_enabled
+                  ? `<div style="display:flex;align-items:center;gap:6px"><div style="width:32px;height:18px;border-radius:9px;background:var(--color-success);position:relative"><div style="width:14px;height:14px;border-radius:50%;background:white;position:absolute;top:2px;right:2px"></div></div><span style="font-size:0.75rem;color:var(--color-success)">On</span></div>`
+                  : `<div style="display:flex;align-items:center;gap:6px"><div style="width:32px;height:18px;border-radius:9px;background:var(--color-border);position:relative"><div style="width:14px;height:14px;border-radius:50%;background:white;position:absolute;top:2px;left:2px"></div></div><span style="font-size:0.75rem;color:var(--color-text-3)">Off</span></div>`,
+                status: statusBadge(a.is_active ? 'active' : 'inactive'),
+                last_login: formatDate(a.last_login_at),
+              };
+            }),
             'No administrators'
           )}
         </div>
@@ -1967,34 +3397,87 @@ const Pages = {
       const merchants = merchantsResp.data || [];
       const services = servicesResp.data || [];
 
-      const rows = merchants.map(m => {
-        const svc = services.find(s => s.id === m.service_id);
-        return `<tr>
-          <td><div class="fw-500">${m.email}</div><div class="text-xs text-muted">${m.display_name || '—'}</div></td>
-          <td>${svc ? svc.display_name : m.service_id.substring(0,8)}</td>
-          <td>${m.role}</td>
-          <td>${m.is_active
-            ? '<span class="badge badge-success">Active</span>'
-            : '<span class="badge badge-danger">Inactive</span>'}</td>
-          <td>${m.last_login_at ? formatDate(m.last_login_at) : 'Never'}</td>
-          <td>
-            <div class="flex gap-xs">
-              <button class="btn btn-ghost btn-sm" title="${m.is_active ? 'Deactivate' : 'Activate'}" onclick="Pages._toggleMerchant('${m.id}', ${!m.is_active})">${m.is_active ? '🚫' : '✅'}</button>
-              <button class="btn btn-ghost btn-sm" title="Reset Password" onclick="Pages._resetMerchantPassword('${m.id}')">🔑</button>
-            </div>
-          </td>
-        </tr>`;
-      }).join('');
+      const _getMerchantColor = (name) => {
+        const colors = ['primary', 'violet', 'blue', 'amber', 'rose'];
+        const hash = (name || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+        return colors[hash % colors.length];
+      };
+
+      const _getInitials = (name, email) => {
+        if (name && name !== '—') {
+          return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        }
+        return (email || '?').slice(0, 2).toUpperCase();
+      };
+
+      const activeCount = merchants.filter(m => m.is_active).length;
+      const inactiveCount = merchants.length - activeCount;
 
       container.innerHTML = `
-        ${Components.renderPageHeader('Merchants', 'Manage developer accounts linked to services', `<button class="btn btn-primary" onclick="Pages._showCreateMerchant()"><i data-lucide="plus"></i> Create Merchant</button>`)}
+        ${Components.renderPageHeader('Merchants', `${merchants.length} developer accounts`,
+          `<button class="btn btn-primary" onclick="Pages._showCreateMerchant()"><i data-lucide="plus"></i> Create Merchant</button>`)}
+        <div class="tx-stats-bar">
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon brand"><i data-lucide="store"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${merchants.length}</div>
+              <div class="tx-stat-mini-label">Total Merchants</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon success"><i data-lucide="check-circle"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${activeCount}</div>
+              <div class="tx-stat-mini-label">Active</div>
+            </div>
+          </div>
+          <div class="tx-stat-mini">
+            <div class="tx-stat-mini-icon danger"><i data-lucide="x-circle"></i></div>
+            <div class="tx-stat-mini-body">
+              <div class="tx-stat-mini-value">${inactiveCount}</div>
+              <div class="tx-stat-mini-label">Inactive</div>
+            </div>
+          </div>
+        </div>
         <div class="card">
-          <table class="table">
-            <thead><tr><th>Email</th><th>Service</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
-            <tbody>${rows || '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">No merchant accounts yet</td></tr>'}</tbody>
-          </table>
+          ${Components.renderTable(
+            [
+              { label: 'Merchant', key: 'merchant' },
+              { label: 'Service', key: 'service' },
+              { label: 'Role', key: 'role' },
+              { label: 'Status', key: 'status' },
+              { label: 'Last Login', key: 'last_login' },
+              { label: 'Actions', key: 'actions' },
+            ],
+            merchants.map(m => {
+              const svc = services.find(s => s.id === m.service_id);
+              const color = _getMerchantColor(m.display_name || m.email);
+              const initials = _getInitials(m.display_name, m.email);
+              return {
+                merchant: `<div style="display:flex;align-items:center;gap:12px">
+                  <div class="svc-avatar svc-avatar-${color}" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:white">${initials}</div>
+                  <div style="display:flex;flex-direction:column">
+                    <span style="font-weight:600;color:var(--color-text)">${m.display_name || '—'}</span>
+                    <span style="font-size:0.6875rem;color:var(--color-text-3)">${m.email}</span>
+                  </div>
+                </div>`,
+                service: svc ? `<span class="badge badge-info">${svc.display_name}</span>` : `<code class="code-tag sm">${(m.service_id || '').substring(0,8)}</code>`,
+                role: `<span class="badge badge-default">${m.role || '—'}</span>`,
+                status: `<div style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="Pages._toggleMerchant('${m.id}', ${!m.is_active})" title="Click to ${m.is_active ? 'deactivate' : 'activate'}">
+                  <div style="width:32px;height:18px;border-radius:9px;background:${m.is_active ? 'var(--color-success)' : 'var(--color-border)'};position:relative;transition:background 0.2s">
+                    <div style="width:14px;height:14px;border-radius:50%;background:white;position:absolute;top:2px;${m.is_active ? 'right:2px' : 'left:2px'};transition:all 0.2s"></div>
+                  </div>
+                  <span style="font-size:0.75rem;color:${m.is_active ? 'var(--color-success)' : 'var(--color-text-3)'}">${m.is_active ? 'Active' : 'Inactive'}</span>
+                </div>`,
+                last_login: m.last_login_at ? formatDate(m.last_login_at) : '<span style="color:var(--color-text-3)">Never</span>',
+                actions: `<button class="btn btn-ghost sm" onclick="Pages._resetMerchantPassword('${m.id}')" title="Reset Password"><i data-lucide="key"></i></button>`,
+              };
+            }),
+            'No merchant accounts yet'
+          )}
         </div>
       `;
+      if (window.lucide) lucide.createIcons();
     } catch (e) {
       container.innerHTML = Components.renderError(e.message);
     }
@@ -2047,21 +3530,47 @@ const Pages = {
 
   async _toggleMerchant(id, active) {
     const action = active ? 'activate' : 'deactivate';
-    if (!confirm(`Are you sure you want to ${action} this merchant?`)) return;
-    try {
-      await API.toggleMerchant(id, active);
-      Toast.success(`Merchant ${action}d`);
-      Router.navigate('/admin/merchants');
-    } catch (e) { Toast.error(e.message); }
+    UI.confirm(`${active ? 'Activate' : 'Deactivate'} Merchant`, `Are you sure you want to ${action} this merchant? This will ${active ? 'restore' : 'suspend'} their access.`, async () => {
+      try {
+        await API.toggleMerchant(id, active);
+        Toast.success(`Merchant ${action}d`);
+        Router.navigate('/admin/merchants');
+      } catch (e) { Toast.error(e.message); }
+    }, 'danger');
   },
 
   async _resetMerchantPassword(id) {
-    const password = prompt('Enter new password (min 8 chars):');
-    if (!password || password.length < 8) return Toast.error('Password must be at least 8 characters');
-    try {
-      await API.resetMerchantPassword(id, password);
-      Toast.success('Password reset. All sessions revoked.');
-    } catch (e) { Toast.error(e.message); }
+    Modal.show('Reset Merchant Password', `
+      <div style="margin-bottom:16px">
+        <p style="font-size:0.8125rem;color:var(--color-text-3);margin:0 0 12px">Enter a new password for this merchant. All active sessions will be revoked.</p>
+        <div class="form-group" style="margin:0">
+          <label class="ui-label">New Password</label>
+          <input class="ui-input" type="text" id="reset-pw-input" placeholder="Min 8 characters" minlength="8">
+        </div>
+        <div id="reset-pw-error" class="form-error hidden"></div>
+      </div>
+    `, [
+      `<button class="btn btn-ghost" onclick="Modal.close()">Cancel</button>`,
+      `<button class="btn btn-primary" id="reset-pw-submit"><i data-lucide="key"></i> Reset Password</button>`
+    ]);
+    if (window.lucide) lucide.createIcons();
+    document.getElementById('reset-pw-submit')?.addEventListener('click', async () => {
+      const password = document.getElementById('reset-pw-input')?.value;
+      const errEl = document.getElementById('reset-pw-error');
+      if (!password || password.length < 8) {
+        errEl.textContent = 'Password must be at least 8 characters';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      try {
+        await API.resetMerchantPassword(id, password);
+        Modal.close();
+        Toast.success('Password reset. All sessions revoked.');
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.classList.remove('hidden');
+      }
+    });
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -2069,253 +3578,162 @@ const Pages = {
   // ═══════════════════════════════════════════════════════════════════════════
 
   async flow(container) {
-    const node = (icon, label, sub = '', colorClass = 'brand') => `
-      <div class="flow-node">
-        <div class="flow-node-icon ${colorClass}"><i data-lucide="${icon}"></i></div>
-        <div class="flow-node-label">${label}</div>
-        ${sub ? `<div class="flow-node-sub">${sub}</div>` : ''}
+    const step = (opts) => `
+      <div class="af-step">
+        <div class="af-step-dot ${opts.pulse ? 'pulse' : ''}"></div>
+        <div class="af-step-content">
+          <div class="af-step-icon af-icon-${opts.color || 'brand'}">
+            <i data-lucide="${opts.icon}"></i>
+          </div>
+          <div class="af-step-card">
+            <div class="af-step-header">
+              <div class="af-step-title">${opts.title}</div>
+              <div class="af-step-tag af-tag-${opts.color || 'brand'}">${opts.tag || 'SYSTEM'}</div>
+            </div>
+            <p class="af-step-desc">${opts.desc}</p>
+            ${opts.pills ? `
+              <div class="af-step-meta">
+                ${opts.pills.map(p => `<div class="af-pill"><i data-lucide="${p.icon}"></i> ${p.text}</div>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
       </div>`;
-    const arrow = () => `<div class="flow-arrow"><i data-lucide="chevron-right"></i></div>`;
-    const listItem = (num, title, desc) => `
-      <div class="flow-list-item">
-        <div class="flow-list-num">${num}</div>
-        <div class="flow-list-content"><h4>${title}</h4><p>${desc}</p></div>
+
+    const phase = (num, title, subtitle, stepsHtml, extraHtml = '') => `
+      <div class="af-phase">
+        <div class="af-phase-header">
+          <div class="af-phase-number">${num}</div>
+          <div class="af-phase-title">
+            <h2>${title}</h2>
+            <p>${subtitle}</p>
+          </div>
+        </div>
+        <div class="af-timeline">
+          ${stepsHtml}
+        </div>
+        ${extraHtml}
       </div>`;
 
     container.innerHTML = `
       <div class="page-content">
         <div class="page-header">
           <div class="page-title-wrap">
-            <h1 class="page-title">Process Flow</h1>
-            <p class="page-subtitle">End-to-end Trialvo Pay system lifecycle — from onboarding to payment settlement</p>
+            <h1 class="page-title">System Process Architecture</h1>
+            <p class="page-subtitle">Visualizing the end-to-end lifecycle of Trialvo Pay system and operations</p>
           </div>
         </div>
 
-        <div class="flow-page">
+        <div class="af-container">
+          <!-- Phase 1: Onboarding -->
+          ${phase(1, 'Onboarding & Setup', 'Preparing merchants for integration', `
+            ${step({
+              icon: 'user-cog', title: 'Admin Creates Service', tag: 'ADMIN', color: 'brand', pulse: true,
+              desc: 'Admin defines the service parameters including slug, commission, and environment mode.',
+              pills: [{icon: 'settings', text: 'Service ID'}, {icon: 'globe', text: 'Slug'}]
+            })}
+            ${step({
+              icon: 'mail', title: 'Merchant Credentialing', tag: 'ADMIN', color: 'warning',
+              desc: 'Admin generates merchant account and shares temporary credentials via secure channel.',
+              pills: [{icon: 'key', text: 'One-time Pass'}]
+            })}
+            ${step({
+              icon: 'shield-check', title: 'Merchant Security Setup', tag: 'MERCHANT', color: 'success',
+              desc: 'Merchant logs in, resets password, and enables security features.',
+              pills: [{icon: 'lock', text: 'Password Reset'}]
+            })}
+            ${step({
+              icon: 'key-round', title: 'API Authentication', tag: 'MERCHANT', color: 'success',
+              desc: 'Merchant generates Master API Key and configures IPN endpoints for webhooks.',
+              pills: [{icon: 'webhook', text: 'IPN Secret'}, {icon: 'code', text: 'API Key'}]
+            })}
+          `)}
 
-          <!-- ─── Diagram 1: Onboarding ─── -->
-          <div class="card flow-section">
-            <div class="flow-section-title">
-              <i data-lucide="user-plus"></i>
-              Diagram 1 — Merchant Onboarding (Admin-controlled)
+          <!-- Phase 2: Payment Lifecycle -->
+          ${phase(2, 'Payment Lifecycle', 'From bill creation to successful capture', `
+            ${step({
+              icon: 'code-2', title: 'Bill Initialization', tag: 'API', color: 'brand', pulse: true,
+              desc: 'Merchant backend sends POST request to /api/v1/bills with order details.',
+              pills: [{icon: 'file-text', text: 'JSON Payload'}, {icon: 'shield', text: 'X-Signature'}]
+            })}
+            ${step({
+              icon: 'layout', title: 'Gateway Redirection', tag: 'UX', color: 'info',
+              desc: 'Customer is redirected to Trialvo Pay hosted page to select payment method.',
+              pills: [{icon: 'smartphone', text: 'bKash/Nagad'}, {icon: 'credit-card', text: 'SSL Commerz'}]
+            })}
+            ${step({
+              icon: 'building-2', title: 'External Processing', tag: 'GATEWAY', color: 'warning',
+              desc: 'Payment is processed by EPS/Gateway. Trialvo Pay listens for synchronous callbacks.',
+              pills: [{icon: 'zap', text: 'EPS Callback'}]
+            })}
+            ${step({
+              icon: 'database', title: 'Integrity Verification', tag: 'CORE', color: 'brand',
+              desc: 'Trialvo Pay verifies payment status directly with the gateway API to prevent spoofing.',
+              pills: [{icon: 'check-circle', text: 'check_status'}]
+            })}
+          `, `
+            <div class="docs-callout warn" style="margin:20px 0 0 48px">
+              <div class="docs-callout-title"><i data-lucide="alert-triangle"></i> Critical: IPN Authoritative</div>
+              <p>The customer redirect is for UX only. The IPN webhook is the authoritative payment confirmation. Never fulfill orders based on the redirect alone.</p>
             </div>
-            <div class="flow-diagram">
-              ${node('user-cog', 'Admin', 'Creates service', 'brand')}
-              ${arrow()}
-              ${node('layers', 'Service Created', 'Slug, commission, mode', 'info')}
-              ${arrow()}
-              ${node('store', 'Merchant Account', 'Admin creates', 'brand')}
-              ${arrow()}
-              ${node('mail', 'Credentials Shared', 'Email + password', 'warning')}
-              ${arrow()}
-              ${node('log-in', 'Merchant Logs In', 'Changes password', 'success')}
-              ${arrow()}
-              ${node('key-round', 'Generates API Key', 'Self-service', 'success')}
-              ${arrow()}
-              ${node('webhook', 'Sets Webhooks', 'IPN endpoints', 'success')}
-              ${arrow()}
-              ${node('check-circle', 'Ready', 'Integration live', 'success')}
-            </div>
-            <div class="flow-list" style="margin-top:24px">
-              ${listItem(1, 'Admin creates a Service', 'Set the service name, slug, EPS mode (sandbox/live), commission rate, and default success/fail/cancel URLs.')}
-              ${listItem(2, 'Admin creates Merchant Account', 'One merchant account per service. Admin sets the email and temporary password, then shares credentials securely.')}
-              ${listItem(3, 'Merchant self-onboards', 'Merchant logs in, changes password, generates their API key, and configures their webhook endpoints — all without admin involvement.')}
-              ${listItem(4, 'Integration is live', 'Merchant integrates using their Service ID + API Key. Trialvo Pay routes their bills through EPS.')}
-            </div>
-          </div>
+          `)}
 
-          <!-- ─── Diagram 2: Payment Flow ─── -->
-          <div class="card flow-section">
-            <div class="flow-section-title">
-              <i data-lucide="credit-card"></i>
-              Diagram 2 — Payment Flow
-            </div>
-            <div class="flow-diagram">
-              ${node('code-2', 'Merchant Backend', 'POST /api/v1/bills', 'brand')}
-              ${arrow()}
-              ${node('server', 'Trialvo Pay', 'Validates + creates bill', 'info')}
-              ${arrow()}
-              ${node('external-link', 'pay_url Returned', 'Redirect customer', 'warning')}
-              ${arrow()}
-              ${node('layout', 'Payment Page', 'Customer selects method', 'info')}
-              ${arrow()}
-              ${node('building-2', 'EPS Gateway', 'bKash/Nagad/Card', 'warning')}
-              ${arrow()}
-              ${node('zap', 'EPS Callback', 'Success/Fail/Cancel', 'warning')}
-            </div>
-            <div class="flow-diagram" style="margin-top:4px">
-              ${node('shield-check', 'Trialvo Pay Verifies', 'check_status API', 'success')}
-              ${arrow()}
-              ${node('database', 'DB Updated', 'Bill + Transaction', 'brand')}
-              ${arrow()}
-              ${node('webhook', 'IPN Dispatched', 'To merchant endpoints', 'info')}
-              ${arrow()}
-              ${node('check-circle', 'Merchant Fulfilled', 'Order processed', 'success')}
-              ${arrow()}
-              ${node('user', 'Customer Redirected', 'success_url / fail_url', 'info')}
-            </div>
-            <div class="docs-callout warn" style="margin-top:20px">
-              <div class="docs-callout-title"><i data-lucide="alert-triangle"></i> Critical: Always use IPN, never redirect</div>
-              <p>The customer redirect to success_url is for UX only. The IPN webhook is the authoritative payment confirmation. Never fulfill orders based on the redirect alone — it can be spoofed or missed.</p>
-            </div>
-          </div>
+          <!-- Phase 3: Refunds & Decisions -->
+          ${phase(3, 'Refunds & Disputes', 'Handling post-payment adjustments', `
+            ${step({
+              icon: 'rotate-ccw', title: 'Refund Request', tag: 'MERCHANT', color: 'warning', pulse: true,
+              desc: 'Merchant requests a refund via API or Portal. Requires original transaction reference.',
+              pills: [{icon: 'hash', text: 'Tx Reference'}]
+            })}
+            ${step({
+              icon: 'user-cog', title: 'Admin Review', tag: 'ADMIN', color: 'brand',
+              desc: 'Admin reviews the refund request in the dashboard and makes a decision.',
+              pills: [{icon: 'check', text: 'Approve'}, {icon: 'x', text: 'Reject'}]
+            })}
+            ${step({
+              icon: 'webhook', title: 'Refund Notification', tag: 'WEBHOOK', color: 'success',
+              desc: 'System sends refund.approved or refund.rejected IPN to merchant.',
+              pills: [{icon: 'send', text: 'IPN Event'}]
+            })}
+          `)}
 
-          <!-- ─── Diagram 3: Refund Flow ─── -->
-          <div class="card flow-section">
-            <div class="flow-section-title">
-              <i data-lucide="rotate-ccw"></i>
-              Diagram 3 — Refund Flow
-            </div>
-            <div class="flow-diagram">
-              ${node('code-2', 'Merchant Backend', 'POST /api/v1/refunds', 'brand')}
-              ${arrow()}
-              ${node('server', 'Trialvo Pay', 'Creates refund request', 'info')}
-              ${arrow()}
-              ${node('clock', 'Pending Review', 'Status: requested', 'warning')}
-              ${arrow()}
-              ${node('user-cog', 'Admin Reviews', 'Admin panel → Refunds', 'brand')}
-              ${arrow()}
-              ${node('git-branch', 'Decision', 'Approve or Reject', 'brand')}
-            </div>
-            <div class="flow-diagram" style="margin-top:4px">
-              ${node('check-circle', 'Approved', 'Refund processed', 'success')}
-              <div class="flow-arrow" style="color:var(--color-text-4)"><i data-lucide="chevron-right"></i></div>
-              ${node('webhook', 'IPN Sent', 'refund.approved event', 'success')}
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              ${node('x-circle', 'Rejected', 'With reason', 'danger')}
-              <div class="flow-arrow" style="color:var(--color-text-4)"><i data-lucide="chevron-right"></i></div>
-              ${node('webhook', 'IPN Sent', 'refund.rejected event', 'danger')}
-            </div>
-          </div>
-
-          <!-- ─── Diagram 4: IPN Delivery ─── -->
-          <div class="card flow-section">
-            <div class="flow-section-title">
-              <i data-lucide="send"></i>
-              Diagram 4 — IPN Delivery & Retry
-            </div>
-            <div class="flow-diagram">
-              ${node('zap', 'Event Triggered', 'payment.success etc', 'brand')}
-              ${arrow()}
-              ${node('webhook', 'Find Endpoints', 'Subscribed to event', 'info')}
-              ${arrow()}
-              ${node('shield', 'Sign Payload', 'HMAC-SHA256 secret', 'brand')}
-              ${arrow()}
-              ${node('send', 'POST to URL', 'With X-Signature', 'info')}
-              ${arrow()}
-              ${node('git-branch', 'HTTP 2xx?', 'Check response', 'warning')}
-            </div>
-            <div class="flow-diagram" style="margin-top:4px">
-              ${node('check-circle', 'Delivered', 'Status: delivered', 'success')}
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              ${node('clock', 'Retry Queue', '30s → 2m → 8m → 30m → 2h', 'warning')}
-              ${arrow()}
-              ${node('refresh-cw', 'Retry Attempt', 'Up to 5 retries', 'warning')}
-              ${arrow()}
-              ${node('x-circle', 'Exhausted', 'All retries failed', 'danger')}
-            </div>
-            <div class="docs-callout tip" style="margin-top:20px">
-              <div class="docs-callout-title"><i data-lucide="info"></i> Delivery tracking</div>
-              <p>Every delivery attempt is logged with HTTP status, response body, and timestamps. Merchants can view delivery history in their portal under <strong>Webhooks → Deliveries</strong>. Admins can view all IPN endpoints under <strong>IPN Endpoints</strong>.</p>
-            </div>
-          </div>
-
-          <!-- ─── Diagram 5: IPN Architecture ─── -->
-          <div class="card flow-section">
-            <div class="flow-section-title">
-              <i data-lucide="network"></i>
-              Diagram 5 &mdash; IPN Architecture &amp; Event Reference
-            </div>
-
-            <p style="font-size:0.8125rem;color:var(--color-text-2);margin-bottom:20px">
-              IPN (Instant Payment Notification) is Trialvo Pay's push-notification system. When a payment event occurs,
-              Trialvo Pay signs a JSON payload with the merchant's webhook secret and POSTs it to every subscribed endpoint.
-              It is the <strong style="color:var(--color-text)">only authoritative source of truth</strong> —
-              never rely on browser redirects alone.
-            </p>
-
-            <!-- Full IPN chain from EPS to Merchant -->
-            <div style="margin-bottom:28px">
-              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-3);margin-bottom:12px">Full IPN chain — from EPS to Merchant</div>
-              <div class="flow-diagram">
-                ${node('building-2', 'EPS Gateway', 'Payment processed', 'warning')}
-                ${arrow()}
-                ${node('zap', 'EPS Callback', '/eps/callback', 'warning')}
-                ${arrow()}
-                ${node('shield-check', 'Verify EPS Sig', 'HMAC from EPS', 'brand')}
-                ${arrow()}
-                ${node('database', 'Bill Updated', 'Status + transaction', 'info')}
-                ${arrow()}
-                ${node('zap', 'Event Emitted', 'payment.success etc', 'brand')}
-                ${arrow()}
-                ${node('search', 'Find Webhooks', 'Active + subscribed', 'info')}
-                ${arrow()}
-                ${node('lock', 'Sign Payload', 'X-Trialvo-Pay-Signature', 'brand')}
-                ${arrow()}
-                ${node('send', 'POST to URL', 'Merchant endpoint', 'success')}
-              </div>
-            </div>
-
-            <!-- IPN Event Types Table -->
-            <div style="margin-bottom:28px">
-              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-3);margin-bottom:12px">IPN Event Types</div>
-              <table class="docs-perm-table">
-                <thead><tr><th>Event</th><th>Trigger</th><th>Bill Status After</th></tr></thead>
+          <!-- Phase 4: IPN Webhook Architecture -->
+          ${phase(4, 'IPN Webhook Architecture', 'Authoritative push notification system', `
+            ${step({
+              icon: 'shield', title: 'Payload Signing', tag: 'SECURITY', color: 'brand', pulse: true,
+              desc: 'Every IPN includes X-Trialvo-Pay-Signature header using HMAC-SHA256.',
+              pills: [{icon: 'lock', text: 'HMAC-SHA256'}]
+            })}
+            ${step({
+              icon: 'clock', title: 'Retry Strategy', tag: 'RELIABILITY', color: 'warning',
+              desc: 'If merchant responds with non-2xx, system retries: 30s → 2m → 8m → 30m → 2h.',
+              pills: [{icon: 'refresh-cw', text: '5 Max Retries'}]
+            })}
+          `, `
+            <div style="margin:24px 0 0 48px">
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-3);margin-bottom:12px">Standard IPN Events</div>
+              <table class="docs-perm-table" style="margin-bottom:24px">
+                <thead><tr><th>Event</th><th>Description</th><th>Status</th></tr></thead>
                 <tbody>
-                  <tr><td><code>payment.success</code></td><td>EPS confirms payment successfully received</td><td><code>paid</code></td></tr>
-                  <tr><td><code>payment.failed</code></td><td>EPS reports payment failure</td><td><code>failed</code></td></tr>
-                  <tr><td><code>payment.cancelled</code></td><td>Customer cancels on EPS payment page</td><td><code>cancelled</code></td></tr>
-                  <tr><td><code>refund.approved</code></td><td>Admin approves a refund request</td><td><code>refunded</code></td></tr>
-                  <tr><td><code>refund.rejected</code></td><td>Admin rejects a refund request</td><td>unchanged</td></tr>
+                  <tr><td><code>payment.success</code></td><td>EPS confirms payment received</td><td><code>paid</code></td></tr>
+                  <tr><td><code>payment.failed</code></td><td>EPS reports failure</td><td><code>failed</code></td></tr>
+                  <tr><td><code>payment.cancelled</code></td><td>Customer cancelled payment</td><td><code>cancelled</code></td></tr>
+                  <tr><td><code>refund.approved</code></td><td>Admin approved refund</td><td><code>refunded</code></td></tr>
                 </tbody>
               </table>
-            </div>
 
-            <!-- IPN Payload Fields -->
-            <div style="margin-bottom:28px">
-              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-3);margin-bottom:12px">IPN Payload Structure (JSON body sent to merchant)</div>
-              <table class="docs-perm-table">
-                <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
-                <tbody>
-                  <tr><td><code>event</code></td><td>string</td><td>Event type — e.g. <code>payment.success</code></td></tr>
-                  <tr><td><code>bill_token</code></td><td>string</td><td>Merchant's original bill reference</td></tr>
-                  <tr><td><code>amount</code></td><td>string</td><td>Transaction amount in BDT</td></tr>
-                  <tr><td><code>currency</code></td><td>string</td><td>Always <code>BDT</code></td></tr>
-                  <tr><td><code>status</code></td><td>string</td><td>Bill status after the event</td></tr>
-                  <tr><td><code>gateway_provider</code></td><td>string</td><td>Payment method used (bkash, nagad, card, etc)</td></tr>
-                  <tr><td><code>eps_merchant_tx_id</code></td><td>string</td><td>EPS gateway transaction reference</td></tr>
-                  <tr><td><code>timestamp</code></td><td>ISO 8601</td><td>Event time in UTC</td></tr>
-                  <tr><td><code>metadata</code></td><td>object / null</td><td>Custom data passed at bill creation time</td></tr>
-                  <tr><td><code>refund_amount</code></td><td>string / null</td><td>Refund amount (refund events only)</td></tr>
-                  <tr><td><code>refund_reason</code></td><td>string / null</td><td>Reason for refund (refund events only)</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Signature Verification Steps -->
-            <div style="margin-bottom:0">
-              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-3);margin-bottom:12px">Signature Verification — X-Trialvo-Pay-Signature header</div>
-              <p style="font-size:0.8125rem;color:var(--color-text-2);margin-bottom:14px">
-                Every IPN POST includes the header <code style="font-size:0.78em;background:var(--color-surface-2);padding:2px 6px;border-radius:4px;color:var(--color-brand-2)">X-Trialvo-Pay-Signature</code>.
-                Merchants must verify this before trusting the payload:
-              </p>
+              <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-3);margin-bottom:12px">Signature Verification Flow</div>
               <div class="flow-list">
-                ${listItem(1, 'Get the raw request body bytes (before JSON parsing)', 'Never re-serialize the parsed JSON to verify — byte order must be exact to match the signature.')}
-                ${listItem(2, 'Compute HMAC-SHA256(raw_body, webhook_secret)', 'Use the secret shown when the webhook endpoint was created. It is not recoverable after creation — regenerate and update if lost.')}
-                ${listItem(3, 'Hex-encode the digest and compare with header', 'Use constant-time comparison (e.g. crypto.timingSafeEqual in Node, hmac.compare_digest in Python) to prevent timing attacks.')}
-                ${listItem(4, 'Respond HTTP 2xx within 10 seconds', 'If your endpoint takes longer or returns a non-2xx, Trialvo Pay retries: 30s → 2m → 8m → 30m → 2h (max 5 retries). After 5 failures the delivery is marked exhausted.')}
+                <div class="flow-list-item" style="border:none;padding:8px 0"><div class="flow-list-num">1</div><div class="flow-list-content"><p>Get raw request body bytes (do not parse JSON yet).</p></div></div>
+                <div class="flow-list-item" style="border:none;padding:8px 0"><div class="flow-list-num">2</div><div class="flow-list-content"><p>Compute HMAC-SHA256(raw_body, webhook_secret).</p></div></div>
+                <div class="flow-list-item" style="border:none;padding:8px 0"><div class="flow-list-num">3</div><div class="flow-list-content"><p>Compare hex digest with X-Trialvo-Pay-Signature header using timing-safe equal.</p></div></div>
               </div>
             </div>
-
-            <div class="docs-callout warn" style="margin-top:20px">
-              <div class="docs-callout-title"><i data-lucide="alert-triangle"></i> Never skip signature verification</div>
-              <p>Any public URL that accepts IPN without verifying the <code>X-Trialvo-Pay-Signature</code> header can be spoofed by a third party sending fake payment.success events. Always verify before fulfilling orders or crediting accounts.</p>
-            </div>
-          </div>
-
+          `)}
         </div>
       </div>
     `;
+
     if (window.lucide) lucide.createIcons();
   },
 

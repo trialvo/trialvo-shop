@@ -49,10 +49,36 @@ pub async fn get(state: web::Data<AppState>, path: web::Path<Uuid>) -> HttpRespo
     HttpResponse::Ok().json(serde_json::json!({"transaction": tx, "events": events, "bill": bill}))
 }
 
+pub async fn delete(state: web::Data<AppState>, path: web::Path<Uuid>) -> HttpResponse {
+    let tx_id = path.into_inner();
+
+    // Verify transaction exists
+    match get_transaction_by_id(&state.db, tx_id).await {
+        Ok(Some(_)) => {},
+        Ok(None) => return HttpResponse::NotFound().json(serde_json::json!({"error": "Transaction not found"})),
+        Err(_) => return HttpResponse::InternalServerError().json(serde_json::json!({"error": "Internal error"})),
+    };
+
+    // Delete transaction (CASCADE will remove events)
+    match delete_transaction(&state.db, tx_id).await {
+        Ok(true) => {
+            tracing::info!("Admin deleted transaction {}", tx_id);
+            HttpResponse::Ok().json(serde_json::json!({"success": true, "message": "Transaction deleted permanently"}))
+        },
+        Ok(false) => HttpResponse::NotFound().json(serde_json::json!({"error": "Transaction not found"})),
+        Err(e) => {
+            tracing::error!("delete_transaction error: {:?}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({"error": "Failed to delete transaction"}))
+        },
+    }
+}
+
 pub fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/transactions")
             .route("", web::get().to(list))
             .route("/{id}", web::get().to(get))
+            .route("/{id}", web::delete().to(delete))
     );
 }
+

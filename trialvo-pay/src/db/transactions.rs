@@ -273,3 +273,12 @@ pub async fn get_events_for_transaction(pool: &PgPool, transaction_id: Uuid) -> 
     .await?;
     Ok(events)
 }
+
+/// Hard-delete a transaction and its events (CASCADE handles events automatically).
+pub async fn delete_transaction(pool: &PgPool, id: Uuid) -> Result<bool> {
+    let result = sqlx::query("DELETE FROM transactions WHERE id = $1")
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() > 0)
+}

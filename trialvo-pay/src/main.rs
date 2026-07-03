@@ -73,6 +73,7 @@ async fn main() -> std::io::Result<()> {
     // ─── Shared IPN HTTP client ───────────────────────────────────────────────
     let ipn_client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
+        .user_agent("TrialvoPay/1.0")
         .build()
         .expect("IPN HTTP client init failed");
 

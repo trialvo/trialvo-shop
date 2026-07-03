@@ -343,9 +343,31 @@ fn render_expired(_bill_token: &str) -> HttpResponse {
 }
 
 fn render_error(msg: &str) -> HttpResponse {
+    let html = format!(r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Error — Trialvo Pay</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {{ --brand: #0d9488; --bg: #f7f8fa; --surface: #ffffff; --border: #e2e8f0; --text: #1e293b; --text-2: #475569; --danger: #ef4444; }}
+  body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }}
+  .card {{ background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.05); max-width: 440px; width: 100%; }}
+  h1 {{ font-size: 1.5rem; color: var(--danger); margin-bottom: 12px; }}
+  p {{ color: var(--text-2); font-size: 0.9375rem; }}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>System Error</h1>
+  <p>{}</p>
+</div>
+</body>
+</html>"#, msg);
     HttpResponse::InternalServerError()
         .content_type("text/html; charset=utf-8")
-        .body(format!("<h1>Error</h1><p>{}</p>", msg))
+        .body(html)
 }
 
 fn render_success_redirect(bill: &crate::db::bills::Bill, base_url: &str) -> HttpResponse {
@@ -363,38 +385,112 @@ fn render_cancelled(_bill: &crate::db::bills::Bill) -> HttpResponse {
         .body(html)
 }
 
-/// Render a minimal error page for skip_preview mode with a retry button.
+/// Render a premium error page for skip_preview mode with a retry button.
 fn render_skip_preview_error(error_msg: &str, bill_token: &str) -> HttpResponse {
     let html = format!(r#"<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Payment Error — Trialvo Pay</title>
+<title>Payment Unavailable — Trialvo Pay</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  :root {{
+    --brand: #0d9488;
+    --brand-light: #14b8a6;
+    --bg: #f7f8fa;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-2: #475569;
+    --text-muted: #94a3b8;
+    --danger: #ef4444;
+  }}
   * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-  body {{ font-family: 'Inter', sans-serif; background: #0f172a; color: #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }}
-  .error-card {{ background: #1e293b; border-radius: 16px; padding: 40px; max-width: 420px; width: 90%; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }}
-  .error-icon {{ font-size: 48px; margin-bottom: 16px; }}
-  h1 {{ font-size: 20px; font-weight: 600; margin-bottom: 8px; color: #f87171; }}
-  p {{ font-size: 14px; color: #94a3b8; margin-bottom: 24px; line-height: 1.6; }}
-  .retry-btn {{ display: inline-block; padding: 12px 32px; background: #6366f1; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.2s; }}
-  .retry-btn:hover {{ background: #4f46e5; }}
-  .footer {{ margin-top: 24px; font-size: 12px; color: #64748b; }}
+  body {{
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(13,148,136,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(20,184,166,0.05) 0%, transparent 50%);
+  }}
+  .error-container {{ width: 100%; max-width: 440px; }}
+  .error-card {{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+  }}
+  .error-card::before {{
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--danger), #f87171);
+  }}
+  .icon-wrap {{
+    width: 72px; height: 72px;
+    background: rgba(239, 68, 68, 0.08);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    color: var(--danger);
+  }}
+  h1 {{ font-size: 1.35rem; font-weight: 700; color: var(--text); margin-bottom: 12px; letter-spacing: -0.02em; }}
+  .msg-primary {{ font-size: 0.9375rem; color: var(--text-2); line-height: 1.6; margin-bottom: 8px; }}
+  .msg-detail {{
+    font-size: 0.8125rem; color: var(--text-muted);
+    background: #f8fafc; border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px; margin-bottom: 28px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    word-break: break-all;
+  }}
+  .retry-btn {{
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, var(--brand), var(--brand-light));
+    color: white; border: none; border-radius: 14px;
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+    text-decoration: none; transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(13,148,136,0.2);
+  }}
+  .retry-btn:hover {{ transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13,148,136,0.3); }}
+  .retry-btn:active {{ transform: translateY(0); }}
+  .footer {{
+    margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 0.75rem; color: var(--text-muted);
+  }}
+  .footer svg {{ opacity: 0.6; }}
 </style>
 </head>
 <body>
-<div class="error-card">
-  <div class="error-icon">⚠️</div>
-  <h1>Payment Temporarily Unavailable</h1>
-  <p>We couldn't connect to the payment gateway. Error: {error_msg}</p>
-  <p style="font-size: 12px; margin-top: -15px;">Please try again in a moment or contact support.</p>
-  <a href="/pay/{bill_token}" class="retry-btn">Try Again</a>
-  <div class="footer">Secured by Trialvo Pay</div>
+<div class="error-container">
+  <div class="error-card">
+    <div class="icon-wrap">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+    </div>
+    <h1>Payment Temporarily Unavailable</h1>
+    <p class="msg-primary">We encountered a technical issue connecting to the payment gateway. Your transaction has not been charged.</p>
+    <div class="msg-detail">Error: {error_msg}</div>
+    <a href="/pay/{bill_token}" class="retry-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+      Try Again
+    </a>
+  </div>
+  <div class="footer">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Secured by <strong>Trialvo Pay</strong>
+  </div>
 </div>
 </body>
-</html>"#, bill_token = bill_token);
+</html>"#, error_msg = error_msg, bill_token = bill_token);
     HttpResponse::ServiceUnavailable()
         .content_type("text/html; charset=utf-8")
         .body(html)

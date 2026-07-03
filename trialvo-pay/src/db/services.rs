@@ -270,3 +270,57 @@ pub async fn cleanup_expired_grace_keys(pool: &PgPool) -> Result<u64> {
     .await?;
     Ok(result.rows_affected())
 }
+
+/// Delete a service and all its related data.
+/// Bills FK does not CASCADE, so we must delete bills (and their transactions) first.
+pub async fn delete_service(pool: &PgPool, id: Uuid) -> Result<bool> {
+    // Delete in dependency order: refunds → transactions → bill_items → bills → ipn → keys → service
+    // Use a transaction to ensure atomicity
+    let mut tx = pool.begin().await?;
+
+    // Delete refunds referencing this service
+    sqlx::query("DELETE FROM refunds WHERE service_id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Delete transactions via bills
+    sqlx::query("DELETE FROM transactions WHERE bill_id IN (SELECT id FROM bills WHERE service_id = $1)")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Delete bill_items via bills
+    sqlx::query("DELETE FROM bill_items WHERE bill_id IN (SELECT id FROM bills WHERE service_id = $1)")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Delete bills
+    sqlx::query("DELETE FROM bills WHERE service_id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Delete service keys (CASCADE should handle, but be explicit)
+    sqlx::query("DELETE FROM service_keys WHERE service_id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Delete IPN endpoints (CASCADE should handle)
+    sqlx::query("DELETE FROM ipn_endpoints WHERE service_id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Finally delete the service itself
+    let result = sqlx::query("DELETE FROM services WHERE id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    tx.commit().await?;
+    Ok(result.rows_affected() > 0)
+}
+
