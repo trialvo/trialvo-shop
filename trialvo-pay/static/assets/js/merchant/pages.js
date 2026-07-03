@@ -45,6 +45,7 @@ login() {
             </form>
         </div>
     </div>`;
+},
 
 initLogin() {
     document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -98,6 +99,7 @@ async dashboard() {
     <div class="card"><div class="card-header"><span class="card-title">Recent Transactions</span></div>
         ${MUI.table(['Transaction ID', 'Amount', 'Status', 'Date'], rows)}
     </div>`;
+},
 
 // ─── SETTINGS ───────────────────────────────────────────────────────────────
 async settings() {
