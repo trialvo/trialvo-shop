@@ -18,6 +18,7 @@ const testimonialRoutes = require('./routes/testimonials');
 const contactRoutes = require('./routes/contact');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payments');
+const settingsRoutes = require('./routes/settings');
 
 
 const app = express();
@@ -46,6 +47,7 @@ app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/admin/settings', settingsRoutes);
 
 
 // ─── 404 Handler ─────────────────────────────────────────

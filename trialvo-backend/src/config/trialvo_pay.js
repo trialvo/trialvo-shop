@@ -1,34 +1,58 @@
 const crypto = require('crypto');
 const axios = require('axios');
+const { pool } = require('./db');
 
-const BASE_URL = process.env.TRIALVO_PAY_BASE_URL;
-const SERVICE_ID = process.env.TRIALVO_PAY_SERVICE_ID;
-const API_KEY = process.env.TRIALVO_PAY_API_KEY;
-const IPN_SECRET = process.env.TRIALVO_PAY_IPN_SECRET;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
-const IPN_URL = process.env.IPN_URL || 'http://host.docker.internal:15000/api/payments/ipn';
+/**
+ * Get dynamic settings from database with environment fallbacks
+ */
+async function getSettings() {
+  try {
+    const { rows } = await pool.query(
+      "SELECT key, value FROM system_config WHERE key LIKE 'trialvo_pay_%'"
+    );
+    
+    const config = {};
+    rows.forEach(r => config[r.key] = r.value);
+
+    return {
+      baseUrl: config.trialvo_pay_base_url || process.env.TRIALVO_PAY_BASE_URL,
+      serviceId: config.trialvo_pay_service_id || process.env.TRIALVO_PAY_SERVICE_ID,
+      apiKey: config.trialvo_pay_api_key || process.env.TRIALVO_PAY_API_KEY,
+      ipnSecret: config.trialvo_pay_ipn_secret || process.env.TRIALVO_PAY_IPN_SECRET,
+      frontendUrl: config.frontend_url || process.env.FRONTEND_URL || 'http://localhost:8091',
+    };
+  } catch (error) {
+    console.error('[Trialvo Pay] Error loading config from DB:', error.message);
+    return {
+      baseUrl: process.env.TRIALVO_PAY_BASE_URL,
+      serviceId: process.env.TRIALVO_PAY_SERVICE_ID,
+      apiKey: process.env.TRIALVO_PAY_API_KEY,
+      ipnSecret: process.env.TRIALVO_PAY_IPN_SECRET,
+      frontendUrl: process.env.FRONTEND_URL || 'http://localhost:8091',
+    };
+  }
+}
 
 /**
  * Generate HMAC-SHA256 signature for Trialvo Pay API
- * Signature = HMAC-SHA256(timestamp + nonce + service_id + body_hash, api_key)
  */
-function buildHeaders(body = {}) {
+function buildHeaders(settings, body = {}) {
+  const { serviceId, apiKey } = settings;
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const nonce = crypto.randomBytes(16).toString('hex');
   const bodyStr = JSON.stringify(body);
   const bodyHash = crypto.createHash('sha256').update(bodyStr).digest('hex');
 
-  // Trialvo Pay signature format: HMAC-SHA256(api_key, "service_id:timestamp:nonce:body_sha256")
-  const message = `${SERVICE_ID}:${timestamp}:${nonce}:${bodyHash}`;
+  const message = `${serviceId}:${timestamp}:${nonce}:${bodyHash}`;
   const signature = crypto
-    .createHmac('sha256', API_KEY)
+    .createHmac('sha256', apiKey)
     .update(message)
     .digest('hex');
 
   return {
     'Content-Type': 'application/json',
-    'X-Service-Id': SERVICE_ID,
-    'X-Api-Key': API_KEY,
+    'X-Service-Id': serviceId,
+    'X-Api-Key': apiKey,
     'X-Timestamp': timestamp,
     'X-Nonce': nonce,
     'X-Body-Hash': bodyHash,
@@ -77,6 +101,8 @@ async function createTrialvoPayBill(params) {
     unit_final_price: amount,
   }];
 
+  const settings = await getSettings();
+  
   // Resolve address — use shipping data or defaults
   const addr = shippingAddress || {};
   const productParam = productSlug ? `&product=${productSlug}` : '';
@@ -95,9 +121,9 @@ async function createTrialvoPayBill(params) {
     customer_state: addr.state || 'Dhaka',
     customer_postcode: addr.postcode || '1000',
     customer_country: addr.country || 'BD',
-    success_url: `${FRONTEND_URL}/order-success?orderId=${orderId}${productParam}`,
-    fail_url: `${FRONTEND_URL}/checkout?error=payment_failed${productParam ? `${productParam}` : ''}`,
-    cancel_url: `${FRONTEND_URL}/checkout?error=payment_cancelled${productParam ? `${productParam}` : ''}`,
+    success_url: `${settings.frontendUrl}/order-success?orderId=${orderId}${productParam}`,
+    fail_url: `${settings.frontendUrl}/checkout?error=payment_failed${productParam ? `${productParam}` : ''}`,
+    cancel_url: `${settings.frontendUrl}/checkout?error=payment_cancelled${productParam ? `${productParam}` : ''}`,
     meta: {
       order_id: orderId,
       product_slug: productSlug || null,
@@ -106,14 +132,14 @@ async function createTrialvoPayBill(params) {
     items: billItems,
   };
 
-  const headers = buildHeaders(body);
+  const headers = buildHeaders(settings, body);
 
-  console.log(`[Trialvo Pay] Creating bill at ${BASE_URL}/api/v1/bills`);
+  console.log(`[Trialvo Pay] Creating bill at ${settings.baseUrl}/api/v1/bills`);
   console.log(`[Trialvo Pay] Order: ${orderId}, Items: ${billItems.length}, Amount: ${amount} BDT`);
 
   try {
     const response = await axios.post(
-      `${BASE_URL}/api/v1/bills`,
+      `${settings.baseUrl}/api/v1/bills`,
       body,
       { headers, timeout: 10000 }
     );
@@ -134,11 +160,12 @@ async function createTrialvoPayBill(params) {
  * @param {string} receivedSig - X-Payvault-Signature header value
  * @returns {boolean}
  */
-function verifyIpnSignature(rawBody, receivedSig) {
-  if (!receivedSig || !IPN_SECRET) return false;
+async function verifyIpnSignature(rawBody, receivedSig) {
+  const settings = await getSettings();
+  if (!receivedSig || !settings.ipnSecret) return false;
   try {
     const expected = crypto
-      .createHmac('sha256', IPN_SECRET)
+      .createHmac('sha256', settings.ipnSecret)
       .update(rawBody)
       .digest('hex');
     const expectedBuf = Buffer.from(expected, 'hex');

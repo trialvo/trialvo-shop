@@ -178,6 +178,25 @@ pub async fn create_bill_handler(
     }
 }
 
+/// GET /api/v1/verify
+/// Verify service credentials and return basic info
+pub async fn verify_service_handler(
+    req: HttpRequest,
+    _state: web::Data<AppState>,
+) -> HttpResponse {
+    let auth = match req.extensions().get::<AuthenticatedService>().cloned() {
+        Some(a) => a,
+        None => return HttpResponse::Unauthorized().json(serde_json::json!({"error": "Unauthorized"})),
+    };
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "success": true,
+        "service_id": auth.service_id,
+        "message": "Connection successful"
+    }))
+}
+
+
 /// GET /api/v1/bills/{token}
 pub async fn get_bill_handler(
     req: HttpRequest,
@@ -243,6 +262,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
         web::scope("/bills")
             .route("", web::post().to(create_bill_handler))
             .route("/{token}", web::get().to(get_bill_handler))
-            .route("/{token}", web::delete().to(cancel_bill_handler))
+            .route("/{token}", web::delete().to(cancel_bill_handler)),
     );
+    cfg.route("/verify", web::get().to(verify_service_handler));
 }

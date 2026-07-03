@@ -27,6 +27,7 @@ async function runMigrations() {
       require('./006_advanced_features'),
       require('./007_trialvo_pay_columns'),
       require('./008_payment_details'),
+      require('./009_system_config'),
     ];
 
     let count = 0;
