@@ -56,6 +56,8 @@
   --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
   --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+
+  --color-brand-gradient: linear-gradient(135deg, var(--color-brand), var(--color-brand-2));
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────────────── */
@@ -3930,25 +3932,25 @@ code.code-tag { all: unset; font-family: 'JetBrains Mono', monospace; background
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-text-3);
+  color: var(--color-text-2);
   background: transparent;
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
-  flex: 1;
   justify-content: center;
+  min-width: fit-content;
 }
 .adoc-tab i { width: 16px; height: 16px; flex-shrink: 0; }
 .adoc-tab:hover { color: var(--color-text-2); background: var(--color-surface-2); }
 .adoc-tab.active {
-  color: white;
+  color: #ffffff !important;
   background: var(--color-brand-gradient);
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(13,148,136,0.25);
+  box-shadow: 0 4px 12px rgba(13,148,136,0.3);
 }
 
 /* ─── Tab Panels ──────────────────────────────────────────────────── */
