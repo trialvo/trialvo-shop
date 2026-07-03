@@ -42,7 +42,7 @@ pub async fn update(
     }
 
     // Auto-encrypt EPS secret values
-    let value_to_store = if category == "eps" && key.contains("username") || key.contains("password") || key.contains("hash_key") {
+    let value_to_store = if category == "eps" && (key.contains("username") || key.contains("password") || key.contains("hash_key")) {
         match crate::crypto::aes::encrypt(&state.config.master_key, &body.value) {
             Ok(enc) => enc,
             Err(_) => return HttpResponse::InternalServerError().json(serde_json::json!({"error": "Encryption failed"})),
