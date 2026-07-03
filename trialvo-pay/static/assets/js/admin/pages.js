@@ -3848,93 +3848,161 @@ const Pages = {
   // ═══════════════════════════════════════════════════════════════════════════
 
   async docs(container) {
+    // ── Section renderer ────────────────────────────────────────────────
+    const section = (id, icon, title, body) => `
+      <div class="adoc-section" id="doc-${id}">
+        <div class="adoc-section-header">
+          <div class="adoc-section-icon"><i data-lucide="${icon}"></i></div>
+          <h2 class="adoc-section-title">${title}</h2>
+        </div>
+        <div class="adoc-section-body">${body}</div>
+      </div>`;
+
+    const callout = (type, icon, title, text) => `
+      <div class="docs-callout ${type}">
+        <div class="docs-callout-title"><i data-lucide="${icon}"></i> ${title}</div>
+        <p>${text}</p>
+      </div>`;
+
+    const stepCard = (num, title, body) => `
+      <div class="adoc-step">
+        <div class="adoc-step-num">${num}</div>
+        <div class="adoc-step-body">
+          <div class="adoc-step-title">${title}</div>
+          <div class="adoc-step-desc">${body}</div>
+        </div>
+      </div>`;
+
+    // ── Tab definitions ─────────────────────────────────────────────────
+    const tabs = [
+      { id: 'onboarding', icon: 'user-plus',    label: 'Onboarding' },
+      { id: 'operations', icon: 'settings',     label: 'Operations' },
+      { id: 'webhooks',   icon: 'webhook',      label: 'Webhooks & IPN' },
+      { id: 'security',   icon: 'shield-check', label: 'Security' },
+      { id: 'perms',      icon: 'lock',         label: 'Permissions' },
+    ];
+
     container.innerHTML = `
       <div class="page-content">
         <div class="page-header">
           <div class="page-title-wrap">
-            <h1 class="page-title">Admin Guide</h1>
-            <p class="page-subtitle">Operations reference — what only the admin can do and how to do it</p>
+            <h1 class="page-title">Admin Knowledge Base</h1>
+            <p class="page-subtitle">Comprehensive operations reference for Trialvo Pay platform administration</p>
           </div>
           <a href="/docs" target="_blank" class="btn btn-outline btn-sm">
-            <i data-lucide="code-2"></i> API Docs (for merchants)
+            <i data-lucide="code-2"></i> API Docs
           </a>
         </div>
 
-        <div class="admin-docs card" style="padding:32px">
-          <div class="docs-section">
+        <!-- Tab Navigation -->
+        <div class="adoc-tabs">
+          ${tabs.map((t, i) => `
+            <button class="adoc-tab ${i === 0 ? 'active' : ''}" data-tab="${t.id}">
+              <i data-lucide="${t.icon}"></i>
+              <span>${t.label}</span>
+            </button>
+          `).join('')}
+        </div>
 
-            <h2><i data-lucide="user-plus"></i> 1. Onboarding a New Merchant</h2>
-            <p>Merchant registration is <strong>admin-only</strong>. Merchants cannot self-register. Follow these steps:</p>
+        <!-- ═══ TAB: Onboarding ═══ -->
+        <div class="adoc-panel active" id="tab-onboarding">
+          ${section('onboard-overview', 'info', 'Onboarding Overview',
+            `<p>Merchant registration is <strong>admin-only</strong>. There is no self-registration. The admin creates a service, then creates a merchant account, and shares the credentials securely.</p>`
+          )}
 
-            <h3>Step 1 — Create a Service</h3>
-            <p>Navigate to <strong>Services → New Service</strong>. Fill in:</p>
-            <ul>
-              <li><strong>Display Name</strong> — merchant's project name (e.g. "GameStore")</li>
-              <li><strong>Slug</strong> — URL-safe identifier (e.g. <code>gamestore</code>)</li>
-              <li><strong>Mode</strong> — <code>sandbox</code> for testing, <code>live</code> for production</li>
-              <li><strong>Commission Rate</strong> — percentage (e.g. <code>2.5</code>) or set to <code>0</code> for special deals</li>
-              <li><strong>Commission Type</strong> — <code>percentage</code> or <code>fixed</code></li>
-              <li><strong>Success / Fail / Cancel URLs</strong> — default redirect URLs (merchant can override later)</li>
-            </ul>
-
-            <h3>Step 2 — Create the Merchant Account</h3>
-            <p>Navigate to <strong>Merchants → New Merchant</strong>. Select the service you just created, provide:</p>
-            <ul>
-              <li><strong>Email</strong> — the developer's login email</li>
-              <li><strong>Temporary Password</strong> — share this securely; merchant must change it on first login</li>
-              <li><strong>Display Name</strong> — optional, shown in the merchant panel</li>
-            </ul>
-            <div class="docs-callout info">
-              <div class="docs-callout-title"><i data-lucide="info"></i> One merchant per service</div>
-              <p>Each service has exactly one merchant account. If a team has multiple developers, they share the same login.</p>
+          ${section('create-service', 'layers', 'Step 1 — Create a Service', `
+            <p>Navigate to <strong>Services → New Service</strong> and configure:</p>
+            <div class="adoc-grid-2">
+              ${stepCard(1, 'Display Name', 'Merchant\'s project name (e.g. "GameStore")')}
+              ${stepCard(2, 'Slug', 'URL-safe identifier (e.g. <code>gamestore</code>)')}
+              ${stepCard(3, 'Mode', '<code>sandbox</code> for testing, <code>live</code> for production')}
+              ${stepCard(4, 'Commission', 'Percentage rate (e.g. <code>2.5</code>) or <code>0</code> for free')}
+              ${stepCard(5, 'Commission Type', '<code>percentage</code> or <code>fixed</code>')}
+              ${stepCard(6, 'Redirect URLs', 'Default success / fail / cancel URLs')}
             </div>
+          `)}
 
-            <h3>Step 3 — Share Credentials</h3>
-            <p>Share with the merchant:</p>
-            <ul>
-              <li>Merchant Portal URL: <code>https://pay.trialvo.com/merchant</code></li>
-              <li>Their email and temporary password</li>
-            </ul>
-            <p>The merchant logs in, changes their password, then generates their own API key and webhook secrets — <strong>you don't need to touch those</strong>.</p>
+          ${section('create-merchant', 'store', 'Step 2 — Create Merchant Account', `
+            <p>Navigate to <strong>Merchants → New Merchant</strong>. Select the service, then provide:</p>
+            <div class="adoc-grid-2">
+              ${stepCard(1, 'Email', 'Developer\'s login email address')}
+              ${stepCard(2, 'Temporary Password', 'Share securely; merchant must change on first login')}
+              ${stepCard(3, 'Display Name', 'Optional — shown in merchant panel header')}
+            </div>
+            ${callout('info', 'info', 'One merchant per service', 'Each service has exactly one merchant account. If a team has multiple developers, they share the same login credentials.')}
+          `)}
 
-            <h2><i data-lucide="percent"></i> 2. Commission Management</h2>
-            <p>Go to <strong>Services → [Service Name] → Edit</strong> to change commission at any time.</p>
+          ${section('share-creds', 'send', 'Step 3 — Share Credentials', `
+            <p>Share the following with the merchant:</p>
+            <div class="adoc-code-block">
+              <div class="adoc-code-label">Merchant Portal</div>
+              <code>https://pay.trialvo.com/merchant</code>
+            </div>
+            <p style="margin-top:12px">The merchant logs in, changes their password, then generates their own API key and webhook secrets — <strong>you don't need to touch those</strong>.</p>
+          `)}
+        </div>
+
+        <!-- ═══ TAB: Operations ═══ -->
+        <div class="adoc-panel" id="tab-operations">
+          ${section('commission', 'percent', 'Commission Management', `
+            <p>Go to <strong>Services → [Service] → Edit Settings → Commission tab</strong> to change rates.</p>
             <table class="docs-perm-table">
-              <thead><tr><th>Commission Type</th><th>How it Works</th><th>Example</th></tr></thead>
+              <thead><tr><th>Type</th><th>How it Works</th><th>Example</th></tr></thead>
               <tbody>
                 <tr><td><strong>Percentage</strong></td><td>Applied as % of transaction amount</td><td>2.5% on ৳1000 = ৳25</td></tr>
                 <tr><td><strong>Fixed</strong></td><td>Fixed fee per transaction</td><td>৳15 flat per payment</td></tr>
                 <tr><td><strong>Zero / Special</strong></td><td>Set rate to 0 for no commission</td><td>Partner deal, free tier</td></tr>
               </tbody>
             </table>
-            <div class="docs-callout warn">
-              <div class="docs-callout-title"><i data-lucide="alert-triangle"></i> Commission changes are not retroactive</div>
-              <p>Changing the commission rate only affects new bills created after the change. Existing bills are not affected.</p>
-            </div>
+            ${callout('warn', 'alert-triangle', 'Not retroactive', 'Commission changes only affect new bills. Existing bills retain the rate from when they were created.')}
+          `)}
 
-            <h2><i data-lucide="rotate-ccw"></i> 3. Refund Approval Workflow</h2>
-            <p>Merchants can request refunds via API. Admin must approve or reject each refund. No automatic refund processing.</p>
-            <ol>
-              <li>Merchant calls <code>POST /api/v1/refunds</code> with <code>bill_token</code>, <code>refund_amount</code>, and <code>reason</code></li>
-              <li>A refund request appears in <strong>Refunds</strong> with status <code>requested</code></li>
-              <li>You review the request — check the bill details, amount, and merchant reason</li>
-              <li>Click <strong>Approve</strong> or <strong>Reject</strong> (with a rejection reason for the merchant)</li>
-              <li>Trialvo Pay sends an IPN to the merchant's webhooks: <code>refund.approved</code> or <code>refund.rejected</code></li>
-            </ol>
-            <div class="docs-callout info">
-              <div class="docs-callout-title"><i data-lucide="info"></i> Actual refund processing</div>
-              <p>Trialvo Pay marks the refund as approved, but the actual EPS refund transaction depends on your EPS gateway settings. Confirm with your EPS account whether refunds are processed automatically or require manual gateway action.</p>
+          ${section('refunds', 'rotate-ccw', 'Refund Workflow', `
+            <p>Merchants request refunds via API. Admin must approve or reject — there is <strong>no automatic refund processing</strong>.</p>
+            <div class="adoc-grid-2">
+              ${stepCard(1, 'Merchant requests', 'Calls <code>POST /api/v1/refunds</code> with bill_token, amount, and reason')}
+              ${stepCard(2, 'Request appears', 'Shows in <strong>Refunds</strong> page with status <code>requested</code>')}
+              ${stepCard(3, 'Admin reviews', 'Check bill details, amount, and merchant\'s stated reason')}
+              ${stepCard(4, 'Decision', 'Click <strong>Approve</strong> or <strong>Reject</strong> (with reason)')}
+              ${stepCard(5, 'IPN sent', 'System dispatches <code>refund.approved</code> or <code>refund.rejected</code>')}
             </div>
+            ${callout('info', 'info', 'EPS refund processing', 'Trialvo Pay marks the refund as approved, but the actual EPS refund depends on your gateway settings. Confirm whether refunds are processed automatically or require manual action.')}
+          `)}
 
-            <h2><i data-lucide="toggle-left"></i> 4. Enabling / Disabling Services & Merchants</h2>
-            <h3>Disable a Service</h3>
-            <p>Go to <strong>Services → [Service] → Edit → Status: Inactive</strong>. This blocks all new bills for that service. Existing in-flight bills are unaffected.</p>
+          ${section('service-mgmt', 'toggle-left', 'Service & Merchant Management', `
+            <h3 style="margin-top:0">Disable a Service</h3>
+            <p>Go to <strong>Services → [Service] → Edit Settings → Danger Zone → Deactivate</strong>. This blocks all new bills. In-flight bills are unaffected.</p>
+
+            <h3>Delete a Service</h3>
+            <p>Go to <strong>Services → [Service] → Preview → Delete</strong>. Requires typing the service slug for confirmation. This permanently removes the service and all associated data.</p>
+            ${callout('warn', 'alert-triangle', 'Irreversible action', 'Deleting a service permanently removes all associated bills, transactions, IPN endpoints, and the merchant account. This cannot be undone.')}
+
             <h3>Lock / Unlock a Merchant</h3>
             <p>Go to <strong>Merchants → [Merchant] → Deactivate</strong>. This immediately blocks merchant login and API access. Use when credentials are compromised or to offboard a merchant.</p>
+
             <h3>Reset Merchant Password</h3>
             <p>Go to <strong>Merchants → [Merchant] → Reset Password</strong>. All existing sessions are revoked.</p>
+          `)}
 
-            <h2><i data-lucide="layers"></i> 5. Sandbox vs Live Mode</h2>
+          ${section('transactions', 'credit-card', 'Transaction Management', `
+            <p>The <strong>Transactions</strong> page provides a comprehensive view of all payment transactions across services.</p>
+
+            <h3>Transaction Preview</h3>
+            <p>Click any transaction row to open the <strong>detail panel</strong> which displays:</p>
+            <ul>
+              <li>Full transaction ID, bill token, and gateway reference</li>
+              <li>Payment method, amount, and commission breakdown</li>
+              <li>Customer information and metadata</li>
+              <li>Status timeline with all state changes</li>
+              <li>Raw gateway response data (JSON viewer)</li>
+            </ul>
+
+            <h3>Transaction Deletion</h3>
+            <p>Transactions can be deleted from the detail panel. A <strong>confirmation modal</strong> requires typing the transaction ID to prevent accidental deletions.</p>
+            ${callout('warn', 'alert-triangle', 'Audit trail', 'Deleted transactions are logged in the audit system. The deletion is permanent and removes all associated payment records.')}
+          `)}
+
+          ${section('sandbox-live', 'layers', 'Sandbox vs Live Mode', `
             <p>Each service is independently configured as sandbox or live:</p>
             <table class="docs-perm-table">
               <thead><tr><th>Mode</th><th>EPS Environment</th><th>Real Payments</th><th>Use For</th></tr></thead>
@@ -3943,38 +4011,31 @@ const Pages = {
                 <tr><td><code>live</code></td><td>EPS production</td><td class="yes">Yes</td><td>Production transactions</td></tr>
               </tbody>
             </table>
-            <p>To switch a service from sandbox to live, go to <strong>Services → [Service] → Edit → Mode: Live</strong>. Ensure the EPS production credentials are configured in <strong>Configuration</strong> first.</p>
+            <p>Switch mode in <strong>Services → [Service] → Edit Settings → API & Keys</strong>. Ensure EPS production credentials are configured in <strong>Configuration</strong> first.</p>
+          `)}
 
-            <h2><i data-lucide="shield-check"></i> 6. Security & Audit</h2>
-            <h3>Audit Logs</h3>
-            <p>Every admin action (login, service edit, refund decision, password reset) is logged in <strong>Audit Logs</strong>. Logs include the admin email, IP address, action type, and timestamp. Logs are read-only and cannot be deleted.</p>
-            <h3>Two-Factor Authentication</h3>
-            <p>Admin accounts support 2FA via TOTP (Google Authenticator). Enable 2FA in <strong>Profile → Enable 2FA</strong>. Strongly recommended for all admins in production.</p>
-            <h3>Admin Roles</h3>
-            <p>Admin accounts have a <code>role</code> field (<code>superadmin</code> / <code>admin</code>). Role management is done from <strong>Administrators</strong>. Only superadmins can create or delete other admin accounts.</p>
-
-            <h2><i data-lucide="settings"></i> 7. System Configuration</h2>
-            <p>Under <strong>Configuration</strong>, you can manage:</p>
-            <ul>
-              <li><strong>EPS Credentials</strong> — API keys, store ID, merchant ID, hash key for sandbox and live</li>
-              <li><strong>IPN Retry Settings</strong> — max retries, retry interval multiplier</li>
-              <li><strong>Rate Limits</strong> — API requests per minute per service</li>
-              <li><strong>Argon2 Parameters</strong> — password hashing memory/iterations (advanced)</li>
-            </ul>
-            <div class="docs-callout warn">
-              <div class="docs-callout-title"><i data-lucide="alert-triangle"></i> Configuration changes take effect immediately</div>
-              <p>Changes to EPS credentials immediately affect all active services using that mode. Test in sandbox before changing live credentials.</p>
+          ${section('config', 'settings', 'System Configuration', `
+            <p>The <strong>Configuration</strong> page manages system-wide settings:</p>
+            <div class="adoc-grid-2">
+              ${stepCard('⚡', 'EPS Credentials', 'API keys, store ID, merchant ID, hash key for sandbox and live environments')}
+              ${stepCard('🔄', 'IPN Retry Settings', 'Max retries (default 5) and retry interval multiplier')}
+              ${stepCard('🚦', 'Rate Limits', 'API requests per minute per service')}
+              ${stepCard('🔐', 'Argon2 Parameters', 'Password hashing memory/iterations (advanced tuning)')}
             </div>
+            ${callout('warn', 'alert-triangle', 'Immediate effect', 'Configuration changes take effect immediately for all active services. Test in sandbox before modifying live credentials.')}
+          `)}
+        </div>
 
-            <h2><i data-lucide="webhook"></i> 9. IPN &amp; Webhooks — Admin View</h2>
-            <p>IPN (Instant Payment Notification) is how Trialvo Pay notifies merchants of payment events. As admin, you have <strong>oversight</strong> over all IPN endpoints across all merchants. Merchants manage their own webhooks — you cannot create or delete their endpoints, but you can monitor and troubleshoot.</p>
+        <!-- ═══ TAB: Webhooks & IPN ═══ -->
+        <div class="adoc-panel" id="tab-webhooks">
+          ${section('ipn-overview', 'send', 'What is IPN?', `
+            <p>IPN (Instant Payment Notification) is Trialvo Pay's <strong>push-notification system</strong>. When a bill changes status, the system signs a JSON payload with the merchant's webhook secret and POSTs it to all subscribed endpoints.</p>
+            <p>IPN is the <strong>only authoritative source of truth</strong> for payment status — never rely on browser redirects alone.</p>
+          `)}
 
-            <h3>What is an IPN?</h3>
-            <p>When a bill changes status (payment succeeds, fails, is cancelled, or a refund is decided), Trialvo Pay immediately POSTs a signed JSON payload to all merchant webhook URLs that are subscribed to that event. This is called an IPN (Instant Payment Notification) — our equivalent of what Stripe calls a "webhook event".</p>
-
-            <h3>IPN Events</h3>
+          ${section('ipn-events', 'zap', 'IPN Events', `
             <table class="docs-perm-table">
-              <thead><tr><th>Event</th><th>When It Fires</th><th>Who Can Subscribe</th></tr></thead>
+              <thead><tr><th>Event</th><th>Trigger</th><th>Subscriber</th></tr></thead>
               <tbody>
                 <tr><td><code>payment.success</code></td><td>EPS confirms payment received</td><td>Merchant webhook</td></tr>
                 <tr><td><code>payment.failed</code></td><td>EPS reports payment failure</td><td>Merchant webhook</td></tr>
@@ -3983,19 +4044,20 @@ const Pages = {
                 <tr><td><code>refund.rejected</code></td><td>Admin rejects refund request</td><td>Merchant webhook</td></tr>
               </tbody>
             </table>
+          `)}
 
-            <h3>How IPN Delivery Works</h3>
-            <ol>
-              <li>Event triggers (EPS callback or admin refund decision)</li>
-              <li>Trialvo Pay finds all active webhook endpoints for that merchant subscribed to the event</li>
-              <li>Trialvo Pay signs the JSON payload using <code>HMAC-SHA256(raw_body, webhook_secret)</code></li>
-              <li>Trialvo Pay POSTs to each endpoint with the <code>X-Trialvo-Pay-Signature</code> header</li>
-              <li>If the endpoint does not return HTTP 2xx within 10 seconds → retry queue</li>
-              <li>Retry schedule: <strong>30s → 2m → 8m → 30m → 2h</strong> (up to 5 retries)</li>
-              <li>After 5 failed retries → delivery status becomes <code>exhausted</code></li>
-            </ol>
+          ${section('ipn-delivery', 'truck', 'Delivery Mechanism', `
+            <div class="adoc-grid-2">
+              ${stepCard(1, 'Event triggers', 'EPS callback or admin refund decision fires an event')}
+              ${stepCard(2, 'Find endpoints', 'System locates all active webhooks subscribed to the event')}
+              ${stepCard(3, 'Sign payload', 'JSON is signed with <code>HMAC-SHA256(raw_body, webhook_secret)</code>')}
+              ${stepCard(4, 'POST to URL', 'Payload sent with <code>X-Trialvo-Pay-Signature</code> header')}
+              ${stepCard(5, 'Verify response', 'Endpoint must return HTTP 2xx within 10 seconds')}
+              ${stepCard(6, 'Retry on failure', 'Schedule: <strong>30s → 2m → 8m → 30m → 2h</strong> (max 5 retries)')}
+            </div>
+          `)}
 
-            <h3>IPN Payload Fields</h3>
+          ${section('ipn-payload', 'file-json', 'Payload Structure', `
             <table class="docs-perm-table">
               <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
               <tbody>
@@ -4004,71 +4066,134 @@ const Pages = {
                 <tr><td><code>amount</code></td><td>string</td><td>Transaction amount in BDT</td></tr>
                 <tr><td><code>currency</code></td><td>string</td><td>Always <code>BDT</code></td></tr>
                 <tr><td><code>status</code></td><td>string</td><td>Bill status after event</td></tr>
-                <tr><td><code>gateway_provider</code></td><td>string</td><td>bkash, nagad, etc.</td></tr>
-                <tr><td><code>eps_merchant_tx_id</code></td><td>string</td><td>EPS transaction ID</td></tr>
+                <tr><td><code>gateway_provider</code></td><td>string</td><td>bkash, nagad, card, etc.</td></tr>
+                <tr><td><code>eps_merchant_tx_id</code></td><td>string</td><td>EPS transaction reference</td></tr>
                 <tr><td><code>timestamp</code></td><td>ISO 8601</td><td>Event time in UTC</td></tr>
                 <tr><td><code>metadata</code></td><td>object / null</td><td>Custom data from bill creation</td></tr>
                 <tr><td><code>refund_amount</code></td><td>string / null</td><td>Refund amount (refund events only)</td></tr>
                 <tr><td><code>refund_reason</code></td><td>string / null</td><td>Reason (refund events only)</td></tr>
               </tbody>
             </table>
+          `)}
 
-            <h3>Admin Monitoring — IPN Endpoints Page</h3>
-            <p>Navigate to <strong>IPN Endpoints</strong> in the sidebar to see a system-wide view of all merchant webhook endpoints across all services. You can:</p>
+          ${section('ipn-monitoring', 'activity', 'Admin Monitoring', `
+            <p>Navigate to <strong>IPN Endpoints</strong> in the sidebar for a system-wide view of all merchant webhook endpoints.</p>
             <ul>
               <li>See which endpoints are <strong>active or inactive</strong></li>
               <li>See which <strong>events each endpoint subscribes to</strong></li>
               <li>See <strong>delivery statistics</strong> (last delivery, failure count)</li>
               <li>View per-delivery logs — HTTP status codes, response bodies, timestamps, and retry attempts</li>
             </ul>
-            <div class="docs-callout info">
-              <div class="docs-callout-title"><i data-lucide="info"></i> Merchants manage their own webhooks</div>
-              <p>Admins can <strong>view</strong> all IPN endpoints and delivery logs across all services, but <strong>cannot create, edit, or delete</strong> a merchant's webhook endpoints. Merchants self-manage their endpoints from the Merchant Portal (Webhooks page). The admin role is visibility and troubleshooting.</p>
-            </div>
+            ${callout('info', 'info', 'Merchants manage their own webhooks', 'Admins can <strong>view</strong> all IPN endpoints and delivery logs, but <strong>cannot create, edit, or delete</strong> merchant webhook endpoints. Merchants self-manage from the Merchant Portal.')}
+          `)}
 
-            <h3>Troubleshooting Failed IPN Deliveries</h3>
-            <ol>
-              <li>Navigate to <strong>IPN Endpoints</strong> → click the endpoint → view <strong>Delivery History</strong></li>
-              <li>Check the <strong>HTTP status code</strong> returned by the merchant's server</li>
-              <li>Check the <strong>error message</strong> — common causes: timeout (10s exceeded), TLS error, DNS failure, non-2xx response</li>
-              <li>If all 5 retries exhausted, inform the merchant to check their endpoint server</li>
-              <li>Merchants can also view their own delivery history from the Merchant Portal → Webhooks → Deliveries</li>
-            </ol>
-            <div class="docs-callout warn">
-              <div class="docs-callout-title"><i data-lucide="alert-triangle"></i> Exhausted deliveries are not re-triggered automatically</div>
-              <p>Once a delivery is marked <code>exhausted</code>, it will not be retried again. The merchant must either fix their endpoint and await the next real event, or use the <strong>Test Webhook</strong> feature in the Merchant Portal to send a test payload to verify their endpoint is working.</p>
+          ${section('ipn-troubleshoot', 'wrench', 'Troubleshooting Failed Deliveries', `
+            <div class="adoc-grid-2">
+              ${stepCard(1, 'View delivery history', 'IPN Endpoints → click endpoint → Delivery History')}
+              ${stepCard(2, 'Check HTTP status', 'Common: timeout (10s), TLS error, DNS failure, non-2xx')}
+              ${stepCard(3, 'Review error details', 'Each delivery log includes full response body and headers')}
+              ${stepCard(4, 'Inform merchant', 'After 5 retries exhausted, ask merchant to fix their endpoint')}
             </div>
+            ${callout('warn', 'alert-triangle', 'Exhausted deliveries', 'Once marked <code>exhausted</code>, deliveries are NOT re-triggered. Merchant must fix their endpoint and wait for the next event, or use the <strong>Test Webhook</strong> feature.')}
+          `)}
+        </div>
 
-            <h2><i data-lucide="book-open"></i> 10. What Admin Can vs Cannot Do</h2>
-            <p>Clear separation of responsibilities between admin and merchant:</p>
+        <!-- ═══ TAB: Security ═══ -->
+        <div class="adoc-panel" id="tab-security">
+          ${section('audit-logs', 'file-check', 'Audit Logs', `
+            <p>Every admin action is logged in <strong>Audit Logs</strong> including:</p>
+            <ul>
+              <li>Admin email and IP address</li>
+              <li>Action type (login, service edit, refund decision, password reset, etc.)</li>
+              <li>Timestamp in UTC</li>
+              <li>Affected resource IDs</li>
+            </ul>
+            <p>Logs are <strong>read-only and cannot be deleted</strong>. They serve as an immutable record of all administrative actions.</p>
+          `)}
+
+          ${section('2fa', 'smartphone', 'Two-Factor Authentication', `
+            <p>Admin accounts support 2FA via <strong>TOTP</strong> (Google Authenticator, Authy, etc.).</p>
+            <p>Enable 2FA in <strong>Profile → Enable 2FA</strong>. Once enabled, login requires both password and a 6-digit code from the authenticator app.</p>
+            ${callout('tip', 'check-circle', 'Recommended for production', 'All admins should enable 2FA before going live. This protects against credential theft and unauthorized access.')}
+          `)}
+
+          ${section('admin-roles', 'user-cog', 'Admin Roles', `
             <table class="docs-perm-table">
-              <thead>
-                <tr><th>Action</th><th>Admin</th><th>Merchant</th></tr>
-              </thead>
+              <thead><tr><th>Role</th><th>Capabilities</th><th>Management</th></tr></thead>
               <tbody>
-                <tr><td>Create/delete service</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
-                <tr><td>Create/delete merchant account</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
-                <tr><td>Set/change commission rate</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
-                <tr><td>Enable/disable service</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
-                <tr><td>Approve/reject refunds</td><td class="yes">✓ Yes</td><td class="no">No (request only)</td></tr>
+                <tr><td><code>superadmin</code></td><td>Full system access, can manage other admins</td><td>Can create/delete admin accounts</td></tr>
+                <tr><td><code>admin</code></td><td>Full operational access</td><td>Cannot manage other admin accounts</td></tr>
+              </tbody>
+            </table>
+            <p>Role management is done from <strong>Administrators</strong> in the sidebar. Only superadmins can create or delete other admin accounts.</p>
+          `)}
+
+          ${section('sig-verify', 'shield', 'Signature Verification', `
+            <p>Every IPN POST includes the <code>X-Trialvo-Pay-Signature</code> header. Merchants must verify this before trusting the payload:</p>
+            <div class="adoc-grid-2">
+              ${stepCard(1, 'Get raw body', 'Read raw request bytes — do NOT parse JSON first')}
+              ${stepCard(2, 'Compute HMAC', '<code>HMAC-SHA256(raw_body, webhook_secret)</code>')}
+              ${stepCard(3, 'Compare', 'Hex-encode digest, compare with header using timing-safe equality')}
+              ${stepCard(4, 'Respond', 'Return HTTP 2xx within 10 seconds')}
+            </div>
+            ${callout('warn', 'alert-triangle', 'Never skip verification', 'Any public URL accepting IPN without verifying signatures can be spoofed. Always verify before fulfilling orders or crediting accounts.')}
+          `)}
+        </div>
+
+        <!-- ═══ TAB: Permissions ═══ -->
+        <div class="adoc-panel" id="tab-perms">
+          ${section('perms-matrix', 'lock', 'Admin vs Merchant Permissions', `
+            <p>Clear separation of responsibilities between admin and merchant roles:</p>
+            <table class="docs-perm-table">
+              <thead><tr><th>Action</th><th>Admin</th><th>Merchant</th></tr></thead>
+              <tbody>
+                <tr><td>Create / delete service</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
+                <tr><td>Create / delete merchant account</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
+                <tr><td>Set / change commission rate</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
+                <tr><td>Enable / disable service</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
+                <tr><td>Approve / reject refunds</td><td class="yes">✓ Yes</td><td class="no">No (request only)</td></tr>
                 <tr><td>View all services' transactions</td><td class="yes">✓ Yes</td><td class="no">Own service only</td></tr>
                 <tr><td>View audit logs</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
                 <tr><td>Manage EPS configuration</td><td class="yes">✓ Yes</td><td class="no">No</td></tr>
-                <tr><td>View all IPN endpoints (oversight)</td><td class="yes">✓ Yes</td><td class="no">Own service only</td></tr>
+                <tr><td>View all IPN endpoints</td><td class="yes">✓ Yes</td><td class="no">Own service only</td></tr>
                 <tr><td>View all delivery logs</td><td class="yes">✓ Yes</td><td class="no">Own service only</td></tr>
                 <tr><td>Create / edit / delete webhooks</td><td class="no">No</td><td class="yes">✓ Yes (own service)</td></tr>
                 <tr><td>Generate API keys</td><td class="yes">✓ Yes (via service)</td><td class="yes">✓ Yes (own service)</td></tr>
                 <tr><td>Update service URLs</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes (own service)</td></tr>
-                <tr><td>View own transactions</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes (own service)</td></tr>
+                <tr><td>View transactions</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes (own service)</td></tr>
                 <tr><td>Request refunds</td><td class="yes">✓ Yes</td><td class="yes">✓ Yes (own bills)</td></tr>
               </tbody>
             </table>
+          `)}
 
-          </div>
+          ${section('api-auth', 'key', 'API Authentication Methods', `
+            <table class="docs-perm-table">
+              <thead><tr><th>API Scope</th><th>Auth Method</th><th>Header</th></tr></thead>
+              <tbody>
+                <tr><td>Service API (<code>/api/v1/*</code>)</td><td>HMAC-SHA256 signature</td><td><code>X-Signature</code>, <code>X-Api-Key</code>, <code>X-Timestamp</code>, <code>X-Nonce</code></td></tr>
+                <tr><td>Admin API (<code>/api/admin/*</code>)</td><td>Bearer token (session)</td><td><code>Authorization: Bearer {token}</code></td></tr>
+                <tr><td>Merchant API (<code>/api/merchant/*</code>)</td><td>Bearer token (session)</td><td><code>Authorization: Bearer {token}</code></td></tr>
+              </tbody>
+            </table>
+            ${callout('info', 'info', 'Service API uses HMAC', 'The Service API uses stateless HMAC authentication with request signing. This is more secure than API key-only auth as each request is signed with a timestamp and nonce to prevent replay attacks.')}
+          `)}
         </div>
+
       </div>
     `;
+
     if (window.lucide) lucide.createIcons();
+
+    // ── Tab switching logic ─────────────────────────────────────────────
+    container.querySelectorAll('.adoc-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        container.querySelectorAll('.adoc-tab').forEach(t => t.classList.remove('active'));
+        container.querySelectorAll('.adoc-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        const panel = container.querySelector(`#tab-${tab.dataset.tab}`);
+        if (panel) panel.classList.add('active');
+      });
+    });
   },
 
 };

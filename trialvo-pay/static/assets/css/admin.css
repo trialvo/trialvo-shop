@@ -3905,3 +3905,244 @@ code.code-tag { all: unset; font-family: 'JetBrains Mono', monospace; background
   height: 24px;
   color: white;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ADVANCED DOCS / KNOWLEDGE BASE UI
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Tab Navigation ──────────────────────────────────────────────── */
+.adoc-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-xl);
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.adoc-tabs::-webkit-scrollbar { display: none; }
+
+.adoc-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex: 1;
+  justify-content: center;
+}
+.adoc-tab i { width: 16px; height: 16px; flex-shrink: 0; }
+.adoc-tab:hover { color: var(--color-text-2); background: var(--color-surface-2); }
+.adoc-tab.active {
+  color: white;
+  background: var(--color-brand-gradient);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(13,148,136,0.25);
+}
+
+/* ─── Tab Panels ──────────────────────────────────────────────────── */
+.adoc-panel {
+  display: none;
+  animation: adocFadeIn 0.3s ease;
+}
+.adoc-panel.active { display: block; }
+
+@keyframes adocFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Section Cards ───────────────────────────────────────────────── */
+.adoc-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  transition: all 0.2s ease;
+}
+.adoc-section:hover {
+  border-color: var(--color-brand-light);
+  box-shadow: var(--shadow-sm);
+}
+.adoc-section:last-child { margin-bottom: 0; }
+
+.adoc-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.adoc-section-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(13,148,136,0.1);
+  color: var(--color-brand);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.adoc-section-icon i { width: 20px; height: 20px; }
+
+.adoc-section-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* ─── Section Body ────────────────────────────────────────────────── */
+.adoc-section-body p {
+  font-size: 0.875rem;
+  color: var(--color-text-2);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+.adoc-section-body p:last-child { margin-bottom: 0; }
+.adoc-section-body strong { color: var(--color-text); }
+.adoc-section-body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78em;
+  background: var(--color-surface-3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--color-brand);
+}
+.adoc-section-body h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 20px 0 8px;
+}
+.adoc-section-body ul, .adoc-section-body ol {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+.adoc-section-body li {
+  font-size: 0.875rem;
+  color: var(--color-text-2);
+  margin-bottom: 5px;
+  line-height: 1.6;
+}
+
+/* ─── Step Cards (Grid Items) ─────────────────────────────────────── */
+.adoc-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-md);
+  margin: var(--space-md) 0;
+}
+
+.adoc-step {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+.adoc-step:hover {
+  border-color: var(--color-brand-light);
+  background: var(--color-surface);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.adoc-step-num {
+  width: 32px;
+  height: 32px;
+  background: var(--color-brand-gradient);
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(13,148,136,0.2);
+}
+
+.adoc-step-body { flex: 1; min-width: 0; }
+
+.adoc-step-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.adoc-step-desc {
+  font-size: 0.8125rem;
+  color: var(--color-text-3);
+  line-height: 1.5;
+}
+.adoc-step-desc code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78em;
+  background: var(--color-surface-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--color-brand);
+}
+
+/* ─── Code Block ──────────────────────────────────────────────────── */
+.adoc-code-block {
+  background: #1e293b;
+  border-radius: var(--radius);
+  padding: var(--space-md) var(--space-lg);
+  margin: var(--space-md) 0;
+  position: relative;
+}
+.adoc-code-label {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.adoc-code-block code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875rem;
+  color: #7dd3fc;
+  background: transparent;
+  padding: 0;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .adoc-tabs {
+    gap: 2px;
+    padding: 4px;
+  }
+  .adoc-tab {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+  }
+  .adoc-tab span { display: none; }
+  .adoc-tab i { width: 18px; height: 18px; }
+  .adoc-grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .adoc-section {
+    padding: var(--space-lg);
+  }
+}
