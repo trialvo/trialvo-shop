@@ -19,12 +19,24 @@ async function handleIpn(req, res) {
     });
 
     // Verify signature
-    if (!verifyIpnSignature(rawBody, signature)) {
+    if (!(await verifyIpnSignature(rawBody, signature))) {
       console.warn('[IPN] ⚠️  Signature verification FAILED — rejecting');
       return res.status(401).json({ error: 'Invalid signature' });
     }
 
     const event = req.body?.event;
+
+    // Handle Test Ping from Trialvo Pay Admin
+    if (event === 'test.ping') {
+      console.log('[IPN] 🏓 Received test ping');
+      return res.json({
+        success: true,
+        message: 'Ping received successfully!',
+        received_event: event,
+        received_payload: req.body,
+        server_timestamp: new Date().toISOString()
+      });
+    }
     // Support both nested (data wrapper) and flat payload formats
     const data = req.body?.data || req.body;
 

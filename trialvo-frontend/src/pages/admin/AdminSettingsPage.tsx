@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { User, Lock, Loader2, Save, ShieldCheck, KeyRound, CreditCard, Activity, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,12 @@ import { api } from '@/lib/api';
 const AdminSettingsPage: React.FC = () => {
  const { toast } = useToast();
  const { adminProfile } = useAuth();
- const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'payment'>('profile');
+ const [searchParams, setSearchParams] = useSearchParams();
+ const activeTab = (searchParams.get('tab') as 'profile' | 'security' | 'payment') || 'profile';
+
+ const setActiveTab = (tab: string) => {
+  setSearchParams({ tab });
+ };
 
  const [fullName, setFullName] = useState(adminProfile?.full_name || '');
  const [nameLoading, setNameLoading] = useState(false);
@@ -21,6 +27,13 @@ const AdminSettingsPage: React.FC = () => {
  const [newPassword, setNewPassword] = useState('');
  const [confirmPassword, setConfirmPassword] = useState('');
  const [passLoading, setPassLoading] = useState(false);
+
+ // Visibility States
+ const [showCurrentPass, setShowCurrentPass] = useState(false);
+ const [showNewPass, setShowNewPass] = useState(false);
+ const [showConfirmPass, setShowConfirmPass] = useState(false);
+ const [showApiKey, setShowApiKey] = useState(false);
+ const [showIpnSecret, setShowIpnSecret] = useState(false);
 
  // Trialvo Pay Settings
  const [trialvoPay, setTrialvoPay] = useState({
@@ -212,17 +225,44 @@ const AdminSettingsPage: React.FC = () => {
       <div className="space-y-4">
        <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground font-medium">Current Password</Label>
-        <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+        <div className="relative">
+         <Input type={showCurrentPass ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={`${inputClass} pr-10`} placeholder="••••••••" />
+         <button 
+          type="button"
+          onClick={() => setShowCurrentPass(!showCurrentPass)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+         >
+          {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+         </button>
+        </div>
        </div>
 
        <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground font-medium">New Password</Label>
-        <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+        <div className="relative">
+         <Input type={showNewPass ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={`${inputClass} pr-10`} placeholder="••••••••" />
+         <button 
+          type="button"
+          onClick={() => setShowNewPass(!showNewPass)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+         >
+          {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+         </button>
+        </div>
        </div>
 
        <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground font-medium">Confirm New Password</Label>
-        <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={inputClass} placeholder="••••••••" />
+        <div className="relative">
+         <Input type={showConfirmPass ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`${inputClass} pr-10`} placeholder="••••••••" />
+         <button 
+          type="button"
+          onClick={() => setShowConfirmPass(!showConfirmPass)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+         >
+          {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+         </button>
+        </div>
        </div>
 
        <Button onClick={handleChangePassword} disabled={passLoading || !currentPassword || !newPassword || !confirmPassword} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm h-9 text-sm">
@@ -262,23 +302,41 @@ const AdminSettingsPage: React.FC = () => {
        </div>
        <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground font-medium">API Key</Label>
-        <Input 
-         type="password"
-         value={trialvoPay.apiKey} 
-         onChange={(e) => setTrialvoPay({...trialvoPay, apiKey: e.target.value})} 
-         className={inputClass}
-         placeholder="Secret API Key"
-        />
+        <div className="relative">
+         <Input 
+          type={showApiKey ? "text" : "password"}
+          value={trialvoPay.apiKey} 
+          onChange={(e) => setTrialvoPay({...trialvoPay, apiKey: e.target.value})} 
+          className={`${inputClass} pr-10`}
+          placeholder="Secret API Key"
+         />
+         <button 
+          type="button"
+          onClick={() => setShowApiKey(!showApiKey)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+         >
+          {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+         </button>
+        </div>
        </div>
        <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground font-medium">Webhook (IPN) Secret</Label>
-        <Input 
-         type="password"
-         value={trialvoPay.ipnSecret} 
-         onChange={(e) => setTrialvoPay({...trialvoPay, ipnSecret: e.target.value})} 
-         className={inputClass}
-         placeholder="Used to verify incoming payments"
-        />
+        <div className="relative">
+         <Input 
+          type={showIpnSecret ? "text" : "password"}
+          value={trialvoPay.ipnSecret} 
+          onChange={(e) => setTrialvoPay({...trialvoPay, ipnSecret: e.target.value})} 
+          className={`${inputClass} pr-10`}
+          placeholder="Used to verify incoming payments"
+         />
+         <button 
+          type="button"
+          onClick={() => setShowIpnSecret(!showIpnSecret)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+         >
+          {showIpnSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+         </button>
+        </div>
        </div>
       </div>
 
@@ -293,15 +351,42 @@ const AdminSettingsPage: React.FC = () => {
        <p className="text-[10px] text-muted-foreground">Internal Docker URL or public domain of Trialvo Pay service</p>
       </div>
 
-      {testResult && (
-       <div className={`p-3 rounded-xl border flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${testResult.success ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : 'bg-red-500/10 border-red-500/20 text-red-600'}`}>
-        {testResult.success ? <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}
-        <div>
-         <p className="text-sm font-bold">{testResult.success ? 'Connected' : 'Failed'}</p>
-         <p className="text-xs opacity-80">{testResult.message}</p>
-        </div>
-       </div>
-      )}
+            {testResult && (
+              <div className={`p-4 rounded-xl border space-y-3 animate-in fade-in slide-in-from-top-2 duration-300 ${testResult.success ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                <div className="flex items-center gap-3">
+                  {testResult.success ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <AlertCircle className="w-5 h-5 text-red-600" />}
+                  <p className={`text-sm font-bold ${testResult.success ? 'text-emerald-700' : 'text-red-700'}`}>
+                    {testResult.success ? 'Connection Successful' : 'Connection Failed'}
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-2 pl-8">
+                  <div className="flex items-center justify-between py-1 border-b border-border/30">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Response Message</span>
+                    <span className="text-xs font-medium text-foreground">{testResult.message}</span>
+                  </div>
+                  {(testResult as any).data && (
+                    <>
+                      <div className="flex items-center justify-between py-1 border-b border-border/30">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Verified Service ID</span>
+                        <span className="text-xs font-mono text-primary">{(testResult as any).data.service_id}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 border-b border-border/30">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Status</span>
+                        <Badge variant="outline" className="h-4 text-[9px] border-emerald-500/30 text-emerald-600 bg-emerald-500/5 uppercase font-bold">
+                          Authorized
+                        </Badge>
+                      </div>
+                    </>
+                  )}
+                  {!(testResult as any).data && !testResult.success && (
+                    <div className="text-xs text-red-500 italic mt-1">
+                      Check your Service ID and API Key. Ensure the Base URL is correct.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
       <div className="flex items-center gap-3 pt-2">
        <Button onClick={handleUpdateTrialvoPay} disabled={settingsLoading} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm">
