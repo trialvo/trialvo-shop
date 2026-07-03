@@ -276,10 +276,11 @@ impl EpsGateway {
             .map_err(|e| anyhow!("EPS InitializeEPS HTTP error: {}", e))?;
 
         let status = response.status();
+        let headers = response.headers().clone();
         let text = response.text().await.unwrap_or_default();
 
         if !status.is_success() {
-            tracing::error!("EPS InitializeEPS failed: HTTP {} — Headers: {:?} — Body: {}", status, response.headers(), text);
+            tracing::error!("EPS InitializeEPS failed: HTTP {} — Headers: {:?} — Body: {}", status, headers, text);
             return Err(anyhow!("EPS InitializeEPS failed: HTTP {} — {}", status, text));
         }
 
