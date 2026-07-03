@@ -130,7 +130,7 @@ impl EpsGateway {
         Self {
             client: Client::builder()
                 .timeout(std::time::Duration::from_secs(30))
-                .redirect(reqwest::redirect::Policy::default())
+                .redirect(reqwest::redirect::Policy::none())
                 .build()
                 .expect("HTTP client init failed"),
             creds,
