@@ -130,7 +130,7 @@ impl EpsGateway {
         Self {
             client: Client::builder()
                 .timeout(std::time::Duration::from_secs(30))
-                .redirect(reqwest::redirect::Policy::none())
+                .redirect(reqwest::redirect::Policy::default())
                 .build()
                 .expect("HTTP client init failed"),
             creds,
@@ -279,6 +279,7 @@ impl EpsGateway {
         let text = response.text().await.unwrap_or_default();
 
         if !status.is_success() {
+            tracing::error!("EPS InitializeEPS failed: HTTP {} — Headers: {:?} — Body: {}", status, response.headers(), text);
             return Err(anyhow!("EPS InitializeEPS failed: HTTP {} — {}", status, text));
         }
 
