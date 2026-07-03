@@ -2444,23 +2444,24 @@ const Pages = {
   },
 
   async _toggleEpsMode() {
-    const btn = document.getElementById('eps-mode-toggle');
+    var btn = document.getElementById('eps-mode-toggle');
     if (!btn) return;
-    const currentMode = btn.dataset.mode;
-    const newMode = currentMode === 'sandbox' ? 'live' : 'sandbox';
+    var currentMode = btn.dataset.mode;
+    var targetMode = currentMode === 'sandbox' ? 'live' : 'sandbox';
+    var targetModeUpper = targetMode.toUpperCase();
 
-    const title = newMode === 'live'
+    var title = targetMode === 'live'
       ? '⚠️ Switch to LIVE Mode?'
       : 'Switch to Sandbox Mode?';
-    const msg = newMode === 'live'
+    var msg = targetMode === 'live'
       ? '<div style="padding:12px 0"><strong style="color:#dc2626">WARNING: This will process REAL payments with REAL money.</strong><br><br>All transactions will go through the live EPS gateway (<code>pgapi.eps.com.bd</code>). Make sure your live EPS credentials are configured and your merchant account is active.</div>'
       : '<div style="padding:12px 0">Switching to <strong style="color:#059669">Sandbox</strong> mode. All transactions will use the EPS sandbox environment (<code>sandboxpgapi.eps.com.bd</code>).<br><br>No real payments will be processed.</div>';
-    const confirmStyle = newMode === 'live' ? 'danger' : 'success';
+    var confirmStyle = targetMode === 'live' ? 'danger' : 'success';
 
-    UI.confirm(title, msg, async () => {
+    UI.confirm(title, msg, async function() {
       try {
-        await API.updateConfig('eps', 'mode', newMode);
-        Toast.success(`EPS mode switched to ${newMode.toUpperCase()}`);
+        await API.updateConfig('eps', 'mode', targetMode);
+        Toast.success('EPS mode switched to ' + targetModeUpper);
         Pages.config(document.getElementById('page-content'));
       } catch (e) { Toast.error('Failed to switch mode: ' + e.message); }
     }, confirmStyle);
