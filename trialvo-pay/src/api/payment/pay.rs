@@ -46,6 +46,10 @@ pub async fn payment_page(
         _ => return render_error("Service not found"),
     };
 
+    if !service.is_active {
+        return render_error("This service is currently unavailable. Please contact the merchant.");
+    }
+
     // Check skip_preview setting — if enabled, init EPS server-side and redirect directly
     let skip_preview = service.meta
         .get("skip_preview")
@@ -110,14 +114,28 @@ async fn perform_eps_init(
                 t
             }
         }
-        _ => match get_fresh_token_internal(&gateway, &mut redis, &mode).await {
-            Ok(tok) => tok,
-            Err(e) => {
-                tracing::error!("EPS GetToken failed: {}", e);
-                drop(redis);
-                return Err("Payment gateway unavailable".to_string());
+        Ok(None) => {
+            tracing::warn!("EPS token not found in Redis cache (mode={}), fetching fresh token", mode);
+            match get_fresh_token_internal(&gateway, &mut redis, &mode).await {
+                Ok(tok) => tok,
+                Err(e) => {
+                    tracing::error!("EPS GetToken failed: {}", e);
+                    drop(redis);
+                    return Err("Payment gateway unavailable".to_string());
+                }
             }
-        },
+        }
+        Err(e) => {
+            tracing::warn!("Redis cache error (mode={}): {}. Fetching fresh EPS token.", mode, e);
+            match get_fresh_token_internal(&gateway, &mut redis, &mode).await {
+                Ok(tok) => tok,
+                Err(e) => {
+                    tracing::error!("EPS GetToken failed: {}", e);
+                    drop(redis);
+                    return Err("Payment gateway unavailable".to_string());
+                }
+            }
+        }
     };
     drop(redis);
 

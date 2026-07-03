@@ -68,7 +68,7 @@ pub async fn callback_handler(
                 return handle_by_bill_token(&state, bill_token, &query).await;
             }
             tracing::warn!("EPS callback missing MerchantTransactionId and ValueA");
-            return render_callback_page("fail", None, None);
+            return render_callback_page("fail", None, None, &state.config.base_url);
         }
     };
 
@@ -77,17 +77,17 @@ pub async fn callback_handler(
         Ok(Some(t)) => t,
         Ok(None) => {
             tracing::warn!("EPS callback: transaction not found for merchant_tx_id={}", merchant_tx_id);
-            return render_callback_page("fail", None, None);
+            return render_callback_page("fail", None, None, &state.config.base_url);
         }
         Err(e) => {
             tracing::error!("EPS callback DB error: {}", e);
-            return render_callback_page("fail", None, None);
+            return render_callback_page("fail", None, None, &state.config.base_url);
         }
     };
 
     let bill = match crate::db::bills::get_bill_by_id(&state.db, tx.bill_id).await {
         Ok(Some(b)) => b,
-        _ => return render_callback_page("fail", None, None),
+        _ => return render_callback_page("fail", None, None, &state.config.base_url),
     };
 
     // ── Load service (needed for fallback URLs and IPN dispatch) ──────────
@@ -95,7 +95,7 @@ pub async fn callback_handler(
         Ok(Some(s)) => s,
         _ => {
             tracing::error!("EPS callback: service not found for bill {}", bill.id);
-            return render_callback_page("fail", None, None);
+            return render_callback_page("fail", None, None, &state.config.base_url);
         }
     };
 
@@ -168,7 +168,7 @@ pub async fn callback_handler(
             .or(service.cancel_url)
             .unwrap_or_else(|| format!("{}/pay/callback?type=cancel", state.config.base_url));
 
-        return render_callback_page("cancel", Some(&redirect_url), Some(&bill.bill_token));
+        return render_callback_page("cancel", Some(&redirect_url), Some(&bill.bill_token), &state.config.base_url);
     }
 
     // ── EPS verification: ALWAYS call CheckStatus to confirm ──────────────
@@ -192,6 +192,7 @@ pub async fn callback_handler(
                 "fail",
                 bill.fail_url.as_deref().or(service.fail_url.as_deref()),
                 Some(&bill.bill_token),
+                &state.config.base_url,
             );
         }
     };
@@ -322,6 +323,7 @@ pub async fn callback_handler(
         if is_success { "success" } else { "fail" },
         Some(&redirect_url),
         Some(&bill.bill_token),
+        &state.config.base_url,
     )
 }
 
@@ -396,9 +398,9 @@ async fn handle_by_bill_token(
             "cancel"  => bill.cancel_url.or(service_urls.and_then(|s| s.cancel_url)),
             _         => bill.fail_url.or(service_urls.and_then(|s| s.fail_url)),
         };
-        render_callback_page(callback_type, redirect.as_deref(), Some(bill_token))
+        render_callback_page(callback_type, redirect.as_deref(), Some(bill_token), &state.config.base_url)
     } else {
-        render_callback_page("fail", None, None)
+        render_callback_page("fail", None, None, &state.config.base_url)
     }
 }
 
@@ -406,6 +408,7 @@ fn render_callback_page(
     callback_type: &str,
     redirect_url: Option<&str>,
     _bill_token: Option<&str>,
+    base_url: &str,
 ) -> HttpResponse {
     let (template, status) = match callback_type {
         "success" => (include_str!("../../templates/success.html"), 200u16),
@@ -413,7 +416,7 @@ fn render_callback_page(
         _         => (include_str!("../../templates/failed.html"), 200),
     };
 
-    let redirect = redirect_url.unwrap_or("http://localhost:8091/");
+    let redirect = redirect_url.unwrap_or(base_url);
     let html = template.replace("{{REDIRECT_URL}}", redirect);
 
     HttpResponse::build(actix_web::http::StatusCode::from_u16(status).unwrap())
