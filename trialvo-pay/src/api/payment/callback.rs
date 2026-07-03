@@ -173,7 +173,7 @@ pub async fn callback_handler(
 
     // ── EPS verification: ALWAYS call CheckStatus to confirm ──────────────
     // This prevents spoofed callbacks from marking bills as paid.
-    let verified_status = match verify_with_eps(&state, &merchant_tx_id, query.transaction_id.as_deref()).await {
+    let verified_status = match verify_with_eps(&state, &merchant_tx_id, query.transaction_id.as_deref(), service.is_sandbox).await {
         Ok(status) => status,
         Err(e) => {
             // EPS unreachable — log and fail safe (don't mark as paid)
@@ -331,8 +331,9 @@ async fn verify_with_eps(
     state: &web::Data<AppState>,
     merchant_tx_id: &str,
     eps_tx_id: Option<&str>,
+    is_sandbox: bool,
 ) -> anyhow::Result<String> {
-    let creds = get_eps_credentials(&state.db, &state.config.master_key).await?;
+    let creds = get_eps_credentials(&state.db, &state.config.master_key, is_sandbox).await?;
     let gateway = EpsGateway::new(creds);
     let mode = gateway.get_mode();
 

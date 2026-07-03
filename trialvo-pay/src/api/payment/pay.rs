@@ -81,7 +81,7 @@ async fn perform_eps_init(
     req: &HttpRequest,
 ) -> Result<EpsInitResult, String> {
     // Get EPS credentials
-    let creds = match get_eps_credentials(&state.db, &state.config.master_key).await {
+    let creds = match get_eps_credentials(&state.db, &state.config.master_key, service.is_sandbox).await {
         Ok(c) => c,
         Err(e) => {
             tracing::error!("EPS credentials error: {}", e);

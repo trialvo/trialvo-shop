@@ -96,9 +96,9 @@ pub struct EpsCredentials {
     pub mode: String,
 }
 
-pub async fn get_eps_credentials(pool: &PgPool, master_key: &str) -> Result<EpsCredentials> {
-    let mode = get_eps_mode(pool).await?;
-    let pfx = &mode;
+pub async fn get_eps_credentials(pool: &PgPool, master_key: &str, is_sandbox: bool) -> Result<EpsCredentials> {
+    let mode = if is_sandbox { "sandbox" } else { "live" };
+    let pfx = mode;
 
     let base_url = get_config_required(pool, "eps", &format!("{}_base_url", pfx)).await?;
     let merchant_id = get_config_required(pool, "eps", &format!("{}_merchant_id", pfx)).await?;
@@ -123,5 +123,5 @@ pub async fn get_eps_credentials(pool: &PgPool, master_key: &str) -> Result<EpsC
         crate::crypto::aes::decrypt(master_key, &enc_hash_key)?
     };
 
-    Ok(EpsCredentials { base_url, merchant_id, store_id, username, password, hash_key, mode })
+    Ok(EpsCredentials { base_url, merchant_id, store_id, username, password, hash_key, mode: mode.to_string() })
 }

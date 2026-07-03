@@ -2322,35 +2322,8 @@ const Pages = {
                 </div>
                 <div class="config-card-body">
                   ${items.map(item => {
-                    // Special toggle for EPS mode
                     if (cat === 'eps' && item.key_name === 'mode') {
-                      const isLive = (item.value || '').toLowerCase() === 'live';
-                      return `
-                      <div class="config-row" style="padding:16px 20px;background:${isLive ? 'linear-gradient(135deg,#fef2f210,#fee2e210)' : 'linear-gradient(135deg,#f0fdf410,#dcfce710)'};border:1px solid ${isLive ? '#fecaca40' : '#bbf7d040'};border-radius:12px;margin-bottom:4px">
-                        <div class="config-row-info" style="flex:1">
-                          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-                            <div style="width:36px;height:36px;border-radius:10px;background:${isLive ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'linear-gradient(135deg,#10b981,#059669)'};display:flex;align-items:center;justify-content:center">
-                              <i data-lucide="${isLive ? 'zap' : 'shield-check'}" style="width:18px;height:18px;color:white"></i>
-                            </div>
-                            <div>
-                              <div style="font-weight:700;font-size:14px;color:#0f172a">EPS Gateway Mode</div>
-                              <div style="font-size:11px;color:#64748b">Switch between sandbox (testing) and live (real payments)</div>
-                            </div>
-                          </div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:14px">
-                          <span style="font-size:12px;font-weight:${!isLive ? '700' : '500'};color:${!isLive ? '#059669' : '#94a3b8'};min-width:60px;text-align:right">Sandbox</span>
-                          <button id="eps-mode-toggle"
-                            onclick="Pages._toggleEpsMode()"
-                            style="position:relative;width:52px;height:28px;border-radius:14px;border:none;cursor:pointer;transition:all .3s ease;background:${isLive ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'linear-gradient(135deg,#10b981,#059669)'};box-shadow:0 2px 8px ${isLive ? '#ef444440' : '#10b98140'}"
-                            data-mode="${isLive ? 'live' : 'sandbox'}"
-                            title="Click to switch to ${isLive ? 'sandbox' : 'live'} mode">
-                            <span style="position:absolute;top:3px;${isLive ? 'right:3px' : 'left:3px'};width:22px;height:22px;border-radius:11px;background:white;box-shadow:0 1px 4px rgba(0,0,0,.15);transition:all .3s ease"></span>
-                          </button>
-                          <span style="font-size:12px;font-weight:${isLive ? '700' : '500'};color:${isLive ? '#dc2626' : '#94a3b8'};min-width:32px">Live</span>
-                          <span style="font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;background:${isLive ? '#fee2e2' : '#dcfce7'};color:${isLive ? '#dc2626' : '#16a34a'}">${isLive ? '● LIVE' : '● SANDBOX'}</span>
-                        </div>
-                      </div>`;
+                      return ''; // Mode is now per-service (driven by service.is_sandbox)
                     }
                     return `
                     <div class="config-row">
@@ -2443,29 +2416,7 @@ const Pages = {
     }, 'success');
   },
 
-  async _toggleEpsMode() {
-    var btn = document.getElementById('eps-mode-toggle');
-    if (!btn) return;
-    var currentMode = btn.dataset.mode;
-    // Store on Pages so the stringified onclick can access it
-    Pages._pendingEpsMode = currentMode === 'sandbox' ? 'live' : 'sandbox';
 
-    var title = Pages._pendingEpsMode === 'live'
-      ? '⚠️ Switch to LIVE Mode?'
-      : 'Switch to Sandbox Mode?';
-    var msg = Pages._pendingEpsMode === 'live'
-      ? '<div style="padding:12px 0"><strong style="color:#dc2626">WARNING: This will process REAL payments with REAL money.</strong><br><br>All transactions will go through the live EPS gateway (<code>pgapi.eps.com.bd</code>). Make sure your live EPS credentials are configured and your merchant account is active.</div>'
-      : '<div style="padding:12px 0">Switching to <strong style="color:#059669">Sandbox</strong> mode. All transactions will use the EPS sandbox environment (<code>sandboxpgapi.eps.com.bd</code>).<br><br>No real payments will be processed.</div>';
-    var confirmStyle = Pages._pendingEpsMode === 'live' ? 'danger' : 'success';
-
-    UI.confirm(title, msg, async function() {
-      try {
-        await API.updateConfig('eps', 'mode', Pages._pendingEpsMode);
-        Toast.success('EPS mode switched to ' + Pages._pendingEpsMode.toUpperCase());
-        Pages.config(document.getElementById('page-content'));
-      } catch (e) { Toast.error('Failed to switch mode: ' + e.message); }
-    }, confirmStyle);
-  },
 
 
   // ═══════════════════════════════════════════════════════════════════════════
