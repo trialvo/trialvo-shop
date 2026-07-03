@@ -177,8 +177,6 @@ impl EpsGateway {
             return Err(anyhow!("EPS GetToken returned failure: code={:?} msg={:?}", parsed.error_code, parsed.error_message));
         }
 
-        tracing::info!("EPS GetToken success: token_len={} token_prefix={}", parsed.token.len(), &parsed.token[..10.min(parsed.token.len())]);
-
         Ok((parsed.token, parsed.expire_date))
     }
 
@@ -278,11 +276,9 @@ impl EpsGateway {
             .map_err(|e| anyhow!("EPS InitializeEPS HTTP error: {}", e))?;
 
         let status = response.status();
-        let headers = response.headers().clone();
         let text = response.text().await.unwrap_or_default();
 
         if !status.is_success() {
-            tracing::error!("EPS InitializeEPS failed: HTTP {} — Headers: {:?} — Body: {}", status, headers, text);
             return Err(anyhow!("EPS InitializeEPS failed: HTTP {} — {}", status, text));
         }
 
