@@ -236,6 +236,20 @@ const Pages = {
           </div>
         </div>
       </div>
+
+      <!-- Recent IPN Activity -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-header">
+          <h3 class="card-title"><i data-lucide="webhook"></i> Recent IPN Deliveries</h3>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost sm" id="refresh-dash-ipn" title="Refresh"><i data-lucide="refresh-cw"></i></button>
+            <button class="btn btn-ghost sm" onclick="Router.navigate('/admin/ipn')">View all</button>
+          </div>
+        </div>
+        <div id="dash-ipn-feed" style="max-height:320px;overflow-y:auto">
+          <div style="padding:24px;text-align:center;color:#94a3b8;font-size:12px"><span class="spinner-sm"></span> Loading...</div>
+        </div>
+      </div>
     `;
 
     // Render Chart.js
@@ -273,6 +287,10 @@ const Pages = {
     }
 
     if (window.lucide) lucide.createIcons();
+
+    // Load Recent IPN Activity on dashboard
+    Pages._loadDashboardIpnActivity();
+    document.getElementById('refresh-dash-ipn')?.addEventListener('click', () => Pages._loadDashboardIpnActivity());
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1161,8 +1179,9 @@ const Pages = {
     } catch (e) { Toast.error(e.message); }
   },
 
+
   // ═══════════════════════════════════════════════════════════════════════════
-  // IPN ENDPOINTS
+  // IPN ENDPOINTS — Advanced Card-Based UI
   // ═══════════════════════════════════════════════════════════════════════════
 
   _IPN_EVENTS: [
@@ -1171,6 +1190,9 @@ const Pages = {
     'bill.created', 'bill.cancelled'
   ],
 
+  // Store endpoint data in memory to avoid inline JSON in HTML attributes
+  _ipnEndpointData: new Map(),
+
   async _loadRecentIpnActivity() {
     const feed = document.getElementById('recent-ipn-feed');
     if (!feed) return;
@@ -1178,21 +1200,44 @@ const Pages = {
       const res = await API.getRecentDeliveries();
       const items = res.data || [];
       if (items.length === 0) {
-        feed.innerHTML = '<div class="p-16 text-center text-muted">No recent activity</div>';
+        feed.innerHTML = '<div style="padding:24px;text-align:center;color:#94a3b8;font-size:13px"><i data-lucide="inbox" style="width:32px;height:32px;margin:0 auto 8px;display:block;opacity:.4"></i>No recent activity</div>';
+        if (window.lucide) lucide.createIcons();
         return;
       }
       feed.innerHTML = items.map(d => `
-        <div class="recent-tx-item">
-          <div class="tx-service" style="width:120px"><code class="event-tag">${d.event_type}</code></div>
-          <div class="tx-info">
-            <span class="tx-entity truncate" style="max-width:140px">${d.ipn_endpoint_id.slice(0,8)}...</span>
-            ${d.status === 'delivered' ? '<span class="badge badge-success sm">OK</span>' : '<span class="badge badge-danger sm">FAIL</span>'}
-          </div>
-          <div class="tx-amount xs text-muted">${formatDate(d.created_at)}</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:12px">
+          <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${d.status === 'delivered' ? '#10b981' : '#ef4444'}"></span>
+          <code style="background:#f1f5f9;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;color:#334155">${d.event_type}</code>
+          <span style="color:#94a3b8;font-size:10px;margin-left:auto">${formatDate(d.created_at)}</span>
+          <span style="font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;background:${d.status === 'delivered' ? '#dcfce7' : '#fee2e2'};color:${d.status === 'delivered' ? '#16a34a' : '#dc2626'}">${d.status}</span>
         </div>
       `).join('');
     } catch (e) {
-      feed.innerHTML = `<div class="p-16 text-center text-danger">Error loading activity</div>`;
+      feed.innerHTML = '<div style="padding:24px;text-align:center;color:#ef4444;font-size:13px">Error loading activity</div>';
+    }
+  },
+
+  async _loadDashboardIpnActivity() {
+    const feed = document.getElementById('dash-ipn-feed');
+    if (!feed) return;
+    try {
+      const res = await API.getRecentDeliveries();
+      const items = res.data || [];
+      if (items.length === 0) {
+        feed.innerHTML = '<div style="padding:24px;text-align:center;color:#94a3b8;font-size:13px"><i data-lucide="inbox" style="width:32px;height:32px;margin:0 auto 8px;display:block;opacity:.4"></i>No recent IPN deliveries</div>';
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+      feed.innerHTML = items.map(d => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:12px">
+          <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${d.status === 'delivered' ? '#10b981' : '#ef4444'}"></span>
+          <code style="background:#f1f5f9;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;color:#334155">${d.event_type}</code>
+          <span style="color:#94a3b8;font-size:10px;margin-left:auto">${formatDate(d.created_at)}</span>
+          <span style="font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;background:${d.status === 'delivered' ? '#dcfce7' : '#fee2e2'};color:${d.status === 'delivered' ? '#16a34a' : '#dc2626'}">${d.status}</span>
+        </div>
+      `).join('');
+    } catch (e) {
+      feed.innerHTML = '<div style="padding:24px;text-align:center;color:#ef4444;font-size:13px">Error loading IPN activity</div>';
     }
   },
 
@@ -1206,101 +1251,205 @@ const Pages = {
       const endpoints = endpointsResp.data || [];
       const services = servicesResp.data || [];
       const serviceMap = Object.fromEntries(services.map(s => [s.id, s]));
-
       Pages._renderIpnPage(container, endpoints, services, serviceMap);
     } catch (e) { container.innerHTML = Components.renderError(e.message); }
   },
 
   _renderIpnPage(container, endpoints, services, serviceMap) {
-    const rows = endpoints.map(ep => {
-      const svc = serviceMap[ep.service_id];
-      const isHealthy = ep.failure_count === 0;
-      const statusClass = ep.is_active ? (isHealthy ? 'status-success' : 'status-warning') : 'status-muted';
-      
-      return {
-        service: `
-          <div class="service-cell">
-            <div class="fw-600 color-text">${svc?.display_name || '—'}</div>
-            <code class="code-tag sm">${svc?.slug || ep.service_id.slice(0,8)}</code>
+    // Store endpoint data for later use (avoids inline JSON in HTML)
+    Pages._ipnEndpointData.clear();
+    endpoints.forEach(ep => Pages._ipnEndpointData.set(ep.id, ep));
+
+    const totalEp = endpoints.length;
+    const activeEp = endpoints.filter(e => e.is_active).length;
+    const unhealthyEp = endpoints.filter(e => e.failure_count > 0).length;
+    const healthyEp = activeEp - unhealthyEp;
+
+    const epCards = endpoints.length === 0
+      ? `<div style="padding:48px 24px;text-align:center;color:#94a3b8">
+           <i data-lucide="webhook" style="width:48px;height:48px;margin:0 auto 16px;display:block;opacity:.3"></i>
+           <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:#64748b">No IPN Endpoints</div>
+           <div style="font-size:13px">Create your first webhook endpoint to start receiving payment notifications.</div>
+         </div>`
+      : endpoints.map(ep => {
+        const svc = serviceMap[ep.service_id];
+        const isHealthy = ep.failure_count === 0;
+        const sColor = !ep.is_active ? '#94a3b8' : isHealthy ? '#10b981' : '#f59e0b';
+        const sLabel = !ep.is_active ? 'Inactive' : isHealthy ? 'Healthy' : 'Degraded';
+        const secPrev = ep.secret ? ep.secret.slice(0,8) + '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
+
+        return `
+        <div class="ipn-endpoint-card" data-ipn-id="${ep.id}" style="border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:white;transition:box-shadow .2s"
+             onmouseover="this.style.boxShadow='0 4px 24px rgba(0,0,0,.06)'" onmouseout="this.style.boxShadow='none'">
+          <!-- Header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #f1f5f9;background:#fafbfc;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:12px;min-width:0">
+              <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,${sColor}15,${sColor}08);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i data-lucide="webhook" style="width:18px;height:18px;color:${sColor}"></i>
+              </div>
+              <div style="min-width:0">
+                <div style="font-weight:700;font-size:14px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${svc?.display_name || 'Unknown Service'}</div>
+                <code style="font-size:10px;color:#64748b;background:#f1f5f9;padding:1px 6px;border-radius:4px">${svc?.slug || ep.service_id.slice(0,8)}</code>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+              <span style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:${sColor}12;color:${sColor}">
+                <span style="width:6px;height:6px;border-radius:50%;background:${sColor}"></span>
+                ${sLabel}
+              </span>
+              ${ep.failure_count > 0 ? '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:#fee2e2;color:#dc2626">' + ep.failure_count + ' fail' + (ep.failure_count > 1 ? 's' : '') + '</span>' : ''}
+            </div>
           </div>
-        `,
-        url: `<code class="code-tag sm truncate" title="${ep.url}" style="max-width:280px">${ep.url}</code>`,
-        events: `
-          <div class="events-wrap">
-            ${(ep.events||[]).map(e => `<span class="event-tag">${e}</span>`).join('')}
+
+          <!-- Body -->
+          <div style="padding:16px 20px">
+            <!-- URL -->
+            <div style="margin-bottom:14px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:6px">Webhook URL</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <code style="flex:1;font-size:12px;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#334155;min-width:0">${ep.url}</code>
+                <button class="btn btn-ghost sm ipn-action-btn" data-action="edit" data-ipn-id="${ep.id}" title="Edit endpoint" style="padding:6px;border-radius:8px;flex-shrink:0">
+                  <i data-lucide="edit-3" style="width:14px;height:14px"></i>
+                </button>
+                <button class="btn btn-ghost sm ipn-action-btn" data-action="copy-url" data-ipn-id="${ep.id}" title="Copy URL" style="padding:6px;border-radius:8px;flex-shrink:0">
+                  <i data-lucide="copy" style="width:14px;height:14px"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Secret -->
+            <div style="margin-bottom:14px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:6px">Webhook Secret</div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;min-width:0">
+                  <i data-lucide="key" style="width:14px;height:14px;color:#94a3b8;flex-shrink:0"></i>
+                  <code id="secret-${ep.id}" style="font-size:11px;color:#334155;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${secPrev}</code>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0">
+                  <button class="btn btn-ghost sm ipn-action-btn" data-action="toggle-secret" data-ipn-id="${ep.id}" title="Reveal / Hide" style="padding:6px;border-radius:8px">
+                    <i data-lucide="eye" style="width:14px;height:14px"></i>
+                  </button>
+                  <button class="btn btn-ghost sm ipn-action-btn" data-action="copy-secret" data-ipn-id="${ep.id}" title="Copy secret" style="padding:6px;border-radius:8px">
+                    <i data-lucide="copy" style="width:14px;height:14px"></i>
+                  </button>
+                  <button class="btn btn-ghost sm ipn-action-btn" data-action="regenerate-secret" data-ipn-id="${ep.id}" title="Regenerate secret" style="padding:6px;border-radius:8px;color:#f59e0b">
+                    <i data-lucide="refresh-cw" style="width:14px;height:14px"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Events -->
+            <div style="margin-bottom:14px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:6px">Subscribed Events</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px">
+                ${(ep.events||[]).map(e => {
+                  const cat = e.split('.')[0];
+                  const cc = { payment: '#3b82f6', refund: '#8b5cf6', bill: '#f59e0b' }[cat] || '#64748b';
+                  return '<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:' + cc + '10;color:' + cc + ';border:1px solid ' + cc + '20">' + e + '</span>';
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Health info -->
+            ${ep.last_success_at || ep.last_failure_at ? `
+            <div style="display:flex;gap:16px;padding:10px 14px;background:#f8fafc;border-radius:8px;margin-bottom:14px;flex-wrap:wrap">
+              ${ep.last_success_at ? '<div style="font-size:11px;color:#64748b"><span style="color:#10b981;font-weight:600">Last success:</span> ' + formatDate(ep.last_success_at) + '</div>' : ''}
+              ${ep.last_failure_at ? '<div style="font-size:11px;color:#64748b"><span style="color:#ef4444;font-weight:600">Last failure:</span> ' + formatDate(ep.last_failure_at) + '</div>' : ''}
+            </div>` : ''}
+
+            <!-- Endpoint ID -->
+            <div style="display:flex;align-items:center;gap:8px;font-size:10px;color:#94a3b8;flex-wrap:wrap">
+              <span>ID:</span>
+              <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:9px">${ep.id}</code>
+              <span style="margin-left:auto">Created ${formatDate(ep.created_at)}</span>
+            </div>
           </div>
-        `,
-        status: `
-          <div class="status-cell">
-            ${statusBadge(ep.is_active ? 'active' : 'inactive')}
-            ${ep.is_active && ep.failure_count > 0 ? `<span class="health-pulse pulse-warning" title="Endpoint has failures"></span>` : ''}
-          </div>
-        `,
-        health: `
-          <div class="health-cell">
-            ${ep.failure_count > 0 
-              ? `<span class="text-danger fw-600"><i data-lucide="alert-circle" class="icon-xs"></i> ${ep.failure_count}</span>` 
-              : `<span class="text-success"><i data-lucide="check-circle" class="icon-xs"></i> Healthy</span>`}
-            <div class="text-muted xs">${ep.last_failure_at ? 'Last fail: ' + formatDate(ep.last_failure_at) : ''}</div>
-          </div>
-        `,
-        actions: `
-          <div class="action-btns">
-            <button class="btn btn-ghost sm" title="Edit" onclick="Pages._editIpnModal('${ep.id}','${ep.url.replace(/'/g,"\\'")}',${JSON.stringify(ep.events)},${ep.is_active})">
-              <i data-lucide="edit-3"></i>
+
+          <!-- Footer Actions -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid #f1f5f9;background:#fafbfc;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="ipn-action-btn" data-action="edit" data-ipn-id="${ep.id}"
+                style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:white;cursor:pointer;display:flex;align-items:center;gap:4px;color:#334155;transition:all .15s"
+                onmouseover="this.style.borderColor='#0d9488';this.style.color='#0d9488'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#334155'">
+                <i data-lucide="settings" style="width:12px;height:12px"></i> Configure
+              </button>
+              <button class="ipn-action-btn" data-action="test" data-ipn-id="${ep.id}"
+                style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:white;cursor:pointer;display:flex;align-items:center;gap:4px;color:#334155;transition:all .15s"
+                onmouseover="this.style.borderColor='#eab308';this.style.color='#eab308'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#334155'">
+                <i data-lucide="zap" style="width:12px;height:12px"></i> Test Ping
+              </button>
+              <button class="ipn-action-btn" data-action="deliveries" data-ipn-id="${ep.id}"
+                style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:white;cursor:pointer;display:flex;align-items:center;gap:4px;color:#334155;transition:all .15s"
+                onmouseover="this.style.borderColor='#3b82f6';this.style.color='#3b82f6'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#334155'">
+                <i data-lucide="bar-chart-2" style="width:12px;height:12px"></i> Deliveries
+              </button>
+            </div>
+            <button class="ipn-action-btn" data-action="delete" data-ipn-id="${ep.id}"
+              style="font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid #fee2e2;background:white;cursor:pointer;display:flex;align-items:center;gap:4px;color:#ef4444;transition:all .15s"
+              onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='white'">
+              <i data-lucide="trash-2" style="width:12px;height:12px"></i> Delete
             </button>
-            <button class="btn btn-ghost sm" title="Test ping" onclick="Pages._testIpnEndpoint('${ep.id}')">
-              <i data-lucide="zap"></i>
-            </button>
-            <button class="btn btn-ghost sm" title="Delivery logs" onclick="Pages._viewIpnDeliveries('${ep.id}','${ep.url.replace(/'/g,"\\'")}')">
-              <i data-lucide="bar-chart-2"></i>
-            </button>
-            <button class="btn btn-ghost sm danger" title="Delete" onclick="Pages._deleteIpnEndpoint('${ep.id}')">
-              <i data-lucide="trash-2"></i>
-            </button>
           </div>
-        `,
-      };
-    });
+        </div>`;
+      }).join('');
 
     container.innerHTML = `
-      ${Components.renderPageHeader('IPN Endpoints', 'Webhook endpoints across all services — admin has full control',
-        `<button class="btn btn-primary" id="add-ipn-btn"><i data-lucide="plus"></i> Add Endpoint</button>`)}
-      
-      <div class="dashboard-grid">
-        <div class="card overflow-hidden">
-          <div class="card-header">
-            <h3 class="card-title"><i data-lucide="server"></i> Configured Endpoints</h3>
-          </div>
-          ${Components.renderTable(
-            [
-              { label: 'Service', key: 'service' },
-              { label: 'URL', key: 'url' },
-              { label: 'Status', key: 'status' },
-              { label: 'Health', key: 'health' },
-              { label: 'Actions', key: 'actions' },
-            ],
-            rows,
-            'No IPN endpoints configured across any service.'
-          )}
-        </div>
+      ${Components.renderPageHeader('IPN Endpoints', 'Webhook notification endpoints \u2014 manage URLs, secrets, events & delivery health',
+        '<button class="btn btn-primary" id="add-ipn-btn"><i data-lucide="plus"></i> Add Endpoint</button>')}
 
-        <div class="card overflow-hidden">
-          <div class="card-header">
-            <h3 class="card-title"><i data-lucide="activity"></i> Recent Activity</h3>
-            <button class="btn btn-ghost sm" id="refresh-ipn-recent"><i data-lucide="refresh-cw"></i></button>
-          </div>
-          <div id="recent-ipn-feed" class="recent-tx-list">
-            <div class="p-16 text-center text-muted"><span class="spinner-sm"></span> Loading activity...</div>
-          </div>
-        </div>
+      <!-- Stats -->
+      <div class="ipn-stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px">
+        ${Components.renderStatCard('Total Endpoints', totalEp, 'server', 'primary')}
+        ${Components.renderStatCard('Active', activeEp, 'check-circle', 'emerald')}
+        ${Components.renderStatCard('Healthy', healthyEp, 'heart-pulse', 'emerald')}
+        ${Components.renderStatCard('Unhealthy', unhealthyEp, 'alert-triangle', unhealthyEp > 0 ? 'danger' : 'emerald')}
       </div>
+
+      <!-- Endpoint Cards (full width) -->
+      <div id="ipn-cards-container" style="display:flex;flex-direction:column;gap:16px">${epCards}</div>
     `;
 
-    Pages._loadRecentIpnActivity();
-    document.getElementById('refresh-ipn-recent')?.addEventListener('click', () => Pages._loadRecentIpnActivity());
+    // Attach event delegation for all IPN action buttons
+    const cardsContainer = document.getElementById('ipn-cards-container');
+    if (cardsContainer) {
+      cardsContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.ipn-action-btn');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const id = btn.dataset.ipnId;
+        const ep = Pages._ipnEndpointData.get(id);
+        if (!ep) return;
 
-    // Store services for modal use
+        switch (action) {
+          case 'edit':
+            Pages._editIpnModal(id, ep.url, ep.events, ep.is_active);
+            break;
+          case 'copy-url':
+            navigator.clipboard.writeText(ep.url).then(() => Toast.success('URL copied!'));
+            break;
+          case 'toggle-secret':
+            Pages._toggleIpnSecret(id, ep.secret);
+            break;
+          case 'copy-secret':
+            navigator.clipboard.writeText(ep.secret).then(() => Toast.success('Secret copied!'));
+            break;
+          case 'regenerate-secret':
+            Pages._regenerateIpnSecret(id);
+            break;
+          case 'test':
+            Pages._testIpnEndpoint(id);
+            break;
+          case 'deliveries':
+            Pages._viewIpnDeliveries(id, ep.url);
+            break;
+          case 'delete':
+            Pages._deleteIpnEndpoint(id);
+            break;
+        }
+      });
+    }
+
     container.__ipnServices = services;
     document.getElementById('add-ipn-btn')?.addEventListener('click', () => Pages._addIpnModal(services));
     if (window.lucide) lucide.createIcons();
@@ -1312,25 +1461,25 @@ const Pages = {
         <div class="form-group">
           <label class="form-label">Service</label>
           <select id="ipn-svc" class="form-input">
-            ${services.map(s => `<option value="${s.id}">${s.display_name} (${s.slug})</option>`).join('')}
+            ${services.map(s => '<option value="' + s.id + '">' + s.display_name + ' (' + s.slug + ')</option>').join('')}
           </select>
         </div>
-        ${Components.renderInput('ipn-url', 'Webhook URL', 'url', 'https://yourapp.com/webhook', '', true)}
+        ${Components.renderInput('ipn-url', 'Webhook URL', 'url', 'https://yourapp.com/api/webhook', '', true)}
         <div class="form-group">
-          <label class="form-label">Events (select all that apply)</label>
-          <div class="checkbox-group">
-            ${Pages._IPN_EVENTS.map(ev => `
-              <label class="checkbox-label">
-                <input type="checkbox" name="ipn-events" value="${ev}" checked> ${ev}
-              </label>
-            `).join('')}
+          <label class="form-label">Events</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            ${Pages._IPN_EVENTS.map(ev => {
+              const cat = ev.split('.')[0];
+              const cc = { payment: '#3b82f6', refund: '#8b5cf6', bill: '#f59e0b' }[cat] || '#64748b';
+              return '<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;transition:all .15s;font-size:12px;font-weight:500"><input type="checkbox" name="ipn-events" value="' + ev + '" checked style="accent-color:' + cc + '"><span style="color:' + cc + ';font-weight:600">' + ev + '</span></label>';
+            }).join('')}
           </div>
         </div>
         <div id="add-ipn-error" class="form-error hidden"></div>
       </form>
     `, [
-      `<button class="btn btn-ghost" onclick="Modal.close()">Cancel</button>`,
-      `<button class="btn btn-primary" onclick="Pages._submitAddIpn()"><i data-lucide="plus"></i> Create</button>`
+      '<button class="btn btn-ghost" onclick="Modal.close()">Cancel</button>',
+      '<button class="btn btn-primary" onclick="Pages._submitAddIpn()"><i data-lucide="plus"></i> Create Endpoint</button>'
     ]);
   },
 
@@ -1346,29 +1495,36 @@ const Pages = {
         events,
       });
       Modal.close();
-      // Show the auto-generated secret ONCE
-      Modal.show('⚠️ Save Your Webhook Secret', `
-        <div class="alert-warning p-16 rounded-8 mb-16">
-          <strong>This secret will NOT be shown again.</strong> Copy it now and store it securely.
-          Your server must use this to verify the <code>X-Trialvo-Pay-Signature</code> header.
-        </div>
-        <div class="key-reveal">
-          <div class="key-display">
-            <code id="ipn-secret-display">${res.secret}</code>
-            <button class="btn btn-ghost sm" onclick="navigator.clipboard.writeText('${res.secret}').then(()=>Toast.success('Copied!'))">
-              <i data-lucide="copy"></i> Copy
-            </button>
+      Modal.show('\uD83D\uDD11 Webhook Secret Created', `
+        <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <i data-lucide="alert-triangle" style="width:16px;height:16px;color:#d97706"></i>
+            <strong style="color:#92400e;font-size:13px">Save this secret now \u2014 it can be viewed later from the dashboard.</strong>
           </div>
+          <div style="font-size:12px;color:#78350f">Use this to verify the <code style="background:#fde68a;padding:1px 4px;border-radius:3px">X-Trialvo-Pay-Signature</code> header on your server.</div>
         </div>
-        <div class="detail-grid mt-16">
-          ${Components.renderDetailRow('Endpoint ID', `<code>${res.id}</code>`)}
-          ${Components.renderDetailRow('URL', `<code>${res.url}</code>`)}
-          ${Components.renderDetailRow('Events', res.events?.join(', '))}
+        <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;padding:14px 16px;border-radius:10px;border:1px solid #e2e8f0">
+          <i data-lucide="key" style="width:16px;height:16px;color:#0d9488;flex-shrink:0"></i>
+          <code style="font-size:13px;word-break:break-all;flex:1;font-weight:600;color:#0f172a">${res.secret}</code>
+          <button class="btn btn-ghost sm" id="copy-new-secret-btn">
+            <i data-lucide="copy"></i> Copy
+          </button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;font-size:12px">
+          <div style="padding:10px 14px;background:#f8fafc;border-radius:8px"><span style="color:#94a3b8">Endpoint ID</span><br><code style="font-size:10px">${res.id}</code></div>
+          <div style="padding:10px 14px;background:#f8fafc;border-radius:8px"><span style="color:#94a3b8">URL</span><br><code style="font-size:10px;word-break:break-all">${res.url}</code></div>
         </div>
       `, [
-        `<button class="btn btn-primary" onclick="Modal.close(); Pages.ipn(document.getElementById('page-content'))">Done — I saved my secret</button>`
+        '<button class="btn btn-primary" id="done-secret-btn">Done \u2014 I saved my secret</button>'
       ]);
       if (window.lucide) lucide.createIcons();
+      document.getElementById('copy-new-secret-btn')?.addEventListener('click', () => {
+        navigator.clipboard.writeText(res.secret).then(() => Toast.success('Copied!'));
+      });
+      document.getElementById('done-secret-btn')?.addEventListener('click', () => {
+        Modal.close();
+        Pages.ipn(document.getElementById('page-content'));
+      });
     } catch (e) {
       errEl.textContent = e.message;
       errEl.classList.remove('hidden');
@@ -1376,36 +1532,44 @@ const Pages = {
   },
 
   _editIpnModal(id, url, events, isActive) {
-    Modal.show('Edit IPN Endpoint', `
+    if (typeof events === 'string') { try { events = JSON.parse(events); } catch(_) { events = []; } }
+    Modal.show('Configure Endpoint', `
       <form id="edit-ipn-form">
-        ${Components.renderInput('edit-ipn-url', 'Webhook URL', 'url', '', url, true)}
-        <div class="form-group">
-          <label class="form-label">Events</label>
-          <div class="checkbox-group">
-            ${Pages._IPN_EVENTS.map(ev => `
-              <label class="checkbox-label">
-                <input type="checkbox" name="edit-ipn-events" value="${ev}" ${events.includes(ev) ? 'checked' : ''}> ${ev}
-              </label>
-            `).join('')}
+        <div style="margin-bottom:16px">
+          <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:6px;display:block">Webhook URL</label>
+          <input id="edit-ipn-url" type="url" value="${url}" required
+            style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;box-sizing:border-box"
+            onfocus="this.style.borderColor='#0d9488'" onblur="this.style.borderColor='#e2e8f0'" />
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:6px;display:block">Subscribed Events</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            ${Pages._IPN_EVENTS.map(ev => {
+              const cat = ev.split('.')[0];
+              const cc = { payment: '#3b82f6', refund: '#8b5cf6', bill: '#f59e0b' }[cat] || '#64748b';
+              const chk = events.includes(ev);
+              return '<label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid ' + (chk ? cc + '40' : '#e2e8f0') + ';border-radius:8px;cursor:pointer;transition:all .15s;font-size:12px;background:' + (chk ? cc + '08' : 'transparent') + '"><input type="checkbox" name="edit-ipn-events" value="' + ev + '" ' + (chk ? 'checked' : '') + ' style="accent-color:' + cc + '"><span style="color:' + cc + ';font-weight:600">' + ev + '</span></label>';
+            }).join('')}
           </div>
         </div>
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="edit-ipn-active" ${isActive ? 'checked' : ''}> Active (uncheck to disable deliveries)
+        <div style="margin-bottom:16px">
+          <label style="display:flex;align-items:center;gap:10px;padding:12px 16px;border:1px solid ${isActive ? '#10b98140' : '#e2e8f0'};border-radius:10px;cursor:pointer;background:${isActive ? '#10b98108' : '#f8fafc'};transition:all .15s">
+            <input type="checkbox" id="edit-ipn-active" ${isActive ? 'checked' : ''} style="accent-color:#10b981;width:16px;height:16px">
+            <div>
+              <div style="font-weight:600;font-size:13px;color:#0f172a">Active</div>
+              <div style="font-size:11px;color:#64748b">Uncheck to pause webhook deliveries</div>
+            </div>
           </label>
         </div>
         <div id="edit-ipn-error" class="form-error hidden"></div>
       </form>
     `, [
-      `<div style="display:flex;justify-content:space-between;width:100%;gap:12px">
-        <button class="btn btn-ghost danger" onclick="Pages._rotateIpnSecret('${id}')"><i data-lucide="refresh-cw"></i> Rotate Secret</button>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" onclick="Modal.close()">Cancel</button>
-          <button class="btn btn-primary" onclick="Pages._submitEditIpn('${id}')"><i data-lucide="save"></i> Save Changes</button>
-        </div>
-      </div>`
+      '<div style="display:flex;justify-content:space-between;width:100%;gap:12px;flex-wrap:wrap"><button class="btn btn-ghost danger" id="rotate-secret-btn"><i data-lucide="refresh-cw"></i> Rotate Secret</button><div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="Modal.close()">Cancel</button><button class="btn btn-primary" id="save-edit-ipn-btn"><i data-lucide="save"></i> Save Changes</button></div></div>'
     ]);
     if (window.lucide) lucide.createIcons();
+    // Attach event listeners via JS instead of inline
+    document.getElementById('save-edit-ipn-btn')?.addEventListener('click', () => Pages._submitEditIpn(id));
+    document.getElementById('rotate-secret-btn')?.addEventListener('click', () => Pages._rotateIpnSecret(id));
   },
 
   async _submitEditIpn(id) {
@@ -1420,7 +1584,7 @@ const Pages = {
         is_active: document.getElementById('edit-ipn-active').checked,
       });
       Modal.close();
-      Toast.success('Endpoint updated');
+      Toast.success('Endpoint updated successfully');
       Pages.ipn(document.getElementById('page-content'));
     } catch (e) {
       errEl.textContent = e.message;
@@ -1429,40 +1593,85 @@ const Pages = {
   },
 
   async _testIpnEndpoint(id) {
-    Toast.info('Sending test ping…');
+    Toast.info('Sending test ping\u2026');
     try {
       const res = await API.testIpnEndpoint(id);
       if (res.success) {
-        Toast.success(`Test ping delivered! HTTP ${res.http_status}`);
+        Toast.success('Test ping delivered! HTTP ' + res.http_status);
       } else {
-        Toast.error(`Test failed: ${res.error || `HTTP ${res.http_status}`}`);
+        Toast.error('Test failed: ' + (res.error || 'HTTP ' + res.http_status));
       }
       Pages.ipn(document.getElementById('page-content'));
-    } catch (e) {
-      Toast.error(e.message);
-    }
+    } catch (e) { Toast.error(e.message); }
   },
 
   async _rotateIpnSecret(id) {
     if (!confirm('Rotate webhook secret? Old secret will stop working immediately.')) return;
     try {
       const res = await API.rotateIpnSecret(id);
-      Modal.show('⚠️ New Webhook Secret', `
-        <div class="alert-warning p-16 rounded-8 mb-16">
-          <strong>Save this now!</strong> It will never be shown again.
-        </div>
-        <div class="key-reveal">
-          <div class="key-display">
-            <code>${res.new_secret}</code>
-            <button class="btn btn-ghost sm" onclick="navigator.clipboard.writeText('${res.new_secret}').then(()=>Toast.success('Copied!'))">
-              <i data-lucide="copy"></i>
-            </button>
+      Modal.show('\uD83D\uDD11 New Webhook Secret', `
+        <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <i data-lucide="alert-triangle" style="width:16px;height:16px;color:#d97706"></i>
+            <strong style="color:#92400e;font-size:13px">Save this now! The old secret has been invalidated.</strong>
           </div>
         </div>
-      `, [`<button class="btn btn-primary" onclick="Modal.close();Pages.ipn(document.getElementById('page-content'))">Done</button>`]);
-    } catch (e) {
-      Toast.error(e.message);
+        <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;padding:14px 16px;border-radius:10px;border:1px solid #e2e8f0">
+          <i data-lucide="key" style="width:16px;height:16px;color:#0d9488;flex-shrink:0"></i>
+          <code style="font-size:13px;word-break:break-all;flex:1;font-weight:600;color:#0f172a">${res.new_secret}</code>
+          <button class="btn btn-ghost sm" id="copy-rotated-secret-btn">
+            <i data-lucide="copy"></i>
+          </button>
+        </div>
+      `, ['<button class="btn btn-primary" id="done-rotated-secret-btn">Done \u2014 I saved my secret</button>']);
+      if (window.lucide) lucide.createIcons();
+      document.getElementById('copy-rotated-secret-btn')?.addEventListener('click', () => {
+        navigator.clipboard.writeText(res.new_secret).then(() => Toast.success('Copied!'));
+      });
+      document.getElementById('done-rotated-secret-btn')?.addEventListener('click', () => {
+        Modal.close();
+        Pages.ipn(document.getElementById('page-content'));
+      });
+    } catch (e) { Toast.error(e.message); }
+  },
+
+  _toggleIpnSecret(id, secret) {
+    const el = document.getElementById('secret-' + id);
+    if (!el) return;
+    if (el.dataset.revealed === 'true') {
+      el.textContent = secret.slice(0,8) + '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
+      el.dataset.revealed = 'false';
+    } else {
+      el.textContent = secret;
+      el.dataset.revealed = 'true';
     }
+  },
+
+  async _regenerateIpnSecret(id) {
+    if (!confirm('Regenerate webhook secret? The old secret will stop working immediately.')) return;
+    try {
+      const res = await API.rotateIpnSecret(id);
+      Modal.show('\uD83D\uDD11 New Webhook Secret', `
+        <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:16px">
+          <strong style="color:#92400e;font-size:13px">Update your application with this new secret.</strong>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:#f1f5f9;padding:14px 16px;border-radius:10px;border:1px solid #e2e8f0">
+          <i data-lucide="key" style="width:16px;height:16px;color:#0d9488;flex-shrink:0"></i>
+          <code style="font-size:13px;word-break:break-all;flex:1;font-weight:600">${res.new_secret}</code>
+          <button class="btn btn-ghost sm" id="copy-regen-secret-btn">
+            <i data-lucide="copy"></i>
+          </button>
+        </div>
+      `, ['<button class="btn btn-primary" id="done-regen-secret-btn">Done</button>']);
+      if (window.lucide) lucide.createIcons();
+      document.getElementById('copy-regen-secret-btn')?.addEventListener('click', () => {
+        navigator.clipboard.writeText(res.new_secret).then(() => Toast.success('Copied!'));
+      });
+      document.getElementById('done-regen-secret-btn')?.addEventListener('click', () => {
+        Modal.close();
+        Pages.ipn(document.getElementById('page-content'));
+      });
+    } catch (e) { Toast.error(e.message); }
   },
 
   async _deleteIpnEndpoint(id) {
@@ -1471,9 +1680,7 @@ const Pages = {
       await API.deleteIpnEndpoint(id);
       Toast.success('Endpoint deleted');
       Pages.ipn(document.getElementById('page-content'));
-    } catch (e) {
-      Toast.error(e.message);
-    }
+    } catch (e) { Toast.error(e.message); }
   },
 
   async _viewIpnDeliveries(endpointId, url) {
@@ -1481,53 +1688,54 @@ const Pages = {
       const res = await API.getIpnDeliveries(endpointId);
       const deliveries = res.data || [];
 
-      Modal.show(`Delivery Logs — ${url.length > 40 ? url.slice(0,40)+'…' : url}`, `
-        <div style="max-height:420px;overflow-y:auto">
-          ${deliveries.length === 0
-            ? '<p class="p-16 text-muted">No deliveries recorded yet.</p>'
-            : Components.renderTable(
-              [
-                { label: 'Event', key: 'event' },
-                { label: 'Status', key: 'status' },
-                { label: 'Attempts', key: 'attempts' },
-                { label: 'Time', key: 'time' },
-                { label: 'Retry', key: 'actions' },
-              ],
-              deliveries.map(d => ({
-                event: `<code class="code-tag sm">${d.event_type}</code>`,
-                status: d.status === 'delivered'
-                  ? '<span class="badge badge-success">delivered</span>'
-                  : d.status === 'exhausted'
-                  ? '<span class="badge badge-danger">exhausted</span>'
-                  : '<span class="badge badge-warning">' + d.status + '</span>',
-                http: d.http_status ? `<code>${d.http_status}</code>` : '—',
-                attempts: `${d.attempt_count}/${d.max_attempts}`,
-                time: formatDate(d.created_at),
-                actions: d.status !== 'delivered' 
-                  ? `<button class="btn btn-ghost sm" onclick="Pages._retryIpnDelivery('${d.id}', '${endpointId}', '${url.replace(/'/g,"\\'")}')"><i data-lucide="refresh-cw"></i></button>`
-                  : '—',
-              })),
-              'No deliveries'
-            )
-          }
+      const dCards = deliveries.length === 0
+        ? '<div style="padding:32px;text-align:center;color:#94a3b8;font-size:13px"><i data-lucide="inbox" style="width:32px;height:32px;display:block;margin:0 auto 8px;opacity:.3"></i>No deliveries recorded yet.</div>'
+        : deliveries.map(d => {
+          const isOk = d.status === 'delivered';
+          const sc = isOk ? '#10b981' : d.status === 'exhausted' ? '#ef4444' : '#f59e0b';
+          return `
+          <div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:8px;height:8px;border-radius:50%;background:${sc}"></span>
+                <code style="font-size:11px;font-weight:600;background:#f1f5f9;padding:2px 8px;border-radius:5px">${d.event_type}</code>
+                <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:${sc}15;color:${sc}">${d.status}</span>
+              </div>
+              <span style="font-size:10px;color:#94a3b8">${formatDate(d.created_at)}</span>
+            </div>
+            <div style="display:flex;gap:12px;font-size:11px;color:#64748b;flex-wrap:wrap">
+              <span>Attempts: <strong>${d.attempt_count}/${d.max_attempts}</strong></span>
+              ${d.http_status ? '<span>HTTP: <strong>' + d.http_status + '</strong></span>' : ''}
+              ${d.error_message ? '<span style="color:#ef4444">Error: ' + d.error_message.slice(0,60) + '</span>' : ''}
+            </div>
+            ${!isOk ? '<div style="margin-top:8px"><button class="btn btn-ghost sm ipn-retry-btn" data-delivery-id="' + d.id + '" data-ep-id="' + endpointId + '" style="font-size:10px;padding:4px 10px;border-radius:6px;border:1px solid #e2e8f0"><i data-lucide="refresh-cw" style="width:10px;height:10px"></i> Retry</button></div>' : ''}
+          </div>`;
+        }).join('');
+
+      Modal.show('Delivery Logs', `
+        <div style="margin-bottom:12px;padding:10px 14px;background:#f8fafc;border-radius:8px;font-size:11px;color:#64748b">
+          <strong style="color:#0f172a">Endpoint:</strong> <code style="font-size:10px;word-break:break-all">${url}</code>
+          <span style="margin-left:12px"><strong>${deliveries.length}</strong> deliveries</span>
         </div>
-      `, [`<button class="btn btn-ghost" onclick="Modal.close()">Close</button>`]);
+        <div id="delivery-list" style="max-height:460px;overflow-y:auto">${dCards}</div>
+      `, ['<button class="btn btn-ghost" onclick="Modal.close()">Close</button>']);
       if (window.lucide) lucide.createIcons();
-    } catch (e) {
-      Toast.error(e.message);
-    }
+      // Attach retry event listeners
+      document.getElementById('delivery-list')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.ipn-retry-btn');
+        if (!btn) return;
+        Pages._retryIpnDelivery(btn.dataset.deliveryId, btn.dataset.epId, url);
+      });
+    } catch (e) { Toast.error(e.message); }
   },
 
   async _retryIpnDelivery(deliveryId, endpointId, url) {
     try {
-      Toast.info('Retrying delivery…');
+      Toast.info('Retrying delivery\u2026');
       await API.retryIpnDelivery(deliveryId);
       Toast.success('Retry attempt initiated');
-      // Refresh logs modal
       Pages._viewIpnDeliveries(endpointId, url);
-    } catch (e) {
-      Toast.error(e.message);
-    }
+    } catch (e) { Toast.error(e.message); }
   },
 
   async audit(container) {

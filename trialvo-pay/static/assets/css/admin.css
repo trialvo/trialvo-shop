@@ -1159,6 +1159,11 @@ code.code-tag { all: unset; font-family: 'JetBrains Mono', monospace; background
   .recent-tx-item { flex-direction: column; gap: 6px; }
   .tx-service { width: auto; }
   .tx-info { flex-direction: column; gap: 4px; }
+
+  /* ── IPN Page ── */
+  .ipn-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .ipn-main-layout { grid-template-columns: 1fr !important; }
+  .ipn-endpoint-card .ipn-action-btn { min-height: 38px; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -1211,6 +1216,9 @@ code.code-tag { all: unset; font-family: 'JetBrains Mono', monospace; background
   .modal-backdrop { padding: 8px; }
   .modal { max-width: 100%; border-radius: var(--radius); }
   .ui-modal { width: 100%; max-width: 100%; border-radius: var(--radius); }
+
+  /* ── IPN Page ── */
+  .ipn-stats-grid { grid-template-columns: 1fr !important; }
 }
 
 /* ─── Safe Area Insets (notched phones) ──────────────────────────────────── */

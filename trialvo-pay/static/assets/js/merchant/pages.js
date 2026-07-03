@@ -169,6 +169,12 @@ async webhooks() {
             <div class="webhook-url">${ep.url}</div>
             <div>${ep.is_active ? MUI.badge('active') : MUI.badge('inactive')}</div>
         </div>
+        <div style="display:flex;align-items:center;gap:8px;margin:8px 0;padding:8px 12px;background:var(--bg-secondary,#f8fafc);border-radius:8px">
+            <i data-lucide="key" style="width:14px;height:14px;color:var(--text-secondary);flex-shrink:0"></i>
+            <code id="msecret-${ep.id}" style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis">••••••••••••••••</code>
+            <button class="btn btn-sm btn-secondary" style="padding:4px 8px;font-size:10px" onclick="MerchantPages.toggleSecret('${ep.id}','${ep.secret}')"><i data-lucide="eye" style="width:12px;height:12px"></i></button>
+            <button class="btn btn-sm btn-secondary" style="padding:4px 8px;font-size:10px" onclick="MUI.copyToClipboard('${ep.secret}')"><i data-lucide="copy" style="width:12px;height:12px"></i></button>
+        </div>
         <div class="webhook-events">${(ep.events || []).map(e => `<span class="webhook-event">${e}</span>`).join('')}</div>
         <div class="webhook-actions">
             <button class="btn btn-sm btn-secondary" onclick="MerchantPages.testWebhook('${ep.id}')"><i data-lucide="zap" style="width:12px;height:12px"></i> Test</button>
@@ -230,6 +236,18 @@ async testWebhook(id) {
 async deleteWebhook(id) {
     if (!confirm('Delete this webhook endpoint?')) return;
     try { await MerchantAPI.deleteWebhook(id); MUI.toast('Webhook deleted', 'success'); MerchantApp.navigate('#/webhooks'); } catch(e) { MUI.toast(e.message, 'error'); }
+},
+
+toggleSecret(id, secret) {
+    const el = document.getElementById(`msecret-${id}`);
+    if (!el) return;
+    if (el.dataset.revealed === 'true') {
+        el.textContent = '••••••••••••••••';
+        el.dataset.revealed = 'false';
+    } else {
+        el.textContent = secret;
+        el.dataset.revealed = 'true';
+    }
 },
 
 // ─── TRANSACTIONS ───────────────────────────────────────────────────────────
