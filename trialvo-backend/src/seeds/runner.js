@@ -7,14 +7,16 @@ async function runSeeds() {
     const seeds = [
       require('./adminSeed'),
       require('./productSeed'),
+      require('./categorySeed'),
+      require('./lifestyleProductSeed'),
     ];
 
     for (const seed of seeds) {
       const result = await client.query(`SELECT COUNT(*) as count FROM ${seed.table}`);
       const count = parseInt(result.rows[0].count, 10);
 
-      if (count === 0) {
-        console.log(`  🌱 Seeding: ${seed.table}`);
+      if (seed.alwaysRun || count === 0) {
+        console.log(`  🌱 Seeding: ${seed.table}${seed.alwaysRun ? ' (upsert)' : ''}`);
         await seed.run(client);
         console.log(`  ✅ Seeded: ${seed.table}`);
       } else {

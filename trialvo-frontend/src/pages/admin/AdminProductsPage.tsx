@@ -9,11 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel,
-  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
-  AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { QueryError } from '@/components/admin/QueryError';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,6 +22,7 @@ import {
   useDuplicateProduct, useBulkToggleProducts,
 } from '@/hooks/admin/useAdminProducts';
 import { categories } from '@/data/products';
+import ImageUploadButton from '@/components/admin/ImageUploadButton';
 
 // ─── Types ─────────────────────────────────────────────────────
 interface DemoItem {
@@ -60,6 +58,7 @@ interface ProductFormData {
   };
   is_featured: boolean;
   is_active: boolean;
+  is_trialable: boolean;
 }
 
 const emptyForm: ProductFormData = {
@@ -83,6 +82,7 @@ const emptyForm: ProductFormData = {
   },
   is_featured: false,
   is_active: true,
+  is_trialable: false,
 };
 
 // ─── Reusable styling constants ───────────────────────────────
@@ -176,21 +176,28 @@ const ImageUrlField: React.FC<{
         )}
       </div>
     ))}
-    <Button
-      variant="ghost"
-      size="sm"
-      className="text-primary hover:text-primary/80 text-xs"
-      onClick={() => onChange([...values, ''])}
-    >
-      <Plus className="w-3 h-3 mr-1" /> Add Image
-    </Button>
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-primary hover:text-primary/80 text-xs"
+        onClick={() => onChange([...values, ''])}
+      >
+        <Plus className="w-3 h-3 mr-1" /> Add Image
+      </Button>
+      <ImageUploadButton
+        label="Upload"
+        className="h-8 text-xs border-border text-foreground hover:bg-muted"
+        onUploaded={(url) => onChange([...values.filter((v) => v.trim()), url])}
+      />
+    </div>
   </div>
 );
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────
 const AdminProductsPage: React.FC = () => {
   const { toast } = useToast();
-  const { data: products, isLoading } = useAdminProducts();
+  const { data: products, isLoading, isError, error, refetch } = useAdminProducts();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
@@ -303,6 +310,7 @@ const AdminProductsPage: React.FC = () => {
       seo: product.seo || { title: { bn: '', en: '' }, description: { bn: '', en: '' }, keywords: { bn: [''], en: [''] } },
       is_featured: product.isFeatured,
       is_active: product.isActive,
+      is_trialable: Boolean(product.isTrialable),
     });
     setEditorOpen(true);
   };
@@ -484,6 +492,15 @@ const AdminProductsPage: React.FC = () => {
                         />
                         Active
                       </label>
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={form.is_trialable}
+                          onChange={(e) => setForm({ ...form, is_trialable: e.target.checked })}
+                          className="rounded border-border bg-muted text-primary focus:ring-primary"
+                        />
+                        Trialable
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -539,12 +556,19 @@ const AdminProductsPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="space-y-1">
                   <Label className={labelClass}>Thumbnail URL *</Label>
-                  <Input
-                    value={form.thumbnail}
-                    onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
-                    className={inputClass}
-                    placeholder="https://images.unsplash.com/..."
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={form.thumbnail}
+                      onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
+                      className={`flex-1 ${inputClass}`}
+                      placeholder="https://images.unsplash.com/... or upload →"
+                    />
+                    <ImageUploadButton
+                      kind="thumbnail"
+                      label="Upload"
+                      onUploaded={(url) => setForm({ ...form, thumbnail: url })}
+                    />
+                  </div>
                   {form.thumbnail && (
                     <img
                       src={form.thumbnail}
@@ -902,6 +926,11 @@ const AdminProductsPage: React.FC = () => {
                   <Badge variant="outline" className={`text-xs ${form.is_active ? 'border-success/20 text-success bg-success/10' : 'border-destructive/20 text-destructive bg-destructive/10'}`}>
                     {form.is_active ? 'Active' : 'Inactive'}
                   </Badge>
+                  {form.is_trialable && (
+                    <Badge variant="outline" className="text-xs border-primary/20 text-primary bg-primary/10">
+                      Trialable
+                    </Badge>
+                  )}
                 </div>
 
                 <Separator className="bg-border" />
@@ -1037,7 +1066,11 @@ const AdminProductsPage: React.FC = () => {
 
       <div className="admin-card">
         <CardContent className="p-0">
-          {isLoading ? (
+          {isError ? (
+            <div className="p-4">
+              <QueryError what="products" error={error} onRetry={() => refetch()} />
+            </div>
+          ) : isLoading ? (
             <div className="p-6 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-14 bg-muted" />
@@ -1186,21 +1219,18 @@ const AdminProductsPage: React.FC = () => {
         </CardContent>
       </div>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent className="bg-card border-border shadow-soft-xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground">Delete Product</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              Are you sure? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-border text-foreground bg-transparent hover:bg-muted">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:opacity-90">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete Confirmation — typed confirm for an irreversible action (§12.3) */}
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete product"
+        destructive
+        typedConfirmWord="DELETE"
+        confirmLabel="Delete product"
+        busy={deleteProduct.isPending}
+        onConfirm={handleDelete}
+        description="This permanently removes the product. This action cannot be undone."
+      />
     </div>
   );
 };

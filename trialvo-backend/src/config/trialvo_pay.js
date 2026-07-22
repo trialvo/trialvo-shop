@@ -80,6 +80,7 @@ async function createTrialvoPayBill(params) {
     shippingAddress,  // { address, city, state, postcode, country }
     notes,
     items,            // [{ id, name, category, quantity, price, discount, finalPrice }]
+    trialInstanceId,
   } = params;
 
   // Build items array — multiple products or fallback single
@@ -128,6 +129,7 @@ async function createTrialvoPayBill(params) {
       order_id: orderId,
       product_slug: productSlug || null,
       notes: notes || '',
+      trial_instance_id: trialInstanceId || null,
     },
     items: billItems,
   };

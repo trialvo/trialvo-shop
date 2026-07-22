@@ -89,12 +89,12 @@ async function createProduct(req, res, next) {
         const {
             slug, category, price_bdt, price_usd, thumbnail, images,
             video_url, demo, name, short_description, features, facilities,
-            faq, seo, is_featured, is_active,
+            faq, seo, is_featured, is_active, deploy_config, is_trialable,
         } = req.body;
 
         await pool.query(
-            `INSERT INTO products (id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+            `INSERT INTO products (id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active, deploy_config, is_trialable)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
             [
                 id, slug, category || 'ecommerce', price_bdt || 0, price_usd || 0,
                 thumbnail || '', JSON.stringify(images || {}), video_url || null,
@@ -102,6 +102,7 @@ async function createProduct(req, res, next) {
                 JSON.stringify(short_description || {}), JSON.stringify(features || {}),
                 JSON.stringify(facilities || {}), JSON.stringify(faq || []),
                 JSON.stringify(seo || {}), is_featured ? 1 : 0, is_active !== false ? 1 : 0,
+                deploy_config ? JSON.stringify(deploy_config) : null, is_trialable ? 1 : 0,
             ]
         );
 
@@ -121,13 +122,17 @@ async function updateProduct(req, res, next) {
         // Build dynamic SET clause
         const fields = [];
         const values = [];
-        const jsonFields = ['images', 'demo', 'name', 'short_description', 'features', 'facilities', 'faq', 'seo'];
+        const jsonFields = ['images', 'demo', 'name', 'short_description', 'features', 'facilities', 'faq', 'seo', 'deploy_config'];
+        const boolFields = ['is_featured', 'is_active', 'is_trialable'];
         let paramIdx = 1;
 
         for (const [key, value] of Object.entries(updates)) {
             if (key === 'id') continue;
+            let stored = value;
+            if (jsonFields.includes(key)) stored = value == null ? null : JSON.stringify(value);
+            else if (boolFields.includes(key)) stored = value ? 1 : 0;
             fields.push(`${key} = $${paramIdx}`);
-            values.push(jsonFields.includes(key) ? JSON.stringify(value) : (key === 'is_featured' || key === 'is_active' ? (value ? 1 : 0) : value));
+            values.push(stored);
             paramIdx++;
         }
 

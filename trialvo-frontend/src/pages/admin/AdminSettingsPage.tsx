@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { User, Lock, Loader2, Save, ShieldCheck, KeyRound, CreditCard, Activity, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Loader2, Save, ShieldCheck, KeyRound, CreditCard, Activity, CheckCircle2, AlertCircle, Eye, EyeOff, FlaskConical, Mail } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,12 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
+import { Switch } from '@/components/ui/switch';
+import { useTrialSettings, useUpdateTrialSettings } from '@/hooks/useTrialSettings';
 
 const AdminSettingsPage: React.FC = () => {
  const { toast } = useToast();
  const { adminProfile } = useAuth();
  const [searchParams, setSearchParams] = useSearchParams();
- const activeTab = (searchParams.get('tab') as 'profile' | 'security' | 'payment') || 'profile';
+ const activeTab = (searchParams.get('tab') as 'profile' | 'security' | 'payment' | 'trial' | 'email') || 'profile';
 
  const setActiveTab = (tab: string) => {
   setSearchParams({ tab });
@@ -34,6 +36,7 @@ const AdminSettingsPage: React.FC = () => {
  const [showConfirmPass, setShowConfirmPass] = useState(false);
  const [showApiKey, setShowApiKey] = useState(false);
  const [showIpnSecret, setShowIpnSecret] = useState(false);
+ const [showSmtpPass, setShowSmtpPass] = useState(false);
 
  // Trialvo Pay Settings
  const [trialvoPay, setTrialvoPay] = useState({
@@ -46,23 +49,79 @@ const AdminSettingsPage: React.FC = () => {
  const [testLoading, setTestLoading] = useState(false);
  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
- // Fetch settings on mount
- React.useEffect(() => {
+ // Trial settings
+ const { data: trialSettings } = useTrialSettings();
+ const updateTrialSettings = useUpdateTrialSettings();
+ const [trialForm, setTrialForm] = useState({
+  autoApproveHosted: false,
+  hostedDays: 14,
+  selfHostedDays: 14,
+  paidExtendDays: 365,
+  trialsEnabled: true,
+ });
+ const [trialSaving, setTrialSaving] = useState(false);
+
+ // SMTP settings
+ const [smtpForm, setSmtpForm] = useState({
+  enabled: false,
+  host: '',
+  port: 587,
+  secure: false,
+  user: '',
+  password: '',
+  hasPassword: false,
+  fromEmail: 'noreply@trialvo.com',
+  fromName: 'Trialvo Shop',
+  testEmail: '',
+ });
+ const [smtpSaving, setSmtpSaving] = useState(false);
+ const [smtpTestLoading, setSmtpTestLoading] = useState(false);
+ const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+ useEffect(() => {
+  if (trialSettings) {
+   setTrialForm({
+    autoApproveHosted: trialSettings.autoApproveHosted,
+    hostedDays: trialSettings.hostedDays,
+    selfHostedDays: trialSettings.selfHostedDays,
+    paidExtendDays: trialSettings.paidExtendDays ?? 365,
+    trialsEnabled: trialSettings.trialsEnabled !== false,
+   });
+  }
+ }, [trialSettings]);
+
+ useEffect(() => {
   const fetchSettings = async () => {
    try {
-    const data = await api.get<any>('/admin/settings/trialvo-pay');
+    const [payData, smtpData] = await Promise.all([
+     api.get<any>('/admin/settings/trialvo-pay'),
+     api.get<any>('/admin/settings/smtp'),
+    ]);
     setTrialvoPay({
-     serviceId: data.trialvo_pay_service_id || '',
-     apiKey: data.trialvo_pay_api_key || '',
-     ipnSecret: data.trialvo_pay_ipn_secret || '',
-     baseUrl: data.trialvo_pay_base_url || 'http://trialvo-pay:8080'
+     serviceId: payData.trialvo_pay_service_id || '',
+     apiKey: payData.trialvo_pay_api_key || '',
+     ipnSecret: payData.trialvo_pay_ipn_secret || '',
+     baseUrl: payData.trialvo_pay_base_url || 'http://trialvo-pay:8080'
     });
+    setSmtpForm((prev) => ({
+     ...prev,
+     enabled: smtpData.enabled ?? false,
+     host: smtpData.host || '',
+     port: smtpData.port || 587,
+     secure: smtpData.secure ?? false,
+     user: smtpData.user || '',
+     password: '',
+     hasPassword: smtpData.hasPassword ?? false,
+     fromEmail: smtpData.fromEmail || 'noreply@trialvo.com',
+     fromName: smtpData.fromName || 'Trialvo Shop',
+     testEmail: adminProfile?.email || '',
+    }));
    } catch (err) {
-    console.error('Failed to fetch Trialvo Pay settings', err);
+    console.error('Failed to fetch settings', err);
    }
   };
   fetchSettings();
- }, []);
+ }, [adminProfile?.email]);
 
  const handleUpdateName = async () => {
   setNameLoading(true);
@@ -73,6 +132,70 @@ const AdminSettingsPage: React.FC = () => {
    toast({ title: 'Error', description: err.message, variant: 'destructive' });
   }
   setNameLoading(false);
+ };
+
+ const handleSaveTrialSettings = async () => {
+  setTrialSaving(true);
+  try {
+   await updateTrialSettings.mutateAsync(trialForm);
+   toast({ title: 'Trial settings saved' });
+  } catch (err: any) {
+   toast({ title: 'Error', description: err.message, variant: 'destructive' });
+  }
+  setTrialSaving(false);
+ };
+
+ const handleSaveSmtpSettings = async () => {
+  setSmtpSaving(true);
+  try {
+   const payload: Record<string, unknown> = {
+    enabled: smtpForm.enabled,
+    host: smtpForm.host,
+    port: smtpForm.port,
+    secure: smtpForm.secure,
+    user: smtpForm.user,
+    fromEmail: smtpForm.fromEmail,
+    fromName: smtpForm.fromName,
+   };
+   if (smtpForm.password) payload.password = smtpForm.password;
+
+   const res = await api.post<any>('/admin/settings/smtp', payload);
+   setSmtpForm((prev) => ({
+    ...prev,
+    password: '',
+    hasPassword: res.hasPassword ?? prev.hasPassword,
+   }));
+   toast({ title: 'SMTP settings saved' });
+  } catch (err: any) {
+   toast({ title: 'Error', description: err.message, variant: 'destructive' });
+  }
+  setSmtpSaving(false);
+ };
+
+ const handleTestSmtp = async () => {
+  setSmtpTestLoading(true);
+  setSmtpTestResult(null);
+  try {
+   const payload: Record<string, unknown> = {
+    testEmail: smtpForm.testEmail || adminProfile?.email,
+    host: smtpForm.host,
+    port: smtpForm.port,
+    secure: smtpForm.secure,
+    user: smtpForm.user,
+    fromEmail: smtpForm.fromEmail,
+    fromName: smtpForm.fromName,
+   };
+   if (smtpForm.password) payload.password = smtpForm.password;
+
+   const res = await api.post<any>('/admin/settings/smtp/test', payload);
+   setSmtpTestResult({ success: true, message: res.message || 'Test email sent' });
+   toast({ title: 'Test email sent', description: res.message });
+  } catch (err: any) {
+   const msg = err.message || 'SMTP test failed';
+   setSmtpTestResult({ success: false, message: msg });
+   toast({ title: 'SMTP test failed', description: msg, variant: 'destructive' });
+  }
+  setSmtpTestLoading(false);
  };
 
  const handleChangePassword = async () => {
@@ -151,6 +274,20 @@ const AdminSettingsPage: React.FC = () => {
     >
      <KeyRound className="w-4 h-4" />
      Security
+    </button>
+    <button
+     onClick={() => setActiveTab('trial')}
+     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'trial' ? 'bg-card text-foreground shadow-soft-sm' : 'text-muted-foreground hover:text-foreground'}`}
+    >
+     <FlaskConical className="w-4 h-4" />
+     Trials
+    </button>
+    <button
+     onClick={() => setActiveTab('email')}
+     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'email' ? 'bg-card text-foreground shadow-soft-sm' : 'text-muted-foreground hover:text-foreground'}`}
+    >
+     <Mail className="w-4 h-4" />
+     Email
     </button>
     <button
      onClick={() => setActiveTab('payment')}
@@ -268,6 +405,235 @@ const AdminSettingsPage: React.FC = () => {
        <Button onClick={handleChangePassword} disabled={passLoading || !currentPassword || !newPassword || !confirmPassword} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm h-9 text-sm">
         {passLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Lock className="w-4 h-4 mr-1.5" />}
         Change Password
+       </Button>
+      </div>
+     </div>
+    </div>
+   )}
+
+   {/* Trial Settings Tab */}
+   {activeTab === 'trial' && (
+    <div className="admin-card overflow-hidden">
+     <div className="hero-gradient-soft p-6 border-b border-border/50">
+      <div className="flex items-center gap-4">
+       <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center shadow-soft-sm ring-1 ring-primary/20">
+        <FlaskConical className="w-6 h-6 text-primary" />
+       </div>
+       <div>
+        <h3 className="text-lg font-bold text-foreground">Trial System</h3>
+        <p className="text-sm text-muted-foreground">Control auto-approve and default trial periods</p>
+       </div>
+      </div>
+     </div>
+
+     <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/20">
+       <div>
+        <p className="text-sm font-semibold text-foreground">Enable public trial requests</p>
+        <p className="text-xs text-muted-foreground mt-1">
+         Kill switch (§16). When off, Request Trial CTA and API return disabled.
+        </p>
+       </div>
+       <Switch
+        checked={trialForm.trialsEnabled}
+        onCheckedChange={(v) => setTrialForm({ ...trialForm, trialsEnabled: v })}
+       />
+      </div>
+
+      <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/20">
+       <div>
+        <p className="text-sm font-semibold text-foreground">Auto-approve Option 1 (Trialvo Hosted)</p>
+        <p className="text-xs text-muted-foreground mt-1">
+         When enabled, hosted trial requests are provisioned instantly without manual review.
+        </p>
+       </div>
+       <Switch
+        checked={trialForm.autoApproveHosted}
+        onCheckedChange={(v) => setTrialForm({ ...trialForm, autoApproveHosted: v })}
+       />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">Option 1 trial period (days)</Label>
+        <Input
+         type="number"
+         min={1}
+         max={365}
+         value={trialForm.hostedDays}
+         onChange={(e) => setTrialForm({ ...trialForm, hostedDays: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+         className={inputClass}
+        />
+        <p className="text-[10px] text-muted-foreground">Used for auto-approve and as default when approving hosted trials</p>
+       </div>
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">Option 2 trial period (days)</Label>
+        <Input
+         type="number"
+         min={1}
+         max={365}
+         value={trialForm.selfHostedDays}
+         onChange={(e) => setTrialForm({ ...trialForm, selfHostedDays: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+         className={inputClass}
+        />
+        <p className="text-[10px] text-muted-foreground">Default when approving self-hosted (your domain) trials</p>
+       </div>
+       <div className="space-y-1.5 md:col-span-2">
+        <Label className="text-xs text-muted-foreground font-medium">Paid convert extend (days)</Label>
+        <Input
+         type="number"
+         min={1}
+         max={3650}
+         value={trialForm.paidExtendDays}
+         onChange={(e) => setTrialForm({ ...trialForm, paidExtendDays: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+         className={inputClass}
+        />
+        <p className="text-[10px] text-muted-foreground">
+          After successful product payment, matching trial instance is unfrozen and extended by this many days (default 365).
+        </p>
+       </div>
+      </div>
+
+      <Button onClick={handleSaveTrialSettings} disabled={trialSaving} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm">
+       {trialSaving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+       Save Trial Settings
+      </Button>
+     </div>
+    </div>
+   )}
+
+   {/* SMTP / Email Tab */}
+   {activeTab === 'email' && (
+    <div className="admin-card overflow-hidden">
+     <div className="hero-gradient-soft p-6 border-b border-border/50">
+      <div className="flex items-center gap-4">
+       <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center shadow-soft-sm ring-1 ring-primary/20">
+        <Mail className="w-6 h-6 text-primary" />
+       </div>
+       <div>
+        <h3 className="text-lg font-bold text-foreground">Email (SMTP)</h3>
+        <p className="text-sm text-muted-foreground">Configure outbound email for trial notifications and system messages</p>
+       </div>
+      </div>
+     </div>
+
+     <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/20">
+       <div>
+        <p className="text-sm font-semibold text-foreground">Enable SMTP</p>
+        <p className="text-xs text-muted-foreground mt-1">When off, emails are logged to the server console only.</p>
+       </div>
+       <Switch
+        checked={smtpForm.enabled}
+        onCheckedChange={(v) => setSmtpForm({ ...smtpForm, enabled: v })}
+       />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+       <div className="space-y-1.5 md:col-span-2">
+        <Label className="text-xs text-muted-foreground font-medium">SMTP Host</Label>
+        <Input
+         value={smtpForm.host}
+         onChange={(e) => setSmtpForm({ ...smtpForm, host: e.target.value })}
+         className={inputClass}
+         placeholder="smtp.gmail.com"
+        />
+       </div>
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">Port</Label>
+        <Input
+         type="number"
+         value={smtpForm.port}
+         onChange={(e) => setSmtpForm({ ...smtpForm, port: parseInt(e.target.value, 10) || 587 })}
+         className={inputClass}
+        />
+       </div>
+       <div className="flex items-end pb-2">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+         <Switch
+          checked={smtpForm.secure}
+          onCheckedChange={(v) => setSmtpForm({ ...smtpForm, secure: v })}
+         />
+         <span className="text-muted-foreground">Use SSL/TLS (port 465)</span>
+        </label>
+       </div>
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">Username</Label>
+        <Input
+         value={smtpForm.user}
+         onChange={(e) => setSmtpForm({ ...smtpForm, user: e.target.value })}
+         className={inputClass}
+         placeholder="SMTP login"
+        />
+       </div>
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">
+         Password {smtpForm.hasPassword && !smtpForm.password && '(saved — leave blank to keep)'}
+        </Label>
+        <div className="relative">
+         <Input
+          type={showSmtpPass ? 'text' : 'password'}
+          value={smtpForm.password}
+          onChange={(e) => setSmtpForm({ ...smtpForm, password: e.target.value })}
+          className={`${inputClass} pr-10`}
+          placeholder={smtpForm.hasPassword ? '••••••••' : 'SMTP password'}
+         />
+         <button
+          type="button"
+          onClick={() => setShowSmtpPass(!showSmtpPass)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+         >
+          {showSmtpPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+         </button>
+        </div>
+       </div>
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">From Email</Label>
+        <Input
+         type="email"
+         value={smtpForm.fromEmail}
+         onChange={(e) => setSmtpForm({ ...smtpForm, fromEmail: e.target.value })}
+         className={inputClass}
+        />
+       </div>
+       <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground font-medium">From Name</Label>
+        <Input
+         value={smtpForm.fromName}
+         onChange={(e) => setSmtpForm({ ...smtpForm, fromName: e.target.value })}
+         className={inputClass}
+        />
+       </div>
+      </div>
+
+      <div className="space-y-1.5">
+       <Label className="text-xs text-muted-foreground font-medium">Test recipient</Label>
+       <Input
+        type="email"
+        value={smtpForm.testEmail}
+        onChange={(e) => setSmtpForm({ ...smtpForm, testEmail: e.target.value })}
+        className={inputClass}
+        placeholder={adminProfile?.email || 'you@example.com'}
+       />
+      </div>
+
+      {smtpTestResult && (
+       <div className={`p-4 rounded-xl border ${smtpTestResult.success ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+        <div className="flex items-center gap-2">
+         {smtpTestResult.success ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <AlertCircle className="w-5 h-5 text-red-600" />}
+         <p className="text-sm">{smtpTestResult.message}</p>
+        </div>
+       </div>
+      )}
+
+      <div className="flex items-center gap-3 pt-2">
+       <Button onClick={handleSaveSmtpSettings} disabled={smtpSaving} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm">
+        {smtpSaving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+        Save SMTP Settings
+       </Button>
+       <Button variant="outline" onClick={handleTestSmtp} disabled={smtpTestLoading} className="border-primary/20 text-primary hover:bg-primary/5">
+        {smtpTestLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Activity className="w-4 h-4 mr-1.5" />}
+        Send Test Email
        </Button>
       </div>
      </div>

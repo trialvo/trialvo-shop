@@ -3,6 +3,9 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
+  Tags,
+  ClipboardList,
+  Server,
   ShoppingCart,
   MessageSquare,
   Star,
@@ -41,6 +44,9 @@ const navGroups = [
     label: 'Management',
     items: [
       { path: '/admin/products', label: 'Products', icon: Package },
+      { path: '/admin/categories', label: 'Categories', icon: Tags },
+      { path: '/admin/trial-requests', label: 'Trial Requests', icon: ClipboardList },
+      { path: '/admin/trial-instances', label: 'Trial Instances', icon: Server },
       { path: '/admin/orders', label: 'Orders', icon: ShoppingCart },
     ],
   },

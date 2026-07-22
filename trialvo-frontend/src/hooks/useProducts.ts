@@ -54,6 +54,7 @@ function rowToProduct(row: any): Product {
     seo: typeof row.seo === "string" ? JSON.parse(row.seo) : row.seo,
     isFeatured: Boolean(row.is_featured),
     isActive: Boolean(row.is_active),
+    isTrialable: Boolean(row.is_trialable),
     createdAt: row.created_at,
   };
 }

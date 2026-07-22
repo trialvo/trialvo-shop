@@ -1,0 +1,108 @@
+# Opt1 hosted trial — LOCAL port-mode compose template.
+# Used when PROVISION_MODE=local (dev/test on Docker Desktop): no Traefik, no DNS,
+# no TLS. Each instance exposes its API + DB on unique host ports so trials are
+# reachable at http://localhost:<port> without any reverse proxy.
+#
+# Placeholders ({{...}}) are substituted by the provisioner at provision time.
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "{{DB_ROOT_PASSWORD}}"
+      MYSQL_DATABASE: ecom
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "{{DB_PORT}}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p{{DB_ROOT_PASSWORD}}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - trial_net
+
+  api:
+    image: "{{API_IMAGE}}"
+    restart: unless-stopped
+    environment:
+      PORT: "5000"
+      NODE_ENV: production
+      TRIAL_MODE: "1"
+      CONTROL_PLANE_URL: "{{CONTROL_PLANE_URL}}"
+      TRIAL_INSTALL_ID: "{{INSTALL_ID}}"
+      TRIAL_AGENT_SECRET: "{{AGENT_SECRET}}"
+      TRIAL_BOOTSTRAP_TOKEN: "{{BOOTSTRAP_TOKEN}}"
+      TRIAL_DOMAIN: "{{TRIAL_DOMAIN}}"
+      # License public key is mounted as a file (below) to avoid inlining a
+      # multi-line PEM into YAML. licenseClient falls back to the file when the
+      # LICENSE_PUBLIC_KEY env is empty.
+      LICENSE_PUBLIC_KEY: ""
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: "{{DB_ROOT_PASSWORD}}"
+      DB_NAME: ecom
+      JWTSECRET: "{{JWTSECRET}}"
+    ports:
+      - "{{API_PORT}}:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/usr/src/app/uploads
+      - ./license_public.pem:/usr/src/app/config/license_public.pem:ro
+    networks:
+      - trial_net
+
+  # Admin SPA (nginx). API URL is injected at container start via /config.js,
+  # so this image is not rebuilt per instance. The browser reaches the API on
+  # the host-mapped port, hence localhost:<api port>.
+  admin:
+    image: "{{ADMIN_IMAGE}}"
+    restart: unless-stopped
+    environment:
+      API_ORIGIN: "http://localhost:{{API_PORT}}"
+      IMAGE_URL: "http://localhost:{{API_PORT}}"
+      API_PREFIX: "/api/v1"
+    ports:
+      - "{{ADMIN_PORT}}:80"
+    depends_on:
+      - api
+    networks:
+      - trial_net
+
+  # Shop (Next.js). The browser talks to the shop's own origin (/api/v1 BFF
+  # proxy), so API_URL is server-side only and uses the in-network service name.
+  # IMAGE_URL is rendered into the browser, so it uses the host-mapped API port.
+  shop:
+    image: "{{SHOP_IMAGE}}"
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      API_URL: "http://api:5000"
+      IMAGE_URL: "http://localhost:{{API_PORT}}"
+      SITE_URL: "http://localhost:{{SHOP_PORT}}"
+      SHOP_URL: "http://localhost:{{SHOP_PORT}}"
+      APP_URL: "http://localhost:{{SHOP_PORT}}"
+    ports:
+      - "{{SHOP_PORT}}:5000"
+    depends_on:
+      - api
+    networks:
+      - trial_net
+
+volumes:
+  mysql_data:
+  uploads_data:
+
+networks:
+  trial_net:
+    driver: bridge

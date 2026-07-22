@@ -25,6 +25,10 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import DashboardPage from "./pages/admin/DashboardPage";
 import AdminProductsPage from "./pages/admin/AdminProductsPage";
+import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
+import AdminTrialRequestsPage from "./pages/admin/AdminTrialRequestsPage";
+import AdminTrialInstancesPage from "./pages/admin/AdminTrialInstancesPage";
+import TrialStatusPage from "./pages/TrialStatusPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminMessagesPage from "./pages/admin/AdminMessagesPage";
 import AdminTestimonialsPage from "./pages/admin/AdminTestimonialsPage";
@@ -48,6 +52,7 @@ const App = () => (
                   <Route path="/" element={<HomePage />} />
                   <Route path="/products" element={<ProductsPage />} />
                   <Route path="/products/:slug" element={<ProductDetailPage />} />
+                  <Route path="/trial-status/:token" element={<TrialStatusPage />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/order-success" element={<OrderSuccessPage />} />
                   <Route path="/about" element={<AboutPage />} />
@@ -67,6 +72,9 @@ const App = () => (
                   >
                     <Route index element={<DashboardPage />} />
                     <Route path="products" element={<AdminProductsPage />} />
+                    <Route path="categories" element={<AdminCategoriesPage />} />
+                    <Route path="trial-requests" element={<AdminTrialRequestsPage />} />
+                    <Route path="trial-instances" element={<AdminTrialInstancesPage />} />
                     <Route path="orders" element={<AdminOrdersPage />} />
                     <Route path="messages" element={<AdminMessagesPage />} />
                     <Route path="testimonials" element={<AdminTestimonialsPage />} />

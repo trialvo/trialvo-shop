@@ -1,5 +1,6 @@
 const { pool } = require('../config/db');
 const { verifyIpnSignature } = require('../config/trialvo_pay');
+const { activateFromPaidOrder } = require('../services/trialActivation');
 
 /**
  * POST /api/payments/ipn
@@ -92,7 +93,8 @@ async function handleIpn(req, res) {
 
     // Update the order in our database
     const existing = await pool.query(
-      'SELECT id, status FROM orders WHERE order_id = $1',
+      `SELECT id, order_id, status, payment_status, product_id, customer_email, trial_instance_id
+       FROM orders WHERE order_id = $1`,
       [orderId]
     );
 
@@ -102,6 +104,16 @@ async function handleIpn(req, res) {
     }
 
     const order = existing.rows[0];
+
+    // Prefer trial_instance_id from IPN meta when order row lacks it
+    const metaInstanceId = data?.meta?.trial_instance_id || null;
+    if (!order.trial_instance_id && metaInstanceId) {
+      await pool.query(
+        'UPDATE orders SET trial_instance_id = $1 WHERE id = $2 AND trial_instance_id IS NULL',
+        [metaInstanceId, order.id]
+      ).catch(() => {});
+      order.trial_instance_id = metaInstanceId;
+    }
 
     // Build update fields
     const updates = [];
@@ -162,6 +174,21 @@ async function handleIpn(req, res) {
     }
 
     console.log(`[IPN] ✅ Order ${orderId} updated — event: ${event}, status: ${newStatus || 'unchanged'}, method: ${paymentMethod || 'N/A'}, ref: ${paymentReference || 'N/A'}`);
+
+    // After successful payment: auto-unfreeze + extend matching trial instance
+    if (event === 'payment.success' && paymentStatus === 'paid') {
+      try {
+        const result = await activateFromPaidOrder(order);
+        if (result.ok) {
+          console.log(`[IPN] Trial activation:`, result);
+        } else {
+          console.log(`[IPN] Trial activation skipped:`, result.reason);
+        }
+      } catch (actErr) {
+        console.error('[IPN] Trial activation error (order still paid):', actErr.message);
+      }
+    }
+
     return res.status(200).json({ received: true });
 
   } catch (error) {

@@ -12,6 +12,7 @@ interface CreateOrderInput {
   notes?: string;
   paymentMethod: string;
   totalBdt: number;
+  trialInstanceId?: string;
 }
 
 interface Order {

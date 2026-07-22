@@ -19,6 +19,7 @@ const CheckoutPage: React.FC = () => {
   const { language, t } = useLanguage();
   const [searchParams] = useSearchParams();
   const productSlug = searchParams.get('product');
+  const trialInstanceId = searchParams.get('trialInstance') || undefined;
 
   const { data: product, isLoading: productLoading } = useProduct(productSlug || undefined);
   const createOrder = useCreateOrder();
@@ -90,6 +91,7 @@ const CheckoutPage: React.FC = () => {
         notes: formData.notes,
         paymentMethod: 'trialvo_pay',
         totalBdt: product.priceBDT,
+        ...(trialInstanceId ? { trialInstanceId } : {}),
       });
 
       if (order.pay_url) {
@@ -152,6 +154,14 @@ const CheckoutPage: React.FC = () => {
           </Button>
 
           <h1 className="text-3xl font-bold mb-8">{t('checkout.title')}</h1>
+
+          {trialInstanceId && (
+            <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+              {language === 'bn'
+                ? 'এই অর্ডারটি একটি ট্রায়াল instance-এর সাথে লিঙ্ক করা হবে। পেমেন্ট সফল হলে trial অটো সক্রিয়/extend হবে।'
+                : 'This order will link to your trial instance. On successful payment the trial will auto-activate/extend.'}
+            </div>
+          )}
 
           {/* Payment Error Banner */}
           {showError && errorParam && (

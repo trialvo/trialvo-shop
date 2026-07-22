@@ -4,6 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
+const storage = require('./services/storage');
 
 const { testConnection } = require('./config/db');
 const { runMigrations } = require('./migrations/runner');
@@ -13,12 +15,19 @@ const { errorHandler } = require('./middleware/errorHandler');
 // Route imports
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
+const categoryRoutes = require('./routes/categories');
 const orderRoutes = require('./routes/orders');
 const testimonialRoutes = require('./routes/testimonials');
 const contactRoutes = require('./routes/contact');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payments');
 const settingsRoutes = require('./routes/settings');
+const trialRoutes = require('./routes/trials');
+const agentRoutes = require('./routes/agent');
+const { ensureKeyPair } = require('./services/leaseIssuer');
+const { startTrialLifecycleCron } = require('./cron/trialLifecycle');
+const { startEventsRetentionCron } = require('./cron/eventsRetention');
+const { startTrialMaintenanceCron } = require('./cron/trialMaintenance');
 
 
 const app = express();
@@ -34,6 +43,13 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// ─── Static uploads (local storage driver only) ──────────
+// Serves admin-uploaded media at /uploads/*. With an S3/GCS driver the bucket
+// serves files directly, so this mount is a no-op for that path.
+if (storage.DRIVER === 'local') {
+ app.use('/uploads', express.static(storage.LOCAL_ROOT));
+}
+
 // ─── Health Check ────────────────────────────────────────
 app.get('/api/health', (req, res) => {
  res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -42,9 +58,12 @@ app.get('/api/health', (req, res) => {
 // ─── Routes ──────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/trial', trialRoutes);
+app.use('/api/agent', agentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin/settings', settingsRoutes);
@@ -82,6 +101,11 @@ async function startServer() {
  // 3. Run auto-seeds (if tables empty)
  console.log('🌱 Checking seeds...');
  await runSeeds();
+
+ ensureKeyPair();
+ startTrialLifecycleCron();
+ startEventsRetentionCron();
+ startTrialMaintenanceCron();
 
  // 4. Start listening
  server = app.listen(PORT, () => {

@@ -73,7 +73,7 @@ const AdminLoginPage: React.FC = () => {
     <Card className="border-border bg-card/95 backdrop-blur-xl shadow-2xl">
      <CardHeader className="text-center pb-2 pt-8">
       <div className="w-16 h-16 mx-auto mb-5 rounded-2xl hero-gradient shadow-soft-md flex items-center justify-center ring-4 ring-primary/10">
-       <ShieldCheck className="w-8 h-8 text-primary-foreground" />
+       <ShieldCheck className="w-8 h-8 text-white" />
       </div>
       <CardTitle className="text-2xl font-bold text-foreground tracking-tight">Admin Panel</CardTitle>
       <CardDescription className="text-muted-foreground mt-1">
@@ -131,10 +131,10 @@ const AdminLoginPage: React.FC = () => {
        <Button
         type="submit"
         disabled={isLoading}
-        className="w-full h-11 mt-2 text-sm font-semibold hero-gradient text-primary-foreground shadow-soft-md hover:opacity-90 transition-all rounded-xl border-0"
+        className="w-full h-11 mt-2 text-sm font-semibold hero-gradient text-white shadow-soft-md hover:opacity-90 transition-all rounded-xl border-0"
        >
-        {isLoading ? (
-         <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+         {isLoading ? (
+         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         ) : (
          <>
           <LogIn className="w-4 h-4 mr-2" />

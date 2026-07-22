@@ -1,6 +1,9 @@
 const { pool } = require('../config/db');
 const axios = require('axios');
 const crypto = require('crypto');
+const { getTrialSettings, updateTrialSettings } = require('../services/trialSettings');
+const { getSmtpSettingsForAdmin, updateSmtpSettings, getSmtpConfig } = require('../services/smtpSettings');
+const { sendTestMail } = require('../services/mailer');
 
 /**
  * GET /api/admin/settings/trialvo-pay
@@ -104,5 +107,78 @@ async function testTrialvoPayConnection(req, res, next) {
 module.exports = {
   getTrialvoPaySettings,
   updateTrialvoPaySettings,
-  testTrialvoPayConnection
+  testTrialvoPayConnection,
+  getTrialSettings: async (req, res, next) => {
+    try {
+      res.json(await getTrialSettings());
+    } catch (error) {
+      next(error);
+    }
+  },
+  updateTrialSettings: async (req, res, next) => {
+    try {
+      const { autoApproveHosted, hostedDays, selfHostedDays, paidExtendDays, trialsEnabled } = req.body || {};
+      const settings = await updateTrialSettings({
+        autoApproveHosted, hostedDays, selfHostedDays, paidExtendDays, trialsEnabled,
+      });
+      res.json({ message: 'Trial settings updated', ...settings });
+    } catch (error) {
+      next(error);
+    }
+  },
+  getSmtpSettings: async (req, res, next) => {
+    try {
+      res.json(await getSmtpSettingsForAdmin());
+    } catch (error) {
+      next(error);
+    }
+  },
+  updateSmtpSettings: async (req, res, next) => {
+    try {
+      const settings = await updateSmtpSettings(req.body || {});
+      res.json({ message: 'SMTP settings updated', ...settings });
+    } catch (error) {
+      next(error);
+    }
+  },
+  testSmtpSettings: async (req, res, next) => {
+    try {
+      const { testEmail, host, port, secure, user, password, fromEmail, fromName } = req.body || {};
+      const to = testEmail || req.admin?.email;
+
+      if (!to) {
+        return res.status(400).json({ error: 'Test email address is required' });
+      }
+
+      let cfg;
+      if (host) {
+        const stored = await getSmtpConfig();
+        cfg = {
+          enabled: true,
+          host,
+          port: parseInt(port, 10) || 587,
+          secure: Boolean(secure),
+          user: user || '',
+          password: password || stored.password,
+          fromEmail: fromEmail || stored.fromEmail,
+          fromName: fromName || stored.fromName,
+          hasPassword: Boolean(password || stored.hasPassword),
+        };
+      } else {
+        cfg = await getSmtpConfig();
+      }
+
+      if (!cfg.host) {
+        return res.status(400).json({ error: 'SMTP host is required' });
+      }
+
+      await sendTestMail({ to, cfg });
+      res.json({ success: true, message: `Test email sent to ${to}` });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'SMTP test failed',
+      });
+    }
+  },
 };

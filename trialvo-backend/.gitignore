@@ -1,3 +1,9 @@
 node_modules/
 .env
 *.log
+
+# Admin-uploaded media (local storage driver)
+uploads/
+
+# Local Option-1 provisioned trial stacks (Docker project dirs)
+var/

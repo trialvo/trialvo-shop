@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Package, ShoppingCart, MessageSquare, Star, TrendingUp, Clock, DollarSign, ArrowUpRight, Activity } from 'lucide-react';
+import { Package, ShoppingCart, MessageSquare, Star, TrendingUp, Clock, DollarSign, ArrowUpRight, Activity, Server } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAdminProducts } from '@/hooks/admin/useAdminProducts';
 import { useAdminOrders, useOrderStats } from '@/hooks/admin/useAdminOrders';
 import { useUnreadCount } from '@/hooks/admin/useAdminMessages';
 import { useAdminTestimonials } from '@/hooks/admin/useAdminTestimonials';
+import { useTrialAnalytics } from '@/hooks/useTrialAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -52,6 +53,7 @@ const DashboardPage: React.FC = () => {
  const { data: stats, isLoading: statsLoading } = useOrderStats();
  const { data: unreadCount, isLoading: unreadLoading } = useUnreadCount();
  const { data: testimonials, isLoading: testimonialsLoading } = useAdminTestimonials();
+ const { data: trialAnalytics } = useTrialAnalytics();
  const { adminProfile } = useAuth();
 
  const isLoading = productsLoading || ordersLoading || statsLoading || unreadLoading || testimonialsLoading;
@@ -145,6 +147,39 @@ const DashboardPage: React.FC = () => {
      </>
     )}
    </div>
+
+   {/* Trial control plane snapshot */}
+   {trialAnalytics && (
+    <div className="admin-card">
+     <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+       <Server className="w-4 h-4 text-primary" />
+       Trial Control Plane
+      </h3>
+      <Link to="/admin/trial-instances" className="text-xs text-primary hover:underline">View instances</Link>
+     </div>
+     <div className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+      <div>
+       <p className="text-xs text-muted-foreground">Active trials</p>
+       <p className="text-xl font-bold">{trialAnalytics.instances.active}</p>
+      </div>
+      <div>
+       <p className="text-xs text-muted-foreground">Pending requests</p>
+       <p className="text-xl font-bold">{trialAnalytics.requests.pending}</p>
+      </div>
+      <div>
+       <p className="text-xs text-muted-foreground">Paid conversions</p>
+       <p className="text-xl font-bold">{trialAnalytics.conversion.paidConversions}</p>
+       <p className="text-[10px] text-muted-foreground">{trialAnalytics.conversion.conversionRatePct}% rate</p>
+      </div>
+      <div>
+       <p className="text-xs text-muted-foreground">Heartbeat health</p>
+       <p className="text-xl font-bold">{trialAnalytics.uptime.healthyPct != null ? `${trialAnalytics.uptime.healthyPct}%` : '—'}</p>
+       <p className="text-[10px] text-muted-foreground">{trialAnalytics.alerts.outdatedAgents} outdated agents · {trialAnalytics.alerts.expiringSoon} expiring soon</p>
+      </div>
+     </div>
+    </div>
+   )}
 
    {/* Weekly Comparison + Monthly Chart */}
    {!isLoading && stats && (

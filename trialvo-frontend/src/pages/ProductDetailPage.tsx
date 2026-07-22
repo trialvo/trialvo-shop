@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, ShoppingCart, Play, Star, Award, Clock, Package, Headphones, FileText, Video, Loader2 } from 'lucide-react';
+import { ArrowLeft, Check, ShoppingCart, Play, Star, Award, Clock, Package, Headphones, FileText, Video, Loader2, ClipboardList } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
 import DemoAccessCard from '@/components/cards/DemoAccessCard';
+import RequestTrialModal from '@/components/trial/RequestTrialModal';
 import ProductCard from '@/components/cards/ProductCard';
 import FAQ from '@/components/sections/FAQ';
 import ScreenshotGallery from '@/components/gallery/ScreenshotGallery';
 import { useProduct, useRelatedProducts } from '@/hooks/useProducts';
+import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -18,9 +20,12 @@ const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'shop' | 'admin'>('shop');
+  const [trialOpen, setTrialOpen] = useState(false);
 
   const { data: product, isLoading, error } = useProduct(slug);
   const { data: relatedProducts } = useRelatedProducts(product?.id, product?.category);
+  const { data: trialConfig } = usePublicTrialConfig();
+  const canRequestTrial = Boolean(product?.isTrialable && trialConfig?.trialsEnabled !== false);
 
   if (isLoading) {
     return (
@@ -213,6 +218,12 @@ const ProductDetailPage: React.FC = () => {
                     {t('product.buyNow')}
                   </Link>
                 </Button>
+                {canRequestTrial && (
+                  <Button size="lg" variant="secondary" className="flex-1 h-14 text-base" onClick={() => setTrialOpen(true)}>
+                    <ClipboardList className="w-5 h-5 mr-2" />
+                    {language === 'bn' ? 'ট্রায়াল চাই' : 'Request Trial'}
+                  </Button>
+                )}
                 {product.demo.length > 0 && (
                   <Button asChild variant="outline" size="lg" className="flex-1 h-14 text-base">
                     <a href={product.demo[0].url} target="_blank" rel="noopener noreferrer">
@@ -319,6 +330,15 @@ const ProductDetailPage: React.FC = () => {
 
       {/* Structured Data */}
       <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+
+      {canRequestTrial && (
+        <RequestTrialModal
+          open={trialOpen}
+          onOpenChange={setTrialOpen}
+          productSlug={product.slug}
+          productName={product.name[language]}
+        />
+      )}
     </Layout>
   );
 };

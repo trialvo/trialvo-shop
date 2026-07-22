@@ -87,6 +87,38 @@ async function request<T>(
   return res.json();
 }
 
+/**
+ * Multipart upload. Sends FormData directly (no JSON Content-Type so the browser
+ * can set the correct multipart boundary) while still attaching the auth token.
+ */
+async function upload<T>(endpoint: string, formData: FormData): Promise<T> {
+  const token = getToken();
+  if (token && isTokenExpired()) {
+    triggerAuthExpired();
+    throw new Error("Session expired. Please log in again.");
+  }
+
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 401) {
+      triggerAuthExpired();
+      throw new Error(body.error || "Session expired. Please log in again.");
+    }
+    throw new Error(body.error || `Upload failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
 export const api = {
   get: <T>(endpoint: string) => request<T>(endpoint),
   post: <T>(endpoint: string, data: unknown) =>
@@ -94,4 +126,35 @@ export const api = {
   put: <T>(endpoint: string, data: unknown) =>
     request<T>(endpoint, { method: "PUT", body: JSON.stringify(data) }),
   delete: <T>(endpoint: string) => request<T>(endpoint, { method: "DELETE" }),
+  upload,
+  /** Binary download (installer zip, etc.) */
+  downloadBlob: async (endpoint: string, fallbackName = "download.bin") => {
+    const token = getToken();
+    if (token && isTokenExpired()) {
+      triggerAuthExpired();
+      throw new Error("Session expired. Please log in again.");
+    }
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}${endpoint}`, { headers });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }));
+      if (res.status === 401) {
+        triggerAuthExpired();
+        throw new Error(body.error || "Session expired. Please log in again.");
+      }
+      throw new Error(body.error || `Download failed: ${res.status}`);
+    }
+    const blob = await res.blob();
+    const cd = res.headers.get("Content-Disposition") || "";
+    const match = cd.match(/filename="?([^";]+)"?/i);
+    const filename = match?.[1] || fallbackName;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    return { filename, size: blob.size };
+  },
 };

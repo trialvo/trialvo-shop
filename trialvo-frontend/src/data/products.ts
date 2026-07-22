@@ -43,6 +43,7 @@ export interface Product {
   };
   isFeatured: boolean;
   isActive: boolean;
+  isTrialable?: boolean;
   sortOrder?: number;
   createdAt: string;
 }

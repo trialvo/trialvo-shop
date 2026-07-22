@@ -28,6 +28,19 @@ async function runMigrations() {
       require('./007_trialvo_pay_columns'),
       require('./008_payment_details'),
       require('./009_system_config'),
+      require('./010_categories'),
+      require('./011_media_assets'),
+      require('./012_product_deploy_config'),
+      require('./013_trial_requests'),
+      require('./014_trial_instances'),
+      require('./015_remote_commands'),
+      require('./016_instance_events'),
+      require('./017_instance_backups'),
+      require('./018_trial_settings'),
+      require('./019_smtp_settings'),
+      require('./020_order_trial_instance'),
+      require('./021_trials_enabled'),
+      require('./022_remote_commands_created_by'),
     ];
 
     let count = 0;

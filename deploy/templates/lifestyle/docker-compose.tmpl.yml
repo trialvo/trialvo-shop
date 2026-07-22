@@ -1,0 +1,85 @@
+# Opt1 hosted trial — compose template (TS-3.2 scaffolding)
+# Placeholders replaced by provisioner when Docker Opt1 is enabled.
+# MVP still uses shared demo URLs; this file is ready for INFRA / Traefik cutover.
+
+services:
+  api:
+    image: ${TRIAL_IMAGE_API:-registry.trialvo.com/lifestyle-api:trial}
+    restart: unless-stopped
+    environment:
+      TRIAL_MODE: "1"
+      CONTROL_PLANE_URL: "{{CONTROL_PLANE_URL}}"
+      TRIAL_INSTALL_ID: "{{INSTALL_ID}}"
+      TRIAL_AGENT_SECRET: "{{AGENT_SECRET}}"
+      TRIAL_BOOTSTRAP_TOKEN: "{{BOOTSTRAP_TOKEN}}"
+      TRIAL_DOMAIN: "{{SUBDOMAIN}}.{{TRIAL_DOMAIN_BASE}}"
+      LICENSE_PUBLIC_KEY: "{{LICENSE_PUBLIC_KEY}}"
+      DB_HOST: db
+      DB_USER: ecom
+      DB_PASSWORD: "{{DB_PASSWORD}}"
+      DB_NAME: ecom
+      JWTSECRET: "{{JWTSECRET}}"
+    volumes:
+      - uploads_data:/app/uploads
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.{{PROJECT}}.api.rule=Host(`api-{{SUBDOMAIN}}.{{TRIAL_DOMAIN_BASE}}`)"
+      - "traefik.http.routers.{{PROJECT}}.api.tls.certresolver=le"
+      - "traefik.http.services.{{PROJECT}}.api.loadbalancer.server.port=9000"
+    depends_on:
+      - db
+    networks:
+      - trial_net
+      - traefik_public
+
+  admin:
+    image: ${TRIAL_IMAGE_ADMIN:-registry.trialvo.com/lifestyle-admin:trial}
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.{{PROJECT}}.admin.rule=Host(`admin-{{SUBDOMAIN}}.{{TRIAL_DOMAIN_BASE}}`)"
+      - "traefik.http.routers.{{PROJECT}}.admin.tls.certresolver=le"
+      - "traefik.http.services.{{PROJECT}}.admin.loadbalancer.server.port=80"
+    depends_on:
+      - api
+    networks:
+      - trial_net
+      - traefik_public
+
+  shop:
+    image: ${TRIAL_IMAGE_SHOP:-registry.trialvo.com/lifestyle-shop:trial}
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.{{PROJECT}}.shop.rule=Host(`{{SUBDOMAIN}}.{{TRIAL_DOMAIN_BASE}}`)"
+      - "traefik.http.routers.{{PROJECT}}.shop.tls.certresolver=le"
+      - "traefik.http.services.{{PROJECT}}.shop.loadbalancer.server.port=80"
+    depends_on:
+      - api
+    networks:
+      - trial_net
+      - traefik_public
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "{{DB_ROOT_PASSWORD}}"
+      MYSQL_DATABASE: ecom
+      MYSQL_USER: ecom
+      MYSQL_PASSWORD: "{{DB_PASSWORD}}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - trial_net
+
+volumes:
+  mysql_data:
+  uploads_data:
+
+networks:
+  trial_net:
+    driver: bridge
+  traefik_public:
+    external: true

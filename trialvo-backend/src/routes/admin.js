@@ -21,6 +21,16 @@ router.use(authenticate);
 // Dashboard
 router.get('/dashboard', getDashboardStats);
 
+// Categories (modular sub-router; auth inherited from above)
+router.use('/categories', require('./admin/categories'));
+
+// Media uploads (modular sub-router; auth inherited from above)
+router.use('/media', require('./admin/media'));
+
+// Trial control plane
+router.use('/trial-requests', require('./admin/trialRequests'));
+router.use('/trial-instances', require('./admin/trialInstances'));
+
 // Products
 router.get('/products', adminGetProducts);
 router.post('/products', createProduct);

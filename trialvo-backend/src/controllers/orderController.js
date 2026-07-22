@@ -11,17 +11,44 @@ async function createOrder(req, res, next) {
       productId, customerName, customerEmail, customerPhone,
       company, needsHosting, notes, paymentMethod, totalBdt,
       discountAmount, shippingAddress, productName,
+      trialInstanceId,
     } = req.body;
+
+    let linkedInstanceId = null;
+    if (trialInstanceId) {
+      const inst = await pool.query(
+        `SELECT ti.id, ti.product_id, tr.email
+         FROM trial_instances ti
+         LEFT JOIN trial_requests tr ON tr.id = ti.request_id
+         WHERE ti.id = $1`,
+        [trialInstanceId]
+      );
+      if (!inst.rows.length) {
+        return res.status(400).json({ error: 'Invalid trialInstanceId' });
+      }
+      const row = inst.rows[0];
+      if (productId && row.product_id && row.product_id !== productId) {
+        return res.status(400).json({ error: 'trialInstanceId does not match productId' });
+      }
+      if (
+        customerEmail && row.email
+        && String(row.email).toLowerCase() !== String(customerEmail).toLowerCase()
+      ) {
+        return res.status(400).json({ error: 'trialInstanceId email does not match customerEmail' });
+      }
+      linkedInstanceId = row.id;
+    }
 
     // ── 1. Save order to PostgreSQL ──────────────────────────────────
     await pool.query(
-      `INSERT INTO orders (id, order_id, product_id, customer_name, customer_email, customer_phone, company, needs_hosting, notes, payment_method, total_bdt, status, discount_amount, shipping_address)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+      `INSERT INTO orders (id, order_id, product_id, customer_name, customer_email, customer_phone, company, needs_hosting, notes, payment_method, total_bdt, status, discount_amount, shipping_address, trial_instance_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         id, orderId, productId || null, customerName, customerEmail,
         customerPhone, company || '', needsHosting ? 1 : 0,
         notes || '', paymentMethod || 'trialvo_pay', totalBdt || 0, 'pending',
         discountAmount || 0, shippingAddress ? JSON.stringify(shippingAddress) : null,
+        linkedInstanceId,
       ]
     );
 
@@ -71,6 +98,7 @@ async function createOrder(req, res, next) {
         customerPhone,
         shippingAddress: parsedShipping,
         notes,
+        trialInstanceId: linkedInstanceId,
         items: [{
           id: productId,
           name: productName || 'Digital Product',
