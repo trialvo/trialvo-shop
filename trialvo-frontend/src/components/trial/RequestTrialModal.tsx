@@ -72,12 +72,22 @@ const RequestTrialModal: React.FC<Props> = ({ open, onOpenChange, productSlug, p
         desiredDomain: trialType === 'self_hosted' ? form.domain : undefined,
         useCase: form.useCase || undefined,
       });
-      toast({
-        title: language === 'bn' ? (res.autoApproved ? 'ট্রায়াল প্রস্তুত!' : 'অনুরোধ পাঠানো হয়েছে!') : (res.autoApproved ? 'Trial is ready!' : 'Request submitted!'),
-        description: language === 'bn'
-          ? (res.autoApproved ? 'লগইন তথ্য status পেজে দেখুন। ইমেইলও পাঠানো হয়েছে।' : 'ইমেইলে আপডেট পাবেন। Status পেজ খোলা হয়েছে।')
-          : (res.autoApproved ? 'Login details are on your status page. We emailed you too.' : 'Check email for updates. Status page opened.'),
-      });
+      // Duplicate email → send them back to the existing status page (no new trial created).
+      if (res.existing) {
+        toast({
+          title: language === 'bn' ? 'আগের ট্রায়াল পাওয়া গেছে' : 'Existing trial found',
+          description: language === 'bn'
+            ? 'এই ইমেইলে ইতিমধ্যে একটি ট্রায়াল আছে। Status পেজে নিয়ে যাওয়া হচ্ছে।'
+            : 'You already have a trial for this email. Opening your status page.',
+        });
+      } else {
+        toast({
+          title: language === 'bn' ? (res.autoApproved ? 'ট্রায়াল প্রস্তুত!' : 'অনুরোধ পাঠানো হয়েছে!') : (res.autoApproved ? 'Trial is ready!' : 'Request submitted!'),
+          description: language === 'bn'
+            ? (res.autoApproved ? 'লগইন তথ্য status পেজে দেখুন। ইমেইলও পাঠানো হয়েছে।' : 'ইমেইলে আপডেট পাবেন। Status পেজ খোলা হয়েছে।')
+            : (res.autoApproved ? 'Login details are on your status page. We emailed you too.' : 'Check email for updates. Status page opened.'),
+        });
+      }
       onOpenChange(false);
       if (res.statusUrl) window.location.href = res.statusUrl;
     } catch (err: any) {

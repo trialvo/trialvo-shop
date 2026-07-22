@@ -55,6 +55,8 @@ export function useSubmitTrialRequest() {
         autoApproved?: boolean;
         status?: string;
         trialDays?: number;
+        existing?: boolean;
+        message?: string;
       }>("/trial/requests", body),
   });
 }

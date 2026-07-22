@@ -30,6 +30,33 @@ async function createTrialRequest(req, res, next) {
             return res.status(400).json({ error: 'desiredDomain required for self_hosted' });
         }
 
+        // One open trial per email: pending/active requests reuse the existing status page
+        // instead of creating another row (avoids duplicate stacks for the same customer).
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const existing = await pool.query(
+            `SELECT id, public_token, status, requested_days
+             FROM trial_requests
+             WHERE LOWER(TRIM(email)) = $1
+               AND status IN ('pending', 'active')
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [normalizedEmail]
+        );
+        if (existing.rows.length > 0) {
+            const prev = existing.rows[0];
+            const statusUrl = `${FRONTEND}/trial-status/${prev.public_token}`;
+            return res.status(200).json({
+                ok: true,
+                existing: true,
+                requestId: prev.id,
+                statusToken: prev.public_token,
+                statusUrl,
+                status: prev.status,
+                trialDays: prev.requested_days,
+                message: 'You already have a trial request for this email',
+            });
+        }
+
         const prod = await pool.query(
             'SELECT id, is_trialable, name FROM products WHERE slug = $1 AND is_active = 1',
             [productSlug]
@@ -52,7 +79,7 @@ async function createTrialRequest(req, res, next) {
               company, desired_domain, use_case, requested_days, ip_address
             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
             [
-                id, publicToken, prod.rows[0].id, trialType, name, email, phone,
+                id, publicToken, prod.rows[0].id, trialType, name.trim(), normalizedEmail, phone,
                 company || null, desiredDomain || null, useCase || null,
                 trialDays, ip,
             ]
@@ -64,8 +91,8 @@ async function createTrialRequest(req, res, next) {
             public_token: publicToken,
             product_id: prod.rows[0].id,
             trial_type: trialType,
-            customer_name: name,
-            email,
+            customer_name: name.trim(),
+            email: normalizedEmail,
             phone,
             company,
             desired_domain: desiredDomain,
@@ -81,8 +108,8 @@ async function createTrialRequest(req, res, next) {
             provisionResult = await provisionFromRequest(requestRow, trialDays);
             autoApproved = true;
         } else {
-            const mail = trialRequestReceivedEmail({ name, statusUrl, autoApproved: false });
-            await sendMail({ to: email, ...mail });
+            const mail = trialRequestReceivedEmail({ name: name.trim(), statusUrl, autoApproved: false });
+            await sendMail({ to: normalizedEmail, ...mail });
         }
 
         res.status(201).json({
