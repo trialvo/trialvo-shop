@@ -1,155 +1,146 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { Link } from "react-router-dom";
+import { Mail, MapPin, Phone } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { BrandLogo } from "@/components/brand";
+import type { FooterLinkGroup, LocalizedString } from "@/types/marketplace";
+import { localize } from "@/lib/localize";
 
-const Footer: React.FC = () => {
-  const { language, t } = useLanguage();
+const MARKETPLACE_GROUPS: FooterLinkGroup[] = [
+  {
+    id: "marketplace",
+    title: { bn: "মার্কেটপ্লেস", en: "Marketplace" },
+    links: [
+      { href: "/products", label: "All products" },
+      { href: "/products?category=ecommerce", label: "Ecommerce" },
+      { href: "/products?category=fashion", label: "Fashion" },
+      { href: "/products?category=tech", label: "Tech" },
+    ],
+  },
+  {
+    id: "company",
+    title: { bn: "কোম্পানি", en: "Company" },
+    links: [
+      { href: "/about", label: "About" },
+      { href: "/contact", label: "Contact" },
+      { href: "/terms", label: "Terms" },
+      { href: "/privacy", label: "Privacy" },
+    ],
+  },
+];
 
-  const quickLinks = [
-    { href: '/', label: t('nav.home') },
-    { href: '/products', label: t('nav.products') },
-    { href: '/about', label: t('nav.about') },
-    { href: '/contact', label: t('nav.contact') },
-  ];
+const GROUP_LABELS_BN: Record<string, Record<string, string>> = {
+  marketplace: {
+    "All products": "সব প্রোডাক্ট",
+    Ecommerce: "ইকমার্স",
+    Fashion: "ফ্যাশন",
+    Tech: "টেক",
+  },
+  company: {
+    About: "আমাদের সম্পর্কে",
+    Contact: "যোগাযোগ",
+    Terms: "শর্তাবলী",
+    Privacy: "প্রাইভেসি",
+  },
+};
 
-  const legalLinks = [
-    { href: '/terms', label: t('nav.terms') },
-    { href: '/privacy', label: t('nav.privacy') },
-  ];
+function linkLabel(
+  groupId: string,
+  englishLabel: string,
+  language: "bn" | "en",
+): string {
+  if (language === "en") return englishLabel;
+  return GROUP_LABELS_BN[groupId]?.[englishLabel] ?? englishLabel;
+}
+
+const BRAND_BLURB: LocalizedString = {
+  bn: "রেডিমেড ইকমার্স সলিউশনের ডিজিটাল মার্কেটপ্লেস—এডমিন প্যানেল ও শপ একসাথে।",
+  en: "A digital marketplace for ready-made ecommerce solutions—admin panel and shop together.",
+};
+
+/**
+ * Marketplace footer — continuous with page body (not a heavy dark dump).
+ * Standard columns: brand, marketplace, company, contact.
+ */
+export default function Footer() {
+  const { language } = useLanguage();
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-primary text-primary-foreground" role="contentinfo">
-      <div className="container-custom section-padding">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {/* Brand Section */}
+    <footer className="border-t border-border bg-background" role="contentinfo">
+      <div className="container-custom py-12 md:py-14">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div className="lg:col-span-1">
-            <Link to="/" className="inline-flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-primary-foreground flex items-center justify-center">
-                <span className="text-primary font-bold text-lg">E</span>
-              </div>
-              <span className="font-bold text-xl">
-                {language === 'bn' ? 'ইশপ মার্কেট' : 'eShop Market'}
-              </span>
+            <Link to="/" className="mb-4 inline-flex" aria-label={language === "bn" ? "ইশপ মার্কেট" : "eShop Market"}>
+              <BrandLogo
+                withWordmark
+                wordmark={language === "bn" ? "ইশপ মার্কেট" : "eShop Market"}
+                size="md"
+              />
             </Link>
-            <p className="text-primary-foreground/80 text-sm leading-relaxed mb-6">
-              {t('footer.description')}
+            <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+              {localize(BRAND_BLURB, language)}
             </p>
+          </div>
 
-            {/* Social Links */}
-            <div className="flex items-center gap-3">
-              <a
-                href="https://facebook.com/eshopmarket"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="w-9 h-9 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 flex items-center justify-center transition-colors"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
-              </a>
-              <a
-                href="https://youtube.com/@eshopmarket"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="YouTube"
-                className="w-9 h-9 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 flex items-center justify-center transition-colors"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
-              </a>
-              <a
-                href="https://wa.me/8801700000000"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp"
-                className="w-9 h-9 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 flex items-center justify-center transition-colors"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
-              </a>
+          {MARKETPLACE_GROUPS.map((group) => (
+            <div key={group.id}>
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.12em] text-foreground">
+                {localize(group.title, language)}
+              </h3>
+              <ul className="space-y-2.5">
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      to={link.href}
+                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {linkLabel(group.id, link.label, language)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          ))}
 
-          {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">{t('footer.quickLinks')}</h3>
-            <ul className="space-y-3">
-              {quickLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm inline-flex items-center gap-2 group"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent/60 group-hover:bg-accent transition-colors" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal Links */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">{t('footer.legal')}</h3>
-            <ul className="space-y-3">
-              {legalLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-primary-foreground/80 hover:text-primary-foreground transition-colors text-sm inline-flex items-center gap-2 group"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent/60 group-hover:bg-accent transition-colors" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">{t('contact.info.title')}</h3>
-            <ul className="space-y-4">
-              <li className="flex items-center gap-3 text-sm text-primary-foreground/80">
-                <div className="w-9 h-9 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <span>info@eshopmarket.com</span>
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.12em] text-foreground">
+              {language === "bn" ? "যোগাযোগ" : "Contact"}
+            </h3>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2.5">
+                <Mail className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+                <a href="mailto:info@eshopmarket.com" className="hover:text-foreground">
+                  info@eshopmarket.com
+                </a>
               </li>
-              <li className="flex items-center gap-3 text-sm text-primary-foreground/80">
-                <div className="w-9 h-9 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-4 h-4" />
-                </div>
-                <span>+880 1700-000000</span>
+              <li className="flex items-center gap-2.5">
+                <Phone className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+                <a href="tel:+8801700000000" className="hover:text-foreground">
+                  +880 1700-000000
+                </a>
               </li>
-              <li className="flex items-start gap-3 text-sm text-primary-foreground/80">
-                <div className="w-9 h-9 rounded-lg bg-primary-foreground/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <span>
-                  {language === 'bn'
-                    ? 'ঢাকা, বাংলাদেশ'
-                    : 'Dhaka, Bangladesh'}
-                </span>
+              <li className="flex items-start gap-2.5">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+                <span>{language === "bn" ? "ঢাকা, বাংলাদেশ" : "Dhaka, Bangladesh"}</span>
               </li>
             </ul>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-primary-foreground/15 mt-12 pt-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-primary-foreground/60">
-              {t('footer.copyright')}
-            </p>
-            <p className="text-sm text-primary-foreground/40">
-              {language === 'bn'
-                ? 'ভালোবাসা দিয়ে তৈরি ❤️ বাংলাদেশ'
-                : 'Made with ❤️ in Bangladesh'}
-            </p>
-          </div>
+      <div className="border-t border-border">
+        <div className="container-custom flex flex-col items-start justify-between gap-3 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center">
+          <p>
+            © {year} {language === "bn" ? "ইশপ মার্কেট" : "eShop Market"}.{" "}
+            {language === "bn" ? "সর্বস্বত্ব সংরক্ষিত।" : "All rights reserved."}
+          </p>
+          <p>
+            {language === "bn"
+              ? "ডিজিটাল গুডস মার্কেটপ্লেস"
+              : "Digital goods marketplace"}
+          </p>
         </div>
       </div>
     </footer>
   );
-};
-
-export default Footer;
+}

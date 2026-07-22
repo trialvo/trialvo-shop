@@ -1,31 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Product } from "@/data/products";
+import type { ProductApiRow } from "@/types/marketplace";
 
-// Fetch all active products with optional category filter
-async function fetchProducts(category?: string): Promise<Product[]> {
-  const query = category ? `?category=${category}` : "";
-  const data = await api.get<any[]>(`/products${query}`);
-  return data.map(rowToProduct);
-}
-
-// Fetch single product by slug
-async function fetchProductBySlug(slug: string): Promise<Product | null> {
+function parseJsonField<T>(value: T | string, fallback: T): T {
+  if (typeof value !== "string") return value;
   try {
-    const data = await api.get<any>(`/products/${slug}`);
-    return rowToProduct(data);
+    return JSON.parse(value) as T;
   } catch {
-    return null;
+    return fallback;
   }
 }
 
-// Fetch featured products
-async function fetchFeaturedProducts(): Promise<Product[]> {
-  const data = await api.get<any[]>("/products/featured");
-  return data.map(rowToProduct);
-}
-
-function rowToProduct(row: any): Product {
+function rowToProduct(row: ProductApiRow): Product {
   return {
     id: row.id,
     slug: row.slug,
@@ -33,33 +20,49 @@ function rowToProduct(row: any): Product {
     priceBDT: Number(row.price_bdt),
     priceUSD: Number(row.price_usd),
     thumbnail: row.thumbnail,
-    images:
-      typeof row.images === "string" ? JSON.parse(row.images) : row.images,
+    images: parseJsonField(row.images, { admin: [], shop: [] }),
     videoUrl: row.video_url || undefined,
-    demo: typeof row.demo === "string" ? JSON.parse(row.demo) : row.demo,
-    name: typeof row.name === "string" ? JSON.parse(row.name) : row.name,
-    shortDescription:
-      typeof row.short_description === "string"
-        ? JSON.parse(row.short_description)
-        : row.short_description,
-    features:
-      typeof row.features === "string"
-        ? JSON.parse(row.features)
-        : row.features,
-    facilities:
-      typeof row.facilities === "string"
-        ? JSON.parse(row.facilities)
-        : row.facilities,
-    faq: typeof row.faq === "string" ? JSON.parse(row.faq) : row.faq,
-    seo: typeof row.seo === "string" ? JSON.parse(row.seo) : row.seo,
+    demo: parseJsonField(row.demo, []),
+    name: parseJsonField(row.name, { bn: "", en: "" }),
+    shortDescription: parseJsonField(row.short_description, { bn: "", en: "" }),
+    features: parseJsonField(row.features, { bn: [], en: [] }),
+    facilities: parseJsonField(row.facilities, { bn: [], en: [] }),
+    faq: parseJsonField(row.faq, []),
+    seo: parseJsonField(row.seo, {
+      title: { bn: "", en: "" },
+      description: { bn: "", en: "" },
+      keywords: { bn: [], en: [] },
+    }),
     isFeatured: Boolean(row.is_featured),
     isActive: Boolean(row.is_active),
     isTrialable: Boolean(row.is_trialable),
+    sortOrder:
+      row.sort_order == null || row.sort_order === ""
+        ? undefined
+        : Number(row.sort_order),
     createdAt: row.created_at,
   };
 }
 
-// ========== Hooks ==========
+async function fetchProducts(category?: string): Promise<Product[]> {
+  const query = category ? `?category=${category}` : "";
+  const data = await api.get<ProductApiRow[]>(`/products${query}`);
+  return data.map(rowToProduct);
+}
+
+async function fetchProductBySlug(slug: string): Promise<Product | null> {
+  try {
+    const data = await api.get<ProductApiRow>(`/products/${slug}`);
+    return rowToProduct(data);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchFeaturedProducts(): Promise<Product[]> {
+  const data = await api.get<ProductApiRow[]>("/products/featured");
+  return data.map(rowToProduct);
+}
 
 export function useProducts(category?: string) {
   return useQuery({
@@ -73,7 +76,7 @@ export function useProduct(slug: string | undefined) {
   return useQuery({
     queryKey: ["product", slug],
     queryFn: () => fetchProductBySlug(slug!),
-    enabled: !!slug,
+    enabled: Boolean(slug),
     staleTime: 1000 * 60,
   });
 }
@@ -86,7 +89,6 @@ export function useFeaturedProducts() {
   });
 }
 
-// Get related products (same category, different id)
 export function useRelatedProducts(
   productId: string | undefined,
   category: string | undefined,
@@ -95,15 +97,13 @@ export function useRelatedProducts(
     queryKey: ["relatedProducts", productId, category],
     queryFn: async () => {
       if (!productId || !category) return [];
-      // We need the slug for the related endpoint, but we only have productId
-      // Use the products endpoint with category filter instead
-      const data = await api.get<any[]>(`/products?category=${category}`);
+      const data = await api.get<ProductApiRow[]>(`/products?category=${category}`);
       return data
-        .filter((p: any) => p.id !== productId)
+        .filter((row) => row.id !== productId)
         .slice(0, 3)
         .map(rowToProduct);
     },
-    enabled: !!productId && !!category,
+    enabled: Boolean(productId && category),
     staleTime: 1000 * 60,
   });
 }

@@ -1,97 +1,119 @@
-import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
-import { useToast } from '@/components/ui/use-toast';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useSubmitTrialRequest } from '@/hooks/useTrialRequests';
-import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { useToast } from "@/components/ui/use-toast";
+import { FormTextField, FormTextareaField } from "@/components/form";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useSubmitTrialRequest } from "@/hooks/useTrialRequests";
+import { usePublicTrialConfig } from "@/hooks/useTrialSettings";
+import {
+  createTrialRequestSchema,
+  type TrialRequestSchemaValues,
+} from "@/lib/validation";
+import { useState } from "react";
 
-interface Props {
+export type RequestTrialModalProps = {
   open: boolean;
-  onOpenChange: (v: boolean) => void;
+  onOpenChange: (open: boolean) => void;
   productSlug: string;
   productName: string;
-}
+};
 
-const RequestTrialModal: React.FC<Props> = ({ open, onOpenChange, productSlug, productName }) => {
+/**
+ * Trial request modal — react-hook-form + zod with shared FormTextField.
+ */
+export function RequestTrialModal({
+  open,
+  onOpenChange,
+  productSlug,
+  productName,
+}: Readonly<RequestTrialModalProps>) {
   const { language } = useLanguage();
   const { toast } = useToast();
   const submit = useSubmitTrialRequest();
   const { data: trialSettings } = usePublicTrialConfig();
-  const [trialType, setTrialType] = useState<'hosted' | 'self_hosted'>('hosted');
-  const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', domain: '', useCase: '' });
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [trialType, setTrialType] = useState<"hosted" | "self_hosted">("hosted");
 
-  const t = (bn: string, en: string) => (language === 'bn' ? bn : en);
+  const t = (bn: string, en: string) => (language === "bn" ? bn : en);
 
-  // Client-side validation so users get instant, field-level feedback before
-  // the request ever hits the API (the backend still validates authoritatively).
-  const validate = () => {
-    const next: Record<string, string> = {};
-    if (!form.name.trim()) next.name = t('নাম দিন', 'Name is required');
-    const email = form.email.trim();
-    if (!email) next.email = t('ইমেইল দিন', 'Email is required');
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = t('সঠিক ইমেইল দিন', 'Enter a valid email address');
-    const phoneDigits = form.phone.replace(/\D/g, '');
-    if (!form.phone.trim()) next.phone = t('ফোন নম্বর দিন', 'Phone is required');
-    else if (phoneDigits.length < 7) next.phone = t('সঠিক ফোন নম্বর দিন', 'Enter a valid phone number');
-    if (trialType === 'self_hosted') {
-      const domain = form.domain.trim();
-      if (!domain) next.domain = t('ডোমেইন দিন', 'Domain is required');
-      else if (!/^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i.test(domain)) {
-        next.domain = t('সঠিক ডোমেইন দিন (যেমন myshop.com)', 'Enter a valid domain (e.g. myshop.com)');
-      }
-    }
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
+  const schema = useMemo(
+    () => createTrialRequestSchema(language, trialType),
+    [language, trialType],
+  );
 
-  const setField = (key: keyof typeof form, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    // Clear a field's error as soon as the user starts correcting it.
-    setErrors((prev) => (prev[key] ? { ...prev, [key]: '' } : prev));
-  };
+  const form = useForm<TrialRequestSchemaValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      domain: "",
+      useCase: "",
+    },
+    mode: "onBlur",
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  // Re-validate domain rules when switching trial type
+  useEffect(() => {
+    void form.trigger("domain");
+  }, [trialType, form]);
+
+  const onSubmit = async (values: TrialRequestSchemaValues) => {
     try {
       const res = await submit.mutateAsync({
         productSlug,
         trialType,
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        company: form.company || undefined,
-        desiredDomain: trialType === 'self_hosted' ? form.domain : undefined,
-        useCase: form.useCase || undefined,
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        company: values.company || undefined,
+        desiredDomain:
+          trialType === "self_hosted" ? values.domain || undefined : undefined,
+        useCase: values.useCase || undefined,
       });
-      // Duplicate email → send them back to the existing status page (no new trial created).
+
       if (res.existing) {
         toast({
-          title: language === 'bn' ? 'আগের ট্রায়াল পাওয়া গেছে' : 'Existing trial found',
-          description: language === 'bn'
-            ? 'এই ইমেইলে ইতিমধ্যে একটি ট্রায়াল আছে। Status পেজে নিয়ে যাওয়া হচ্ছে।'
-            : 'You already have a trial for this email. Opening your status page.',
+          title: t("আগের ট্রায়াল পাওয়া গেছে", "Existing trial found"),
+          description: t(
+            "এই ইমেইলে ইতিমধ্যে একটি ট্রায়াল আছে। Status পেজে নিয়ে যাওয়া হচ্ছে।",
+            "You already have a trial for this email. Opening your status page.",
+          ),
         });
       } else {
         toast({
-          title: language === 'bn' ? (res.autoApproved ? 'ট্রায়াল প্রস্তুত!' : 'অনুরোধ পাঠানো হয়েছে!') : (res.autoApproved ? 'Trial is ready!' : 'Request submitted!'),
-          description: language === 'bn'
-            ? (res.autoApproved ? 'লগইন তথ্য status পেজে দেখুন। ইমেইলও পাঠানো হয়েছে।' : 'ইমেইলে আপডেট পাবেন। Status পেজ খোলা হয়েছে।')
-            : (res.autoApproved ? 'Login details are on your status page. We emailed you too.' : 'Check email for updates. Status page opened.'),
+          title: t(
+            res.autoApproved ? "ট্রায়াল প্রস্তুত!" : "অনুরোধ পাঠানো হয়েছে!",
+            res.autoApproved ? "Trial is ready!" : "Request submitted!",
+          ),
+          description: t(
+            res.autoApproved
+              ? "লগইন তথ্য status পেজে দেখুন। ইমেইলও পাঠানো হয়েছে।"
+              : "ইমেইলে আপডেট পাবেন। Status পেজ খোলা হয়েছে।",
+            res.autoApproved
+              ? "Login details are on your status page. We emailed you too."
+              : "Check email for updates. Status page opened.",
+          ),
         });
       }
+
+      form.reset();
       onOpenChange(false);
       if (res.statusUrl) window.location.href = res.statusUrl;
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : t("সমস্যা হয়েছে", "Something went wrong");
+      toast({ title: "Error", description: message, variant: "destructive" });
     }
   };
 
@@ -99,97 +121,114 @@ const RequestTrialModal: React.FC<Props> = ({ open, onOpenChange, productSlug, p
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{language === 'bn' ? 'ট্রায়াল অনুরোধ' : 'Request Trial'} — {productName}</DialogTitle>
+          <DialogTitle>
+            {t("ট্রায়াল অনুরোধ", "Request Trial")} — {productName}
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="grid grid-cols-2 gap-2">
-            <Button type="button" variant={trialType === 'hosted' ? 'default' : 'outline'} onClick={() => setTrialType('hosted')} className="text-xs h-auto py-2 flex-col">
-              <span>{language === 'bn' ? 'Option 1' : 'Option 1'}</span>
-              <span className="text-[10px] opacity-80">{language === 'bn' ? 'Trialvo হোস্টেড' : 'Trialvo Hosted'}</span>
-            </Button>
-            <Button type="button" variant={trialType === 'self_hosted' ? 'default' : 'outline'} onClick={() => setTrialType('self_hosted')} className="text-xs h-auto py-2 flex-col">
-              <span>{language === 'bn' ? 'Option 2' : 'Option 2'}</span>
-              <span className="text-[10px] opacity-80">{language === 'bn' ? 'আমার ডোমেইন' : 'My Domain'}</span>
-            </Button>
-          </div>
-          {trialSettings && (
-            <p className="text-xs text-muted-foreground rounded-lg bg-muted/40 px-3 py-2">
-              {language === 'bn' ? 'ট্রায়াল মেয়াদ' : 'Trial period'}:{' '}
-              <strong>{trialType === 'hosted' ? trialSettings.hostedDays : trialSettings.selfHostedDays} {language === 'bn' ? 'দিন' : 'days'}</strong>
-              {trialType === 'hosted' && trialSettings.autoApproveHosted && (
-                <> · {language === 'bn' ? 'তাৎক্ষণিক অনুমোদন' : 'instant approval'}</>
-              )}
-            </p>
-          )}
-          <Field
-            id="trial-name" label={t('নাম', 'Name')} required error={errors.name}
-            value={form.name} onChange={(v) => setField('name', v)} autoComplete="name"
-          />
-          <Field
-            id="trial-email" label="Email" type="email" required error={errors.email}
-            value={form.email} onChange={(v) => setField('email', v)} autoComplete="email"
-          />
-          <Field
-            id="trial-phone" label={t('ফোন', 'Phone')} type="tel" required error={errors.phone}
-            value={form.phone} onChange={(v) => setField('phone', v)} autoComplete="tel"
-          />
-          <Field
-            id="trial-company" label={t('কোম্পানি (ঐচ্ছিক)', 'Company (optional)')}
-            value={form.company} onChange={(v) => setField('company', v)} autoComplete="organization"
-          />
-          {trialType === 'self_hosted' && (
-            <Field
-              id="trial-domain" label={t('ডোমেইন', 'Domain')} required error={errors.domain}
-              placeholder="myshop.com" value={form.domain} onChange={(v) => setField('domain', v)}
+
+        <Form {...form} key={`${trialType}-${language}`}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="mt-2 space-y-4"
+            noValidate
+          >
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant={trialType === "hosted" ? "default" : "outline"}
+                onClick={() => setTrialType("hosted")}
+                className="h-auto flex-col py-2 text-xs"
+              >
+                <span>Option 1</span>
+                <span className="text-[10px] opacity-80">
+                  {t("Trialvo হোস্টেড", "Trialvo Hosted")}
+                </span>
+              </Button>
+              <Button
+                type="button"
+                variant={trialType === "self_hosted" ? "default" : "outline"}
+                onClick={() => setTrialType("self_hosted")}
+                className="h-auto flex-col py-2 text-xs"
+              >
+                <span>Option 2</span>
+                <span className="text-[10px] opacity-80">
+                  {t("আমার ডোমেইন", "My Domain")}
+                </span>
+              </Button>
+            </div>
+
+            {trialSettings ? (
+              <p className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                {t("ট্রায়াল মেয়াদ", "Trial period")}:{" "}
+                <strong>
+                  {trialType === "hosted"
+                    ? trialSettings.hostedDays
+                    : trialSettings.selfHostedDays}{" "}
+                  {t("দিন", "days")}
+                </strong>
+                {trialType === "hosted" && trialSettings.autoApproveHosted ? (
+                  <> · {t("তাৎক্ষণিক অনুমোদন", "instant approval")}</>
+                ) : null}
+              </p>
+            ) : null}
+
+            <FormTextField
+              control={form.control}
+              name="name"
+              label={t("নাম", "Name")}
+              autoComplete="name"
+              requiredMark
             />
-          )}
-          <div>
-            <Label htmlFor="trial-usecase">{t('ব্যবহারের উদ্দেশ্য', 'Use case')}</Label>
-            <Textarea id="trial-usecase" value={form.useCase} onChange={(e) => setField('useCase', e.target.value)} rows={2} />
-          </div>
-          <Button type="submit" className="w-full" disabled={submit.isPending}>
-            {submit.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {language === 'bn' ? 'অনুরোধ পাঠান' : 'Submit Request'}
-          </Button>
-        </form>
+            <FormTextField
+              control={form.control}
+              name="email"
+              type="email"
+              label="Email"
+              autoComplete="email"
+              requiredMark
+            />
+            <FormTextField
+              control={form.control}
+              name="phone"
+              type="tel"
+              label={t("ফোন", "Phone")}
+              autoComplete="tel"
+              requiredMark
+            />
+            <FormTextField
+              control={form.control}
+              name="company"
+              label={t("কোম্পানি (ঐচ্ছিক)", "Company (optional)")}
+              autoComplete="organization"
+            />
+            {trialType === "self_hosted" ? (
+              <FormTextField
+                control={form.control}
+                name="domain"
+                label={t("ডোমেইন", "Domain")}
+                placeholder="myshop.com"
+                requiredMark
+              />
+            ) : null}
+            <FormTextareaField
+              control={form.control}
+              name="useCase"
+              label={t("ব্যবহারের উদ্দেশ্য", "Use case")}
+              rows={2}
+              textareaClassName="min-h-[72px]"
+            />
+
+            <Button type="submit" className="w-full" disabled={submit.isPending}>
+              {submit.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {t("অনুরোধ পাঠান", "Submit Request")}
+            </Button>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
-};
-
-// Accessible labelled input with inline validation messaging. Keeping this
-// local avoids repeating the label/aria wiring for every field.
-const Field: React.FC<{
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  required?: boolean;
-  error?: string;
-  placeholder?: string;
-  autoComplete?: string;
-}> = ({ id, label, value, onChange, type = 'text', required, error, placeholder, autoComplete }) => (
-  <div>
-    <Label htmlFor={id}>
-      {label}{required && ' *'}
-    </Label>
-    <Input
-      id={id}
-      type={type}
-      required={required}
-      placeholder={placeholder}
-      autoComplete={autoComplete}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      aria-invalid={!!error}
-      aria-describedby={error ? `${id}-error` : undefined}
-      className={error ? 'border-destructive focus-visible:ring-destructive' : undefined}
-    />
-    {error && (
-      <p id={`${id}-error`} className="mt-1 text-xs text-destructive">{error}</p>
-    )}
-  </div>
-);
+}
 
 export default RequestTrialModal;

@@ -1,7 +1,8 @@
 export interface Product {
   id: string;
   slug: string;
-  category: "ecommerce" | "fashion" | "gift" | "accessories" | "tech";
+  /** Category slug from API /categories */
+  category: string;
   priceBDT: number;
   priceUSD: number;
   thumbnail: string;

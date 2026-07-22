@@ -6,83 +6,83 @@
 
 @layer base {
   :root {
-    /* Primary - Deep Professional Navy */
-    --primary: 220 60% 20%;
+    /*
+     * User-friendly marketplace colors (Fiverr-like):
+     * soft canvas, white cards, readable ink, green actions.
+     */
+    --primary: 210 6% 14%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Soft Blue Gray */
-    --secondary: 214 20% 95%;
-    --secondary-foreground: 220 60% 20%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 210 6% 14%;
 
-    /* Accent - Warm Professional Gold */
-    --accent: 38 92% 50%;
-    --accent-foreground: 220 60% 15%;
+    /* #1DBF73 */
+    --accent: 153 72% 43%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Background & Surface */
-    --background: 0 0% 100%;
-    --foreground: 220 30% 15%;
+    /* Soft page canvas #F5F5F5 */
+    --background: 0 0% 96%;
+    --foreground: 210 6% 14%;
 
-    /* Cards & Surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 220 30% 15%;
+    --card-foreground: 210 6% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 15%;
+    --popover-foreground: 210 6% 14%;
 
-    /* Muted Elements */
-    --muted: 214 20% 96%;
-    --muted-foreground: 220 15% 45%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 220 4% 42%;
 
-    /* Borders & Inputs */
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 220 60% 35%;
+    /* #E4E5E7 */
+    --border: 220 6% 90%;
+    --input: 220 6% 90%;
+    --ring: 153 72% 43%;
 
-    /* Destructive */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success */
-    --success: 142 72% 29%;
+    --success: 153 72% 36%;
     --success-foreground: 0 0% 100%;
 
-    /* Radius */
     --radius: 0.5rem;
 
-    /* Typography */
-    --font-bangla: "Hind Siliguri", sans-serif;
-    --font-english: "Inter", sans-serif;
+    /*
+     * Typography aligned with Fiverr.com:
+     * Fiverr uses proprietary "Macan" (not redistributable).
+     * Figtree is the closest open geometric sans; Hind Siliguri covers Bangla.
+     */
+    --font-bangla: "Hind Siliguri", "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-english: "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-display: "Figtree", "Hind Siliguri", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 30% 15% / 0.05);
+    --shadow-sm: 0 1px 2px 0 hsl(210 6% 14% / 0.04);
     --shadow-md:
-      0 4px 6px -1px hsl(220 30% 15% / 0.08),
-      0 2px 4px -2px hsl(220 30% 15% / 0.06);
+      0 6px 16px -6px hsl(210 6% 14% / 0.1),
+      0 2px 6px -2px hsl(210 6% 14% / 0.05);
     --shadow-lg:
-      0 10px 15px -3px hsl(220 30% 15% / 0.08),
-      0 4px 6px -4px hsl(220 30% 15% / 0.06);
+      0 16px 28px -10px hsl(210 6% 14% / 0.12),
+      0 6px 12px -6px hsl(210 6% 14% / 0.06);
     --shadow-xl:
-      0 20px 25px -5px hsl(220 30% 15% / 0.08),
-      0 8px 10px -6px hsl(220 30% 15% / 0.06);
+      0 24px 40px -14px hsl(210 6% 14% / 0.14),
+      0 10px 16px -8px hsl(210 6% 14% / 0.08);
 
-    /* Gradients */
     --gradient-hero: linear-gradient(
       135deg,
-      hsl(220 60% 20%) 0%,
-      hsl(220 50% 30%) 100%
+      hsl(210 8% 12%) 0%,
+      hsl(200 14% 16%) 55%,
+      hsl(153 28% 18%) 100%
     );
     --gradient-accent: linear-gradient(
       135deg,
-      hsl(38 92% 50%) 0%,
-      hsl(38 92% 60%) 100%
+      hsl(153 72% 43%) 0%,
+      hsl(153 65% 38%) 100%
     );
     --gradient-surface: linear-gradient(
       180deg,
-      hsl(214 20% 98%) 0%,
-      hsl(0 0% 100%) 100%
+      hsl(0 0% 97%) 0%,
+      hsl(0 0% 96%) 100%
     );
 
-    /* Sidebar (keeping for compatibility) */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -90,51 +90,41 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 153 72% 43%;
   }
 
   .dark {
-    /* Primary - Light for dark mode */
-    --primary: 210 40% 98%;
-    --primary-foreground: 220 60% 15%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 220 9% 12%;
 
-    /* Secondary */
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 10% 16%;
+    --secondary-foreground: 0 0% 98%;
 
-    /* Accent - Warm Gold (slightly brighter for dark) */
-    --accent: 38 92% 55%;
-    --accent-foreground: 220 60% 10%;
+    --accent: 153 72% 43%;
+    --accent-foreground: 0 0% 100%;
 
-    /* Background & Surface */
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
+    --background: 220 10% 10%;
+    --foreground: 0 0% 96%;
 
-    /* Cards & Surfaces */
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 10% 13%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 10% 13%;
+    --popover-foreground: 0 0% 96%;
 
-    /* Muted Elements */
-    --muted: 217 32% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 10% 16%;
+    --muted-foreground: 220 8% 68%;
 
-    /* Borders & Inputs */
-    --border: 217 32% 22%;
-    --input: 217 32% 22%;
-    --ring: 212 26% 83%;
+    --border: 220 10% 22%;
+    --input: 220 10% 22%;
+    --ring: 153 72% 43%;
 
-    /* Destructive */
     --destructive: 0 62% 40%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    /* Success */
-    --success: 142 72% 40%;
+    --success: 153 65% 40%;
     --success-foreground: 0 0% 100%;
 
-    /* Shadows for dark mode */
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
     --shadow-md:
       0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.3);
@@ -143,32 +133,31 @@
     --shadow-xl:
       0 20px 25px -5px hsl(0 0% 0% / 0.4), 0 8px 10px -6px hsl(0 0% 0% / 0.3);
 
-    /* Gradients for dark mode */
     --gradient-hero: linear-gradient(
       135deg,
-      hsl(222 47% 12%) 0%,
-      hsl(220 50% 18%) 100%
+      hsl(220 10% 8%) 0%,
+      hsl(200 14% 12%) 55%,
+      hsl(153 25% 14%) 100%
     );
     --gradient-accent: linear-gradient(
       135deg,
-      hsl(38 92% 55%) 0%,
-      hsl(38 92% 65%) 100%
+      hsl(153 72% 43%) 0%,
+      hsl(153 65% 38%) 100%
     );
     --gradient-surface: linear-gradient(
       180deg,
-      hsl(222 47% 10%) 0%,
-      hsl(222 47% 8%) 100%
+      hsl(220 10% 10%) 0%,
+      hsl(220 10% 8%) 100%
     );
 
-    /* Sidebar */
-    --sidebar-background: 222 47% 10%;
+    --sidebar-background: 220 10% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224 76% 48%;
+    --sidebar-primary: 153 72% 43%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 15%;
+    --sidebar-accent: 220 10% 15%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 222 47% 18%;
-    --sidebar-ring: 217 91% 59%;
+    --sidebar-border: 220 10% 18%;
+    --sidebar-ring: 153 72% 43%;
   }
 }
 
@@ -184,6 +173,8 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-bangla);
+    font-feature-settings: "ss01" on, "cv01" on;
+    letter-spacing: -0.011em;
   }
 
   body.lang-en {
@@ -197,6 +188,8 @@
   h5,
   h6 {
     @apply font-semibold tracking-tight;
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 
   /* Bengali Typography Optimization */
@@ -206,6 +199,10 @@
 
   .font-english {
     font-family: var(--font-english);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
   }
 }
 
@@ -243,9 +240,9 @@
     @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
-  /* Section Spacing */
+  /* Section Spacing — marketplace catalog rhythm */
   .section-padding {
-    @apply py-16 md:py-24;
+    @apply py-14 md:py-20;
   }
 
   /* Price Display */

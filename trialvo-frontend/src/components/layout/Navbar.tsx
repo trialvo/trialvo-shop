@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Globe } from 'lucide-react';
-import { useLanguage, Language } from '@/contexts/LanguageContext';
-import { Button } from '@/components/ui/button';
-import ThemeToggle from '@/components/ThemeToggle';
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Globe, Menu, X } from "lucide-react";
+import { useLanguage, type Language } from "@/contexts/LanguageContext";
+import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ThemeToggle";
+import { BrandLogo } from "@/components/brand";
+import { cn } from "@/lib/utils";
 
-const Navbar: React.FC = () => {
+export default function Navbar() {
   const { language, setLanguage, t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const isHome = location.pathname === "/";
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setIsScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -24,121 +26,147 @@ const Navbar: React.FC = () => {
   }, [location]);
 
   const navLinks = [
-    { href: '/', label: t('nav.home') },
-    { href: '/products', label: t('nav.products') },
-    { href: '/about', label: t('nav.about') },
-    { href: '/contact', label: t('nav.contact') },
+    { href: "/", label: t("nav.home") },
+    { href: "/products", label: t("nav.products") },
+    { href: "/about", label: t("nav.about") },
+    { href: "/contact", label: t("nav.contact") },
   ];
 
-  const toggleLanguage = (lang: Language) => {
-    setLanguage(lang);
-  };
+  const isActive = (href: string) =>
+    href === "/" ? location.pathname === "/" : location.pathname.startsWith(href);
 
-  const isActive = (href: string) => {
-    if (href === '/') return location.pathname === '/';
-    return location.pathname.startsWith(href);
-  };
+  const transparent = isHome && !isScrolled && !isMobileMenuOpen;
+  const brandName = language === "bn" ? "ইশপ মার্কেট" : "eShop Market";
 
   return (
     <header
-      className={`header-sticky transition-all duration-300 ${isScrolled ? 'shadow-soft-md' : ''
-        }`}
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 transition-all duration-300",
+        transparent
+          ? "border-transparent bg-transparent"
+          : "border-b border-border/80 bg-background/90 shadow-sm backdrop-blur-md",
+      )}
     >
       <nav className="container-custom" aria-label="Main navigation">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
+        <div className="flex h-16 items-center justify-between md:h-[4.5rem]">
           <Link
             to="/"
-            className="flex items-center gap-2.5 font-bold text-xl text-primary group"
-            aria-label="Home"
+            className="group inline-flex items-center transition-opacity hover:opacity-90"
+            aria-label={brandName}
           >
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center transition-transform group-hover:scale-105">
-              <span className="text-primary-foreground font-bold text-lg">E</span>
-            </div>
-            <span className="hidden sm:inline">
-              {language === 'bn' ? 'ইশপ মার্কেট' : 'eShop Market'}
+            <span className="hidden sm:inline-flex">
+              <BrandLogo
+                withWordmark
+                wordmark={brandName}
+                size="md"
+                tone={transparent ? "onDark" : "default"}
+                markClassName="transition-transform duration-200 group-hover:scale-[1.04]"
+              />
+            </span>
+            <span className="inline-flex sm:hidden">
+              <BrandLogo
+                size="md"
+                tone={transparent ? "onDark" : "default"}
+                markClassName="transition-transform duration-200 group-hover:scale-[1.04]"
+              />
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`relative px-4 py-2 text-sm font-medium transition-colors rounded-lg ${isActive(link.href)
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  }`}
+                className={cn(
+                  "rounded-md px-3.5 py-2 text-sm font-medium transition-colors",
+                  transparent
+                    ? isActive(link.href)
+                      ? "bg-white/15 text-white"
+                      : "text-white/75 hover:bg-white/10 hover:text-white"
+                    : isActive(link.href)
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
               >
                 {link.label}
-                {/* Active Indicator */}
-                {isActive(link.href) && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-primary rounded-full" />
-                )}
               </Link>
             ))}
           </div>
 
-          {/* Right Side Actions */}
           <div className="flex items-center gap-2">
-            {/* Theme Toggle */}
-            <ThemeToggle />
+            <div
+              className={cn(
+                transparent &&
+                  "[&_button]:border-white/30 [&_button]:text-white [&_button:hover]:bg-white/10",
+              )}
+            >
+              <ThemeToggle />
+            </div>
 
-            {/* Language Toggle */}
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 h-9 min-w-[70px]"
+              className={cn(
+                "h-9 gap-1.5 rounded-md",
+                transparent &&
+                  "border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white",
+              )}
               aria-label="Toggle language"
-              onClick={() => toggleLanguage(language === 'bn' ? 'en' : 'bn')}
+              onClick={() => setLanguage((language === "bn" ? "en" : "bn") as Language)}
             >
-              <Globe className="w-4 h-4" />
-              <span className="uppercase font-medium text-xs">
-                {language === 'bn' ? 'EN' : 'বাং'}
+              <Globe className="h-4 w-4" />
+              <span className="text-xs font-semibold uppercase">
+                {language === "bn" ? "EN" : "বাং"}
               </span>
             </Button>
 
-            {/* Mobile Menu Toggle */}
+            <Button asChild size="sm" className="hidden h-9 rounded-md px-4 font-semibold md:inline-flex">
+              <Link to="/products">{language === "bn" ? "ব্রাউজ" : "Browse"}</Link>
+            </Button>
+
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+              className={cn(
+                "md:hidden",
+                transparent && "text-white hover:bg-white/10 hover:text-white",
+              )}
+              onClick={() => setIsMobileMenuOpen((open) => !open)}
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMobileMenuOpen}
             >
-              {isMobileMenuOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border py-3 animate-fade-in">
+        {isMobileMenuOpen ? (
+          <div className="border-t border-border/60 bg-background py-3 md:hidden">
             <div className="flex flex-col gap-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive(link.href)
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-foreground hover:bg-muted'
-                    }`}
+                  className={cn(
+                    "rounded-md px-4 py-3 text-sm font-medium",
+                    isActive(link.href)
+                      ? "bg-primary text-primary-foreground"
+                      : "text-foreground hover:bg-muted",
+                  )}
                 >
                   {link.label}
                 </Link>
               ))}
+              <Link
+                to="/products"
+                className="mt-1 rounded-md bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground"
+              >
+                {language === "bn" ? "সব প্রোডাক্ট ব্রাউজ" : "Browse all products"}
+              </Link>
             </div>
           </div>
-        )}
+        ) : null}
       </nav>
     </header>
   );
-};
-
-export default Navbar;
+}

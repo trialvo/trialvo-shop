@@ -1,25 +1,43 @@
 import React from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 
+/**
+ * Cycles system → light → dark so device preference remains reachable.
+ */
 const ThemeToggle: React.FC = () => {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
-  const toggle = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  const cycle = () => {
+    if (theme === 'system') setTheme('light');
+    else if (theme === 'light') setTheme('dark');
+    else setTheme('system');
   };
+
+  const label =
+    theme === 'system'
+      ? 'Using device theme'
+      : theme === 'dark'
+        ? 'Dark theme'
+        : 'Light theme';
 
   return (
     <Button
       variant="outline"
       size="icon"
-      className="h-9 w-9"
-      onClick={toggle}
-      aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="relative h-9 w-9"
+      onClick={cycle}
+      aria-label={label}
+      title={label}
     >
-      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      {theme === 'system' ? (
+        <Monitor className="h-4 w-4" />
+      ) : theme === 'dark' ? (
+        <Moon className="h-4 w-4" />
+      ) : (
+        <Sun className="h-4 w-4" />
+      )}
     </Button>
   );
 };

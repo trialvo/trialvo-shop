@@ -10,6 +10,9 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+/** New key so legacy forced light/dark defaults do not stick */
+const THEME_STORAGE_KEY = 'trialvo-theme';
+
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
@@ -22,41 +25,54 @@ interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('theme') as Theme | null;
-      return stored || 'dark';
-    }
-    return 'dark';
-  });
+function readInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'system';
 
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+    if (stored === 'light' || stored === 'dark' || stored === 'system') {
+      return stored;
+    }
+  } catch {
+    // ignore storage errors
+  }
+
+  // Default: follow device / OS preference
+  return 'system';
+}
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  const [theme, setTheme] = useState<Theme>(readInitialTheme);
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
 
     const getSystemTheme = (): 'light' | 'dark' => {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
     };
 
     const applyTheme = (themeToApply: Theme) => {
-      const resolved = themeToApply === 'system' ? getSystemTheme() : themeToApply;
+      const resolved =
+        themeToApply === 'system' ? getSystemTheme() : themeToApply;
       setResolvedTheme(resolved);
-
       root.classList.remove('light', 'dark');
       root.classList.add(resolved);
     };
 
     applyTheme(theme);
-    localStorage.setItem('theme', theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
 
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
-      if (theme === 'system') {
-        applyTheme('system');
-      }
+      if (theme === 'system') applyTheme('system');
     };
 
     mediaQuery.addEventListener('change', handleChange);

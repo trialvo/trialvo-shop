@@ -1,16 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import type { ContactFormValues } from "@/types/contact";
+import type { ContactSchemaValues } from "@/lib/validation";
 
-interface CreateContactMessageInput {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-}
-
+/** Public contact form → POST /contact */
 export function useCreateContactMessage() {
   return useMutation({
-    mutationFn: async (input: CreateContactMessageInput) => {
+    mutationFn: async (input: ContactFormValues | ContactSchemaValues) => {
       return await api.post("/contact", input);
     },
   });
