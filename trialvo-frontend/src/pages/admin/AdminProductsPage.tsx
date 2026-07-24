@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Pencil, Trash2, Star, Eye, EyeOff, Search, Loader2,
-  X, Image as ImageIcon, Video, Link2, ChevronDown, ChevronUp, Package,
-  Copy, CheckSquare, Square, ChevronLeft, ChevronRight,
+  X, Image as ImageIcon, Link2, ChevronDown, ChevronUp, Package,
+  Copy, CheckSquare, Square, ChevronLeft, ChevronRight, Settings2,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,10 @@ import {
   useAdminProducts, useCreateProduct, useUpdateProduct, useDeleteProduct,
   useDuplicateProduct, useBulkToggleProducts,
 } from '@/hooks/admin/useAdminProducts';
-import { categories } from '@/data/products';
+import { useAdminCategories } from '@/hooks/useCategories';
 import ImageUploadButton from '@/components/admin/ImageUploadButton';
+import { useCleanupMediaUrls } from '@/hooks/useMedia';
+import { isManagedUploadUrl, normalizeProductImages, resolveMediaUrl } from '@/lib/mediaUrl';
 
 // ─── Types ─────────────────────────────────────────────────────
 interface DemoItem {
@@ -35,6 +37,18 @@ interface DemoItem {
 interface FaqItem {
   question: { bn: string; en: string };
   answer: { bn: string; en: string };
+}
+
+interface DeployConfigForm {
+  image_api: string;
+  image_shop: string;
+  image_admin: string;
+  default_trial_days: number;
+  supports_option1: boolean;
+  supports_option2: boolean;
+  shared_demo: boolean;
+  shared_demo_shop_url: string;
+  shared_demo_admin_url: string;
 }
 
 interface ProductFormData {
@@ -59,6 +73,71 @@ interface ProductFormData {
   is_featured: boolean;
   is_active: boolean;
   is_trialable: boolean;
+  deploy_config: DeployConfigForm;
+}
+
+const emptyDemo = (): DemoItem => ({
+  label: { bn: '', en: '' },
+  url: '',
+  username: '',
+  password: '',
+});
+
+const emptyFaq = (): FaqItem => ({
+  question: { bn: '', en: '' },
+  answer: { bn: '', en: '' },
+});
+
+const emptyDeployConfig = (): DeployConfigForm => ({
+  image_api: '',
+  image_shop: '',
+  image_admin: '',
+  default_trial_days: 14,
+  supports_option1: true,
+  supports_option2: true,
+  shared_demo: false,
+  shared_demo_shop_url: '',
+  shared_demo_admin_url: '',
+});
+
+function normalizeDemoList(raw: any): DemoItem[] {
+  if (!Array.isArray(raw) || raw.length === 0) return [emptyDemo()];
+  return raw.map((d) => ({
+    label: { bn: d?.label?.bn ?? '', en: d?.label?.en ?? '' },
+    url: d?.url ?? '',
+    username: d?.username ?? '',
+    password: d?.password ?? '',
+  }));
+}
+
+function normalizeFaqList(raw: any): FaqItem[] {
+  if (!Array.isArray(raw) || raw.length === 0) return [emptyFaq()];
+  return raw.map((f) => ({
+    question: { bn: f?.question?.bn ?? '', en: f?.question?.en ?? '' },
+    answer: { bn: f?.answer?.bn ?? '', en: f?.answer?.en ?? '' },
+  }));
+}
+
+function normalizeDeployConfig(raw: any): DeployConfigForm {
+  const base = emptyDeployConfig();
+  if (!raw || typeof raw !== 'object') return base;
+  return {
+    image_api: String(raw.image_api ?? ''),
+    image_shop: String(raw.image_shop ?? ''),
+    image_admin: String(raw.image_admin ?? ''),
+    default_trial_days: Math.max(1, parseInt(String(raw.default_trial_days ?? 14), 10) || 14),
+    supports_option1: raw.supports_option1 !== false,
+    supports_option2: raw.supports_option2 !== false,
+    shared_demo: Boolean(raw.shared_demo),
+    shared_demo_shop_url: String(raw.shared_demo_shop_url ?? ''),
+    shared_demo_admin_url: String(raw.shared_demo_admin_url ?? ''),
+  };
+}
+
+function parseMoney(raw: string): number {
+  const n = parseFloat(raw);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.round(n * 100) / 100;
 }
 
 const emptyForm: ProductFormData = {
@@ -69,12 +148,12 @@ const emptyForm: ProductFormData = {
   thumbnail: '',
   images: { admin: [''], shop: [''] },
   video_url: '',
-  demo: [{ label: { bn: '', en: '' }, url: '', username: '', password: '' }],
+  demo: [emptyDemo()],
   name: { bn: '', en: '' },
   short_description: { bn: '', en: '' },
   features: { bn: [''], en: [''] },
   facilities: { bn: [''], en: [''] },
-  faq: [{ question: { bn: '', en: '' }, answer: { bn: '', en: '' } }],
+  faq: [emptyFaq()],
   seo: {
     title: { bn: '', en: '' },
     description: { bn: '', en: '' },
@@ -83,6 +162,7 @@ const emptyForm: ProductFormData = {
   is_featured: false,
   is_active: true,
   is_trialable: false,
+  deploy_config: emptyDeployConfig(),
 };
 
 // ─── Reusable styling constants ───────────────────────────────
@@ -139,36 +219,81 @@ const ImageUrlField: React.FC<{
   label: string;
   values: string[];
   onChange: (vals: string[]) => void;
-}> = ({ label, values, onChange }) => (
+  onRemoveUrl?: (url: string) => void;
+  ownerId?: string | null;
+}> = ({ label, values, onChange, onRemoveUrl, ownerId }) => {
+  const safeValues = values?.length ? values : [''];
+
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= safeValues.length) return;
+    const next = [...safeValues];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    onChange(next);
+  };
+
+  const removeAt = (i: number) => {
+    const removed = safeValues[i];
+    if (removed && onRemoveUrl) onRemoveUrl(removed);
+    if (safeValues.length <= 1) {
+      onChange(['']);
+      return;
+    }
+    onChange(safeValues.filter((_, j) => j !== i));
+  };
+
+  return (
   <div className="space-y-2">
     <Label className={labelClass}>{label}</Label>
-    {values.map((url, i) => (
+    {safeValues.map((url, i) => (
       <div key={i} className="space-y-1">
         <div className="flex gap-2">
           <Input
             value={url}
             onChange={(e) => {
-              const newVals = [...values];
+              const newVals = [...safeValues];
               newVals[i] = e.target.value;
               onChange(newVals);
             }}
             className={`flex-1 text-sm ${inputClass}`}
-            placeholder="https://images.unsplash.com/..."
+            placeholder="/uploads/products/... or https://..."
           />
-          {values.length > 1 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => onChange(values.filter((_, j) => j !== i))}
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground"
+            disabled={i === 0}
+            onClick={() => move(i, i - 1)}
+            title="Move up"
+          >
+            <ChevronUp className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground"
+            disabled={i === safeValues.length - 1}
+            onClick={() => move(i, i + 1)}
+            title="Move down"
+          >
+            <ChevronDown className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => removeAt(i)}
+            title="Remove"
+          >
+            <X className="w-3.5 h-3.5" />
+          </Button>
         </div>
         {url && (
           <img
-            src={url}
+            src={resolveMediaUrl(url)}
             alt=""
             className="w-24 h-16 object-cover rounded-lg border border-white/10"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -178,21 +303,27 @@ const ImageUrlField: React.FC<{
     ))}
     <div className="flex items-center gap-2">
       <Button
+        type="button"
         variant="ghost"
         size="sm"
         className="text-primary hover:text-primary/80 text-xs"
-        onClick={() => onChange([...values, ''])}
+        onClick={() => onChange([...safeValues.filter((v) => v.trim()), ''])}
       >
         <Plus className="w-3 h-3 mr-1" /> Add Image
       </Button>
       <ImageUploadButton
         label="Upload"
+        ownerType="product"
+        ownerId={ownerId || undefined}
         className="h-8 text-xs border-border text-foreground hover:bg-muted"
-        onUploaded={(url) => onChange([...values.filter((v) => v.trim()), url])}
+        onUploaded={(uploadedUrl) =>
+          onChange([...safeValues.filter((v) => v.trim()), uploadedUrl])
+        }
       />
     </div>
   </div>
-);
+  );
+};
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────
 const AdminProductsPage: React.FC = () => {
@@ -214,21 +345,34 @@ const AdminProductsPage: React.FC = () => {
 
   const duplicateProduct = useDuplicateProduct();
   const bulkToggle = useBulkToggleProducts();
+  const cleanupMedia = useCleanupMediaUrls();
+  const { data: adminCategories } = useAdminCategories();
+
+  const queueMediaCleanup = (url: string) => {
+    if (!isManagedUploadUrl(url)) return;
+    cleanupMedia.mutate([url]);
+  };
 
   const filtered = products?.filter(
     (p) => {
       const matchesSearch =
-        p.name.en.toLowerCase().includes(search.toLowerCase()) ||
-        p.name.bn.includes(search) ||
-        p.category.includes(search.toLowerCase());
+        (p.name?.en || '').toLowerCase().includes(search.toLowerCase()) ||
+        (p.name?.bn || '').includes(search) ||
+        (p.category || '').includes(search.toLowerCase());
       const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
       return matchesSearch && matchesCategory;
     }
   );
 
+  // Reset page when filters change so the list never looks "empty"
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, categoryFilter]);
+
   // Pagination
-  const totalPages = Math.ceil((filtered?.length || 0) / ITEMS_PER_PAGE);
-  const paginatedProducts = filtered?.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil((filtered?.length || 0) / ITEMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedProducts = filtered?.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
 
   // Selection
   const toggleProductSelect = (id: string) => {
@@ -294,51 +438,100 @@ const AdminProductsPage: React.FC = () => {
   const openEdit = (product: any) => {
     setEditingId(product.id);
     setForm({
-      slug: product.slug,
-      category: product.category,
-      price_bdt: product.priceBDT,
-      price_usd: product.priceUSD,
-      thumbnail: product.thumbnail,
-      images: product.images || { admin: [''], shop: [''] },
+      slug: product.slug || '',
+      category: product.category || 'ecommerce',
+      price_bdt: Number(product.priceBDT) || 0,
+      price_usd: Number(product.priceUSD) || 0,
+      thumbnail: product.thumbnail || '',
+      images: normalizeProductImages(product.images),
       video_url: product.videoUrl || '',
-      demo: product.demo?.length ? product.demo : [{ label: { bn: '', en: '' }, url: '', username: '', password: '' }],
-      name: product.name,
-      short_description: product.shortDescription,
-      features: product.features || { bn: [''], en: [''] },
-      facilities: product.facilities || { bn: [''], en: [''] },
-      faq: product.faq?.length ? product.faq : [{ question: { bn: '', en: '' }, answer: { bn: '', en: '' } }],
-      seo: product.seo || { title: { bn: '', en: '' }, description: { bn: '', en: '' }, keywords: { bn: [''], en: [''] } },
-      is_featured: product.isFeatured,
-      is_active: product.isActive,
+      demo: normalizeDemoList(product.demo),
+      name: { bn: product.name?.bn ?? '', en: product.name?.en ?? '' },
+      short_description: {
+        bn: product.shortDescription?.bn ?? '',
+        en: product.shortDescription?.en ?? '',
+      },
+      features: {
+        bn: product.features?.bn?.length ? product.features.bn : [''],
+        en: product.features?.en?.length ? product.features.en : [''],
+      },
+      facilities: {
+        bn: product.facilities?.bn?.length ? product.facilities.bn : [''],
+        en: product.facilities?.en?.length ? product.facilities.en : [''],
+      },
+      faq: normalizeFaqList(product.faq),
+      seo: {
+        title: {
+          bn: product.seo?.title?.bn ?? '',
+          en: product.seo?.title?.en ?? '',
+        },
+        description: {
+          bn: product.seo?.description?.bn ?? '',
+          en: product.seo?.description?.en ?? '',
+        },
+        keywords: {
+          bn: product.seo?.keywords?.bn?.length ? product.seo.keywords.bn : [''],
+          en: product.seo?.keywords?.en?.length ? product.seo.keywords.en : [''],
+        },
+      },
+      is_featured: Boolean(product.isFeatured),
+      is_active: Boolean(product.isActive),
       is_trialable: Boolean(product.isTrialable),
+      deploy_config: normalizeDeployConfig(product.deployConfig),
     });
     setEditorOpen(true);
   };
 
   const handleSubmit = async () => {
-    // Clean data
+    if (!form.name.en.trim() || !form.slug.trim()) {
+      toast({ title: 'Name (EN) and slug are required', variant: 'destructive' });
+      return;
+    }
+    if (!form.thumbnail.trim()) {
+      toast({ title: 'Thumbnail is required', variant: 'destructive' });
+      return;
+    }
+
     const cleanedForm = {
       ...form,
+      price_bdt: form.price_bdt,
+      price_usd: form.price_usd,
       images: {
         admin: form.images.admin.filter((u) => u.trim()),
         shop: form.images.shop.filter((u) => u.trim()),
       },
-      demo: form.demo.filter((d) => d.url.trim()),
+      // Keep demo if any useful field is filled (not URL-only)
+      demo: form.demo.filter(
+        (d) =>
+          d.url.trim()
+          || d.label.en.trim()
+          || d.label.bn.trim()
+          || d.username.trim()
+          || d.password.trim(),
+      ),
       features: {
-        bn: form.features.bn.filter((f) => f.trim()),
-        en: form.features.en.filter((f) => f.trim()),
+        bn: (form.features?.bn || []).filter((f) => f.trim()),
+        en: (form.features?.en || []).filter((f) => f.trim()),
       },
       facilities: {
-        bn: form.facilities.bn.filter((f) => f.trim()),
-        en: form.facilities.en.filter((f) => f.trim()),
+        bn: (form.facilities?.bn || []).filter((f) => f.trim()),
+        en: (form.facilities?.en || []).filter((f) => f.trim()),
       },
-      faq: form.faq.filter((f) => f.question.en.trim()),
+      // Keep FAQ if either language has a question
+      faq: form.faq.filter(
+        (f) => (f.question?.en || '').trim() || (f.question?.bn || '').trim(),
+      ),
       seo: {
-        ...form.seo,
+        title: form.seo?.title || { bn: '', en: '' },
+        description: form.seo?.description || { bn: '', en: '' },
         keywords: {
-          bn: form.seo.keywords.bn.filter((k) => k.trim()),
-          en: form.seo.keywords.en.filter((k) => k.trim()),
+          bn: (form.seo?.keywords?.bn || []).filter((k) => k.trim()),
+          en: (form.seo?.keywords?.en || []).filter((k) => k.trim()),
         },
+      },
+      deploy_config: {
+        ...form.deploy_config,
+        default_trial_days: Math.max(1, form.deploy_config.default_trial_days || 14),
       },
     };
 
@@ -437,7 +630,7 @@ const AdminProductsPage: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className={labelClass}>Name (Bangla) *</Label>
+                    <Label className={labelClass}>Name (Bangla)</Label>
                     <Input
                       value={form.name.bn}
                       onChange={(e) => setForm({ ...form, name: { ...form.name, bn: e.target.value } })}
@@ -458,16 +651,36 @@ const AdminProductsPage: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <Label className={labelClass}>Category</Label>
-                    <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                    <Select
+                      value={form.category}
+                      onValueChange={(v) => setForm((prev) => ({ ...prev, category: v }))}
+                      disabled={!!adminCategories && adminCategories.length === 0}
+                    >
                       <SelectTrigger className={inputClass}>
-                        <SelectValue />
+                        <SelectValue placeholder={adminCategories ? 'Select category' : 'Loading categories…'} />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
-                        <SelectItem value="ecommerce">Ecommerce</SelectItem>
-                        <SelectItem value="fashion">Fashion</SelectItem>
-                        <SelectItem value="gift">Gift Shop</SelectItem>
-                        <SelectItem value="accessories">Accessories</SelectItem>
-                        <SelectItem value="tech">Tech</SelectItem>
+                        {(adminCategories && adminCategories.length > 0
+                          ? adminCategories
+                              .filter((c) => c.is_active !== 0)
+                              .map((c) => (
+                                <SelectItem key={c.id} value={c.slug}>
+                                  {c.name?.en || c.slug}
+                                </SelectItem>
+                              ))
+                          : [
+                              <SelectItem key="ecommerce" value="ecommerce">Ecommerce</SelectItem>,
+                              <SelectItem key="fashion" value="fashion">Fashion</SelectItem>,
+                              <SelectItem key="gift" value="gift">Gift Shop</SelectItem>,
+                              <SelectItem key="accessories" value="accessories">Accessories</SelectItem>,
+                              <SelectItem key="tech" value="tech">Tech</SelectItem>,
+                            ]
+                        )}
+                        {form.category
+                          && adminCategories
+                          && !adminCategories.some((c) => c.slug === form.category) && (
+                          <SelectItem value={form.category}>{form.category} (current)</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -509,8 +722,10 @@ const AdminProductsPage: React.FC = () => {
                     <Label className={labelClass}>Price (BDT) *</Label>
                     <Input
                       type="number"
+                      step="0.01"
+                      min={0}
                       value={form.price_bdt}
-                      onChange={(e) => setForm({ ...form, price_bdt: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setForm((prev) => ({ ...prev, price_bdt: parseMoney(e.target.value) }))}
                       className={inputClass}
                     />
                   </div>
@@ -518,8 +733,10 @@ const AdminProductsPage: React.FC = () => {
                     <Label className={labelClass}>Price (USD) *</Label>
                     <Input
                       type="number"
+                      step="0.01"
+                      min={0}
                       value={form.price_usd}
-                      onChange={(e) => setForm({ ...form, price_usd: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => setForm((prev) => ({ ...prev, price_usd: parseMoney(e.target.value) }))}
                       className={inputClass}
                     />
                   </div>
@@ -566,12 +783,19 @@ const AdminProductsPage: React.FC = () => {
                     <ImageUploadButton
                       kind="thumbnail"
                       label="Upload"
-                      onUploaded={(url) => setForm({ ...form, thumbnail: url })}
+                      ownerType="product"
+                      ownerId={editingId || undefined}
+                      onUploaded={(url) => setForm((prev) => {
+                        if (prev.thumbnail && isManagedUploadUrl(prev.thumbnail) && prev.thumbnail !== url) {
+                          queueMediaCleanup(prev.thumbnail);
+                        }
+                        return { ...prev, thumbnail: url };
+                      })}
                     />
                   </div>
                   {form.thumbnail && (
                     <img
-                      src={form.thumbnail}
+                      src={resolveMediaUrl(form.thumbnail)}
                       alt="Thumbnail"
                       className="w-32 h-20 object-cover rounded-lg border border-border mt-2 shadow-soft-sm"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -581,12 +805,16 @@ const AdminProductsPage: React.FC = () => {
                 <ImageUrlField
                   label="Admin Panel Screenshots"
                   values={form.images.admin}
-                  onChange={(vals) => setForm({ ...form, images: { ...form.images, admin: vals } })}
+                  ownerId={editingId}
+                  onRemoveUrl={queueMediaCleanup}
+                  onChange={(vals) => setForm((prev) => ({ ...prev, images: { ...prev.images, admin: vals } }))}
                 />
                 <ImageUrlField
                   label="Shop Screenshots"
                   values={form.images.shop}
-                  onChange={(vals) => setForm({ ...form, images: { ...form.images, shop: vals } })}
+                  ownerId={editingId}
+                  onRemoveUrl={queueMediaCleanup}
+                  onChange={(vals) => setForm((prev) => ({ ...prev, images: { ...prev.images, shop: vals } }))}
                 />
                 <div className="space-y-1">
                   <Label className={labelClass}>Video URL</Label>
@@ -613,10 +841,14 @@ const AdminProductsPage: React.FC = () => {
                       <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Demo #{i + 1}</span>
                       {form.demo.length > 1 && (
                         <Button
+                          type="button"
                           variant="ghost"
                           size="sm"
                           className="h-6 text-destructive text-xs hover:bg-destructive/10"
-                          onClick={() => setForm({ ...form, demo: form.demo.filter((_, j) => j !== i) })}
+                          onClick={() => setForm((prev) => ({
+                            ...prev,
+                            demo: prev.demo.filter((_, j) => j !== i),
+                          }))}
                         >
                           <X className="w-3 h-3 mr-1" /> Remove
                         </Button>
@@ -626,9 +858,12 @@ const AdminProductsPage: React.FC = () => {
                       <Input
                         value={d.label.en}
                         onChange={(e) => {
-                          const arr = [...form.demo];
-                          arr[i] = { ...arr[i], label: { ...arr[i].label, en: e.target.value } };
-                          setForm({ ...form, demo: arr });
+                          const val = e.target.value;
+                          setForm((prev) => {
+                            const arr = [...prev.demo];
+                            arr[i] = { ...arr[i], label: { ...arr[i].label, en: val } };
+                            return { ...prev, demo: arr };
+                          });
                         }}
                         className={`text-sm ${inputClass}`}
                         placeholder="Label (EN)"
@@ -636,9 +871,12 @@ const AdminProductsPage: React.FC = () => {
                       <Input
                         value={d.label.bn}
                         onChange={(e) => {
-                          const arr = [...form.demo];
-                          arr[i] = { ...arr[i], label: { ...arr[i].label, bn: e.target.value } };
-                          setForm({ ...form, demo: arr });
+                          const val = e.target.value;
+                          setForm((prev) => {
+                            const arr = [...prev.demo];
+                            arr[i] = { ...arr[i], label: { ...arr[i].label, bn: val } };
+                            return { ...prev, demo: arr };
+                          });
                         }}
                         className={`text-sm ${inputClass}`}
                         placeholder="লেবেল (BN)"
@@ -647,9 +885,12 @@ const AdminProductsPage: React.FC = () => {
                     <Input
                       value={d.url}
                       onChange={(e) => {
-                        const arr = [...form.demo];
-                        arr[i] = { ...arr[i], url: e.target.value };
-                        setForm({ ...form, demo: arr });
+                        const val = e.target.value;
+                        setForm((prev) => {
+                          const arr = [...prev.demo];
+                          arr[i] = { ...arr[i], url: val };
+                          return { ...prev, demo: arr };
+                        });
                       }}
                       className={`text-sm ${inputClass}`}
                       placeholder="https://demo.example.com"
@@ -658,9 +899,12 @@ const AdminProductsPage: React.FC = () => {
                       <Input
                         value={d.username}
                         onChange={(e) => {
-                          const arr = [...form.demo];
-                          arr[i] = { ...arr[i], username: e.target.value };
-                          setForm({ ...form, demo: arr });
+                          const val = e.target.value;
+                          setForm((prev) => {
+                            const arr = [...prev.demo];
+                            arr[i] = { ...arr[i], username: val };
+                            return { ...prev, demo: arr };
+                          });
                         }}
                         className={`text-sm ${inputClass}`}
                         placeholder="Username"
@@ -668,9 +912,12 @@ const AdminProductsPage: React.FC = () => {
                       <Input
                         value={d.password}
                         onChange={(e) => {
-                          const arr = [...form.demo];
-                          arr[i] = { ...arr[i], password: e.target.value };
-                          setForm({ ...form, demo: arr });
+                          const val = e.target.value;
+                          setForm((prev) => {
+                            const arr = [...prev.demo];
+                            arr[i] = { ...arr[i], password: val };
+                            return { ...prev, demo: arr };
+                          });
                         }}
                         className={`text-sm ${inputClass}`}
                         placeholder="Password"
@@ -679,14 +926,15 @@ const AdminProductsPage: React.FC = () => {
                   </div>
                 ))}
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   className="text-primary hover:text-primary/80 text-xs"
                   onClick={() =>
-                    setForm({
-                      ...form,
-                      demo: [...form.demo, { label: { bn: '', en: '' }, url: '', username: '', password: '' }],
-                    })
+                    setForm((prev) => ({
+                      ...prev,
+                      demo: [...prev.demo, emptyDemo()],
+                    }))
                   }
                 >
                   <Plus className="w-3 h-3 mr-1" /> Add Demo
@@ -707,13 +955,13 @@ const AdminProductsPage: React.FC = () => {
                     <ArrayField
                       label="Features (English)"
                       values={form.features.en}
-                      onChange={(v) => setForm({ ...form, features: { ...form.features, en: v } })}
+                      onChange={(v) => setForm((prev) => ({ ...prev, features: { ...prev.features, en: v } }))}
                       placeholder="Feature item..."
                     />
                     <ArrayField
                       label="Features (Bangla)"
                       values={form.features.bn}
-                      onChange={(v) => setForm({ ...form, features: { ...form.features, bn: v } })}
+                      onChange={(v) => setForm((prev) => ({ ...prev, features: { ...prev.features, bn: v } }))}
                       placeholder="ফিচার..."
                     />
                   </div>
@@ -723,13 +971,13 @@ const AdminProductsPage: React.FC = () => {
                     <ArrayField
                       label="Facilities (English)"
                       values={form.facilities.en}
-                      onChange={(v) => setForm({ ...form, facilities: { ...form.facilities, en: v } })}
+                      onChange={(v) => setForm((prev) => ({ ...prev, facilities: { ...prev.facilities, en: v } }))}
                       placeholder="Facility item..."
                     />
                     <ArrayField
                       label="Facilities (Bangla)"
                       values={form.facilities.bn}
-                      onChange={(v) => setForm({ ...form, facilities: { ...form.facilities, bn: v } })}
+                      onChange={(v) => setForm((prev) => ({ ...prev, facilities: { ...prev.facilities, bn: v } }))}
                       placeholder="সুবিধা..."
                     />
                   </div>
@@ -747,10 +995,14 @@ const AdminProductsPage: React.FC = () => {
                       <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">FAQ #{i + 1}</span>
                       {form.faq.length > 1 && (
                         <Button
+                          type="button"
                           variant="ghost"
                           size="sm"
                           className="h-6 text-destructive text-xs hover:bg-destructive/10"
-                          onClick={() => setForm({ ...form, faq: form.faq.filter((_, j) => j !== i) })}
+                          onClick={() => setForm((prev) => ({
+                            ...prev,
+                            faq: prev.faq.filter((_, j) => j !== i),
+                          }))}
                         >
                           <X className="w-3 h-3 mr-1" /> Remove
                         </Button>
@@ -760,9 +1012,12 @@ const AdminProductsPage: React.FC = () => {
                       <Input
                         value={faq.question.en}
                         onChange={(e) => {
-                          const arr = [...form.faq];
-                          arr[i] = { ...arr[i], question: { ...arr[i].question, en: e.target.value } };
-                          setForm({ ...form, faq: arr });
+                          const val = e.target.value;
+                          setForm((prev) => {
+                            const arr = [...prev.faq];
+                            arr[i] = { ...arr[i], question: { ...arr[i].question, en: val } };
+                            return { ...prev, faq: arr };
+                          });
                         }}
                         className={`text-sm ${inputClass}`}
                         placeholder="Question (EN)"
@@ -770,9 +1025,12 @@ const AdminProductsPage: React.FC = () => {
                       <Input
                         value={faq.question.bn}
                         onChange={(e) => {
-                          const arr = [...form.faq];
-                          arr[i] = { ...arr[i], question: { ...arr[i].question, bn: e.target.value } };
-                          setForm({ ...form, faq: arr });
+                          const val = e.target.value;
+                          setForm((prev) => {
+                            const arr = [...prev.faq];
+                            arr[i] = { ...arr[i], question: { ...arr[i].question, bn: val } };
+                            return { ...prev, faq: arr };
+                          });
                         }}
                         className={`text-sm ${inputClass}`}
                         placeholder="প্রশ্ন (BN)"
@@ -782,9 +1040,12 @@ const AdminProductsPage: React.FC = () => {
                       <Textarea
                         value={faq.answer.en}
                         onChange={(e) => {
-                          const arr = [...form.faq];
-                          arr[i] = { ...arr[i], answer: { ...arr[i].answer, en: e.target.value } };
-                          setForm({ ...form, faq: arr });
+                          const val = e.target.value;
+                          setForm((prev) => {
+                            const arr = [...prev.faq];
+                            arr[i] = { ...arr[i], answer: { ...arr[i].answer, en: val } };
+                            return { ...prev, faq: arr };
+                          });
                         }}
                         className={`text-sm ${inputClass}`}
                         placeholder="Answer (EN)"
@@ -793,9 +1054,12 @@ const AdminProductsPage: React.FC = () => {
                       <Textarea
                         value={faq.answer.bn}
                         onChange={(e) => {
-                          const arr = [...form.faq];
-                          arr[i] = { ...arr[i], answer: { ...arr[i].answer, bn: e.target.value } };
-                          setForm({ ...form, faq: arr });
+                          const val = e.target.value;
+                          setForm((prev) => {
+                            const arr = [...prev.faq];
+                            arr[i] = { ...arr[i], answer: { ...arr[i].answer, bn: val } };
+                            return { ...prev, faq: arr };
+                          });
                         }}
                         className={`text-sm ${inputClass}`}
                         placeholder="উত্তর (BN)"
@@ -805,14 +1069,15 @@ const AdminProductsPage: React.FC = () => {
                   </div>
                 ))}
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   className="text-primary hover:text-primary/80 text-xs"
                   onClick={() =>
-                    setForm({
-                      ...form,
-                      faq: [...form.faq, { question: { bn: '', en: '' }, answer: { bn: '', en: '' } }],
-                    })
+                    setForm((prev) => ({
+                      ...prev,
+                      faq: [...prev.faq, emptyFaq()],
+                    }))
                   }
                 >
                   <Plus className="w-3 h-3 mr-1" /> Add FAQ
@@ -866,15 +1131,155 @@ const AdminProductsPage: React.FC = () => {
                   <ArrayField
                     label="Keywords (EN)"
                     values={form.seo.keywords.en}
-                    onChange={(v) => setForm({ ...form, seo: { ...form.seo, keywords: { ...form.seo.keywords, en: v } } })}
+                    onChange={(v) => setForm((prev) => ({
+                      ...prev,
+                      seo: { ...prev.seo, keywords: { ...prev.seo.keywords, en: v } },
+                    }))}
                     placeholder="keyword"
                   />
                   <ArrayField
                     label="Keywords (BN)"
                     values={form.seo.keywords.bn}
-                    onChange={(v) => setForm({ ...form, seo: { ...form.seo, keywords: { ...form.seo.keywords, bn: v } } })}
+                    onChange={(v) => setForm((prev) => ({
+                      ...prev,
+                      seo: { ...prev.seo, keywords: { ...prev.seo.keywords, bn: v } },
+                    }))}
                     placeholder="কিওয়ার্ড"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Deploy / Trial config */}
+            <div className={sectionClass}>
+              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2 pb-2 border-b border-border/50">
+                <Settings2 className="w-4 h-4 text-primary" />
+                Deploy / Trial config
+              </h3>
+              <p className="text-[11px] text-muted-foreground mb-4">
+                Used by Option 1 shared demo and Option 2 installer packaging. Leave blank for non-trial products.
+              </p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className={labelClass}>API image</Label>
+                    <Input
+                      value={form.deploy_config.image_api}
+                      onChange={(e) => setForm((prev) => ({
+                        ...prev,
+                        deploy_config: { ...prev.deploy_config, image_api: e.target.value },
+                      }))}
+                      className={inputClass}
+                      placeholder="lifestyle-api:trial"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={labelClass}>Shop image</Label>
+                    <Input
+                      value={form.deploy_config.image_shop}
+                      onChange={(e) => setForm((prev) => ({
+                        ...prev,
+                        deploy_config: { ...prev.deploy_config, image_shop: e.target.value },
+                      }))}
+                      className={inputClass}
+                      placeholder="lifestyle-shop:trial"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={labelClass}>Admin image</Label>
+                    <Input
+                      value={form.deploy_config.image_admin}
+                      onChange={(e) => setForm((prev) => ({
+                        ...prev,
+                        deploy_config: { ...prev.deploy_config, image_admin: e.target.value },
+                      }))}
+                      className={inputClass}
+                      placeholder="lifestyle-admin:trial"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className={labelClass}>Default trial days</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={365}
+                      value={form.deploy_config.default_trial_days}
+                      onChange={(e) => setForm((prev) => ({
+                        ...prev,
+                        deploy_config: {
+                          ...prev.deploy_config,
+                          default_trial_days: Math.max(1, parseInt(e.target.value, 10) || 1),
+                        },
+                      }))}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4 pt-6">
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.deploy_config.supports_option1}
+                        onChange={(e) => setForm((prev) => ({
+                          ...prev,
+                          deploy_config: { ...prev.deploy_config, supports_option1: e.target.checked },
+                        }))}
+                        className="rounded border-border"
+                      />
+                      Option 1
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.deploy_config.supports_option2}
+                        onChange={(e) => setForm((prev) => ({
+                          ...prev,
+                          deploy_config: { ...prev.deploy_config, supports_option2: e.target.checked },
+                        }))}
+                        className="rounded border-border"
+                      />
+                      Option 2
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.deploy_config.shared_demo}
+                        onChange={(e) => setForm((prev) => ({
+                          ...prev,
+                          deploy_config: { ...prev.deploy_config, shared_demo: e.target.checked },
+                        }))}
+                        className="rounded border-border"
+                      />
+                      Shared demo
+                    </label>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className={labelClass}>Shared demo shop URL</Label>
+                    <Input
+                      value={form.deploy_config.shared_demo_shop_url}
+                      onChange={(e) => setForm((prev) => ({
+                        ...prev,
+                        deploy_config: { ...prev.deploy_config, shared_demo_shop_url: e.target.value },
+                      }))}
+                      className={inputClass}
+                      placeholder="http://localhost:5100"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={labelClass}>Shared demo admin URL</Label>
+                    <Input
+                      value={form.deploy_config.shared_demo_admin_url}
+                      onChange={(e) => setForm((prev) => ({
+                        ...prev,
+                        deploy_config: { ...prev.deploy_config, shared_demo_admin_url: e.target.value },
+                      }))}
+                      className={inputClass}
+                      placeholder="http://localhost:5174"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -890,7 +1295,7 @@ const AdminProductsPage: React.FC = () => {
                 {/* Thumbnail */}
                 {form.thumbnail ? (
                   <img
-                    src={form.thumbnail}
+                    src={resolveMediaUrl(form.thumbnail)}
                     alt="Preview"
                     className="w-full h-48 object-cover rounded-xl border border-white/10"
                     onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect fill="%231a1d2e" width="400" height="200"/><text x="200" y="100" text-anchor="middle" fill="%23666" font-size="14">No Image</text></svg>'; }}
@@ -980,7 +1385,7 @@ const AdminProductsPage: React.FC = () => {
                       {[...form.images.admin, ...form.images.shop].filter((u) => u.trim()).slice(0, 6).map((url, i) => (
                         <img
                           key={i}
-                          src={url}
+                          src={resolveMediaUrl(url)}
                           alt=""
                           className="w-full h-16 object-cover rounded-lg border border-border shadow-soft-sm hover-scale cursor-pointer"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -1084,7 +1489,7 @@ const AdminProductsPage: React.FC = () => {
                   <div key={product.id} className="rounded-xl border border-border/50 bg-muted/20 p-4 space-y-3">
                     <div className="flex items-center gap-3">
                       <img
-                        src={product.thumbnail}
+                        src={resolveMediaUrl(product.thumbnail)}
                         alt={product.name.en}
                         className="w-14 h-12 object-cover rounded-lg border border-border flex-shrink-0"
                       />
@@ -1110,6 +1515,9 @@ const AdminProductsPage: React.FC = () => {
                     <div className="flex items-center justify-end gap-1 pt-2 border-t border-border/50">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openEdit(product)}>
                         <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" title="Duplicate" onClick={() => handleDuplicate(product.id)}>
+                        <Copy className="w-3.5 h-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(product.id)}>
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1147,7 +1555,7 @@ const AdminProductsPage: React.FC = () => {
                         </td>
                         <td className="py-4 px-5">
                           <div className="flex items-center gap-4">
-                            <img src={product.thumbnail} alt={product.name.en} className="w-12 h-10 object-cover rounded-lg border border-border/50 shadow-soft-sm" />
+                            <img src={resolveMediaUrl(product.thumbnail)} alt={product.name.en} className="w-12 h-10 object-cover rounded-lg border border-border/50 shadow-soft-sm" />
                             <div>
                               <p className="text-sm font-medium text-foreground">{product.name.en}</p>
                               <p className="text-xs text-muted-foreground">{product.slug}</p>
@@ -1197,18 +1605,18 @@ const AdminProductsPage: React.FC = () => {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-5 py-3 border-t border-border">
                   <p className="text-xs text-muted-foreground">
-                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filtered?.length || 0)} of {filtered?.length || 0}
+                    Showing {((safePage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(safePage * ITEMS_PER_PAGE, filtered?.length || 0)} of {filtered?.length || 0}
                   </p>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={safePage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
                       <ChevronLeft className="w-4 h-4" />
                     </Button>
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                      <button key={page} onClick={() => setCurrentPage(page)} className={`h-7 w-7 rounded-md text-xs font-medium transition-all ${currentPage === page ? 'bg-primary text-primary-foreground shadow-soft-sm' : 'text-muted-foreground hover:bg-muted'}`}>
+                      <button key={page} onClick={() => setCurrentPage(page)} className={`h-7 w-7 rounded-md text-xs font-medium transition-all ${safePage === page ? 'bg-primary text-primary-foreground shadow-soft-sm' : 'text-muted-foreground hover:bg-muted'}`}>
                         {page}
                       </button>
                     ))}
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" disabled={safePage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>
                       <ChevronRight className="w-4 h-4" />
                     </Button>
                   </div>

@@ -9,6 +9,8 @@ interface ImageUploadButtonProps {
   kind?: MediaKind;
   label?: string;
   className?: string;
+  ownerType?: 'product' | 'category';
+  ownerId?: string;
 }
 
 // Small reusable control: pick an image → upload → return the hosted URL.
@@ -18,6 +20,8 @@ const ImageUploadButton: React.FC<ImageUploadButtonProps> = ({
   kind = 'product_image',
   label = 'Upload',
   className,
+  ownerType,
+  ownerId,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -28,8 +32,16 @@ const ImageUploadButton: React.FC<ImageUploadButtonProps> = ({
     // Reset so selecting the same file again still fires onChange.
     e.target.value = '';
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Only image files are allowed', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'Image must be under 10 MB', variant: 'destructive' });
+      return;
+    }
     try {
-      const res = await upload.mutateAsync({ file, kind });
+      const res = await upload.mutateAsync({ file, kind, ownerType, ownerId });
       onUploaded(res.url);
       toast({ title: 'Image uploaded' });
     } catch (err: any) {

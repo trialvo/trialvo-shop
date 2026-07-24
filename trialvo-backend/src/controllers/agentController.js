@@ -22,7 +22,7 @@ async function registerAgent(req, res, next) {
               status = 'active', domain = COALESCE($1, domain),
               agent_version = $2, started_at = COALESCE(started_at, NOW()),
               updated_at = NOW(),
-              meta = COALESCE(meta, '{}'::jsonb) || $3::jsonb
+              meta = JSON_MERGE_PATCH(COALESCE(meta, '{}'), $3)
              WHERE id = $4`,
             [
                 domain || null,
@@ -59,7 +59,7 @@ async function heartbeat(req, res, next) {
               last_heartbeat_at = NOW(),
               updated_at = NOW(),
               agent_version = COALESCE($2, agent_version),
-              meta = COALESCE(meta, '{}'::jsonb) || $3::jsonb
+              meta = JSON_MERGE_PATCH(COALESCE(meta, '{}'), $3)
              WHERE id = $1`,
             [
                 inst.id,
@@ -83,9 +83,10 @@ async function heartbeat(req, res, next) {
         );
         if (pending.rows.length) {
             const ids = pending.rows.map((r) => r.id);
+            const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
             await pool.query(
-                `UPDATE remote_commands SET status = 'sent', sent_at = NOW() WHERE id = ANY($1::text[])`,
-                [ids]
+                `UPDATE remote_commands SET status = 'sent', sent_at = NOW() WHERE id IN (${placeholders})`,
+                ids
             );
         }
 
@@ -133,27 +134,40 @@ async function ackCommand(req, res, next) {
     try {
         const { status, result } = req.body;
         const cmdStatus = status === 'succeeded' ? 'succeeded' : 'failed';
-        const { rows: cmdRows } = await pool.query(
+        await pool.query(
             `UPDATE remote_commands SET status = $1, result = $2, acknowledged_at = NOW(), completed_at = NOW()
-             WHERE id = $3 AND instance_id = $4
-             RETURNING command`,
+             WHERE id = $3 AND instance_id = $4`,
             [cmdStatus, result ? JSON.stringify(result) : null, req.params.id, req.instance.id]
+        );
+        const { rows: cmdRows } = await pool.query(
+            'SELECT command FROM remote_commands WHERE id = $1 AND instance_id = $2',
+            [req.params.id, req.instance.id]
         );
 
         const command = cmdRows[0]?.command;
         if (cmdStatus === 'succeeded' && (command === 'destroy_soft' || command === 'destroy_hard')) {
-            // Finalize destroy + revoke Opt2 registry pull token (TS-5.4)
+            // Finalize destroy + revoke Opt2 registry pull token (merge in JS for MySQL)
+            const { rows: instRows } = await pool.query(
+                'SELECT meta FROM trial_instances WHERE id = $1',
+                [req.instance.id]
+            );
+            let meta = instRows[0]?.meta;
+            if (typeof meta === 'string') {
+                try { meta = JSON.parse(meta); } catch { meta = {}; }
+            }
+            meta = meta && typeof meta === 'object' ? meta : {};
+            meta.registry = {
+                ...(meta.registry && typeof meta.registry === 'object' ? meta.registry : {}),
+                revoked: true,
+                revoked_at: new Date().toISOString(),
+            };
             await pool.query(
                 `UPDATE trial_instances SET
                    status = 'destroyed',
-                   meta = COALESCE(meta, '{}'::jsonb)
-                     || jsonb_build_object(
-                          'registry',
-                          COALESCE(meta->'registry', '{}'::jsonb) || jsonb_build_object('revoked', true, 'revoked_at', to_jsonb(NOW()::text))
-                        ),
+                   meta = $1,
                    updated_at = NOW()
-                 WHERE id = $1`,
-                [req.instance.id]
+                 WHERE id = $2`,
+                [JSON.stringify(meta), req.instance.id]
             );
             await logEvent(req.instance.id, 'destroy_completed', {
                 command,

@@ -1,7 +1,9 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const { decrypt } = require('../utils/crypto');
 const { logEvent } = require('./trialEvents');
 const { getTrialSettings } = require('./trialSettings');
+const { isSharedDemoInstance, reactivateTrialAdmin } = require('./sharedDemoProvisioner');
 
 async function enqueueCommand(instanceId, command, payload = null) {
   const id = uuidv4();
@@ -16,6 +18,7 @@ async function enqueueCommand(instanceId, command, payload = null) {
 /**
  * After product payment: unfreeze + extend trial instance.
  * Idempotent per order via meta.paid_order_id.
+ * Shared demo: reactivate ADMIN only (no license-agent commands).
  */
 async function activatePaidInstance(instanceId, { orderId, days, source = 'payment_ipn' } = {}) {
   const { rows } = await pool.query('SELECT * FROM trial_instances WHERE id = $1', [instanceId]);
@@ -46,12 +49,30 @@ async function activatePaidInstance(instanceId, { orderId, days, source = 'payme
     `UPDATE trial_instances SET
        status = 'active',
        frozen_at = NULL,
-       expires_at = COALESCE(expires_at, NOW()) + ($1 || ' days')::interval,
-       meta = $2::jsonb,
+       expires_at = DATE_ADD(COALESCE(expires_at, NOW()), INTERVAL ? DAY),
+       meta = ?,
        updated_at = NOW()
-     WHERE id = $3`,
-    [String(extendDays), JSON.stringify(meta), instanceId]
+     WHERE id = ?`,
+    [extendDays, JSON.stringify(meta), instanceId]
   );
+
+  if (isSharedDemoInstance(instance)) {
+    const password = instance.admin_password_enc ? decrypt(instance.admin_password_enc) : null;
+    await reactivateTrialAdmin({ email: instance.admin_email, password });
+    await logEvent(instanceId, 'paid_activate_shared_demo', {
+      orderId,
+      days: extendDays,
+      source,
+      previousStatus: instance.status,
+    });
+    return {
+      ok: true,
+      instanceId,
+      days: extendDays,
+      previousStatus: instance.status,
+      sharedDemo: true,
+    };
+  }
 
   await enqueueCommand(instanceId, 'unfreeze', null);
   await enqueueCommand(instanceId, 'extend', { days: extendDays });
@@ -100,9 +121,17 @@ async function activateFromPaidOrder(order) {
   if (!instanceId) {
     return { ok: false, reason: 'no_matching_instance' };
   }
+
+  const settings = await getTrialSettings();
+  let days = settings.paidExtendDays || 365;
+  if (order.order_kind === 'trial_extend') {
+    days = order.extend_days || settings.extendDays || 30;
+  }
+
   return activatePaidInstance(instanceId, {
     orderId: order.order_id || order.id,
-    source: 'payment_ipn',
+    days,
+    source: order.order_kind === 'trial_extend' ? 'trial_extend_payment' : 'payment_ipn',
   });
 }
 

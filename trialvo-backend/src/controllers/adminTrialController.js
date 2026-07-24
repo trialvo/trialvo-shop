@@ -18,7 +18,7 @@ async function listTrialRequests(req, res, next) {
         if (product) { params.push(product); sql += ` AND p.slug = $${params.length}`; }
         if (q) {
             params.push(`%${q}%`);
-            sql += ` AND (tr.customer_name ILIKE $${params.length} OR tr.email ILIKE $${params.length})`;
+            sql += ` AND (LOWER(tr.customer_name) LIKE LOWER($${params.length}) OR LOWER(tr.email) LIKE LOWER($${params.length}))`;
         }
         sql += ' ORDER BY tr.created_at DESC LIMIT 200';
         const { rows } = await pool.query(sql, params);
@@ -69,11 +69,12 @@ async function rejectTrialRequest(req, res, next) {
             "UPDATE trial_requests SET status = 'rejected', admin_notes = COALESCE($1, admin_notes), updated_at = NOW() WHERE id = $2",
             [reason || null, req.params.id]
         );
-        await sendMail({
-            to: rows[0].email,
-            subject: 'Trial request update — Trialvo',
-            text: `Hi ${rows[0].customer_name},\n\nYour trial request was not approved at this time.${reason ? `\nReason: ${reason}` : ''}\n`,
+        const { trialRejectedEmail } = require('../services/trialEmails');
+        const mail = trialRejectedEmail({
+            name: rows[0].customer_name,
+            reason: reason || null,
         });
+        await sendMail({ to: rows[0].email, ...mail });
         res.json({ ok: true });
     } catch (err) { next(err); }
 }
@@ -90,8 +91,12 @@ async function patchTrialRequest(req, res, next) {
 async function listInstances(req, res, next) {
     try {
         const { status, type } = req.query;
-        let sql = `SELECT ti.*, p.slug AS product_slug, p.name AS product_name
-                   FROM trial_instances ti JOIN products p ON p.id = ti.product_id WHERE 1=1`;
+        let sql = `SELECT ti.*, p.slug AS product_slug, p.name AS product_name,
+                          tr.customer_name, tr.email AS request_email
+                   FROM trial_instances ti
+                   JOIN products p ON p.id = ti.product_id
+                   LEFT JOIN trial_requests tr ON tr.id = ti.request_id
+                   WHERE 1=1`;
         const params = [];
         if (status) { params.push(status); sql += ` AND ti.status = $${params.length}`; }
         if (type) { params.push(type); sql += ` AND ti.trial_type = $${params.length}`; }
@@ -104,8 +109,12 @@ async function listInstances(req, res, next) {
 async function getInstance(req, res, next) {
     try {
         const { rows } = await pool.query(
-            `SELECT ti.*, p.slug AS product_slug, p.name AS product_name
-             FROM trial_instances ti JOIN products p ON p.id = ti.product_id WHERE ti.id = $1`,
+            `SELECT ti.*, p.slug AS product_slug, p.name AS product_name,
+                    tr.customer_name, tr.email AS request_email
+             FROM trial_instances ti
+             JOIN products p ON p.id = ti.product_id
+             LEFT JOIN trial_requests tr ON tr.id = ti.request_id
+             WHERE ti.id = $1`,
             [req.params.id]
         );
         if (!rows.length) return res.status(404).json({ error: 'Not found' });
@@ -140,6 +149,21 @@ async function setInstanceStatus(id, status) {
 
 async function freezeInstance(req, res, next) {
     try {
+        const { rows } = await pool.query(
+            'SELECT admin_email, meta, trial_type FROM trial_instances WHERE id = $1',
+            [req.params.id]
+        );
+        const inst = rows[0];
+        const { isSharedDemoInstance, revokeTrialAdmin } = require('../services/sharedDemoProvisioner');
+
+        if (inst && isSharedDemoInstance(inst)) {
+            // Shared demo: freeze = revoke Lifestyle ADMIN login (stack stays up)
+            const rev = await revokeTrialAdmin({ email: inst.admin_email });
+            await setInstanceStatus(req.params.id, 'frozen');
+            await logEvent(req.params.id, 'shared_demo_frozen', { by: req.admin?.id, revoke: rev });
+            return res.json({ ok: true, status: 'frozen', sharedDemo: true });
+        }
+
         await setInstanceStatus(req.params.id, 'frozen');
         await enqueueCommand(req.params.id, 'freeze', null, req.admin?.id);
         await logEvent(req.params.id, 'freeze', { by: req.admin?.id });
@@ -149,6 +173,21 @@ async function freezeInstance(req, res, next) {
 
 async function unfreezeInstance(req, res, next) {
     try {
+        const { rows } = await pool.query(
+            'SELECT admin_email, admin_password_enc, meta, trial_type FROM trial_instances WHERE id = $1',
+            [req.params.id]
+        );
+        const inst = rows[0];
+        const { isSharedDemoInstance, reactivateTrialAdmin } = require('../services/sharedDemoProvisioner');
+
+        if (inst && isSharedDemoInstance(inst)) {
+            const password = inst.admin_password_enc ? decrypt(inst.admin_password_enc) : null;
+            const act = await reactivateTrialAdmin({ email: inst.admin_email, password });
+            await setInstanceStatus(req.params.id, 'active');
+            await logEvent(req.params.id, 'shared_demo_unfrozen', { by: req.admin?.id, reactivate: act });
+            return res.json({ ok: true, status: 'active', sharedDemo: true });
+        }
+
         await setInstanceStatus(req.params.id, 'active');
         await enqueueCommand(req.params.id, 'unfreeze', null, req.admin?.id);
         await logEvent(req.params.id, 'unfreeze', { by: req.admin?.id });
@@ -159,10 +198,25 @@ async function unfreezeInstance(req, res, next) {
 async function extendInstance(req, res, next) {
     try {
         const days = parseInt(req.body?.days, 10) || 7;
+        const { rows } = await pool.query(
+            'SELECT admin_email, admin_password_enc, meta, status FROM trial_instances WHERE id = $1',
+            [req.params.id]
+        );
+        const inst = rows[0];
+        const { isSharedDemoInstance, reactivateTrialAdmin } = require('../services/sharedDemoProvisioner');
+
         await pool.query(
-            'UPDATE trial_instances SET expires_at = COALESCE(expires_at, NOW()) + ($1 || \' days\')::interval, status = \'active\', updated_at = NOW() WHERE id = $2',
+            'UPDATE trial_instances SET expires_at = DATE_ADD(COALESCE(expires_at, NOW()), INTERVAL ? DAY), status = \'active\', updated_at = NOW() WHERE id = ?',
             [days, req.params.id]
         );
+
+        if (inst && isSharedDemoInstance(inst)) {
+            const password = inst.admin_password_enc ? decrypt(inst.admin_password_enc) : null;
+            await reactivateTrialAdmin({ email: inst.admin_email, password });
+            await logEvent(req.params.id, 'shared_demo_extended', { days });
+            return res.json({ ok: true, days, sharedDemo: true });
+        }
+
         await enqueueCommand(req.params.id, 'extend', { days }, req.admin?.id);
         await logEvent(req.params.id, 'extend', { days });
         res.json({ ok: true, days });
@@ -171,26 +225,79 @@ async function extendInstance(req, res, next) {
 
 async function destroyInstance(req, res, next) {
     try {
+        const instanceId = req.params.id;
         const mode = req.body?.mode === 'hard' ? 'destroy_hard' : 'destroy_soft';
         const hard = req.body?.mode === 'hard';
-        await setInstanceStatus(req.params.id, 'destroying');
-        await enqueueCommand(req.params.id, mode, { mode: hard ? 'hard' : 'soft' }, req.admin?.id);
 
-        // Opt1: tear down Docker stack from control plane when we own it
-        const { rows } = await pool.query('SELECT trial_type, meta FROM trial_instances WHERE id = $1', [req.params.id]);
-        const meta = rows[0]?.meta && typeof rows[0].meta === 'object' ? rows[0].meta : {};
-        if (rows[0]?.trial_type === 'hosted' && meta.docker?.projectDir) {
-            const { destroyDockerStack } = require('../services/dockerProvisioner');
-            const tear = await destroyDockerStack(meta.docker.projectDir, { hard });
-            await logEvent(req.params.id, 'docker_destroyed', { hard, ...tear });
-            if (tear.ok) {
-                await setInstanceStatus(req.params.id, 'destroyed');
-            }
+        const { rows } = await pool.query(
+            'SELECT admin_email, meta, trial_type FROM trial_instances WHERE id = $1',
+            [instanceId]
+        );
+        const inst = rows[0];
+        const { isSharedDemoInstance, revokeTrialAdmin } = require('../services/sharedDemoProvisioner');
+
+        // Shared demo Option 1: revoke ADMIN only — never compose down
+        if (inst && isSharedDemoInstance(inst)) {
+            await setInstanceStatus(instanceId, 'destroying');
+            const rev = await revokeTrialAdmin({ email: inst.admin_email });
+            await setInstanceStatus(instanceId, 'destroyed');
+            await logEvent(instanceId, 'shared_demo_revoked', { mode, revoke: rev, by: req.admin?.id });
+            return res.json({
+                ok: true,
+                status: 'destroyed',
+                mode,
+                sharedDemo: true,
+                message: 'Revoked demo admin access. Shared stack was not shut down.',
+            });
         }
 
-        await logEvent(req.params.id, 'destroy_requested', { mode });
+        await setInstanceStatus(instanceId, 'destroying');
+        await enqueueCommand(instanceId, mode, { mode: hard ? 'hard' : 'soft' }, req.admin?.id);
+        await logEvent(instanceId, 'destroy_requested', { mode });
+
+        // Return immediately so the admin UI does not spin while Docker tears down
         res.json({ ok: true, status: 'destroying', mode });
+
+        // Opt1 legacy docker stacks / Opt2 agent path
+        setImmediate(() => {
+            tearDownHostedDocker(instanceId, hard).catch((err) => {
+                console.error(`[destroy] background teardown failed for ${instanceId}:`, err.message || err);
+            });
+        });
     } catch (err) { next(err); }
+}
+
+/**
+ * Hosted stacks removed by Control Plane (legacy per-trial Docker only).
+ * Shared demo grants never reach here for teardown.
+ */
+async function tearDownHostedDocker(instanceId, hard) {
+    const { rows } = await pool.query(
+        'SELECT trial_type, meta FROM trial_instances WHERE id = $1',
+        [instanceId]
+    );
+    if (!rows.length) return;
+    if (rows[0].trial_type !== 'hosted') return;
+
+    const { isSharedDemoInstance, parseInstanceMeta } = require('../services/sharedDemoProvisioner');
+    if (isSharedDemoInstance(rows[0])) {
+        await logEvent(instanceId, 'docker_destroy_skipped', { reason: 'shared_demo' });
+        return;
+    }
+
+    const meta = parseInstanceMeta(rows[0].meta);
+    const projectDir = meta.docker?.projectDir;
+    if (!projectDir) {
+        await logEvent(instanceId, 'docker_destroy_skipped', { reason: 'no_projectDir' });
+        return;
+    }
+
+    const { destroyDockerStack } = require('../services/dockerProvisioner');
+    const tear = await destroyDockerStack(projectDir, { hard });
+    await logEvent(instanceId, tear.ok ? 'docker_destroyed' : 'docker_destroy_failed', { hard, ...tear });
+    if (tear.ok) {
+        await setInstanceStatus(instanceId, 'destroyed');
+    }
 }
 
 /**
@@ -224,7 +331,7 @@ async function downloadInstaller(req, res, next) {
             const { issueRegistryCredentials } = require('../services/packager');
             registry = issueRegistryCredentials({ installId: inst.install_id, expiresAt: inst.expires_at });
             await pool.query(
-                `UPDATE trial_instances SET meta = COALESCE(meta, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
+                `UPDATE trial_instances SET meta = JSON_MERGE_PATCH(COALESCE(meta, '{}'), ?) WHERE id = ?`,
                 [JSON.stringify({ registry }), inst.id]
             );
         }

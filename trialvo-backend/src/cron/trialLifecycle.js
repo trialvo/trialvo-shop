@@ -9,10 +9,21 @@ const DESTROY_AFTER_DAYS = parseInt(process.env.TRIAL_DESTROY_AFTER_DAYS || '7',
 
 async function expireActiveTrials() {
     const expired = await pool.query(
-        "SELECT id FROM trial_instances WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < NOW()"
+        `SELECT id, admin_email, meta, trial_type FROM trial_instances
+         WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < NOW()`
     );
+    const { isSharedDemoInstance, revokeTrialAdmin } = require('../services/sharedDemoProvisioner');
+
     for (const row of expired.rows) {
         await pool.query("UPDATE trial_instances SET status = 'expired', updated_at = NOW() WHERE id = $1", [row.id]);
+
+        if (isSharedDemoInstance(row)) {
+            // Shared demo: revoke ADMIN login — do not enqueue agent freeze
+            const rev = await revokeTrialAdmin({ email: row.admin_email });
+            await logEvent(row.id, 'shared_demo_auto_expired', { revoke: rev });
+            continue;
+        }
+
         await pool.query(
             'INSERT INTO remote_commands (id, instance_id, command, status) VALUES ($1,$2,$3,$4)',
             [uuidv4(), row.id, 'freeze', 'pending']
@@ -26,14 +37,15 @@ async function expireActiveTrials() {
 }
 
 /**
- * Soft-destroy trials that stayed expired for DESTROY_AFTER_DAYS (agent runs pre-destroy backup).
+ * Soft-destroy trials that stayed expired for DESTROY_AFTER_DAYS.
+ * Shared demo grants: revoke admin (idempotent). Others: queue destroy_soft for agent.
  */
 async function destroyStaleExpiredTrials() {
     const { rows } = await pool.query(
-        `SELECT id FROM trial_instances
+        `SELECT id, admin_email, meta, trial_type FROM trial_instances
          WHERE status = 'expired'
            AND expires_at IS NOT NULL
-           AND expires_at < NOW() - ($1 || ' days')::interval
+           AND expires_at < DATE_SUB(NOW(), INTERVAL ? DAY)
            AND NOT EXISTS (
              SELECT 1 FROM remote_commands rc
              WHERE rc.instance_id = trial_instances.id
@@ -42,7 +54,19 @@ async function destroyStaleExpiredTrials() {
            )`,
         [DESTROY_AFTER_DAYS]
     );
+    const { isSharedDemoInstance, revokeTrialAdmin } = require('../services/sharedDemoProvisioner');
+
     for (const row of rows) {
+        if (isSharedDemoInstance(row)) {
+            const rev = await revokeTrialAdmin({ email: row.admin_email });
+            await pool.query(
+                "UPDATE trial_instances SET status = 'destroyed', updated_at = NOW() WHERE id = $1",
+                [row.id]
+            );
+            await logEvent(row.id, 'shared_demo_auto_destroyed', { afterDays: DESTROY_AFTER_DAYS, revoke: rev });
+            continue;
+        }
+
         await pool.query(
             "UPDATE trial_instances SET status = 'destroying', updated_at = NOW() WHERE id = $1",
             [row.id]
@@ -55,7 +79,7 @@ async function destroyStaleExpiredTrials() {
         await logEvent(row.id, 'auto_destroy_queued', { afterDays: DESTROY_AFTER_DAYS });
     }
     if (rows.length) {
-        console.log(`[trialLifecycle] Queued soft-destroy for ${rows.length} stale expired instance(s)`);
+        console.log(`[trialLifecycle] Queued soft-destroy / revoke for ${rows.length} stale expired instance(s)`);
     }
     return rows.length;
 }
@@ -75,7 +99,7 @@ async function sendExpiryReminders() {
          WHERE ti.status = 'active'
            AND ti.expires_at IS NOT NULL
            AND ti.expires_at > NOW()
-           AND ti.expires_at <= NOW() + INTERVAL '3 days'`
+           AND ti.expires_at <= DATE_ADD(NOW(), INTERVAL 3 DAY)`
     );
 
     let sent = 0;
@@ -112,7 +136,7 @@ async function sendExpiryReminders() {
         meta[`reminder_${kind}_at`] = new Date().toISOString();
 
         await pool.query(
-            'UPDATE trial_instances SET meta = $1::jsonb, updated_at = NOW() WHERE id = $2',
+            'UPDATE trial_instances SET meta = $1, updated_at = NOW() WHERE id = $2',
             [JSON.stringify(meta), row.id]
         );
         await logEvent(row.id, `reminder_${kind}`, { daysLeft, to: row.email });

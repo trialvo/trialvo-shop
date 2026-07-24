@@ -8,7 +8,7 @@ const { pool } = require('./db');
 async function getSettings() {
   try {
     const { rows } = await pool.query(
-      "SELECT key, value FROM system_config WHERE key LIKE 'trialvo_pay_%'"
+      "SELECT `key`, value FROM system_config WHERE `key` LIKE 'trialvo_pay_%'"
     );
     
     const config = {};

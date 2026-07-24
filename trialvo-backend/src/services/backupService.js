@@ -28,7 +28,7 @@ async function createPendingBackup(instanceId, trigger = 'manual') {
   // Placeholder key until blob lands (required NOT NULL)
   const storageKey = `backups/${instanceId}/${id}.enc`;
   await pool.query(
-    `INSERT INTO instance_backups (id, instance_id, storage_key, "trigger", status)
+    `INSERT INTO instance_backups (id, instance_id, storage_key, \`trigger\`, status)
      VALUES ($1, $2, $3, $4, 'pending')`,
     [id, instanceId, storageKey, trigger]
   );
@@ -39,14 +39,9 @@ async function getUploadInstructions(instance, { trigger = 'manual' } = {}) {
   const backupKey = await ensureBackupKey(instance.id);
   const pending = await createPendingBackup(instance.id, trigger);
 
-  const base = (process.env.PUBLIC_API_URL
-    || process.env.FRONTEND_URL?.replace('8000', '8092')
-    || PUBLIC_BASE
-    || `http://localhost:${process.env.PORT || 8092}`
-  ).replace(/\/$/, '');
-
-  // Prefer known local API port from env when set
-  const apiBase = (process.env.PUBLIC_API_URL || `http://localhost:${process.env.PORT || 5000}`).replace(/\/$/, '');
+  const { getPublicApiUrl } = require('../config/publicUrls');
+  const apiBase = getPublicApiUrl();
+  const base = apiBase || (PUBLIC_BASE || '').replace(/\/$/, '');
 
   if (DRIVER === 'local') {
     return {
@@ -131,7 +126,7 @@ async function getBackupForInstance(instanceId, backupId) {
 
 async function listBackups(instanceId) {
   const { rows } = await pool.query(
-    `SELECT id, storage_key, size_bytes, checksum_sha256, "trigger", status, created_at, completed_at
+    `SELECT id, storage_key, size_bytes, checksum_sha256, \`trigger\`, status, created_at, completed_at
      FROM instance_backups WHERE instance_id = $1 ORDER BY created_at DESC LIMIT 50`,
     [instanceId]
   );

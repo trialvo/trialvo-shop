@@ -66,17 +66,24 @@ function encryptPayload(buf, keyHex) {
      WHERE id = $2`,
     [JSON.stringify({ ok: true, mode: 'soft', preDestroyBackupId: instructions.backupId }), cmdId]
   );
+  const { rows: metaRows } = await pool.query('SELECT meta FROM trial_instances WHERE id = $1', [inst.id]);
+  let meta = metaRows[0]?.meta;
+  if (typeof meta === 'string') {
+    try { meta = JSON.parse(meta); } catch { meta = {}; }
+  }
+  meta = meta && typeof meta === 'object' ? meta : {};
+  meta.registry = {
+    ...(meta.registry && typeof meta.registry === 'object' ? meta.registry : {}),
+    revoked: true,
+    revoked_at: new Date().toISOString(),
+  };
   await pool.query(
     `UPDATE trial_instances SET
        status = 'destroyed',
-       meta = COALESCE(meta, '{}'::jsonb)
-         || jsonb_build_object(
-              'registry',
-              COALESCE(meta->'registry', '{}'::jsonb) || jsonb_build_object('revoked', true, 'revoked_at', to_jsonb(NOW()::text))
-            ),
+       meta = $1,
        updated_at = NOW()
-     WHERE id = $1`,
-    [inst.id]
+     WHERE id = $2`,
+    [JSON.stringify(meta), inst.id]
   );
 
   const { rows: check } = await pool.query(
@@ -84,7 +91,7 @@ function encryptPayload(buf, keyHex) {
     [inst.id]
   );
   const { rows: bak } = await pool.query(
-    `SELECT id, "trigger", status FROM instance_backups WHERE id = $1`,
+    'SELECT id, `trigger`, status FROM instance_backups WHERE id = $1',
     [instructions.backupId]
   );
 

@@ -2,37 +2,76 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Product } from "@/data/products";
 
+function parseJsonField<T>(value: unknown, fallback: T): T {
+  if (value == null) return fallback;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return value as T;
+}
+
 function rowToProduct(row: any): Product {
+  const imagesRaw = parseJsonField<{ admin?: string[]; shop?: string[] }>(row.images, {});
+  const name = parseJsonField(row.name, { bn: "", en: "" });
+  const shortDescription = parseJsonField(row.short_description, { bn: "", en: "" });
+  const features = parseJsonField(row.features, { bn: [] as string[], en: [] as string[] });
+  const facilities = parseJsonField(row.facilities, { bn: [] as string[], en: [] as string[] });
+  const seo = parseJsonField(row.seo, {
+    title: { bn: "", en: "" },
+    description: { bn: "", en: "" },
+    keywords: { bn: [] as string[], en: [] as string[] },
+  });
+  const demo = parseJsonField(row.demo, [] as Product["demo"]);
+  const faq = parseJsonField(row.faq, [] as Product["faq"]);
+  const deployConfig = parseJsonField<Record<string, unknown> | null>(row.deploy_config, null);
+
   return {
     id: row.id,
-    slug: row.slug,
-    category: row.category,
-    priceBDT: Number(row.price_bdt),
-    priceUSD: Number(row.price_usd),
-    thumbnail: row.thumbnail,
-    images:
-      typeof row.images === "string" ? JSON.parse(row.images) : row.images,
+    slug: row.slug || "",
+    category: row.category || "",
+    priceBDT: Number(row.price_bdt) || 0,
+    priceUSD: Number(row.price_usd) || 0,
+    thumbnail: row.thumbnail || "",
+    images: {
+      admin: Array.isArray(imagesRaw?.admin) ? imagesRaw.admin : [],
+      shop: Array.isArray(imagesRaw?.shop) ? imagesRaw.shop : [],
+    },
     videoUrl: row.video_url || undefined,
-    demo: typeof row.demo === "string" ? JSON.parse(row.demo) : row.demo,
-    name: typeof row.name === "string" ? JSON.parse(row.name) : row.name,
-    shortDescription:
-      typeof row.short_description === "string"
-        ? JSON.parse(row.short_description)
-        : row.short_description,
-    features:
-      typeof row.features === "string"
-        ? JSON.parse(row.features)
-        : row.features,
-    facilities:
-      typeof row.facilities === "string"
-        ? JSON.parse(row.facilities)
-        : row.facilities,
-    faq: typeof row.faq === "string" ? JSON.parse(row.faq) : row.faq,
-    seo: typeof row.seo === "string" ? JSON.parse(row.seo) : row.seo,
+    demo: Array.isArray(demo) ? demo : [],
+    name: {
+      bn: name?.bn ?? "",
+      en: name?.en ?? "",
+    },
+    shortDescription: {
+      bn: shortDescription?.bn ?? "",
+      en: shortDescription?.en ?? "",
+    },
+    features: {
+      bn: Array.isArray(features?.bn) ? features.bn : [],
+      en: Array.isArray(features?.en) ? features.en : [],
+    },
+    facilities: {
+      bn: Array.isArray(facilities?.bn) ? facilities.bn : [],
+      en: Array.isArray(facilities?.en) ? facilities.en : [],
+    },
+    faq: Array.isArray(faq) ? faq : [],
+    seo: {
+      title: { bn: seo?.title?.bn ?? "", en: seo?.title?.en ?? "" },
+      description: { bn: seo?.description?.bn ?? "", en: seo?.description?.en ?? "" },
+      keywords: {
+        bn: Array.isArray(seo?.keywords?.bn) ? seo.keywords.bn : [],
+        en: Array.isArray(seo?.keywords?.en) ? seo.keywords.en : [],
+      },
+    },
     isFeatured: Boolean(row.is_featured),
     isActive: Boolean(row.is_active),
     isTrialable: Boolean(row.is_trialable),
     sortOrder: Number(row.sort_order || 0),
+    deployConfig: deployConfig && typeof deployConfig === "object" ? deployConfig : null,
     createdAt: row.created_at,
   };
 }
@@ -101,6 +140,7 @@ export function useDuplicateProduct() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["featuredProducts"] });
     },
   });
 }

@@ -17,7 +17,7 @@ async function getCategories(req, res, next) {
             SELECT c.*, COALESCE(pc.product_count, 0) AS product_count
             FROM categories c
             LEFT JOIN (
-                SELECT category, COUNT(*)::int AS product_count
+                SELECT category, COUNT(*) AS product_count
                 FROM products
                 WHERE is_active = 1
                 GROUP BY category
@@ -126,7 +126,7 @@ async function deleteCategory(req, res, next) {
         if (cat.rows.length === 0) return res.status(404).json({ error: 'Category not found' });
 
         const inUse = await pool.query(
-            'SELECT COUNT(*)::int AS count FROM products WHERE category = $1',
+            'SELECT COUNT(*) AS count FROM products WHERE category = $1',
             [cat.rows[0].slug]
         );
         if (inUse.rows[0].count > 0) {

@@ -7,6 +7,7 @@ import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
 import { useProduct } from '@/hooks/useProducts';
 import { useCreateOrder } from '@/hooks/useOrders';
+import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,17 +15,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
-
 const CheckoutPage: React.FC = () => {
   const { language, t } = useLanguage();
   const [searchParams] = useSearchParams();
   const productSlug = searchParams.get('product');
   const trialInstanceId = searchParams.get('trialInstance') || undefined;
+  const isExtend = searchParams.get('extend') === '1';
 
-  const { data: product, isLoading: productLoading } = useProduct(productSlug || undefined);
+  const { data: product, isLoading: productLoading } = useProduct(
+    !isExtend || productSlug ? (productSlug || undefined) : undefined,
+  );
+  const { data: trialConfig, isLoading: configLoading } = usePublicTrialConfig();
   const createOrder = useCreateOrder();
 
-  // Check for error params from Trialvo Pay redirect
   const errorParam = searchParams.get('error');
   const [showError, setShowError] = useState(!!errorParam);
 
@@ -38,8 +41,12 @@ const CheckoutPage: React.FC = () => {
   });
   const [redirecting, setRedirecting] = useState(false);
 
+  const loading = isExtend ? configLoading : productLoading;
+  const extendDays = trialConfig?.extendDays ?? 30;
+  const extendPriceBdt = trialConfig?.extendPriceBdt ?? 1500;
+  const extendPriceUsd = trialConfig?.extendPriceUsd ?? 15;
 
-  if (productLoading) {
+  if (loading) {
     return (
       <Layout>
         <div className="section-padding">
@@ -51,25 +58,43 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
-  if (!product) {
+  if (isExtend && !trialInstanceId) {
     return (
       <Layout>
-        <div className="section-padding">
-          <div className="container-custom text-center">
-            <h1 className="text-2xl font-bold mb-4">
-              {language === 'bn' ? 'প্রোডাক্ট পাওয়া যায়নি' : 'Product not found'}
-            </h1>
-            <Button asChild>
-              <Link to="/products">{t('nav.products')}</Link>
-            </Button>
-          </div>
+        <div className="section-padding container-custom text-center">
+          <h1 className="text-2xl font-bold mb-4">
+            {language === 'bn' ? 'ট্রায়াল এক্সটেন্ড লিংক অবৈধ' : 'Invalid extend link'}
+          </h1>
+          <Button asChild><Link to="/products">{t('nav.products')}</Link></Button>
         </div>
       </Layout>
     );
   }
 
+  if (!isExtend && !product) {
+    return (
+      <Layout>
+        <div className="section-padding container-custom text-center">
+          <h1 className="text-2xl font-bold mb-4">
+            {language === 'bn' ? 'প্রোডাক্ট পাওয়া যায়নি' : 'Product not found'}
+          </h1>
+          <Button asChild><Link to="/products">{t('nav.products')}</Link></Button>
+        </div>
+      </Layout>
+    );
+  }
+
+  const displayName = isExtend
+    ? (language === 'bn'
+      ? `ট্রায়াল এক্সটেন্ড (+${extendDays} দিন)`
+      : `Trial extend (+${extendDays} days)`)
+    : (product!.name[language] || product!.name.en);
+
+  const priceBdt = isExtend ? extendPriceBdt : product!.priceBDT;
+  const priceUsd = isExtend ? extendPriceUsd : product!.priceUSD;
+
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -81,89 +106,103 @@ const CheckoutPage: React.FC = () => {
 
     try {
       const order = await createOrder.mutateAsync({
-        productId: product.id,
-        productName: product.name[language],
+        ...(isExtend
+          ? {
+              orderKind: 'trial_extend' as const,
+              trialInstanceId,
+              productId: product?.id,
+              productName: displayName,
+            }
+          : {
+              orderKind: 'product' as const,
+              productId: product!.id,
+              productName: product!.name[language],
+              trialInstanceId: trialInstanceId || undefined,
+              totalBdt: product!.priceBDT,
+            }),
         customerName: formData.name,
         customerEmail: formData.email,
         customerPhone: formData.phone,
         company: formData.company,
-        needsHosting: formData.needsHosting,
+        needsHosting: isExtend ? false : formData.needsHosting,
         notes: formData.notes,
         paymentMethod: 'trialvo_pay',
-        totalBdt: product.priceBDT,
-        ...(trialInstanceId ? { trialInstanceId } : {}),
       });
 
       if (order.pay_url) {
-        // Redirect to Trialvo Pay hosted payment page
         toast.success(
-          language === 'bn'
-            ? 'পেমেন্ট পেজে পাঠানো হচ্ছে...'
-            : 'Redirecting to payment page...'
+          language === 'bn' ? 'পেমেন্ট পেজে পাঠানো হচ্ছে...' : 'Redirecting to payment page...',
         );
         setTimeout(() => {
           window.location.href = order.pay_url!;
         }, 800);
       } else {
-        // Trialvo Pay unreachable — fallback
         toast.error(
           language === 'bn'
             ? 'পেমেন্ট সিস্টেমে সংযোগ করা যায়নি। পরে আবার চেষ্টা করুন।'
-            : 'Could not connect to payment system. Your order was saved — try again shortly.'
+            : 'Could not connect to payment system. Try again shortly.',
         );
         setRedirecting(false);
       }
     } catch (err) {
+      const message = err instanceof Error ? err.message : '';
       toast.error(
-        language === 'bn'
+        message || (language === 'bn'
           ? 'অর্ডার সাবমিট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।'
-          : 'Failed to submit order. Please try again.'
+          : 'Failed to submit order. Please try again.'),
       );
       setRedirecting(false);
     }
   };
 
-
-  const seoData = {
-    bn: {
-      title: 'চেকআউট - অর্ডার সম্পন্ন করুন',
-      description: 'আপনার পছন্দের ইকমার্স সলিউশন কিনতে চেকআউট সম্পন্ন করুন।',
-    },
-    en: {
-      title: 'Checkout - Complete Your Order',
-      description: 'Complete checkout to purchase your selected ecommerce solution.',
-    },
-  };
-
   return (
     <Layout>
       <SEOHead
-        title={seoData[language].title}
-        description={seoData[language].description}
+        title={isExtend
+          ? (language === 'bn' ? 'ট্রায়াল এক্সটেন্ড' : 'Extend trial')
+          : (language === 'bn' ? 'চেকআউট - অর্ডার সম্পন্ন করুন' : 'Checkout - Complete Your Order')}
+        description={isExtend
+          ? 'Pay to extend your trial period'
+          : 'Complete checkout to purchase your selected ecommerce solution.'}
         noindex
       />
 
       <section className="section-padding">
         <div className="container-custom max-w-4xl">
-          {/* Back Button */}
           <Button asChild variant="ghost" size="sm" className="mb-6">
-            <Link to={`/products/${product.slug}`}>
+            <Link to={productSlug ? `/products/${productSlug}` : '/products'}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              {language === 'bn' ? 'প্রোডাক্টে ফিরুন' : 'Back to product'}
+              {language === 'bn' ? 'ফিরে যান' : 'Back'}
             </Link>
           </Button>
 
-          <h1 className="text-3xl font-bold mb-8">{t('checkout.title')}</h1>
+          <h1 className="text-3xl font-bold mb-8">
+            {isExtend
+              ? (language === 'bn' ? 'ট্রায়াল এক্সটেন্ড' : 'Extend your trial')
+              : t('checkout.title')}
+          </h1>
 
-          {trialInstanceId && (
+          {isExtend ? (
+            <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm space-y-1">
+              <p className="font-medium">
+                {language === 'bn'
+                  ? `পেমেন্ট সফল হলে ট্রায়ালে +${extendDays} দিন যোগ হবে।`
+                  : `Successful payment adds +${extendDays} days to this trial.`}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {language === 'bn'
+                  ? 'এটি প্রোডাক্ট কেনা নয় — শুধুমাত্র ট্রায়াল মেয়াদ বাড়ানো। একই ইমেইল ব্যবহার করুন।'
+                  : 'This is not a full product purchase — only a trial time extension. Use the same email as your trial.'}
+              </p>
+            </div>
+          ) : trialInstanceId ? (
             <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
               {language === 'bn'
-                ? 'এই অর্ডারটি একটি ট্রায়াল instance-এর সাথে লিঙ্ক করা হবে। পেমেন্ট সফল হলে trial অটো সক্রিয়/extend হবে।'
-                : 'This order will link to your trial instance. On successful payment the trial will auto-activate/extend.'}
+                ? 'এই কেনা ট্রায়ালের সাথে লিঙ্ক থাকবে। পেমেন্ট সফল হলে ট্রায়াল কনভার্ট/সক্রিয় হবে।'
+                : 'This purchase links to your trial. On payment success the trial will convert/activate.'}
             </div>
-          )}
+          ) : null}
 
-          {/* Payment Error Banner */}
           {showError && errorParam && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -182,33 +221,18 @@ const CheckoutPage: React.FC = () => {
                 }`}>
                   {errorParam === 'payment_cancelled'
                     ? <XCircle className="w-5 h-5" />
-                    : <AlertTriangle className="w-5 h-5" />
-                  }
+                    : <AlertTriangle className="w-5 h-5" />}
                 </div>
                 <div className="flex-1">
                   <h3 className={`font-semibold ${
                     errorParam === 'payment_cancelled' ? 'text-amber-500' : 'text-red-500'
                   }`}>
                     {errorParam === 'payment_cancelled'
-                      ? (language === 'bn' ? 'পেমেন্ট বাতিল করা হয়েছে' : 'Payment Cancelled')
-                      : (language === 'bn' ? 'পেমেন্ট ব্যর্থ হয়েছে' : 'Payment Failed')
-                    }
+                      ? (language === 'bn' ? 'পেমেন্ট বাতিল' : 'Payment Cancelled')
+                      : (language === 'bn' ? 'পেমেন্ট ব্যর্থ' : 'Payment Failed')}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {errorParam === 'payment_cancelled'
-                      ? (language === 'bn'
-                          ? 'আপনি পেমেন্ট বাতিল করেছেন। আবার চেষ্টা করতে নিচের ফর্ম পূরণ করুন।'
-                          : 'You cancelled the payment. Fill in the form below to try again.')
-                      : (language === 'bn'
-                          ? 'পেমেন্ট সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'
-                          : 'Payment could not be completed. Please try again.')
-                    }
-                  </p>
                 </div>
-                <button
-                  onClick={() => setShowError(false)}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
+                <button type="button" onClick={() => setShowError(false)} className="text-muted-foreground">
                   <XCircle className="w-4 h-4" />
                 </button>
               </div>
@@ -216,208 +240,92 @@ const CheckoutPage: React.FC = () => {
           )}
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Checkout Form */}
-            <motion.div
-              className="lg:col-span-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Customer Information */}
-                <div className="bg-card border border-border rounded-xl p-6">
-                  <h2 className="font-semibold text-xl mb-4">
-                    {t('checkout.customerInfo')}
-                  </h2>
-
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">{t('checkout.name')} *</Label>
-                      <Input
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                        placeholder={language === 'bn' ? 'আপনার নাম' : 'Your name'}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">{t('checkout.email')} *</Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="email@example.com"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">{t('checkout.phone')} *</Label>
-                      <Input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="+880 1XXX-XXXXXX"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="company">{t('checkout.company')}</Label>
-                      <Input
-                        id="company"
-                        name="company"
-                        value={formData.company}
-                        onChange={handleInputChange}
-                        placeholder={language === 'bn' ? 'কোম্পানির নাম' : 'Company name'}
-                      />
-                    </div>
+            <div className="lg:col-span-2">
+              <form onSubmit={handleSubmit} className="space-y-6 border rounded-xl p-6 bg-card">
+                <h2 className="font-semibold">{t('checkout.customerInfo')}</h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name">{t('checkout.name')} *</Label>
+                    <Input id="name" name="name" required value={formData.name} onChange={handleInputChange} />
                   </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email">{t('checkout.email')} *</Label>
+                    <Input id="email" name="email" type="email" required value={formData.email} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone">{t('checkout.phone')} *</Label>
+                    <Input id="phone" name="phone" required placeholder="+880…" value={formData.phone} onChange={handleInputChange} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="company">{t('checkout.company')}</Label>
+                    <Input id="company" name="company" value={formData.company} onChange={handleInputChange} />
+                  </div>
+                </div>
 
-                  <div className="mt-4 flex items-center gap-2">
+                {!isExtend && (
+                  <div className="flex items-center gap-2">
                     <Checkbox
                       id="needsHosting"
                       checked={formData.needsHosting}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          needsHosting: checked === true,
-                        }))
-                      }
+                      onCheckedChange={(v) => setFormData((p) => ({ ...p, needsHosting: !!v }))}
                     />
-                    <Label htmlFor="needsHosting" className="text-sm cursor-pointer">
-                      {t('checkout.hosting')}
-                    </Label>
+                    <Label htmlFor="needsHosting">{t('checkout.hosting')}</Label>
                   </div>
+                )}
 
-                  <div className="mt-4 space-y-2">
-                    <Label htmlFor="notes">{t('checkout.notes')}</Label>
-                    <Textarea
-                      id="notes"
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      placeholder={
-                        language === 'bn'
-                          ? 'কোনো বিশেষ অনুরোধ থাকলে লিখুন...'
-                          : 'Any special requests...'
-                      }
-                      rows={3}
-                    />
-                  </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="notes">{t('checkout.notes')}</Label>
+                  <Textarea id="notes" name="notes" rows={3} value={formData.notes} onChange={handleInputChange} />
                 </div>
 
-                {/* Payment Info */}
-                <div className="bg-card border border-border rounded-xl p-6">
-                  <h2 className="font-semibold text-xl mb-4">
-                    {language === 'bn' ? 'পেমেন্ট' : 'Payment'}
-                  </h2>
-
-                  <div className="flex items-center gap-3 p-4 rounded-lg border-2 border-primary bg-primary/5">
-                    <ShieldCheck className="w-6 h-6 text-primary flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-sm">
-                        {language === 'bn' ? 'নিরাপদ পেমেন্ট গেটওয়ে' : 'Secure Payment Gateway'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {language === 'bn'
-                          ? 'বিকাশ, নগদ, কার্ড সহ সব পদ্ধতি সাপোর্টেড'
-                          : 'bKash, Nagad, Card & more — powered by Trialvo Pay'
-                        }
-                      </p>
-                    </div>
+                <div className="rounded-lg border p-4 space-y-2">
+                  <div className="flex items-center gap-2 font-medium">
+                    <CreditCard className="w-4 h-4" />
+                    Secure Payment Gateway
                   </div>
-
-                  {errorParam && (
-                    <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
-                      {errorParam === 'payment_failed'
-                        ? (language === 'bn' ? 'পেমেন্ট ব্যর্থ হয়েছে। আবার চেষ্টা করুন।' : 'Payment failed. Please try again.')
-                        : (language === 'bn' ? 'পেমেন্ট বাতিল হয়েছে।' : 'Payment was cancelled.')}
-                    </div>
-                  )}
+                  <p className="text-xs text-muted-foreground">Trialvo Pay — bKash, Nagad, Card & more</p>
                 </div>
 
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                  disabled={createOrder.isPending || redirecting}
-                >
-                  {(createOrder.isPending || redirecting) ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {redirecting
-                        ? (language === 'bn' ? 'পেমেন্ট পেজে যাচ্ছে...' : 'Going to payment...')
-                        : t('checkout.processing')
-                      }
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      {language === 'bn' ? 'পেমেন্ট করুন' : 'Proceed to Payment'}
-                    </>
-                  )}
+                <Button type="submit" className="w-full" size="lg" disabled={redirecting || createOrder.isPending}>
+                  {(redirecting || createOrder.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {redirecting
+                    ? t('checkout.processing')
+                    : (isExtend
+                      ? (language === 'bn' ? 'এক্সটেন্ড পেমেন্ট' : 'Pay to extend')
+                      : (language === 'bn' ? 'পেমেন্টে যান' : 'Proceed to Payment'))}
                 </Button>
               </form>
-            </motion.div>
+            </div>
 
-            {/* Order Summary */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <div className="bg-card border border-border rounded-xl p-6 sticky top-24">
-                <h2 className="font-semibold text-xl mb-4">
-                  {t('checkout.orderSummary')}
-                </h2>
-
-                <div className="flex gap-4 mb-4">
-                  <img
-                    src={product.thumbnail}
-                    alt={product.name[language]}
-                    className="w-20 h-16 object-cover rounded-lg"
-                  />
-                  <div>
-                    <h3 className="font-medium line-clamp-2">
-                      {product.name[language]}
-                    </h3>
-                  </div>
-                </div>
-
-                <div className="border-t border-border pt-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-muted-foreground">
-                      {t('product.price')}
-                    </span>
-                    <span className="font-semibold">
-                      {t('common.bdt')}{product.priceBDT.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm text-muted-foreground">
-                    <span>USD</span>
-                    <span>~${product.priceUSD}</span>
-                  </div>
-                </div>
-
-                <div className="border-t border-border mt-4 pt-4">
-                  <div className="flex justify-between items-center text-lg font-bold">
-                    <span>{language === 'bn' ? 'মোট' : 'Total'}</span>
-                    <span className="text-primary">
-                      {t('common.bdt')}{product.priceBDT.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
+            <aside className="border rounded-xl p-6 bg-card h-fit space-y-4">
+              <h2 className="font-semibold">{t('checkout.orderSummary')}</h2>
+              <div>
+                <p className="font-medium">{displayName}</p>
+                {isExtend && product && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {product.name[language] || product.name.en}
+                  </p>
+                )}
               </div>
-            </motion.div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{language === 'bn' ? 'মূল্য' : 'Price'}</span>
+                <span>৳{Number(priceBdt).toLocaleString()} (~${priceUsd})</span>
+              </div>
+              {isExtend && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{language === 'bn' ? 'যোগ হবে' : 'Adds'}</span>
+                  <span>+{extendDays} {language === 'bn' ? 'দিন' : 'days'}</span>
+                </div>
+              )}
+              <div className="border-t pt-3 flex justify-between font-bold">
+                <span>{language === 'bn' ? 'মোট' : 'Total'}</span>
+                <span>৳{Number(priceBdt).toLocaleString()}</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Secure checkout
+              </p>
+            </aside>
           </div>
         </div>
       </section>

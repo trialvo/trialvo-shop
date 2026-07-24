@@ -16,6 +16,8 @@ interface AuthContextType {
  isLoading: boolean;
  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
  signOut: () => Promise<void>;
+ /** Apply profile returned from PUT /auth/profile */
+ applyAdminProfile: (admin: AdminProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -107,8 +109,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
  };
 
+ const applyAdminProfile = useCallback((admin: AdminProfile) => {
+  setAdminProfile(admin);
+  setUser({ id: admin.id, email: admin.email });
+ }, []);
+
  return (
-  <AuthContext.Provider value={{ user, session, adminProfile, isLoading, signIn, signOut }}>
+  <AuthContext.Provider value={{ user, session, adminProfile, isLoading, signIn, signOut, applyAdminProfile }}>
    {children}
   </AuthContext.Provider>
  );

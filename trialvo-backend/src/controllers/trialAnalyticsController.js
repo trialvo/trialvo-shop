@@ -16,74 +16,77 @@ async function getTrialAnalytics(req, res, next) {
       expiringSoon,
     ] = await Promise.all([
       pool.query(`
-        SELECT status, COUNT(*)::int AS count
+        SELECT status, COUNT(*) AS count
         FROM trial_instances
         GROUP BY status
       `),
       pool.query(`
-        SELECT trial_type, COUNT(*)::int AS count
+        SELECT trial_type, COUNT(*) AS count
         FROM trial_instances
         GROUP BY trial_type
       `),
       pool.query(`
-        SELECT status, COUNT(*)::int AS count
+        SELECT status, COUNT(*) AS count
         FROM trial_requests
         GROUP BY status
       `),
       pool.query(`
-        SELECT COUNT(*)::int AS paid
+        SELECT COUNT(*) AS paid
         FROM trial_instances
-        WHERE meta ? 'paid_order_id'
+        WHERE JSON_CONTAINS_PATH(meta, 'one', '$.paid_order_id')
       `),
       pool.query(`
         SELECT
-          COUNT(*) FILTER (
-            WHERE last_heartbeat_at IS NOT NULL
-              AND last_heartbeat_at > NOW() - INTERVAL '30 minutes'
-          )::int AS healthy,
-          COUNT(*) FILTER (
-            WHERE status IN ('active', 'frozen', 'provisioning')
-              AND (last_heartbeat_at IS NULL OR last_heartbeat_at <= NOW() - INTERVAL '30 minutes')
-          )::int AS stale,
-          COUNT(*) FILTER (
-            WHERE status IN ('active', 'frozen', 'provisioning')
-          )::int AS monitored
+          SUM(CASE
+            WHEN last_heartbeat_at IS NOT NULL
+              AND last_heartbeat_at > DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+            THEN 1 ELSE 0 END) AS healthy,
+          SUM(CASE
+            WHEN status IN ('active', 'frozen', 'provisioning')
+              AND (last_heartbeat_at IS NULL OR last_heartbeat_at <= DATE_SUB(NOW(), INTERVAL 30 MINUTE))
+            THEN 1 ELSE 0 END) AS stale,
+          SUM(CASE
+            WHEN status IN ('active', 'frozen', 'provisioning')
+            THEN 1 ELSE 0 END) AS monitored
         FROM trial_instances
       `),
       pool.query(`
-        SELECT COUNT(*)::int AS count
+        SELECT COUNT(*) AS count
         FROM trial_instances
-        WHERE COALESCE((meta->>'agent_outdated')::boolean, false) = true
+        WHERE JSON_UNQUOTE(JSON_EXTRACT(meta, '$.agent_outdated')) IN ('true', '1')
           AND status NOT IN ('destroyed')
       `),
       pool.query(`
-        SELECT COUNT(*)::int AS count
+        SELECT COUNT(*) AS count
         FROM trial_instances
         WHERE status = 'active'
           AND expires_at IS NOT NULL
           AND expires_at > NOW()
-          AND expires_at <= NOW() + INTERVAL '3 days'
+          AND expires_at <= DATE_ADD(NOW(), INTERVAL 3 DAY)
       `),
     ]);
 
-    const statusMap = Object.fromEntries(byStatus.rows.map((r) => [r.status, r.count]));
-    const typeMap = Object.fromEntries(byType.rows.map((r) => [r.trial_type, r.count]));
-    const requestMap = Object.fromEntries(requests.rows.map((r) => [r.status, r.count]));
+    const statusMap = Object.fromEntries(byStatus.rows.map((r) => [r.status, Number(r.count)]));
+    const typeMap = Object.fromEntries(byType.rows.map((r) => [r.trial_type, Number(r.count)]));
+    const requestMap = Object.fromEntries(requests.rows.map((r) => [r.status, Number(r.count)]));
 
     const totalInstances = Object.values(statusMap).reduce((a, b) => a + b, 0);
     const active = statusMap.active || 0;
     const frozen = statusMap.frozen || 0;
     const expired = statusMap.expired || 0;
     const destroyed = statusMap.destroyed || 0;
-    const paid = conversions.rows[0]?.paid || 0;
+    const paid = Number(conversions.rows[0]?.paid || 0);
     const approvedRequests = (requestMap.active || 0) + (requestMap.rejected || 0);
     const conversionRate = approvedRequests > 0
       ? Math.round((paid / Math.max(totalInstances, 1)) * 1000) / 10
       : 0;
 
     const hb = heartbeat.rows[0] || { healthy: 0, stale: 0, monitored: 0 };
-    const uptimePct = hb.monitored > 0
-      ? Math.round((hb.healthy / hb.monitored) * 1000) / 10
+    const healthy = Number(hb.healthy || 0);
+    const stale = Number(hb.stale || 0);
+    const monitored = Number(hb.monitored || 0);
+    const uptimePct = monitored > 0
+      ? Math.round((healthy / monitored) * 1000) / 10
       : null;
 
     res.json({
@@ -108,14 +111,14 @@ async function getTrialAnalytics(req, res, next) {
         conversionRatePct: conversionRate,
       },
       uptime: {
-        healthyHeartbeats: hb.healthy,
-        staleInstances: hb.stale,
-        monitored: hb.monitored,
+        healthyHeartbeats: healthy,
+        staleInstances: stale,
+        monitored,
         healthyPct: uptimePct,
       },
       alerts: {
-        expiringSoon: expiringSoon.rows[0]?.count || 0,
-        outdatedAgents: outdated.rows[0]?.count || 0,
+        expiringSoon: Number(expiringSoon.rows[0]?.count || 0),
+        outdatedAgents: Number(outdated.rows[0]?.count || 0),
       },
     });
   } catch (err) {

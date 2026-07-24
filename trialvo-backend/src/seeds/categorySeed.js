@@ -42,9 +42,8 @@ module.exports = {
         let sortOrder = 0;
         for (const cat of categories) {
             await client.query(
-                `INSERT INTO categories (id, slug, name, description, icon, sort_order, is_active)
-                 VALUES ($1, $2, $3, $4, $5, $6, 1)
-                 ON CONFLICT (slug) DO NOTHING`,
+                `INSERT IGNORE INTO categories (id, slug, name, description, icon, sort_order, is_active)
+                 VALUES ($1, $2, $3, $4, $5, $6, 1)`,
                 [
                     uuidv4(), cat.slug, JSON.stringify(cat.name),
                     JSON.stringify(cat.description), cat.icon, sortOrder++,

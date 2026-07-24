@@ -1,6 +1,3 @@
-/**
- * Migration 018: Trial system settings (auto-approve, trial periods)
- */
 module.exports = {
   name: '018_trial_settings',
   async up(client) {
@@ -12,21 +9,11 @@ module.exports = {
 
     for (const [key, val, desc] of defaults) {
       await client.query(
-        'INSERT INTO system_config (key, value, description) VALUES ($1, $2, $3) ON CONFLICT (key) DO NOTHING',
+        'INSERT IGNORE INTO system_config (`key`, value, description) VALUES ($1, $2, $3)',
         [key, val, desc]
       );
     }
 
     console.log('✅ Migration 018: trial settings seeded');
-  },
-
-  async down(client) {
-    await client.query(`
-      DELETE FROM system_config WHERE key IN (
-        'trial_auto_approve_hosted',
-        'trial_period_hosted_days',
-        'trial_period_self_hosted_days'
-      )
-    `);
   },
 };

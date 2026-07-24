@@ -2,6 +2,7 @@ import { Play } from "lucide-react";
 import { ProductCardBadges } from "@/components/cards/product/ProductCardBadges";
 import type { ProductBadge } from "@/lib/digitalGoods";
 import type { MarketplaceLanguage } from "@/types/marketplace";
+import { resolveMediaUrl } from "@/lib/mediaUrl";
 
 export type ProductCardMediaProps = {
   imageSrc: string;
@@ -19,11 +20,12 @@ export function ProductCardMedia({
   language,
   showPlay = false,
 }: Readonly<ProductCardMediaProps>) {
+  const resolved = resolveMediaUrl(imageSrc);
   return (
     <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-      {imageSrc ? (
+      {resolved ? (
         <img
-          src={imageSrc}
+          src={resolved}
           alt={imageAlt}
           className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           loading="lazy"

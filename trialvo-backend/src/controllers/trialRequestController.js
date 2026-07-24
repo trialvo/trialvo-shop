@@ -30,32 +30,10 @@ async function createTrialRequest(req, res, next) {
             return res.status(400).json({ error: 'desiredDomain required for self_hosted' });
         }
 
-        // One open trial per email: pending/active requests reuse the existing status page
-        // instead of creating another row (avoids duplicate stacks for the same customer).
+        // Dedup key: email + product + option (hosted | self_hosted).
+        // Same user may trial many products, and may take both Option 1 and Option 2
+        // for one product — but not the same option twice while pending/active.
         const normalizedEmail = String(email).trim().toLowerCase();
-        const existing = await pool.query(
-            `SELECT id, public_token, status, requested_days
-             FROM trial_requests
-             WHERE LOWER(TRIM(email)) = $1
-               AND status IN ('pending', 'active')
-             ORDER BY created_at DESC
-             LIMIT 1`,
-            [normalizedEmail]
-        );
-        if (existing.rows.length > 0) {
-            const prev = existing.rows[0];
-            const statusUrl = `${FRONTEND}/trial-status/${prev.public_token}`;
-            return res.status(200).json({
-                ok: true,
-                existing: true,
-                requestId: prev.id,
-                statusToken: prev.public_token,
-                statusUrl,
-                status: prev.status,
-                trialDays: prev.requested_days,
-                message: 'You already have a trial request for this email',
-            });
-        }
 
         const prod = await pool.query(
             'SELECT id, is_trialable, name FROM products WHERE slug = $1 AND is_active = 1',
@@ -64,6 +42,35 @@ async function createTrialRequest(req, res, next) {
         if (prod.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
         if (!prod.rows[0].is_trialable) {
             return res.status(400).json({ error: 'This product is not available for trial' });
+        }
+
+        const existing = await pool.query(
+            `SELECT id, public_token, status, requested_days, trial_type
+             FROM trial_requests
+             WHERE LOWER(TRIM(email)) = $1
+               AND product_id = $2
+               AND trial_type = $3
+               AND status IN ('pending', 'active')
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [normalizedEmail, prod.rows[0].id, trialType]
+        );
+        if (existing.rows.length > 0) {
+            const prev = existing.rows[0];
+            const statusUrl = `${FRONTEND}/trial-status/${prev.public_token}`;
+            const optionLabel = trialType === 'hosted' ? 'Option 1' : 'Option 2';
+            return res.status(200).json({
+                ok: true,
+                existing: true,
+                requestId: prev.id,
+                statusToken: prev.public_token,
+                statusUrl,
+                status: prev.status,
+                trialType: prev.trial_type,
+                productSlug,
+                trialDays: prev.requested_days,
+                message: `You already have a ${optionLabel} trial for this product`,
+            });
         }
 
         const defaultDays = defaultDaysForType(settings, trialType);
@@ -100,28 +107,46 @@ async function createTrialRequest(req, res, next) {
             requested_days: trialDays,
         };
 
-        let autoApproved = false;
-        let provisionResult = null;
+        const willAutoApprove = trialType === 'hosted' && settings.autoApproveHosted;
 
-        // Option 1: auto-provision when admin enabled auto-approve for hosted trials
-        if (trialType === 'hosted' && settings.autoApproveHosted) {
-            provisionResult = await provisionFromRequest(requestRow, trialDays);
-            autoApproved = true;
-        } else {
-            const mail = trialRequestReceivedEmail({ name: name.trim(), statusUrl, autoApproved: false });
-            await sendMail({ to: normalizedEmail, ...mail });
-        }
-
+        // Respond immediately — provision / email run in background so the UI
+        // is not blocked by bcrypt, shared-demo MySQL, or slow SMTP.
         res.status(201).json({
             ok: true,
             requestId: id,
             statusToken: publicToken,
             statusUrl,
-            status: autoApproved ? 'active' : 'pending',
-            autoApproved,
+            status: willAutoApprove ? 'pending' : 'pending',
+            autoApproved: false,
+            provisioning: willAutoApprove,
             trialDays,
-            ...(provisionResult ? { shopUrl: provisionResult.shopUrl, adminUrl: provisionResult.adminUrl } : {}),
+            message: willAutoApprove
+                ? 'Request received. Auto-approval is processing — check email shortly.'
+                : 'Request received. You will get an email when approved.',
         });
+
+        setImmediate(() => {
+            (async () => {
+                try {
+                    if (willAutoApprove) {
+                        await provisionFromRequest(requestRow, trialDays);
+                        console.log(`[trial] auto-approved request ${id}`);
+                    } else {
+                        const mail = trialRequestReceivedEmail({ name: name.trim(), statusUrl });
+                        await sendMail({ to: normalizedEmail, ...mail });
+                    }
+                } catch (err) {
+                    console.error(`[trial] background provision/mail failed for ${id}:`, err.message || err);
+                    try {
+                        await pool.query(
+                            `UPDATE trial_requests SET admin_notes = CONCAT(COALESCE(admin_notes,''), $2), updated_at = NOW() WHERE id = $1 AND status = 'pending'`,
+                            [id, `\n[auto] ${err.message || err}`]
+                        );
+                    } catch { /* ignore */ }
+                }
+            })();
+        });
+        return;
     } catch (err) {
         next(err);
     }
@@ -135,6 +160,10 @@ async function getPublicTrialConfig(req, res, next) {
             selfHostedDays: settings.selfHostedDays,
             autoApproveHosted: settings.autoApproveHosted,
             trialsEnabled: settings.trialsEnabled,
+            extendDays: settings.extendDays,
+            extendPriceBdt: settings.extendPriceBdt,
+            extendPriceUsd: settings.extendPriceUsd,
+            paidExtendDays: settings.paidExtendDays,
         });
     } catch (err) {
         next(err);
@@ -148,7 +177,7 @@ async function getTrialStatus(req, res, next) {
             `SELECT tr.*, p.name AS product_name, p.slug AS product_slug,
                     ti.id AS instance_id, ti.install_id, ti.shop_url, ti.admin_url, ti.api_url,
                     ti.admin_email, ti.admin_password_enc, ti.bootstrap_token_enc,
-                    ti.expires_at AS instance_expires, ti.status AS instance_status
+                    ti.expires_at AS instance_expires, ti.status AS instance_status, ti.meta AS instance_meta
              FROM trial_requests tr
              JOIN products p ON p.id = tr.product_id
              LEFT JOIN trial_instances ti ON ti.request_id = tr.id
@@ -158,7 +187,11 @@ async function getTrialStatus(req, res, next) {
         if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
 
         const r = rows[0];
-        const isActive = r.status === 'active' && r.instance_id;
+        let instanceMeta = r.instance_meta;
+        if (typeof instanceMeta === 'string') {
+            try { instanceMeta = JSON.parse(instanceMeta); } catch { instanceMeta = {}; }
+        }
+        const sharedDemo = Boolean(instanceMeta?.sharedDemo);
 
         const payload = {
             status: r.status,
@@ -174,6 +207,10 @@ async function getTrialStatus(req, res, next) {
             apiUrl: r.api_url,
             instanceStatus: r.instance_status,
             instanceId: r.instance_id || null,
+            sharedDemo,
+            disclaimer: sharedDemo
+                ? (instanceMeta?.disclaimer || 'Shared demo — product data may be visible to other trial users')
+                : null,
         };
 
         // Expose credentials when instance exists (token-gated page)
@@ -228,7 +265,7 @@ async function downloadPublicInstaller(req, res, next) {
         if (!registry?.token) {
             registry = issueRegistryCredentials({ installId: inst.install_id, expiresAt: inst.expires_at });
             await pool.query(
-                `UPDATE trial_instances SET meta = COALESCE(meta, '{}'::jsonb) || $1::jsonb WHERE id = $2`,
+                `UPDATE trial_instances SET meta = JSON_MERGE_PATCH(COALESCE(meta, '{}'), $1) WHERE id = $2`,
                 [JSON.stringify({ registry }), inst.id]
             );
         }

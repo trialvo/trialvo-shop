@@ -1,38 +1,17 @@
-/**
- * Migration 008: Add payment detail columns from Trialvo Pay IPN
- * Stores gateway info, payment reference, and timestamps from IPN notifications
- */
+async function addColumnIfMissing(client, table, column, definition) {
+  try {
+    await client.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+  } catch (e) {
+    if (e.errno !== 1060 && e.code !== 'ER_DUP_FIELDNAME') throw e;
+  }
+}
+
 module.exports = {
   name: '008_payment_details',
   async up(client) {
-    const columns = [
-      { name: 'payment_reference', definition: "VARCHAR(255) DEFAULT NULL" },
-      { name: 'paid_at', definition: "TIMESTAMPTZ DEFAULT NULL" },
-      { name: 'gateway_transaction_id', definition: "VARCHAR(255) DEFAULT NULL" },
-    ];
-
-    for (const col of columns) {
-      await client.query(`
-        DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='${col.name}') THEN
-            ALTER TABLE orders ADD COLUMN ${col.name} ${col.definition};
-          END IF;
-        END $$;
-      `);
-    }
-
+    await addColumnIfMissing(client, 'orders', 'payment_reference', 'VARCHAR(255) DEFAULT NULL');
+    await addColumnIfMissing(client, 'orders', 'paid_at', 'DATETIME(3) DEFAULT NULL');
+    await addColumnIfMissing(client, 'orders', 'gateway_transaction_id', 'VARCHAR(255) DEFAULT NULL');
     console.log('✅ Migration 008: Payment detail columns added to orders');
-  },
-
-  async down(client) {
-    const drops = [
-      'ALTER TABLE orders DROP COLUMN IF EXISTS payment_reference',
-      'ALTER TABLE orders DROP COLUMN IF EXISTS paid_at',
-      'ALTER TABLE orders DROP COLUMN IF EXISTS gateway_transaction_id',
-    ];
-    for (const sql of drops) {
-      await client.query(sql).catch(() => {});
-    }
   },
 };

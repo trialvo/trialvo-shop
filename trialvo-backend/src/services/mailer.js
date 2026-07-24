@@ -17,6 +17,7 @@ async function createTransporter(cfg) {
 }
 
 // Sends email when SMTP is enabled in system_config; otherwise logs to console.
+// Hard timeout so a hung SMTP server cannot block request handlers forever.
 async function sendMail({ to, subject, text, html }) {
   const cfg = await getSmtpConfig();
 
@@ -31,13 +32,19 @@ async function sendMail({ to, subject, text, html }) {
     return { ok: true, stub: true };
   }
 
-  await transporter.sendMail({
-    from: formatFromAddress(cfg),
-    to,
-    subject,
-    text,
-    html,
-  });
+  const timeoutMs = parseInt(process.env.SMTP_SEND_TIMEOUT_MS || '12000', 10);
+  await Promise.race([
+    transporter.sendMail({
+      from: formatFromAddress(cfg),
+      to,
+      subject,
+      text,
+      html,
+    }),
+    new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(`SMTP send timed out after ${timeoutMs}ms`)), timeoutMs);
+    }),
+  ]);
 
   return { ok: true };
 }

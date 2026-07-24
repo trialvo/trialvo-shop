@@ -4,9 +4,11 @@ const crypto = require('crypto');
 const { Readable } = require('stream');
 
 // Storage abstraction (D9): local disk (dev) or S3-compatible (prod).
+// Default local root: trialvo-shop/uploads (package root), not buried under backend/.
 const DRIVER = (process.env.STORAGE_DRIVER || 'local').toLowerCase();
 const PUBLIC_BASE = (process.env.STORAGE_URL || `http://localhost:${process.env.PORT || 5000}`).replace(/\/$/, '');
-const LOCAL_ROOT = process.env.UPLOAD_DIR || path.join(__dirname, '..', '..', 'uploads');
+const LOCAL_ROOT = process.env.UPLOAD_DIR
+  || path.join(__dirname, '..', '..', '..', 'uploads');
 
 let s3Client = null;
 
@@ -74,7 +76,14 @@ async function saveBuffer(buffer, { ext = '.webp', subdir = 'media' } = {}) {
         const absDir = path.join(LOCAL_ROOT, subdir);
         ensureDir(absDir);
         fs.writeFileSync(path.join(absDir, filename), buffer);
-        return { storageKey, url: `${PUBLIC_BASE}/uploads/${storageKey}` };
+        // Relative /uploads/... so shop (any port) + API can resolve via mediaUrl helper.
+        // Absolute PUBLIC_BASE URL kept for clients that need a full link (emails, etc.).
+        const relativeUrl = `/uploads/${storageKey}`;
+        return {
+            storageKey,
+            url: relativeUrl,
+            absoluteUrl: `${PUBLIC_BASE}${relativeUrl}`,
+        };
     }
 
     if (DRIVER === 's3' || DRIVER === 'gcs' || DRIVER === 'minio') {

@@ -62,14 +62,53 @@ async function getMe(req, res) {
 // PUT /api/auth/profile
 async function updateProfile(req, res, next) {
  try {
-  const { full_name } = req.body;
+  const { full_name, email } = req.body;
+  const updates = [];
+  const values = [];
+  let idx = 1;
 
+  if (full_name !== undefined) {
+   const name = String(full_name || '').trim();
+   if (!name) {
+    return res.status(400).json({ error: 'Full name is required' });
+   }
+   updates.push(`full_name = $${idx++}`);
+   values.push(name);
+  }
+
+  if (email !== undefined) {
+   const nextEmail = String(email || '').trim().toLowerCase();
+   if (!nextEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
+    return res.status(400).json({ error: 'Valid email is required' });
+   }
+   // Unique email (exclude self)
+   const dup = await pool.query(
+    'SELECT id FROM admin_profiles WHERE LOWER(email) = LOWER($1) AND id <> $2 LIMIT 1',
+    [nextEmail, req.admin.id]
+   );
+   if (dup.rows.length) {
+    return res.status(409).json({ error: 'Email is already in use' });
+   }
+   updates.push(`email = $${idx++}`);
+   values.push(nextEmail);
+  }
+
+  if (!updates.length) {
+   return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  values.push(req.admin.id);
   await pool.query(
-   'UPDATE admin_profiles SET full_name = $1 WHERE id = $2',
-   [full_name, req.admin.id]
+   `UPDATE admin_profiles SET ${updates.join(', ')} WHERE id = $${idx}`,
+   values
   );
 
-  res.json({ message: 'Profile updated successfully' });
+  const { rows } = await pool.query(
+   'SELECT id, email, full_name, avatar_url, role FROM admin_profiles WHERE id = $1',
+   [req.admin.id]
+  );
+
+  res.json({ message: 'Profile updated successfully', admin: rows[0] });
  } catch (error) {
   next(error);
  }

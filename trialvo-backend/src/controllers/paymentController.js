@@ -93,7 +93,8 @@ async function handleIpn(req, res) {
 
     // Update the order in our database
     const existing = await pool.query(
-      `SELECT id, order_id, status, payment_status, product_id, customer_email, trial_instance_id
+      `SELECT id, order_id, status, payment_status, product_id, customer_email,
+              trial_instance_id, order_kind, extend_days
        FROM orders WHERE order_id = $1`,
       [orderId]
     );

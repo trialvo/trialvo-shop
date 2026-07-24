@@ -91,5 +91,6 @@ export type ProductApiRow = {
   is_active: boolean | number;
   is_trialable?: boolean | number;
   sort_order?: number | string | null;
+  deploy_config?: Record<string, unknown> | string | null;
   created_at: string;
 };

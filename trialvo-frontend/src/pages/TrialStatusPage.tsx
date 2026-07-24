@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Loader2, CheckCircle2, Clock, XCircle, Copy, ExternalLink, KeyRound, Mail, Download } from 'lucide-react';
+import { Loader2, CheckCircle2, Clock, XCircle, Copy, ExternalLink, KeyRound, Mail, Download, Package } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { useTrialStatus } from '@/hooks/useTrialRequests';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-
-const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ReactNode }> = {
-  pending: { label: 'Pending review', variant: 'secondary', icon: <Clock className="w-3.5 h-3.5" /> },
-  active: { label: 'Trial active', variant: 'default', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-  rejected: { label: 'Not approved', variant: 'destructive', icon: <XCircle className="w-3.5 h-3.5" /> },
-};
+import { api } from '@/lib/api';
 
 const TrialStatusPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -20,15 +15,30 @@ const TrialStatusPage: React.FC = () => {
   const { toast } = useToast();
   const { language } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
+  const [downloadingInstaller, setDownloadingInstaller] = useState(false);
 
   const copy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: language === 'bn' ? 'কপি হয়েছে' : 'Copied', description: label });
   };
 
+  const t = (bn: string, en: string) => (language === 'bn' ? bn : en);
+
   const displayStatus = data?.instanceStatus && data.instanceStatus !== 'active'
     ? data.instanceStatus
     : data?.status;
+
+  const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ReactNode }> = {
+    pending: { label: t('পর্যালোচনায়', 'Pending review'), variant: 'secondary', icon: <Clock className="w-3.5 h-3.5" /> },
+    active: { label: t('ট্রায়াল চালু', 'Trial active'), variant: 'default', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+    rejected: { label: t('অনুমোদিত নয়', 'Not approved'), variant: 'destructive', icon: <XCircle className="w-3.5 h-3.5" /> },
+    provisioning: {
+      label: t('ইনস্টলের অপেক্ষায়', 'Awaiting install'),
+      variant: 'outline',
+      icon: <Package className="w-3.5 h-3.5" />,
+    },
+  };
+
   const cfg = data
     ? (statusConfig[displayStatus || ''] || {
         label: displayStatus || data.status,
@@ -38,10 +48,14 @@ const TrialStatusPage: React.FC = () => {
     : null;
   const productLabel = data?.productName?.[language] || data?.productName?.en || data?.productSlug;
   const isGranted = !!data?.credentials;
+  const awaitingInstall = data?.trialType === 'self_hosted' && data?.instanceStatus === 'provisioning';
   const canPurchase = Boolean(
     data?.instanceId && data.productSlug && data.status !== 'pending' && data.status !== 'rejected'
   );
-  const checkoutHref = canPurchase
+  const extendHref = canPurchase
+    ? `/checkout?extend=1&trialInstance=${encodeURIComponent(data!.instanceId!)}&product=${encodeURIComponent(data!.productSlug!)}`
+    : null;
+  const buyHref = canPurchase
     ? `/checkout?product=${encodeURIComponent(data!.productSlug!)}&trialInstance=${encodeURIComponent(data!.instanceId!)}`
     : null;
 
@@ -60,10 +74,31 @@ const TrialStatusPage: React.FC = () => {
         {isLoading && (
           <div className="flex justify-center py-12"><Loader2 className="animate-spin w-8 h-8 text-primary" /></div>
         )}
-        {error && <p className="text-destructive">Request not found.</p>}
+        {error && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 space-y-3">
+            <p className="text-destructive font-medium">
+              {language === 'bn' ? 'অনুরোধ পাওয়া যায়নি' : 'Request not found'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {language === 'bn'
+                ? 'এই লিংকটি মেয়াদোত্তীর্ণ, মুছে ফেলা হয়েছে, বা ভুল। নতুন ট্রায়াল অনুরোধ পাঠান — ইমেইলে নতুন status লিংক আসবে।'
+                : 'This link is expired, was cleared, or is invalid. Submit a new trial request — you will get a fresh status link by email.'}
+            </p>
+            <Button asChild variant="outline">
+              <Link to="/products">{language === 'bn' ? 'প্রোডাক্টে যান' : 'Browse products'}</Link>
+            </Button>
+          </div>
+        )}
 
         {data && cfg && (
           <div className="space-y-4">
+            {data.sharedDemo && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+                {language === 'bn'
+                  ? 'শেয়ার্ড ডেমো: অন্য ট্রায়াল ইউজারের সাথে একই স্টোর। ডেটা মিশতে পারে। আলাদা স্ট্যাক চাইলে Option 2 বেছে নিন।'
+                  : (data.disclaimer || 'Shared demo — other trial users share this store. Choose Option 2 for an isolated stack.')}
+              </div>
+            )}
             <div className="border rounded-xl p-6 space-y-4 bg-card">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground text-sm">Status</span>
@@ -96,6 +131,20 @@ const TrialStatusPage: React.FC = () => {
                   {language === 'bn'
                     ? 'আপনার অনুরোধ পর্যালোচনায় আছে। অনুমোদিত হলে এই পেজে credentials দেখা যাবে এবং ইমেইল পাঠানো হবে।'
                     : 'Your request is under review. Once approved, credentials will appear here and we will email you.'}
+                </div>
+              )}
+
+              {awaitingInstall && (
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-700 dark:text-amber-400 space-y-2">
+                  <p className="font-medium">
+                    {t('অনুরোধ অনুমোদিত — এখন ইনস্টল করুন', 'Approved — install on your server next')}
+                  </p>
+                  <p>
+                    {t(
+                      'Option 2 ট্রায়াল আপনার সার্ভারে installer চালানোর পর Active হবে। নিচের credentials ও installer ডাউনলোড ব্যবহার করুন।',
+                      'This Option 2 trial stays “Awaiting install” until you run the installer on your server and the license agent registers. Use the credentials and installer download below.',
+                    )}
+                  </p>
                 </div>
               )}
 
@@ -171,32 +220,74 @@ const TrialStatusPage: React.FC = () => {
                   )}
                 </div>
 
-                {data.installerUrl && (
-                  <Button asChild variant="secondary" className="w-full">
-                    <a href={data.installerUrl}>
+                {data.installerUrl && token && (
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    disabled={downloadingInstaller}
+                    onClick={async () => {
+                      setDownloadingInstaller(true);
+                      try {
+                        const res = await api.downloadBlob(
+                          `/trial/installer/${token}`,
+                          `trialvo-installer-${token.slice(0, 8)}.zip`,
+                        );
+                        toast({
+                          title: t('ডাউনলোড শুরু হয়েছে', 'Download started'),
+                          description: res.filename,
+                        });
+                      } catch (e: unknown) {
+                        const message = e instanceof Error ? e.message : 'Download failed';
+                        toast({ title: 'Error', description: message, variant: 'destructive' });
+                      } finally {
+                        setDownloadingInstaller(false);
+                      }
+                    }}
+                  >
+                    {downloadingInstaller ? (
+                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    ) : (
                       <Download className="w-4 h-4 mr-1.5" />
-                      {language === 'bn' ? 'Installer ডাউনলোড' : 'Download installer package'}
-                    </a>
+                    )}
+                    {language === 'bn' ? 'Installer ডাউনলোড' : 'Download installer package'}
                   </Button>
                 )}
               </div>
             )}
 
-            {checkoutHref && (
-              <div className="border rounded-xl p-6 space-y-3 bg-card">
+            {(extendHref || buyHref) && (
+              <div className="border rounded-xl p-6 space-y-4 bg-card">
                 <h2 className="font-semibold text-sm">
-                  {language === 'bn' ? 'ট্রায়াল কিনে নিন / এক্সটেন্ড করুন' : 'Purchase or extend this trial'}
+                  {language === 'bn' ? 'পরবর্তী ধাপ' : 'Next steps'}
                 </h2>
-                <p className="text-xs text-muted-foreground">
-                  {language === 'bn'
-                    ? 'পেমেন্ট সফল হলে ট্রায়াল অটো-unfreeze হবে এবং মেয়াদ বাড়বে। একই ইমেইল ব্যবহার করুন।'
-                    : 'Successful payment will auto-unfreeze and extend this trial. Use the same email.'}
-                </p>
-                <Button asChild className="w-full">
-                  <Link to={checkoutHref}>
-                    {language === 'bn' ? 'কিনুন / কনভার্ট' : 'Purchase / Convert'}
-                  </Link>
-                </Button>
+                {extendHref && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'bn'
+                        ? 'ট্রায়াল মেয়াদ বাড়াতে আলাদা এক্সটেন্ড প্যাক কিনুন (অ্যাডমিন নির্ধারিত দাম ও দিন)।'
+                        : 'Buy a separate extend pack to add more trial days (price & days set by admin).'}
+                    </p>
+                    <Button asChild className="w-full" variant="default">
+                      <Link to={extendHref}>
+                        {language === 'bn' ? 'ট্রায়াল এক্সটেন্ড' : 'Extend trial'}
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+                {buyHref && (
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'bn'
+                        ? 'পুরো প্রোডাক্ট কিনলে লাইসেন্স/কনভার্শন — এক্সটেন্ড প্যাক নয়।'
+                        : 'Buy the full product for license/conversion — not the extend pack.'}
+                    </p>
+                    <Button asChild className="w-full" variant="outline">
+                      <Link to={buyHref}>
+                        {language === 'bn' ? 'প্রোডাক্ট কিনুন' : 'Buy product'}
+                      </Link>
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 

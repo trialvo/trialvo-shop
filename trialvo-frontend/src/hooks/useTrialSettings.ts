@@ -6,7 +6,12 @@ export interface TrialSettings {
   autoApproveHosted: boolean;
   hostedDays: number;
   selfHostedDays: number;
+  /** Days added after full product purchase (convert) */
   paidExtendDays?: number;
+  /** Paid trial-extend pack */
+  extendDays?: number;
+  extendPriceBdt?: number;
+  extendPriceUsd?: number;
   trialsEnabled?: boolean;
 }
 
@@ -29,7 +34,10 @@ export function useUpdateTrialSettings() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: Partial<TrialSettings>) => api.post('/admin/settings/trial', body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['trialSettings'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['trialSettings'] });
+      qc.invalidateQueries({ queryKey: ['publicTrialConfig'] });
+    },
   });
 }
 

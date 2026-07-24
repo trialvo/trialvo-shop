@@ -3,7 +3,8 @@ import { api } from "@/lib/api";
 import type { Product } from "@/data/products";
 import type { ProductApiRow } from "@/types/marketplace";
 
-function parseJsonField<T>(value: T | string, fallback: T): T {
+function parseJsonField<T>(value: T | string | null | undefined, fallback: T): T {
+  if (value == null) return fallback;
   if (typeof value !== "string") return value;
   try {
     return JSON.parse(value) as T;
@@ -20,7 +21,16 @@ function rowToProduct(row: ProductApiRow): Product {
     priceBDT: Number(row.price_bdt),
     priceUSD: Number(row.price_usd),
     thumbnail: row.thumbnail,
-    images: parseJsonField(row.images, { admin: [], shop: [] }),
+    images: (() => {
+      const parsed = parseJsonField(row.images, { admin: [], shop: [] } as {
+        admin: string[];
+        shop: string[];
+      });
+      return {
+        admin: Array.isArray(parsed?.admin) ? parsed.admin : [],
+        shop: Array.isArray(parsed?.shop) ? parsed.shop : [],
+      };
+    })(),
     videoUrl: row.video_url || undefined,
     demo: parseJsonField(row.demo, []),
     name: parseJsonField(row.name, { bn: "", en: "" }),
@@ -40,6 +50,10 @@ function rowToProduct(row: ProductApiRow): Product {
       row.sort_order == null || row.sort_order === ""
         ? undefined
         : Number(row.sort_order),
+    deployConfig: (() => {
+      const parsed = parseJsonField<Record<string, unknown> | null>(row.deploy_config, null);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    })(),
     createdAt: row.created_at,
   };
 }

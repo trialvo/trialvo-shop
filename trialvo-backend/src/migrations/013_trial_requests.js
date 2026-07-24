@@ -1,11 +1,11 @@
 module.exports = {
- name: '013_trial_requests',
- async up(client) {
-  await client.query(`
+  name: '013_trial_requests',
+  async up(client) {
+    await client.query(`
       CREATE TABLE IF NOT EXISTS trial_requests (
         id CHAR(36) PRIMARY KEY,
         public_token VARCHAR(64) NOT NULL UNIQUE,
-        product_id CHAR(36) NOT NULL REFERENCES products(id),
+        product_id CHAR(36) NOT NULL,
         trial_type VARCHAR(20) NOT NULL,
         customer_name VARCHAR(150) NOT NULL,
         email VARCHAR(200) NOT NULL,
@@ -18,13 +18,15 @@ module.exports = {
         admin_notes TEXT DEFAULT NULL,
         assigned_admin_id INT DEFAULT NULL,
         ip_address VARCHAR(64) DEFAULT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        approved_at TIMESTAMPTZ DEFAULT NULL,
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      )
+        created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+        approved_at DATETIME(3) DEFAULT NULL,
+        updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        CONSTRAINT fk_trial_req_product FOREIGN KEY (product_id) REFERENCES products(id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-  await client.query('CREATE INDEX IF NOT EXISTS idx_trial_req_status ON trial_requests(status)');
-  await client.query('CREATE INDEX IF NOT EXISTS idx_trial_req_product ON trial_requests(product_id)');
-  await client.query('CREATE INDEX IF NOT EXISTS idx_trial_req_token ON trial_requests(public_token)');
- },
+    await client.query('CREATE INDEX IF NOT EXISTS idx_trial_req_status ON trial_requests(status)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_trial_req_product ON trial_requests(product_id)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_trial_req_token ON trial_requests(public_token)');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_trial_req_email ON trial_requests(email)');
+  },
 };

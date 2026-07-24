@@ -11,7 +11,7 @@ const { sendTestMail } = require('../services/mailer');
 async function getTrialvoPaySettings(req, res, next) {
   try {
     const { rows } = await pool.query(
-      "SELECT key, value FROM system_config WHERE key LIKE 'trialvo_pay_%'"
+      "SELECT `key`, value FROM system_config WHERE `key` LIKE 'trialvo_pay_%'"
     );
     
     const settings = {};
@@ -42,7 +42,7 @@ async function updateTrialvoPaySettings(req, res, next) {
     for (const [key, value] of updates) {
       if (value !== undefined) {
         await pool.query(
-          'UPDATE system_config SET value = $1, updated_at = NOW() WHERE key = $2',
+          'UPDATE system_config SET value = $1, updated_at = NOW() WHERE `key` = $2',
           [value, key]
         );
       }
@@ -117,9 +117,13 @@ module.exports = {
   },
   updateTrialSettings: async (req, res, next) => {
     try {
-      const { autoApproveHosted, hostedDays, selfHostedDays, paidExtendDays, trialsEnabled } = req.body || {};
+      const {
+        autoApproveHosted, hostedDays, selfHostedDays, paidExtendDays,
+        extendDays, extendPriceBdt, extendPriceUsd, trialsEnabled,
+      } = req.body || {};
       const settings = await updateTrialSettings({
-        autoApproveHosted, hostedDays, selfHostedDays, paidExtendDays, trialsEnabled,
+        autoApproveHosted, hostedDays, selfHostedDays, paidExtendDays,
+        extendDays, extendPriceBdt, extendPriceUsd, trialsEnabled,
       });
       res.json({ message: 'Trial settings updated', ...settings });
     } catch (error) {

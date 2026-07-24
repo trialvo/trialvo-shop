@@ -7,6 +7,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api';
 import type { TrialInstanceRow } from '@/hooks/useTrialInstances';
@@ -50,6 +51,7 @@ export function InstanceDetail({
   if (!instance) return null;
 
   const canDestroy = !['destroyed', 'destroying'].includes(instance.status);
+  const isSharedDemo = Boolean(instance.meta?.sharedDemo);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -57,14 +59,27 @@ export function InstanceDetail({
         <SheetHeader>
           <SheetTitle className="font-mono text-base">{instance.install_id.slice(0, 16)}…</SheetTitle>
           <SheetDescription>
-            {instance.product_name?.en || instance.product_slug} · {instance.trial_type}
+            {instance.product_name?.en || instance.product_slug} · {instance.trial_type === 'hosted' ? 'Option 1' : 'Option 2'}
+            {isSharedDemo && (
+              <> · <Badge variant="outline" className="align-middle text-[10px]">Shared demo</Badge></>
+            )}
           </SheetDescription>
         </SheetHeader>
 
         <div className="mt-4 space-y-4">
+          {(instance.customer_name || instance.request_email || instance.admin_email) && (
+            <p className="text-sm">
+              <span className="text-muted-foreground">Customer: </span>
+              {instance.customer_name || '—'}
+              {(instance.request_email || instance.admin_email) && (
+                <span className="text-muted-foreground"> · {instance.request_email || instance.admin_email}</span>
+              )}
+            </p>
+          )}
+
           <div className="grid grid-cols-2 gap-2 text-sm">
             <Info label="Status"><TrialStatusBadge status={instance.status} /></Info>
-            <Info label="Agent">{instance.agent_version || '—'}</Info>
+            <Info label="Agent">{isSharedDemo ? 'n/a (shared)' : (instance.agent_version || '—')}</Info>
             <Info label="Domain">{instance.domain || instance.subdomain || '—'}</Info>
             <Info label="Expires">
               {instance.expires_at ? new Date(instance.expires_at).toLocaleString() : '—'}
@@ -91,17 +106,24 @@ export function InstanceDetail({
             {instance.trial_type === 'self_hosted' && onInstaller && (
               <Button size="sm" variant="outline" onClick={() => onInstaller(instance.id)}><Package className="w-3.5 h-3.5 mr-1" />Installer</Button>
             )}
-            <Button size="sm" variant="outline" onClick={() => onBackup(instance.id)}><HardDrive className="w-3.5 h-3.5 mr-1" />Backup</Button>
-            <Button size="sm" variant="outline" onClick={() => onRestore(instance.id)}><RotateCcw className="w-3.5 h-3.5 mr-1" />Restore</Button>
+            {!isSharedDemo && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => onBackup(instance.id)}><HardDrive className="w-3.5 h-3.5 mr-1" />Backup</Button>
+                <Button size="sm" variant="outline" onClick={() => onRestore(instance.id)}><RotateCcw className="w-3.5 h-3.5 mr-1" />Restore</Button>
+              </>
+            )}
             {instance.status === 'active' && (
-              <Button size="sm" variant="outline" onClick={() => onFreeze(instance.id)}><Snowflake className="w-3.5 h-3.5 mr-1" />Freeze</Button>
+              <Button size="sm" variant="outline" onClick={() => onFreeze(instance.id)}><Snowflake className="w-3.5 h-3.5 mr-1" />{isSharedDemo ? 'Revoke login' : 'Freeze'}</Button>
             )}
             {(instance.status === 'frozen' || instance.status === 'expired') && (
-              <Button size="sm" variant="outline" onClick={() => onUnfreeze(instance.id)}><Sun className="w-3.5 h-3.5 mr-1" />Unfreeze</Button>
+              <Button size="sm" variant="outline" onClick={() => onUnfreeze(instance.id)}><Sun className="w-3.5 h-3.5 mr-1" />{isSharedDemo ? 'Restore login' : 'Unfreeze'}</Button>
             )}
             <Button size="sm" variant="outline" onClick={() => onExtend(instance.id)}>+7d</Button>
             {canDestroy && (
-              <Button size="sm" variant="destructive" onClick={() => onDestroy(instance.id)}><Trash2 className="w-3.5 h-3.5 mr-1" />Destroy</Button>
+              <Button size="sm" variant="destructive" onClick={() => onDestroy(instance.id)}>
+                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                {isSharedDemo ? 'Revoke access' : 'Destroy'}
+              </Button>
             )}
             {busy && <Loader2 className="w-4 h-4 animate-spin self-center" />}
           </div>

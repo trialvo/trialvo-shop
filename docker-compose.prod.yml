@@ -1,11 +1,37 @@
 # ═══════════════════════════════════════════════════════════
 # Trialvo Shop — Production Docker Compose
-# Single PostgreSQL instance for both services
+# MySQL 8 for Control Plane (trialvo_shop)
+# Postgres kept only for Trialvo Pay (trialvo_pay)
 # Host nginx handles reverse proxy (port 80/443)
 # ═══════════════════════════════════════════════════════════
 
 services:
-  # ─── Single PostgreSQL (both databases) ──────────────────
+  # ─── MySQL — shop Control Plane ──────────────────────────
+  mysql:
+    image: mysql:8.4
+    restart: always
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=256M
+      - --max-connections=100
+    environment:
+      MYSQL_ROOT_PASSWORD: Tr1alv0DB2026Secure!
+      MYSQL_DATABASE: trialvo_shop
+      MYSQL_USER: trialvo
+      MYSQL_PASSWORD: Tr1alv0DB2026Secure!
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - shop_internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pTr1alv0DB2026Secure!"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  # ─── Postgres — Trialvo Pay only ─────────────────────────
   postgres:
     image: postgres:16-alpine
     restart: always
@@ -16,7 +42,7 @@ services:
     command: postgres -c shared_buffers=256MB -c max_connections=100
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+      - ./init-db-pay.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     networks:
       - shop_internal
     healthcheck:
@@ -49,15 +75,15 @@ services:
       dockerfile: Dockerfile
     restart: always
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
     ports:
       - "127.0.0.1:5000:5000"
     environment:
       PORT: 5000
       NODE_ENV: production
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_HOST: mysql
+      DB_PORT: 3306
       DB_USER: trialvo
       DB_PASSWORD: Tr1alv0DB2026Secure!
       DB_NAME: trialvo_shop
@@ -129,5 +155,6 @@ networks:
     driver: bridge
 
 volumes:
+  mysql_data:
   postgres_data:
   redis_data:

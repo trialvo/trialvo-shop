@@ -46,6 +46,8 @@ export interface Product {
   isActive: boolean;
   isTrialable?: boolean;
   sortOrder?: number;
+  /** Trial/deploy metadata (Option 1/2 images, shared demo flags, etc.) */
+  deployConfig?: Record<string, unknown> | null;
   createdAt: string;
 }
 

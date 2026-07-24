@@ -10,12 +10,15 @@ export interface TrialInstanceRow {
   subdomain?: string;
   shop_url?: string;
   admin_url?: string;
+  admin_email?: string;
   product_slug?: string;
   product_name?: { bn?: string; en?: string };
+  customer_name?: string;
+  request_email?: string;
   expires_at?: string;
   last_heartbeat_at?: string;
   agent_version?: string;
-  meta?: { agent_outdated?: boolean; required_agent_version?: string; [k: string]: unknown };
+  meta?: { agent_outdated?: boolean; required_agent_version?: string; sharedDemo?: boolean; [k: string]: unknown };
   created_at: string;
 }
 
@@ -24,6 +27,12 @@ export function useAdminTrialInstances(status?: string) {
   return useQuery({
     queryKey: ["trialInstances", status || "all"],
     queryFn: () => api.get<TrialInstanceRow[]>(`/admin/trial-instances${q}`),
+    // Poll while any instance is mid-destroy so the list flips to "destroyed" without manual refresh.
+    refetchInterval: (query) => {
+      const rows = query.state.data;
+      if (Array.isArray(rows) && rows.some((r) => r.status === "destroying")) return 4000;
+      return false;
+    },
   });
 }
 

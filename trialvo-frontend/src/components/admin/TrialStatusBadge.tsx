@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Clock, CheckCircle2, XCircle, Snowflake, Loader2, Trash2, AlertTriangle, Ban,
+  Clock, CheckCircle2, XCircle, Snowflake, Loader2, Trash2, AlertTriangle, Ban, Package,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -21,7 +21,13 @@ const ICON = 'w-3.5 h-3.5';
 const STATUS_MAP: Record<string, StatusMeta> = {
   pending: { label: 'Pending', variant: 'secondary', icon: <Clock className={ICON} /> },
   approved: { label: 'Approved', variant: 'default', icon: <CheckCircle2 className={ICON} /> },
-  provisioning: { label: 'Provisioning', variant: 'secondary', icon: <Loader2 className={`${ICON} animate-spin`} /> },
+  // Option 2: approved, waiting for customer to install agent & register
+  provisioning: {
+    label: 'Awaiting install',
+    variant: 'outline',
+    icon: <Package className={ICON} />,
+    className: 'border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-500/10',
+  },
   active: { label: 'Active', variant: 'default', icon: <CheckCircle2 className={ICON} /> },
   frozen: {
     label: 'Frozen',

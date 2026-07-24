@@ -1,19 +1,19 @@
 module.exports = {
- name: '004_testimonials',
- async up(client) {
-  await client.query(`
+  name: '004_testimonials',
+  async up(client) {
+    await client.query(`
       CREATE TABLE IF NOT EXISTS testimonials (
         id CHAR(36) PRIMARY KEY,
-        name JSONB NOT NULL,
-        role JSONB NOT NULL,
-        content JSONB NOT NULL,
+        name JSON NOT NULL,
+        role JSON NOT NULL,
+        content JSON NOT NULL,
         rating INT DEFAULT 5,
         avatar VARCHAR(500) DEFAULT '',
         is_active SMALLINT DEFAULT 1,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      )
+        created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
+        updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-  await client.query('CREATE INDEX IF NOT EXISTS idx_testimonials_is_active ON testimonials(is_active)');
- },
+    await client.query('CREATE INDEX IF NOT EXISTS idx_testimonials_is_active ON testimonials(is_active)');
+  },
 };

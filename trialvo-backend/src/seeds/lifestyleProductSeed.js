@@ -1,5 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 
+const SHOP_URL = process.env.SHARED_DEMO_SHOP_URL || 'http://localhost:5100';
+const ADMIN_URL = process.env.SHARED_DEMO_ADMIN_URL || 'http://localhost:5174';
+
 // Real Lifestyle product listing — upserts so re-seeding is safe.
 module.exports = {
     table: 'products',
@@ -9,17 +12,33 @@ module.exports = {
         const existing = await client.query('SELECT id FROM products WHERE slug = $1', [slug]);
         const id = existing.rows[0]?.id || uuidv4();
 
+        // Public shop browse link (no credentials). Admin URL listed without ops password.
+        const demo = JSON.stringify([
+            {
+                label: { bn: 'শপ ওয়েবসাইট (পাবলিক)', en: 'Shop website (public)' },
+                url: SHOP_URL,
+                username: '',
+                password: '',
+            },
+            {
+                label: { bn: 'অ্যাডমিন প্যানেল', en: 'Admin panel' },
+                url: ADMIN_URL,
+                username: '',
+                password: '',
+            },
+        ]);
+
         const payload = {
             slug,
             category: 'fashion',
             price_bdt: 45000,
             price_usd: 450,
-            thumbnail: 'http://localhost:5000/favicon.ico',
+            thumbnail: `${SHOP_URL}/favicon.ico`,
             images: JSON.stringify({
-                admin: ['http://localhost:5173/favicon.ico'],
-                shop: ['http://localhost:5000/favicon.ico'],
+                admin: [`${ADMIN_URL}/favicon.ico`],
+                shop: [`${SHOP_URL}/favicon.ico`],
             }),
-            demo: JSON.stringify([]),
+            demo,
             name: JSON.stringify({
                 bn: 'লাইফস্টাইল ই-কমার্স',
                 en: 'Lifestyle E-Commerce',
@@ -33,8 +52,8 @@ module.exports = {
                 en: ['Admin RBAC', 'Multi-courier', 'Guest checkout', 'Coupons & mega sale'],
             }),
             facilities: JSON.stringify({
-                bn: ['১৪ দিন ফ্রি ট্রায়াল', 'ডocker ডিপ্লয়', 'রিমোট ফ্রিজ/আনফ্রিজ'],
-                en: ['14-day free trial', 'Docker deploy', 'Remote freeze/unfreeze'],
+                bn: ['১৪ দিন ফ্রি ট্রায়াল (শেয়ার্ড ডেমো)', 'Option 2 সেল্ফ-হোস্টেড', 'রিমোট অ্যাক্সেস রিভোক'],
+                en: ['14-day free trial (shared demo)', 'Option 2 self-hosted', 'Remote access revoke'],
             }),
             faq: JSON.stringify([]),
             seo: JSON.stringify({
@@ -43,25 +62,28 @@ module.exports = {
                 keywords: { bn: ['ইকমার্স'], en: ['ecommerce', 'fashion'] },
             }),
             deploy_config: JSON.stringify({
-                image_api: 'registry.trialvo.com/lifestyle-api:latest',
-                image_shop: 'registry.trialvo.com/lifestyle-shop:latest',
-                image_admin: 'registry.trialvo.com/lifestyle-admin:latest',
+                image_api: 'lifestyle-api:trial',
+                image_shop: 'lifestyle-shop:trial',
+                image_admin: 'lifestyle-admin:trial',
                 default_trial_days: 14,
                 supports_option1: true,
                 supports_option2: true,
+                shared_demo: true,
+                shared_demo_shop_url: SHOP_URL,
+                shared_demo_admin_url: ADMIN_URL,
             }),
         };
 
         if (existing.rows.length) {
             await client.query(
                 `UPDATE products SET
-                  category=$2, price_bdt=$3, price_usd=$4, thumbnail=$5, images=$6::jsonb,
-                  name=$7::jsonb, short_description=$8::jsonb, features=$9::jsonb, facilities=$10::jsonb,
-                  seo=$11::jsonb, deploy_config=$12::jsonb, is_trialable=1, is_active=1, is_featured=1,
+                  category=$2, price_bdt=$3, price_usd=$4, thumbnail=$5, images=$6, demo=$7,
+                  name=$8, short_description=$9, features=$10, facilities=$11,
+                  seo=$12, deploy_config=$13, is_trialable=1, is_active=1, is_featured=1,
                   updated_at=NOW()
                  WHERE slug=$1`,
                 [slug, payload.category, payload.price_bdt, payload.price_usd, payload.thumbnail,
-                    payload.images, payload.name, payload.short_description, payload.features,
+                    payload.images, payload.demo, payload.name, payload.short_description, payload.features,
                     payload.facilities, payload.seo, payload.deploy_config]
             );
         } else {
@@ -69,9 +91,9 @@ module.exports = {
                 `INSERT INTO products (id, slug, category, price_bdt, price_usd, thumbnail, images, demo,
                   name, short_description, features, facilities, faq, seo, is_featured, is_active,
                   deploy_config, is_trialable)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,'[]'::jsonb,$8::jsonb,$9::jsonb,$10::jsonb,$11::jsonb,'[]'::jsonb,$12::jsonb,1,1,$13::jsonb,1)`,
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'[]',$13,1,1,$14,1)`,
                 [id, slug, payload.category, payload.price_bdt, payload.price_usd, payload.thumbnail,
-                    payload.images, payload.name, payload.short_description, payload.features,
+                    payload.images, payload.demo, payload.name, payload.short_description, payload.features,
                     payload.facilities, payload.seo, payload.deploy_config]
             );
         }

@@ -1,23 +1,45 @@
 const { pool } = require('../config/db');
 
+/** MySQL has no CREATE INDEX IF NOT EXISTS — ignore duplicate index errors. */
+function wrapMigrationClient(client) {
+  return {
+    async query(sql, params) {
+      const text = typeof sql === 'string' ? sql.trim() : sql;
+      if (typeof text === 'string' && /^CREATE\s+INDEX\s+IF\s+NOT\s+EXISTS\s+/i.test(text)) {
+        const rewritten = text.replace(/^CREATE\s+INDEX\s+IF\s+NOT\s+EXISTS\s+/i, 'CREATE INDEX ');
+        try {
+          return await client.query(rewritten, params);
+        } catch (e) {
+          if (e.errno === 1061 || e.code === 'ER_DUP_KEYNAME') {
+            return { rows: [], rowCount: 0 };
+          }
+          throw e;
+        }
+      }
+      return client.query(sql, params);
+    },
+    release() {
+      return client.release();
+    },
+  };
+}
+
 async function runMigrations() {
-  const client = await pool.connect();
+  const raw = await pool.connect();
+  const client = wrapMigrationClient(raw);
 
   try {
-    // Create migrations tracking table
     await client.query(`
       CREATE TABLE IF NOT EXISTS _migrations (
-        id SERIAL PRIMARY KEY,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
-        applied_at TIMESTAMPTZ DEFAULT NOW()
-      )
+        applied_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // Get already applied migrations
     const result = await client.query('SELECT name FROM _migrations');
     const appliedNames = new Set(result.rows.map((r) => r.name));
 
-    // Load migration files in order
     const migrations = [
       require('./001_admin_profiles'),
       require('./002_products'),
@@ -41,6 +63,7 @@ async function runMigrations() {
       require('./020_order_trial_instance'),
       require('./021_trials_enabled'),
       require('./022_remote_commands_created_by'),
+      require('./023_trial_extend_pack'),
     ];
 
     let count = 0;
@@ -62,7 +85,7 @@ async function runMigrations() {
       console.log(`✅ ${count} migration(s) applied successfully`);
     }
   } finally {
-    client.release();
+    raw.release();
   }
 }
 

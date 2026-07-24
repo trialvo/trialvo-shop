@@ -35,7 +35,7 @@ const AdminTrialRequestsPage: React.FC = () => {
     if (!approveTarget) return;
     try {
       await approve.mutateAsync({ id: approveTarget.id, days: approveDays });
-      toast({ title: 'Approved & provisioned', description: `Trial period: ${approveDays} days` });
+      toast({ title: 'Approved', description: `Provisioned for ${approveDays} days. Status link emailed to customer.` });
       setApproveTarget(null);
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
@@ -134,8 +134,8 @@ const AdminTrialRequestsPage: React.FC = () => {
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">
               {approveTarget?.trialType === 'hosted'
-                ? 'Option 1 — Trialvo will host this trial on our infrastructure.'
-                : 'Option 2 — Customer installs on their own domain.'}
+                ? 'Option 1 — grants ADMIN access on the shared Lifestyle demo (not a private Docker stack).'
+                : 'Option 2 — customer installs on their own domain (installer + license agent).'}
             </p>
             <div className="space-y-1.5">
               <Label>Trial period (days)</Label>

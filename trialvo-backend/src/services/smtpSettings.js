@@ -24,9 +24,10 @@ const DEFAULTS = {
 };
 
 async function loadConfigMap() {
+  const placeholders = SMTP_KEYS.map((_, i) => `$${i + 1}`).join(',');
   const { rows } = await pool.query(
-    'SELECT key, value FROM system_config WHERE key = ANY($1)',
-    [SMTP_KEYS]
+    `SELECT \`key\`, value FROM system_config WHERE \`key\` IN (${placeholders})`,
+    SMTP_KEYS
   );
   const map = { ...DEFAULTS };
   rows.forEach((r) => { map[r.key] = r.value; });
@@ -99,7 +100,7 @@ async function updateSmtpSettings({
 
   for (const [key, value] of updates) {
     await pool.query(
-      'UPDATE system_config SET value = $1, updated_at = NOW() WHERE key = $2',
+      'UPDATE system_config SET value = $1, updated_at = NOW() WHERE `key` = $2',
       [value, key]
     );
   }

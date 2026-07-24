@@ -1,0 +1,10 @@
+<p style="margin:0 0 16px;font-size:16px;">Hi {{name}},</p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">
+  Your trial request was not approved at this time.
+</p>
+{{#if reason}}
+<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#6b7280;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;">
+  <strong>Note:</strong> {{reason}}
+</p>
+{{/if}}
+<p style="margin:0;font-size:14px;color:#6b7280;">You may submit a new request later if needed.</p>

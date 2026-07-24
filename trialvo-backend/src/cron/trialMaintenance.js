@@ -31,8 +31,8 @@ async function enqueueScheduledBackups() {
          WHERE rc.instance_id = trial_instances.id
            AND rc.command = 'backup_now'
            AND rc.status IN ('pending', 'sent')
-           AND rc.created_at > NOW() - INTERVAL '20 hours'
-           AND (rc.payload->>'scheduled') = 'true'
+           AND rc.created_at > DATE_SUB(NOW(), INTERVAL 20 HOUR)
+           AND JSON_UNQUOTE(JSON_EXTRACT(rc.payload, '$.scheduled')) = 'true'
        )`
   );
   for (const row of rows) {
@@ -62,7 +62,7 @@ async function alertStaleHeartbeats() {
        AND ti.trial_type = 'self_hosted'
        AND (
          ti.last_heartbeat_at IS NULL
-         OR ti.last_heartbeat_at < NOW() - ($1 || ' hours')::interval
+         OR ti.last_heartbeat_at < DATE_SUB(NOW(), INTERVAL ? HOUR)
        )`,
     [STALE_HOURS]
   );
@@ -99,7 +99,7 @@ async function alertStaleHeartbeats() {
 
     meta.offline_alert_at = new Date().toISOString();
     await pool.query(
-      'UPDATE trial_instances SET meta = $1::jsonb, updated_at = NOW() WHERE id = $2',
+      'UPDATE trial_instances SET meta = $1, updated_at = NOW() WHERE id = $2',
       [JSON.stringify(meta), row.id]
     );
   }

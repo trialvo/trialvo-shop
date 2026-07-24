@@ -34,7 +34,7 @@ const { getTrialSettings } = require('../src/services/trialSettings');
 
   const cmds = await pool.query(
     `SELECT command FROM remote_commands
-     WHERE instance_id = $1 AND created_at > NOW() - INTERVAL '2 minutes'
+     WHERE instance_id = $1 AND created_at > DATE_SUB(NOW(), INTERVAL 2 MINUTE)
      ORDER BY created_at DESC LIMIT 5`,
     [id]
   );

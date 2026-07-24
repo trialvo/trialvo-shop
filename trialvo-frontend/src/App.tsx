@@ -29,6 +29,7 @@ import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
 import AdminTrialRequestsPage from "./pages/admin/AdminTrialRequestsPage";
 import AdminTrialInstancesPage from "./pages/admin/AdminTrialInstancesPage";
 import TrialStatusPage from "./pages/TrialStatusPage";
+import TrialRequestSubmittedPage from "./pages/TrialRequestSubmittedPage";
 import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
 import AdminMessagesPage from "./pages/admin/AdminMessagesPage";
 import AdminTestimonialsPage from "./pages/admin/AdminTestimonialsPage";
@@ -53,6 +54,7 @@ const App = () => (
                   <Route path="/products" element={<ProductsPage />} />
                   <Route path="/products/:slug" element={<ProductDetailPage />} />
                   <Route path="/trial-status/:token" element={<TrialStatusPage />} />
+                  <Route path="/trial-request-submitted" element={<TrialRequestSubmittedPage />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/order-success" element={<OrderSuccessPage />} />
                   <Route path="/about" element={<AboutPage />} />

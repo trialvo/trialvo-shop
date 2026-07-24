@@ -31,7 +31,10 @@ export function useAdminTrialRequests(status?: string) {
 
 export function useTrialRequestMutations() {
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["trialRequests"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["trialRequests"] });
+    qc.invalidateQueries({ queryKey: ["trialInstances"] });
+  };
 
   const approve = useMutation({
     mutationFn: ({ id, days, notes }: { id: string; days?: number; notes?: string }) =>
@@ -68,7 +71,11 @@ export function useTrialStatus(token: string | undefined) {
     enabled: !!token,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      return status === 'pending' ? 15000 : false;
+      const instanceStatus = query.state.data?.instanceStatus;
+      // Poll while request is pending or Opt2 still awaiting install
+      if (status === 'pending') return 5000;
+      if (instanceStatus === 'provisioning') return 10000;
+      return false;
     },
   });
 }
@@ -87,6 +94,8 @@ export interface TrialStatusResponse {
   apiUrl?: string;
   instanceStatus?: string;
   instanceId?: string | null;
+  sharedDemo?: boolean;
+  disclaimer?: string | null;
   installerUrl?: string;
   credentials?: {
     adminEmail?: string;

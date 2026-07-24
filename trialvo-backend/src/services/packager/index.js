@@ -12,9 +12,7 @@ const REGISTRY = process.env.TRIAL_REGISTRY || 'registry.trialvo.com';
 const IMAGE_API = process.env.TRIAL_IMAGE_API || `${REGISTRY}/lifestyle-api:trial`;
 const IMAGE_ADMIN = process.env.TRIAL_IMAGE_ADMIN || `${REGISTRY}/lifestyle-admin:trial`;
 const IMAGE_SHOP = process.env.TRIAL_IMAGE_SHOP || `${REGISTRY}/lifestyle-shop:trial`;
-const CP_URL = (process.env.PUBLIC_API_URL
-  || process.env.CONTROL_PLANE_PUBLIC_URL
-  || `http://localhost:${process.env.PORT || 8092}`).replace(/\/$/, '');
+const CP_URL = require('../../config/publicUrls').getPublicApiUrl();
 
 function readTemplate(name) {
   return fs.readFileSync(path.join(TEMPLATE_DIR, name), 'utf8');

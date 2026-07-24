@@ -3,6 +3,7 @@ import {
   Snowflake, Sun, Trash2, Key, Loader2, Server, HardDrive, RotateCcw, AlertTriangle, Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -14,6 +15,7 @@ import { InstanceDetail } from '@/components/admin/InstanceDetail';
 import { TrialStatusBadge } from '@/components/admin/TrialStatusBadge';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { QueryError } from '@/components/admin/QueryError';
+import { CredentialsDialog, type InstanceCredentials } from '@/components/admin/CredentialsDialog';
 
 const AdminTrialInstancesPage: React.FC = () => {
   const { toast } = useToast();
@@ -24,13 +26,25 @@ const AdminTrialInstancesPage: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [destroyTarget, setDestroyTarget] = useState<string | null>(null);
   const [destroyHard, setDestroyHard] = useState(false);
+  const [credsOpen, setCredsOpen] = useState(false);
+  const [credsLoading, setCredsLoading] = useState(false);
+  const [credsData, setCredsData] = useState<InstanceCredentials | null>(null);
+  const [credsInstance, setCredsInstance] = useState<TrialInstanceRow | null>(null);
 
   const showCreds = async (id: string) => {
+    const row = data?.find((x) => x.id === id) || (selected?.id === id ? selected : null);
+    setCredsInstance(row || null);
+    setCredsData(null);
+    setCredsOpen(true);
+    setCredsLoading(true);
     try {
       const c = await credentials.mutateAsync(id);
-      toast({ title: 'Credentials', description: `${c.adminEmail} / ${c.adminPassword}` });
+      setCredsData(c);
     } catch (e: any) {
+      setCredsOpen(false);
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setCredsLoading(false);
     }
   };
 
@@ -67,9 +81,20 @@ const AdminTrialInstancesPage: React.FC = () => {
   const runDestroy = async () => {
     if (!destroyTarget) return;
     const mode = destroyHard ? 'hard' : 'soft';
+    const isShared = Boolean(
+      (selected?.id === destroyTarget && selected?.meta?.sharedDemo)
+      || data?.find((x) => x.id === destroyTarget)?.meta?.sharedDemo
+    );
     try {
       await destroy.mutateAsync({ id: destroyTarget, mode });
-      toast({ title: 'Destroy queued', description: `Status → destroying (${mode})` });
+      toast({
+        title: isShared ? 'Access revoked' : 'Destroy started',
+        description: isShared
+          ? 'Shared demo ADMIN login deactivated. The demo stack stays online.'
+          : mode === 'hard'
+            ? 'Status → destroying. Teardown runs in the background.'
+            : 'Status → destroying. Containers are stopping in the background.',
+      });
       setDestroyTarget(null);
       setDrawerOpen(false);
     } catch (e: any) {
@@ -95,7 +120,7 @@ const AdminTrialInstancesPage: React.FC = () => {
     <div className="space-y-5">
       <div className="admin-page-header">
         <h1>Trial Instances</h1>
-        <p>Monitor and control running trials (freeze, extend, backup, destroy)</p>
+        <p>Access grants &amp; stacks — shared demo revoke, Option 2 agent control</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -126,25 +151,41 @@ const AdminTrialInstancesPage: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="admin-table-header">
-                <th>Install</th><th>Product</th><th>Type</th><th>Status</th><th>Agent</th><th>Expires</th><th>Heartbeat</th><th className="text-right">Actions</th>
+                <th>Customer</th><th>Product</th><th>Type</th><th>Status</th><th>Agent</th><th>Expires</th><th>Heartbeat</th><th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {data?.map((i) => {
                 const outdated = Boolean(i.meta?.agent_outdated);
                 const canDestroy = !['destroyed', 'destroying'].includes(i.status);
+                const isShared = Boolean(i.meta?.sharedDemo);
                 return (
                   <tr
                     key={i.id}
                     className="admin-table-row cursor-pointer"
                     onClick={() => openDetail(i)}
                   >
-                    <td><code className="text-xs">{i.install_id.slice(0, 12)}…</code></td>
+                    <td>
+                      <div className="text-sm font-medium">{i.customer_name || i.admin_email || '—'}</div>
+                      <div className="text-xs text-muted-foreground font-mono">
+                        {(i.request_email || i.admin_email || i.install_id).toString().slice(0, 28)}
+                        {(i.request_email || i.admin_email) ? '' : '…'}
+                      </div>
+                    </td>
                     <td>{i.product_name?.en || i.product_slug}</td>
-                    <td>{i.trial_type}</td>
+                    <td>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs">{i.trial_type === 'hosted' ? 'Option 1' : 'Option 2'}</span>
+                        {isShared && (
+                          <Badge variant="outline" className="w-fit text-[10px]">Shared demo</Badge>
+                        )}
+                      </div>
+                    </td>
                     <td><TrialStatusBadge status={i.status} /></td>
                     <td className="text-xs">
-                      {outdated ? (
+                      {isShared ? (
+                        <span className="text-muted-foreground">n/a</span>
+                      ) : outdated ? (
                         <span className="inline-flex items-center gap-1 text-amber-600">
                           <AlertTriangle className="w-3.5 h-3.5" />
                           {i.agent_version || 'unknown'}
@@ -152,23 +193,59 @@ const AdminTrialInstancesPage: React.FC = () => {
                       ) : (i.agent_version || '—')}
                     </td>
                     <td className="text-xs">{i.expires_at ? new Date(i.expires_at).toLocaleDateString() : '—'}</td>
-                    <td className="text-xs">{i.last_heartbeat_at ? new Date(i.last_heartbeat_at).toLocaleString() : '—'}</td>
+                    <td className="text-xs">
+                      {isShared
+                        ? <span className="text-muted-foreground">n/a</span>
+                        : (i.last_heartbeat_at ? new Date(i.last_heartbeat_at).toLocaleString() : '—')}
+                    </td>
                     <td className="text-right space-x-1" onClick={(e) => e.stopPropagation()}>
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => showCreds(i.id)} title="Credentials" aria-label="Show credentials"><Key className="w-4 h-4" /></Button>
                       {i.trial_type === 'self_hosted' && (
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => downloadInstaller(i.id)} title="Download installer" aria-label="Download installer"><Package className="w-4 h-4" /></Button>
                       )}
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => requestBackup(i.id)} title="Backup now" aria-label="Backup now" disabled={backup.isPending}><HardDrive className="w-4 h-4" /></Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => restoreLatest(i.id)} title="Restore latest" aria-label="Restore latest backup" disabled={restore.isPending || listBackups.isPending}><RotateCcw className="w-4 h-4" /></Button>
+                      {!isShared && (
+                        <>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => requestBackup(i.id)} title="Backup now" aria-label="Backup now" disabled={backup.isPending}><HardDrive className="w-4 h-4" /></Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => restoreLatest(i.id)} title="Restore latest" aria-label="Restore latest backup" disabled={restore.isPending || listBackups.isPending}><RotateCcw className="w-4 h-4" /></Button>
+                        </>
+                      )}
                       {i.status === 'active' && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => freeze.mutate(i.id)} title="Freeze" aria-label="Freeze instance"><Snowflake className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => freeze.mutate(i.id)} title={isShared ? 'Revoke login' : 'Freeze'} aria-label="Freeze instance"><Snowflake className="w-4 h-4" /></Button>
                       )}
                       {(i.status === 'frozen' || i.status === 'expired') && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => unfreeze.mutate(i.id)} title="Unfreeze" aria-label="Unfreeze instance"><Sun className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => unfreeze.mutate(i.id)} title={isShared ? 'Restore login' : 'Unfreeze'} aria-label="Unfreeze instance"><Sun className="w-4 h-4" /></Button>
                       )}
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => extend.mutate({ id: i.id, days: 7 })} title="Extend +7d" aria-label="Extend by 7 days">+7</Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          extend.mutate(
+                            { id: i.id, days: 7 },
+                            {
+                              onSuccess: () => {
+                                toast({
+                                  title: 'Extended +7 days',
+                                  description: Boolean(i.meta?.sharedDemo)
+                                    ? 'Shared demo access reactivated and expiry updated.'
+                                    : i.status === 'provisioning'
+                                      ? 'Expiry updated in Control Plane. Agent will pick up extend after install/register.'
+                                      : 'Expiry updated. Extend command queued for the agent.',
+                                });
+                              },
+                              onError: (e: Error) => {
+                                toast({ title: 'Extend failed', description: e.message, variant: 'destructive' });
+                              },
+                            },
+                          );
+                        }}
+                        title="Extend +7d"
+                        aria-label="Extend by 7 days"
+                      >
+                        +7
+                      </Button>
                       {canDestroy && (
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => confirmDestroy(i.id)} title="Destroy" aria-label="Destroy instance"><Trash2 className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => confirmDestroy(i.id)} title={isShared ? 'Revoke access' : 'Destroy'} aria-label="Destroy instance"><Trash2 className="w-4 h-4" /></Button>
                       )}
                     </td>
                   </tr>
@@ -189,7 +266,27 @@ const AdminTrialInstancesPage: React.FC = () => {
         onOpenChange={setDrawerOpen}
         onFreeze={(id) => freeze.mutate(id)}
         onUnfreeze={(id) => unfreeze.mutate(id)}
-        onExtend={(id) => extend.mutate({ id, days: 7 })}
+        onExtend={(id) => {
+          const row = data?.find((x) => x.id === id);
+          extend.mutate(
+            { id, days: 7 },
+            {
+              onSuccess: () => {
+                toast({
+                  title: 'Extended +7 days',
+                  description: Boolean(row?.meta?.sharedDemo)
+                    ? 'Shared demo access reactivated and expiry updated.'
+                    : row?.status === 'provisioning'
+                      ? 'Expiry updated. Agent applies extend after register.'
+                      : 'Expiry updated. Extend command queued for the agent.',
+                });
+              },
+              onError: (e: Error) => {
+                toast({ title: 'Extend failed', description: e.message, variant: 'destructive' });
+              },
+            },
+          );
+        }}
         onBackup={requestBackup}
         onRestore={restoreLatest}
         onDestroy={confirmDestroy}
@@ -198,29 +295,65 @@ const AdminTrialInstancesPage: React.FC = () => {
         busy={freeze.isPending || unfreeze.isPending || backup.isPending || destroy.isPending}
       />
 
+      <CredentialsDialog
+        open={credsOpen}
+        onOpenChange={setCredsOpen}
+        loading={credsLoading}
+        credentials={credsData}
+        shopUrl={credsInstance?.shop_url}
+        adminUrl={credsInstance?.admin_url}
+        customerLabel={credsInstance?.customer_name || credsInstance?.request_email || credsInstance?.admin_email}
+        sharedDemo={Boolean(credsInstance?.meta?.sharedDemo)}
+      />
+
       <ConfirmDialog
         open={!!destroyTarget}
         onOpenChange={(open) => !open && setDestroyTarget(null)}
-        title="Destroy trial instance"
+        title={
+          Boolean(
+            (selected?.id === destroyTarget && selected?.meta?.sharedDemo)
+            || data?.find((x) => x.id === destroyTarget)?.meta?.sharedDemo
+          )
+            ? 'Revoke shared demo access'
+            : 'Destroy trial instance'
+        }
         destructive
         typedConfirmWord="DESTROY"
-        confirmLabel={destroyHard ? 'Destroy (hard)' : 'Destroy (soft)'}
+        confirmLabel={
+          Boolean(
+            (selected?.id === destroyTarget && selected?.meta?.sharedDemo)
+            || data?.find((x) => x.id === destroyTarget)?.meta?.sharedDemo
+          )
+            ? 'Revoke access'
+            : (destroyHard ? 'Destroy (hard)' : 'Destroy (soft)')
+        }
         busy={destroy.isPending}
         onConfirm={runDestroy}
         description={
           <span className="space-y-2 block">
-            <span className="block">
-              The agent takes a mandatory pre-destroy backup first. This cannot be undone.
-            </span>
-            <label className="flex items-center gap-2 text-xs font-medium text-destructive">
-              <input
-                type="checkbox"
-                checked={destroyHard}
-                onChange={(e) => setDestroyHard(e.target.checked)}
-                className="rounded border-border"
-              />
-              Hard destroy (wipe data & volumes, not just freeze)
-            </label>
+            {Boolean(
+              (selected?.id === destroyTarget && selected?.meta?.sharedDemo)
+              || data?.find((x) => x.id === destroyTarget)?.meta?.sharedDemo
+            ) ? (
+              <span className="block">
+                Revokes this user’s admin access. Does not shut down the demo.
+              </span>
+            ) : (
+              <>
+                <span className="block">
+                  The agent takes a mandatory pre-destroy backup first. This cannot be undone.
+                </span>
+                <label className="flex items-center gap-2 text-xs font-medium text-destructive">
+                  <input
+                    type="checkbox"
+                    checked={destroyHard}
+                    onChange={(e) => setDestroyHard(e.target.checked)}
+                    className="rounded border-border"
+                  />
+                  Hard destroy (wipe data & volumes, not just freeze)
+                </label>
+              </>
+            )}
           </span>
         }
       />

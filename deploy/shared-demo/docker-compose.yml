@@ -1,0 +1,107 @@
+# Shared Lifestyle demo for Option 1 (Trialvo Hosted).
+# One long-lived stack — trial users get ADMIN accounts, not their own compose projects.
+#
+# Ports (host):
+#   Shop  http://localhost:5100
+#   Admin http://localhost:5174
+#   API   http://localhost:9100
+#   MySQL localhost:23307
+#
+# Start:
+#   docker compose -f deploy/shared-demo/docker-compose.yml up -d
+# Then seed once (from trialvo-backend):
+#   node scripts/seed-shared-demo.js
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    container_name: lifestyle-shared-demo-db
+    environment:
+      MYSQL_ROOT_PASSWORD: sharedDemoRoot2026
+      MYSQL_DATABASE: ecom
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "23307:3306"
+    volumes:
+      - shared_demo_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-psharedDemoRoot2026"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - shared_demo_net
+
+  api:
+    image: lifestyle-api:trial
+    restart: unless-stopped
+    container_name: lifestyle-shared-demo-api
+    environment:
+      PORT: "5000"
+      NODE_ENV: production
+      # Intentionally NOT TRIAL_MODE=1 — no license-agent / lease gate on shared demo
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: sharedDemoRoot2026
+      DB_NAME: ecom
+      JWTSECRET: shared-demo-jwt-secret-change-me
+      ADMIN_URL: http://localhost:5174
+      SHOP_URL: http://localhost:5100
+      STORAGE_DRIVER: local
+      STORAGE_URL: http://localhost:9100
+    ports:
+      - "9100:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - shared_demo_uploads:/usr/src/app/uploads
+    networks:
+      - shared_demo_net
+
+  admin:
+    image: lifestyle-admin:trial
+    restart: unless-stopped
+    container_name: lifestyle-shared-demo-admin
+    environment:
+      API_ORIGIN: "http://localhost:9100"
+      IMAGE_URL: "http://localhost:9100"
+      API_PREFIX: "/api/v1"
+    ports:
+      - "5174:80"
+    depends_on:
+      - api
+    networks:
+      - shared_demo_net
+
+  shop:
+    image: lifestyle-shop:trial
+    restart: unless-stopped
+    container_name: lifestyle-shared-demo-shop
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      API_URL: "http://api:5000"
+      IMAGE_URL: "http://localhost:9100"
+      SITE_URL: "http://localhost:5100"
+      SHOP_URL: "http://localhost:5100"
+      APP_URL: "http://localhost:5100"
+    ports:
+      - "5100:5000"
+    depends_on:
+      - api
+    networks:
+      - shared_demo_net
+
+volumes:
+  shared_demo_mysql:
+  shared_demo_uploads:
+
+networks:
+  shared_demo_net:
+    driver: bridge

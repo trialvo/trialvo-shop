@@ -2,6 +2,7 @@ const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 const sharp = require('sharp');
 const storage = require('../services/storage');
+const { deleteMediaByUrls } = require('../services/mediaCleanup');
 
 // Product/category imagery is normalized to a sane max width and re-encoded to
 // WebP so the storefront stays fast regardless of what admins upload. Oversized
@@ -34,7 +35,8 @@ async function uploadMedia(req, res, next) {
         const { data, info } = await pipeline.toBuffer({ resolveWithObject: true });
 
         const subdir = kind === 'category_icon' ? 'categories' : 'products';
-        const { storageKey, url } = await storage.saveBuffer(data, { ext: '.webp', subdir });
+        const saved = await storage.saveBuffer(data, { ext: '.webp', subdir });
+        const { storageKey, url } = saved;
 
         const id = uuidv4();
         await pool.query(
@@ -43,7 +45,13 @@ async function uploadMedia(req, res, next) {
             [id, kind, ownerType, ownerId, url, storageKey, 'image/webp', data.length, info.width, info.height]
         );
 
-        res.status(201).json({ id, url, width: info.width, height: info.height });
+        res.status(201).json({
+            id,
+            url,
+            absoluteUrl: saved.absoluteUrl || url,
+            width: info.width,
+            height: info.height,
+        });
     } catch (error) {
         next(error);
     }
@@ -64,4 +72,19 @@ async function deleteMedia(req, res, next) {
     }
 }
 
-module.exports = { uploadMedia, deleteMedia };
+// POST /api/admin/media/cleanup — body { urls: string[] }
+// Removes tracked uploads that the admin dropped from a product form before save.
+async function cleanupMediaUrls(req, res, next) {
+    try {
+        const urls = Array.isArray(req.body?.urls) ? req.body.urls : [];
+        if (!urls.length) {
+            return res.status(400).json({ error: 'urls array required' });
+        }
+        const deleted = await deleteMediaByUrls(urls);
+        res.json({ message: 'Cleanup complete', deleted });
+    } catch (error) {
+        next(error);
+    }
+}
+
+module.exports = { uploadMedia, deleteMedia, cleanupMediaUrls };

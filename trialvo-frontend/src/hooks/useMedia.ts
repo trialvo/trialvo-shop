@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 export interface UploadedMedia {
   id: string;
   url: string;
+  absoluteUrl?: string;
   width: number;
   height: number;
 }
@@ -28,4 +29,12 @@ async function uploadMedia({ file, kind, ownerType, ownerId }: UploadArgs): Prom
 
 export function useUploadMedia() {
   return useMutation({ mutationFn: uploadMedia });
+}
+
+/** Best-effort cleanup of uploaded files the admin removed from the form. */
+export function useCleanupMediaUrls() {
+  return useMutation({
+    mutationFn: (urls: string[]) =>
+      api.post<{ message: string; deleted: number }>("/admin/media/cleanup", { urls }),
+  });
 }

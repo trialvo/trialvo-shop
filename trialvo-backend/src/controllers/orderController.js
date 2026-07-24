@@ -1,6 +1,7 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 const { createTrialvoPayBill } = require('../config/trialvo_pay');
+const { getTrialSettings } = require('../services/trialSettings');
 
 // POST /api/orders — public, create order + initiate Trialvo Pay payment
 async function createOrder(req, res, next) {
@@ -9,17 +10,31 @@ async function createOrder(req, res, next) {
     const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const {
       productId, customerName, customerEmail, customerPhone,
-      company, needsHosting, notes, paymentMethod, totalBdt,
+      company, needsHosting, notes, paymentMethod,
       discountAmount, shippingAddress, productName,
       trialInstanceId,
+      orderKind: rawKind,
     } = req.body;
 
+    const orderKind = rawKind === 'trial_extend' ? 'trial_extend' : 'product';
+    const settings = await getTrialSettings();
+
     let linkedInstanceId = null;
+    let resolvedProductId = productId || null;
+    let extendDays = null;
+    let totalBdt = 0;
+    let billProductName = productName || 'Digital Product';
+
+    if (!customerName || !customerEmail || !customerPhone) {
+      return res.status(400).json({ error: 'customerName, customerEmail, customerPhone required' });
+    }
+
     if (trialInstanceId) {
       const inst = await pool.query(
-        `SELECT ti.id, ti.product_id, tr.email
+        `SELECT ti.id, ti.product_id, tr.email, p.name AS product_name
          FROM trial_instances ti
          LEFT JOIN trial_requests tr ON tr.id = ti.request_id
+         LEFT JOIN products p ON p.id = ti.product_id
          WHERE ti.id = $1`,
         [trialInstanceId]
       );
@@ -27,42 +42,70 @@ async function createOrder(req, res, next) {
         return res.status(400).json({ error: 'Invalid trialInstanceId' });
       }
       const row = inst.rows[0];
-      if (productId && row.product_id && row.product_id !== productId) {
-        return res.status(400).json({ error: 'trialInstanceId does not match productId' });
-      }
       if (
         customerEmail && row.email
         && String(row.email).toLowerCase() !== String(customerEmail).toLowerCase()
       ) {
-        return res.status(400).json({ error: 'trialInstanceId email does not match customerEmail' });
+        return res.status(400).json({ error: 'Use the same email as your trial request' });
+      }
+      if (productId && row.product_id && row.product_id !== productId && orderKind === 'product') {
+        return res.status(400).json({ error: 'trialInstanceId does not match productId' });
       }
       linkedInstanceId = row.id;
+      if (!resolvedProductId) resolvedProductId = row.product_id;
+      if (row.product_name && typeof row.product_name === 'object') {
+        billProductName = row.product_name.en || row.product_name.bn || billProductName;
+      }
     }
 
-    // ── 1. Save order to PostgreSQL ──────────────────────────────────
+    if (orderKind === 'trial_extend') {
+      if (!linkedInstanceId) {
+        return res.status(400).json({ error: 'trialInstanceId required for trial extend' });
+      }
+      // Server-authoritative price & days
+      extendDays = settings.extendDays;
+      totalBdt = settings.extendPriceBdt;
+      billProductName = `Trial extend (+${extendDays} days) — ${billProductName}`;
+    } else if (resolvedProductId) {
+      const prod = await pool.query('SELECT price_bdt, name FROM products WHERE id = $1', [resolvedProductId]);
+      if (!prod.rows.length) {
+        return res.status(400).json({ error: 'Product not found' });
+      }
+      totalBdt = Number(prod.rows[0].price_bdt) || 0;
+      const n = prod.rows[0].name;
+      if (n && typeof n === 'object') billProductName = n.en || n.bn || billProductName;
+    } else {
+      return res.status(400).json({ error: 'productId required for product purchase' });
+    }
+
+    if (totalBdt <= 0) {
+      return res.status(400).json({ error: 'Invalid order amount' });
+    }
+
     await pool.query(
-      `INSERT INTO orders (id, order_id, product_id, customer_name, customer_email, customer_phone, company, needs_hosting, notes, payment_method, total_bdt, status, discount_amount, shipping_address, trial_instance_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+      `INSERT INTO orders (
+         id, order_id, product_id, customer_name, customer_email, customer_phone, company,
+         needs_hosting, notes, payment_method, total_bdt, status, discount_amount,
+         shipping_address, trial_instance_id, order_kind, extend_days
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
       [
-        id, orderId, productId || null, customerName, customerEmail,
+        id, orderId, resolvedProductId, customerName, customerEmail,
         customerPhone, company || '', needsHosting ? 1 : 0,
-        notes || '', paymentMethod || 'trialvo_pay', totalBdt || 0, 'pending',
+        notes || '', paymentMethod || 'trialvo_pay', totalBdt, 'pending',
         discountAmount || 0, shippingAddress ? JSON.stringify(shippingAddress) : null,
-        linkedInstanceId,
+        linkedInstanceId, orderKind, extendDays,
       ]
     );
 
-    // Insert initial timeline entry
     await pool.query(
-      `INSERT INTO order_timeline (id, order_id, from_status, to_status, changed_by, comment) VALUES ($1, $2, NULL, 'pending', 'system', 'Order created')`,
-      [uuidv4(), id]
+      `INSERT INTO order_timeline (id, order_id, from_status, to_status, changed_by, comment)
+       VALUES ($1, $2, NULL, 'pending', 'system', $3)`,
+      [uuidv4(), id, orderKind === 'trial_extend' ? 'Trial extend order created' : 'Order created']
     );
 
-    // ── 2. Create Trialvo Pay bill & get payment URL ───────────────────────
     let pay_url = null;
     let bill_token = null;
 
-    // Parse shipping address if available
     let parsedShipping = null;
     if (shippingAddress) {
       try {
@@ -70,25 +113,26 @@ async function createOrder(req, res, next) {
       } catch { parsedShipping = null; }
     }
 
-    // Load product details for enriched bill
     let productSlug = null;
-    let productCategory = 'Digital Product';
-    if (productId) {
-      const prodResult = await pool.query('SELECT slug, category FROM products WHERE id = $1', [productId]).catch(() => ({ rows: [] }));
+    let productCategory = orderKind === 'trial_extend' ? 'Trial Extend' : 'Digital Product';
+    if (resolvedProductId) {
+      const prodResult = await pool.query('SELECT slug, category FROM products WHERE id = $1', [resolvedProductId]).catch(() => ({ rows: [] }));
       if (prodResult.rows.length > 0) {
         productSlug = prodResult.rows[0].slug;
-        productCategory = prodResult.rows[0].category || 'Digital Product';
+        if (orderKind !== 'trial_extend') {
+          productCategory = prodResult.rows[0].category || 'Digital Product';
+        }
       }
     }
 
-    const finalAmount = totalBdt || 0;
+    const finalAmount = totalBdt;
     const subtotalAmount = (discountAmount && discountAmount > 0) ? finalAmount + discountAmount : finalAmount;
 
     try {
       const billResult = await createTrialvoPayBill({
         orderId,
-        productId,
-        productName: productName || 'Digital Product',
+        productId: resolvedProductId,
+        productName: billProductName,
         productSlug,
         amount: finalAmount,
         subtotal: subtotalAmount,
@@ -100,8 +144,8 @@ async function createOrder(req, res, next) {
         notes,
         trialInstanceId: linkedInstanceId,
         items: [{
-          id: productId,
-          name: productName || 'Digital Product',
+          id: resolvedProductId || `extend-${linkedInstanceId}`,
+          name: billProductName,
           category: productCategory,
           quantity: 1,
           price: subtotalAmount,
@@ -113,16 +157,14 @@ async function createOrder(req, res, next) {
       pay_url = billResult.pay_url;
       bill_token = billResult.bill_token;
 
-      // Store the payment URL and bill token
       await pool.query(
         'UPDATE orders SET pay_url = $1, trialvo_pay_bill_token = $2 WHERE id = $3',
         [pay_url, bill_token, id]
-      ).catch(() => {}); // Ignore if columns not migrated yet
+      ).catch(() => {});
 
-      console.log(`[Order] Trialvo Pay bill created — order: ${orderId}, token: ${bill_token}`);
+      console.log(`[Order] Trialvo Pay bill created — order: ${orderId}, kind: ${orderKind}, token: ${bill_token}`);
     } catch (pvErr) {
       console.error(`[Order] Trialvo Pay bill creation failed: ${pvErr.message}`);
-      // Return order anyway — frontend shows error
     }
 
     const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);

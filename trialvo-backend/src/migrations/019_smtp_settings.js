@@ -1,6 +1,3 @@
-/**
- * Migration 019: SMTP settings in system_config (admin-configurable)
- */
 module.exports = {
   name: '019_smtp_settings',
   async up(client) {
@@ -17,20 +14,11 @@ module.exports = {
 
     for (const [key, val, desc] of defaults) {
       await client.query(
-        'INSERT INTO system_config (key, value, description) VALUES ($1, $2, $3) ON CONFLICT (key) DO NOTHING',
+        'INSERT IGNORE INTO system_config (`key`, value, description) VALUES ($1, $2, $3)',
         [key, val, desc]
       );
     }
 
     console.log('✅ Migration 019: SMTP settings seeded');
-  },
-
-  async down(client) {
-    await client.query(`
-      DELETE FROM system_config WHERE key IN (
-        'smtp_enabled', 'smtp_host', 'smtp_port', 'smtp_secure',
-        'smtp_user', 'smtp_password_enc', 'smtp_from_email', 'smtp_from_name'
-      )
-    `);
   },
 };

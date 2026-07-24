@@ -12,6 +12,7 @@ import FAQ from '@/components/sections/FAQ';
 import ScreenshotGallery from '@/components/gallery/ScreenshotGallery';
 import { useProduct, useRelatedProducts } from '@/hooks/useProducts';
 import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
+import { resolveMediaUrl } from '@/lib/mediaUrl';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -43,14 +44,19 @@ const ProductDetailPage: React.FC = () => {
     return <Navigate to="/products" replace />;
   }
 
-  const images = activeTab === 'shop' ? product.images.shop : product.images.admin;
+  const images = activeTab === 'shop'
+    ? (product.images?.shop || [])
+    : (product.images?.admin || []);
+  const galleryImages = (images.length > 0 ? images : [product.thumbnail])
+    .map((u) => resolveMediaUrl(u))
+    .filter(Boolean);
 
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name[language],
     description: product.shortDescription[language],
-    image: product.thumbnail,
+    image: resolveMediaUrl(product.thumbnail),
     offers: {
       '@type': 'Offer',
       price: product.priceBDT,
@@ -100,7 +106,7 @@ const ProductDetailPage: React.FC = () => {
         title={product.seo.title[language]}
         description={product.seo.description[language]}
         keywords={product.seo.keywords[language]}
-        ogImage={product.thumbnail}
+        ogImage={resolveMediaUrl(product.thumbnail)}
         ogType="product"
         structuredData={productSchema}
       />
@@ -158,7 +164,7 @@ const ProductDetailPage: React.FC = () => {
 
               {/* Gallery with arrows and modal */}
               <ScreenshotGallery
-                images={images.length > 0 ? images : [product.thumbnail]}
+                images={galleryImages.length > 0 ? galleryImages : [resolveMediaUrl(product.thumbnail)].filter(Boolean)}
                 title={product.name[language]}
               />
             </motion.div>
@@ -224,14 +230,19 @@ const ProductDetailPage: React.FC = () => {
                     {language === 'bn' ? 'ট্রায়াল চাই' : 'Request Trial'}
                   </Button>
                 )}
-                {product.demo.length > 0 && (
-                  <Button asChild variant="outline" size="lg" className="flex-1 h-14 text-base">
-                    <a href={product.demo[0].url} target="_blank" rel="noopener noreferrer">
-                      <Play className="w-5 h-5 mr-2" />
-                      {t('product.viewDemo')}
-                    </a>
-                  </Button>
-                )}
+                {(() => {
+                  const shopDemo = product.demo.find((d) =>
+                    /shop|শপ/i.test(typeof d.label === 'string' ? d.label : (d.label?.en || d.label?.bn || ''))
+                  ) || product.demo[0];
+                  return shopDemo?.url ? (
+                    <Button asChild variant="outline" size="lg" className="flex-1 h-14 text-base">
+                      <a href={shopDemo.url} target="_blank" rel="noopener noreferrer">
+                        <Play className="w-5 h-5 mr-2" />
+                        {language === 'bn' ? 'ডেমো শপ দেখুন' : 'Browse demo shop'}
+                      </a>
+                    </Button>
+                  ) : null;
+                })()}
               </div>
 
               {/* Highlights */}

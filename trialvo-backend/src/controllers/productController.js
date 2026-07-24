@@ -1,5 +1,11 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const {
+    collectProductMediaUrls,
+    cleanupOrphanedProductMedia,
+    cleanupAllProductMedia,
+    linkMediaToProduct,
+} = require('../services/mediaCleanup');
 
 // Helper: build parameterized query with $1, $2, ... placeholders
 function pgParams(startIdx, count) {
@@ -107,6 +113,8 @@ async function createProduct(req, res, next) {
         );
 
         const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
+        // Link any freshly uploaded /uploads assets to this product for later cleanup.
+        await linkMediaToProduct(id, collectProductMediaUrls(rows[0]));
         res.status(201).json(rows[0]);
     } catch (error) {
         next(error);
@@ -119,15 +127,25 @@ async function updateProduct(req, res, next) {
         const { id } = req.params;
         const updates = req.body;
 
+        const before = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
+        if (!before.rows.length) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
         // Build dynamic SET clause
         const fields = [];
         const values = [];
         const jsonFields = ['images', 'demo', 'name', 'short_description', 'features', 'facilities', 'faq', 'seo', 'deploy_config'];
         const boolFields = ['is_featured', 'is_active', 'is_trialable'];
+        const allowed = new Set([
+            'slug', 'category', 'price_bdt', 'price_usd', 'thumbnail', 'images', 'video_url',
+            'demo', 'name', 'short_description', 'features', 'facilities', 'faq', 'seo',
+            'is_featured', 'is_active', 'is_trialable', 'deploy_config', 'sort_order',
+        ]);
         let paramIdx = 1;
 
         for (const [key, value] of Object.entries(updates)) {
-            if (key === 'id') continue;
+            if (key === 'id' || !allowed.has(key)) continue;
             let stored = value;
             if (jsonFields.includes(key)) stored = value == null ? null : JSON.stringify(value);
             else if (boolFields.includes(key)) stored = value ? 1 : 0;
@@ -144,6 +162,8 @@ async function updateProduct(req, res, next) {
         await pool.query(`UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIdx}`, values);
 
         const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
+        await cleanupOrphanedProductMedia(before.rows[0], rows[0]);
+        await linkMediaToProduct(id, collectProductMediaUrls(rows[0]));
         res.json(rows[0]);
     } catch (error) {
         next(error);
@@ -154,7 +174,13 @@ async function updateProduct(req, res, next) {
 async function deleteProduct(req, res, next) {
     try {
         const { id } = req.params;
+        const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
+        if (!rows.length) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
         await pool.query('DELETE FROM products WHERE id = $1', [id]);
+        // Best-effort: remove uploaded files that belonged to this product.
+        await cleanupAllProductMedia(rows[0]);
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         next(error);
@@ -173,19 +199,25 @@ async function duplicateProduct(req, res, next) {
         const newSlug = product.slug + '-copy-' + Date.now().toString(36);
 
         await pool.query(
-            `INSERT INTO products (id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active, sort_order)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 0, $17)`,
+            `INSERT INTO products (
+               id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo,
+               name, short_description, features, facilities, faq, seo,
+               is_featured, is_active, sort_order, deploy_config, is_trialable
+             )
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,0,0,$16,$17,$18)`,
             [
                 newId, newSlug, product.category, product.price_bdt, product.price_usd,
                 product.thumbnail, product.images, product.video_url, product.demo,
                 product.name, product.short_description, product.features,
-                product.facilities, product.faq, product.seo, product.is_featured,
+                product.facilities, product.faq, product.seo,
                 product.sort_order || 0,
+                product.deploy_config || null,
+                product.is_trialable ? 1 : 0,
             ]
         );
 
-        const newResult = await pool.query('SELECT * FROM products WHERE id = $1', [newId]);
-        res.status(201).json(newResult.rows[0]);
+        const { rows: created } = await pool.query('SELECT * FROM products WHERE id = $1', [newId]);
+        res.status(201).json(created[0]);
     } catch (error) {
         next(error);
     }

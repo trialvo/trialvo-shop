@@ -38,7 +38,7 @@ const { pool } = require('../src/config/db');
   // Simulate one scheduled command shape
   const { rows } = await pool.query(
     `SELECT id, command, payload, status FROM remote_commands
-     WHERE command = 'backup_now' AND (payload->>'scheduled') = 'true'
+     WHERE command = 'backup_now' AND JSON_UNQUOTE(JSON_EXTRACT(payload, '$.scheduled')) = 'true'
      ORDER BY created_at DESC LIMIT 1`
   );
 

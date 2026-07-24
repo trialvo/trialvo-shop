@@ -21,11 +21,10 @@ const { renderComposeTemplate } = require('./composeTemplate');
 const { randomHex } = require('../utils/crypto');
 
 const execFileAsync = promisify(execFile);
+const { getPublicApiUrl } = require('../config/publicUrls');
 const TRIALS_ROOT = process.env.TRIALS_ROOT || path.join(__dirname, '..', '..', 'var', 'trials');
 const TRIAL_DOMAIN_BASE = process.env.TRIAL_DOMAIN_BASE || 'trial.trialvo.com';
-const CP_URL = (process.env.PUBLIC_API_URL
-  || process.env.CONTROL_PLANE_PUBLIC_URL
-  || `http://localhost:${process.env.PORT || 8092}`).replace(/\/$/, '');
+const CP_URL = getPublicApiUrl();
 
 // In local mode the trial container reaches the Control Plane (this backend) on
 // the host via host.docker.internal. Defaults to this backend's own port.
@@ -403,7 +402,8 @@ async function destroyDockerStack(projectDir, { hard = false } = {}) {
   }
   const composeFile = path.join(projectDir, 'docker-compose.yml');
   try {
-    const args = ['compose', '-f', composeFile, 'down'];
+    // -t 15: don't wait the full default stop grace per container (Windows Docker is slow).
+    const args = ['compose', '-f', composeFile, 'down', '-t', '15'];
     if (hard) args.push('-v', '--remove-orphans');
     await execFileAsync('docker', args, { cwd: projectDir, timeout: 120000, windowsHide: true });
     if (hard) {

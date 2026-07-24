@@ -86,30 +86,26 @@ export function RequestTrialModal({
         toast({
           title: t("আগের ট্রায়াল পাওয়া গেছে", "Existing trial found"),
           description: t(
-            "এই ইমেইলে ইতিমধ্যে একটি ট্রায়াল আছে। Status পেজে নিয়ে যাওয়া হচ্ছে।",
-            "You already have a trial for this email. Opening your status page.",
+            "ইমেইলে পাঠানো status লিংক চেক করুন।",
+            "Check the status link we sent to your email.",
           ),
         });
       } else {
         toast({
-          title: t(
-            res.autoApproved ? "ট্রায়াল প্রস্তুত!" : "অনুরোধ পাঠানো হয়েছে!",
-            res.autoApproved ? "Trial is ready!" : "Request submitted!",
-          ),
+          title: t("অনুরোধ পাঠানো হয়েছে!", "Request submitted!"),
           description: t(
-            res.autoApproved
-              ? "লগইন তথ্য status পেজে দেখুন। ইমেইলও পাঠানো হয়েছে।"
-              : "ইমেইলে আপডেট পাবেন। Status পেজ খোলা হয়েছে।",
-            res.autoApproved
-              ? "Login details are on your status page. We emailed you too."
-              : "Check email for updates. Status page opened.",
+            "অনুমোদন হলে ইমেইলে লিংক পাবেন।",
+            "If approved, you will receive a link by email.",
           ),
         });
       }
 
       form.reset();
       onOpenChange(false);
-      if (res.statusUrl) window.location.href = res.statusUrl;
+      const q = new URLSearchParams();
+      if (values.email) q.set("email", values.email.trim());
+      if (res.existing) q.set("existing", "1");
+      window.location.href = `/trial-request-submitted?${q.toString()}`;
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : t("সমস্যা হয়েছে", "Something went wrong");
@@ -166,9 +162,7 @@ export function RequestTrialModal({
                     : trialSettings.selfHostedDays}{" "}
                   {t("দিন", "days")}
                 </strong>
-                {trialType === "hosted" && trialSettings.autoApproveHosted ? (
-                  <> · {t("তাৎক্ষণিক অনুমোদন", "instant approval")}</>
-                ) : null}
+                <> · {t("অনুমোদন হলে ইমেইলে লিংক পাবেন", "email link when approved")}</>
               </p>
             ) : null}
 
