@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sign-In</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+    <h1>Sign in with Google</h1>
+    <div id="g_id_onload" data-client_id="184785457190-0bkq1pucbl65n4lhoct81h4leccepgr0.apps.googleusercontent.com"
+        data-callback="handleCredentialResponse">
+    </div>
+
+    <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="sign_in_with"
+        data-size="large" data-logo_alignment="left">
+    </div>
+
+    <script>
+        function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+
+            // Send the token to your backend for verification
+            fetch("http://localhost:7000/api/v1/user/gauth", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ gauthToken: response.credential }),
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    console.log("Server response:", data);
+                })
+                .catch((error) => {
+                    console.error("Error verifying token:", error);
+                });
+        }
+    </script>
+</body>
+
+</html>

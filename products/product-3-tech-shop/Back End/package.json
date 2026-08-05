@@ -1,0 +1,63 @@
+{
+    "name": "auto-blog",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "type": "commonjs",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node index.js",
+        "dev": "nodemon index.js",
+        "docker:build": "docker build -t myshop-ecom .",
+        "docker:run": "docker run -p 7000:7000 --env-file .env myshop-ecom",
+        "docker:build:prod": "docker build -t myshop-ecom:prod .",
+        "docker:run:prod": "docker run -p 8080:8080 --env-file .env.production myshop-ecom:prod",
+        "obfuscate": "node ../deploy/obfuscate-backend.js",
+        "build:trial-image": "bash ../deploy/build-images.sh"
+    },
+    "dependencies": {
+        "@google-cloud/storage": "^7.0.0",
+        "axios": "^1.13.2",
+        "bcrypt": "^6.0.0",
+        "body-parser": "^1.20.2",
+        "compression": "^1.7.4",
+        "config": "^3.3.12",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "errorhandler": "^1.5.1",
+        "express": "^4.19.2",
+        "express-rate-limit": "^8.2.1",
+        "firebase-admin": "^13.6.0",
+        "form-data": "^4.0.4",
+        "google-auth-library": "^10.5.0",
+        "handlebars": "^4.7.8",
+        "helmet": "^7.1.0",
+        "https": "^1.0.0",
+        "jsonwebtoken": "^9.0.2",
+        "logfmt": "^1.4.0",
+        "method-override": "^3.0.0",
+        "multer": "^2.0.2",
+        "mysql2": "^3.10.2",
+        "node-cron": "^4.2.1",
+        "node-fetch": "^3.3.2",
+        "nodemailer": "^7.0.11",
+        "nodemailer-express-handlebars": "^7.0.0",
+        "p-limit": "^3.1.0",
+        "sanitize-html": "^2.17.1",
+        "sharp": "^0.34.5",
+        "validator": "^13.15.23"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.4"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/shuvosvc/myshop-ecom"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/shuvosvc/myshop-ecom/issues"
+    },
+    "homepage": "https://github.com/shuvosvc/myshop-ecom#readme"
+}

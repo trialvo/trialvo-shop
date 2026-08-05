@@ -1,0 +1,99 @@
+# Single Product Page — Task Ledger
+
+## Phase 1A: Order Type ENUM Refactoring ✅
+- [x] Run DB migration: ALTER ENUM + backfill UPDATE (0 admin_regular, 63 admin_stranger)
+- [x] `admin_order.js` — change `'regular'` → `'admin_regular'` in createManualOrder INSERT (L1046)
+- [x] `admin_order.js` — change `'guest'` → `'admin_stranger'` in createManualOrderForStranger INSERT (L1462)
+- [x] `order.js` — add `admin_regular`, `admin_stranger` to validation whitelist (L1950)
+- [x] `admin_dashboard.js` — add `admin_regular`, `admin_stranger`, `single_page` to validation whitelist (L1231)
+- [x] `order-matrics.api.ts` — update TypeScript types (L53, L90)
+- [x] `orders.api.ts` — already `string` type, no change needed
+- [x] `orderData.ts` — add all 5 filter options
+- [x] `AllOrdersView.tsx` — update state type + row mapping (L220, L459)
+- [x] `OrderFiltersBar.tsx` — update prop types
+- [x] `OrdersTable.tsx` — add color-coded order type badges (5 colors)
+- [x] `types.ts` — add `orderType` field to `OrderRow`
+- [x] Shop `service.ts` — update `OrderType` union (L153)
+- [x] `OrderReportReport.tsx` — update filter type + dropdown options
+- [x] `report/types.ts` — update `OrderReportRow.orderType` type
+- [x] Verify: 0 orphaned records, correct distribution
+
+## Phase 2: Backend — Product Flag Endpoints ✅
+- [x] `product.js` — expose `has_single_product_page` in admin getProducts + getProductById responses
+- [x] `product.js` — add `toggleSingleProductPage` endpoint (PATCH, admin auth, audit log)
+- [x] `product.js` — add `getSinglePageData` endpoint (GET, public, validates flag=1, includes bulk_offers)
+- [x] `index.js` — register 2 new routes (`/admin/product/:id/toggle-single-page`, `/user/product/:id/single-page-data`)
+- [x] `v2.sql` — add `has_single_product_page` column to products table definition
+- [x] `updatequerylist.sql` — add V2-054 migration block
+
+## Phase 3: Backend — Single Page Order Controller ✅
+- [x] Create `single_page_sessions` table (V2-055 migration, applied to dev DB)
+- [x] Create `single_page_order.js` controller (6 endpoints):
+  - `sendSinglePagePhoneOtp` — POST, rate limited
+  - `verifySinglePagePhoneOtp` — POST, rate limited
+  - `sendSinglePageEmailOtp` — POST, rate limited
+  - `verifySinglePageEmailOtp` — POST, rate limited
+  - `getSinglePageOrderPermissions` — GET
+  - `placeSinglePageOrder` — POST (full order flow: SKU + bulk only, no coupon/combo/cart-wide)
+- [x] `index.js` — register 6 new routes with `otpSendLimiter` / `otpVerifyLimiter`
+- [x] `updatequerylist.sql` — V2-055 migration block
+- [x] Verified: all endpoints respond correctly on port 9000
+
+## Phase 5: Admin — Product Toggle ✅
+- [x] `products.api.ts` — add `has_single_product_page` to types + `toggleSingleProductPage` API
+- [x] `types.ts` / `utils.ts` — add `hasSingleProductPage` + `slug` to UI Product type/mapper
+- [x] `AllProductsTable.tsx` — add purple toggle column + copy-URL button (appears when ON)
+- [x] `AllProductsPage.tsx` — add optimistic mutation handler for single page toggle
+- [x] Verified: toggle renders, activates, and shows toast + copy-URL icon in admin panel
+
+## Phase 6: Admin — Single Page Orders Tab ✅
+- [x] `AppSidebar.tsx` — added "Single Page Orders" nav item with NEW badge
+- [x] `AllOrdersView.tsx` — added `defaultOrderType` prop support
+- [x] Created `SinglePageOrders.tsx` page wrapper (pre-filters to `single_page`)
+- [x] `App.tsx` — added `/single-page-orders` route
+- [x] i18n — added EN + BN translation keys (`singlePageOrders`)
+- [x] Verified: sidebar renders, page loads pre-filtered, empty state correct (no single_page orders yet)
+
+## Phase 7: Admin — Order Type Column & Filter (DONE in 1A)
+- [x] `types.ts` — add `orderType` to `OrderRow`
+- [x] `OrdersTable.tsx` — color-coded badges
+- [x] `orderData.ts` — ORDER_TYPE_OPTIONS
+- [x] `AllOrdersView.tsx` — pass filter to API
+- [x] `OrderFiltersBar.tsx` — filter dropdown
+
+## Phase 8-9: Shop — Single Order Page + Inline Checkout ✅
+- [x] Created `app/(public)/single-order-page/[slug]/[id]/page.tsx` — SSR metadata + SEO
+- [x] Created `SingleOrderPageClient.tsx` — full standalone product + checkout experience
+  - Product image gallery with thumbnails
+  - Color/variant pickers
+  - Bulk discount display
+  - Quantity selector with stock limit
+  - Inline customer info form (name, phone, address, city, delivery area dropdown, note)
+  - Delivery charge selection dropdown (fetches from `/user/delivery/charges`)
+  - OTP send/verify flow (6-digit code)
+  - Order placement + success view
+- [x] Created `layout.tsx` — hides shop header/footer/nav for standalone experience
+- [x] Updated `proxy.ts` — added `/single-order-page` to PUBLIC_ROUTES
+- [x] Fixed: API field names (`name`, `phone` not `customer_name`/`customer_phone`)
+- [x] Fixed: 6-digit OTP (not 4), `delivery_charge_id` required in place-order
+- [x] Verified: page renders correctly with product data, delivery charges, and all form fields
+
+## Phase 10: Shop — API Service + Hook (Inline) ✅
+- [x] API calls built directly into SingleOrderPageClient (fetch + OTP + order placement)
+- [x] No separate hook needed — component is self-contained
+
+## Backend Integration ✅
+- [x] `single_page_order.js` controller — all 6 endpoints functional
+- [x] Routes registered in `index.js` with rate limiters
+- [x] `single_page_sessions` table created in dev DB
+- [x] Confirmed: `GET /single-page/order-permissions` returns correct config
+- [x] Confirmed: `POST /single-page/send-phone-otp` → `verify-phone-otp` → `place-order` flow wired
+
+## Final Verification
+- [x] E2E: admin toggle → shop page → checkout form renders with delivery charges
+- [x] Backend endpoints: all 6 single-page routes respond correctly
+- [x] Frontend: product gallery, variants, bulk offers, delivery area dropdown all render
+- [ ] Live SMS OTP delivery (requires SMS provider configured in production)
+- [ ] Verify analytics dataLayer events (view_item, begin_checkout, purchase)
+- [ ] Verify CAPI deduplication
+

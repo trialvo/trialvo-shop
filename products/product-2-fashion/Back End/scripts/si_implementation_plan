@@ -1,0 +1,335 @@
+# Single Product Page Order System — Implementation Plan
+
+A dedicated guest-like order flow where users can purchase a single product directly from its own landing page (`/single-order-page/[slug]/[id]`) without login or cart.
+
+---
+
+## Resolved Questions
+
+| Question | Answer |
+|---|---|
+| Login required? | **No** — guest-like flow, no login needed |
+| URL format | **`/single-order-page/[slug]/[id]`** — matches existing product detail route pattern (`/products/[slug]/[id]`) |
+| Verification | **OTP** — phone SMS OTP + email OTP, matching guest checkout flow |
+| Bulk offers | **Smart display** — group by variation, show tier table per variation |
+| Coupons | **Completely disabled** — no coupon field, no coupon logic |
+| Stock deduction | Same as regular/guest orders (on order creation) |
+
+---
+
+## Cost Calculation Formula
+
+**Regular / Guest / Admin orders** (existing — unchanged):
+```
+grandTotal = subtotal - discountTotal - bulkDiscountTotal - comboDiscountTotal
+           - cartWideDiscount + effectiveDeliveryAmount + weightExtraCharge
+```
+
+**Single-page orders** (simplified — only SKU + bulk):
+```
+grandTotal = subtotal - skuDiscountTotal - bulkDiscountTotal
+           + effectiveDeliveryAmount + weightExtraCharge
+```
+
+| Discount Type | Applies to Single Page? |
+|---|---|
+| SKU-level discount (selling_price → final_unit_price) | ✅ Yes |
+| Bulk discount (quantity tiers per SKU) | ✅ Yes |
+| Combo discount | ❌ No — requires multiple different products |
+| Cart-wide discount | ❌ No — cart concept doesn't apply |
+| Coupon discount | ❌ No — explicitly disabled |
+
+> [!IMPORTANT]
+> The new controller will call `calculateBulkComboDiscounts` from `user_discount.js` but **only use `bulkDiscountTotal`** from the result. `comboDiscountTotal` and `cartWideDiscount` will be forced to `0`. This keeps the shared helper intact while enforcing the single-page discount policy.
+
+---
+
+## Current DB State
+
+- **`orders.order_type`**: `ENUM('regular','guest')` — needs `'single_page'` added
+- **`products` table**: Has `slug VARCHAR(255)` with unique index — no new column needed for routing
+- **`products` table**: Needs `has_single_product_page TINYINT(1) DEFAULT 0` column added
+
+---
+
+## Proposed Changes
+
+### Phase 1: Database Schema
+
+#### [MODIFY] Database — `products` table
+
+```sql
+ALTER TABLE products ADD COLUMN has_single_product_page TINYINT(1) NOT NULL DEFAULT 0;
+```
+
+#### [MODIFY] Database — `orders` table
+
+```sql
+ALTER TABLE orders MODIFY COLUMN order_type ENUM('regular','guest','single_page') NOT NULL DEFAULT 'regular';
+```
+
+> [!NOTE]
+> Admin manual orders currently insert as `order_type = 'regular'` with `created_by_admin` flag — no enum change needed for those.
+
+---
+
+### Phase 2: Backend — Product Flag
+
+#### [MODIFY] [product.js](file:///d:/gcp/gcp_graduatefashion_api/controllers/product.js)
+- Add `has_single_product_page` to admin product list SELECT
+- Add `has_single_product_page` to admin create/edit product mutations
+- Add `has_single_product_page` to `getProductByIdUser` SELECT (public endpoint)
+- Add new endpoint: `toggleSingleProductPage(product_id)` — quick toggle from admin list
+
+#### [NEW] Public endpoint: `GET /api/v1/user/product/:id/single-page-data`
+Returns product details + applicable bulk discount rules for that product's SKUs:
+```json
+{
+  "product": { /* full product details */ },
+  "bulk_offers": [
+    {
+      "sku_id": 42,
+      "color_name": "Navy Blue",
+      "variant_name": "XL",
+      "selling_price": 1200,
+      "final_unit_price": 999,
+      "tiers": [
+        { "min_qty": 3, "discount_type": 1, "discount_value": 10, "free_delivery": 1 },
+        { "min_qty": 5, "discount_type": 0, "discount_value": 50, "free_delivery": 1 }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### Phase 3: Backend — Single Page Order Controller
+
+#### [NEW] [single_page_order.js](file:///d:/gcp/gcp_graduatefashion_api/controllers/single_page_order.js)
+
+**`POST /api/v1/single-page-order/place`** — Places a single-page order
+
+Accepts:
+```json
+{
+  "product_sku_id": 42,
+  "quantity": 3,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "phone": "01712345678",
+  "full_address": "House 12, Road 5, Dhanmondi",
+  "city": "Dhaka",
+  "zip_code": "1205",
+  "location_mapping_id": 15,
+  "delivery_charge_id": 2,
+  "payment_type": "cod",
+  "note": "Call before delivery"
+}
+```
+
+Logic (mirrors `createActualOrderFromGuest` in guest_order.js):
+
+1. Validate product has `has_single_product_page = 1`
+2. Validate SKU exists, is active, belongs to product with active categories
+3. Stock check
+4. Validate delivery charge
+5. **Enforce `single_page` scope permissions** via `validateSinglePageOrderPermission` (from previous session)
+6. Calculate pricing:
+   - SKU-level discount (selling_price vs final_unit_price)
+   - Call `calculateBulkComboDiscounts()` → use **only `bulkDiscountTotal`**
+   - Force `comboDiscountTotal = 0`, `cartWideDiscount = 0`, `couponDiscountTotal = 0`
+   - Free delivery logic (SKU flag + bulk-rule-granted)
+   - Weight surcharge
+   - **Grand total** = `subtotal - skuDiscountTotal - bulkDiscountTotal + effectiveDeliveryAmount + weightExtraCharge`
+7. Fraud check via `getFraudTestResults(phone)`
+8. Check for existing user (by phone → by email, same as guest_order.js)
+9. Insert into `orders` with `order_type = 'single_page'`
+10. Insert `order_items`, `order_addresses`, `order_couriers`
+11. Stock deduction (same as guest)
+12. `bumpOrderEventVersion()` for live admin polling
+13. `sendAdminOrderNotification()` — push to admins
+14. `sendOrdermail()` — email confirmation
+15. `autoAssignOrder()` — auto-assign
+16. Return `{ order_id, payment: { url } }`
+
+**OTP Endpoints** (reuse guest_order.js OTP helpers):
+- `POST /api/v1/single-page-order/send-phone-otp`
+- `POST /api/v1/single-page-order/verify-phone-otp`
+- `POST /api/v1/single-page-order/send-email-otp`
+- `POST /api/v1/single-page-order/verify-email-otp`
+- `GET /api/v1/single-page-order/permissions` — returns required verifications
+
+---
+
+### Phase 4: Backend — Order Listing Updates
+
+#### [MODIFY] [order.js](file:///d:/gcp/gcp_graduatefashion_api/controllers/order.js)
+- Line ~1950: Update `order_type` validation to include `'single_page'`:
+  ```js
+  if (!['regular', 'guest', 'single_page'].includes(req.typed.order_type))
+  ```
+
+#### [MODIFY] [index.js](file:///d:/gcp/gcp_graduatefashion_api/index.js)
+- Import and register all new single-page order routes
+- Register new product endpoints (toggle, single-page-data)
+
+---
+
+### Phase 5: Shop Frontend — Single Product Page
+
+#### [NEW] `app/(public)/single-order-page/[slug]/[id]/page.tsx`
+Server component with SEO metadata (same pattern as product detail page).
+
+#### [NEW] `app/(public)/single-order-page/[slug]/[id]/SingleOrderPageClient.tsx`
+Client component — the main landing page:
+- Fetches product data via `/api/v1/user/product/:id/single-page-data`
+- Displays:
+  - Product image gallery
+  - Product name, description, price
+  - **Variation selector** (color → size, same UX as product detail)
+  - **Bulk offer table** — grouped by currently selected variation:
+    ```
+    ┌──────────┬────────────────┬──────────────┐
+    │ Quantity │ Price Per Unit │ You Save     │
+    ├──────────┼────────────────┼──────────────┤
+    │ 3+ pcs   │ ৳890 (-10%)    │ ৳330 total   │
+    │ 5+ pcs   │ ৳850 (-৳50/pc) │ ৳750 total   │
+    └──────────┴────────────────┴──────────────┘
+    ```
+  - Quantity selector
+  - Live price summary (updates as quantity/variation changes)
+  - "Order Now" button → navigates to checkout
+
+#### [NEW] `app/(public)/single-order-page/[slug]/[id]/checkout/page.tsx`
+Single-page checkout (separate route):
+- Order summary sidebar (product, variation, qty, pricing breakdown)
+- Form fields: name, email, phone, delivery zone (location_mapping), full address, payment method
+- **No coupon field**
+- Live cost calculation matching backend formula
+- Phone/email OTP verification modals (based on permission config)
+- Place order → success redirect
+
+#### [NEW] `components/single-order/` directory
+Reusable components:
+- `BulkOfferTable.tsx` — variation-aware tier display
+- `SingleProductSummary.tsx` — price breakdown component
+- `OtpVerifyModal.tsx` — phone/email OTP modal (can reuse existing `openVerifyIdentity` pattern)
+
+---
+
+### Phase 6: Admin Panel — Product Toggle
+
+#### [MODIFY] Products list page
+- Add "Single Page" toggle switch column
+- API call to toggle `has_single_product_page`
+- Show link icon to copy single product page URL when enabled
+
+#### [MODIFY] Create/Edit product modal
+- Add `has_single_product_page` boolean switch
+
+---
+
+### Phase 7: Admin Panel — Sidebar + Single Page Orders Tab
+
+#### [MODIFY] [AppSidebar.tsx](file:///d:/gcp/graduate_shop_admin/src/layout/AppSidebar.tsx)
+Add under orders section:
+```typescript
+{ nameKey: "singlePageOrders", path: "/single-page-orders", pro: false, new: true },
+```
+
+#### [NEW] `pages/Orders/SinglePageOrders.tsx`
+Page wrapper (same pattern as GuestOrders.tsx).
+
+#### [NEW] `components/orders/single-page-orders/`
+Full order management following the `guest-orders/` pattern:
+- `SinglePageOrdersPage.tsx` — main container with data fetching
+- `SinglePageOrdersHeader.tsx` — status tabs
+- `SinglePageOrdersToolbar.tsx` — search + sort + filters
+- `SinglePageOrdersTable.tsx` — order list with details modal
+- `types.ts` — type definitions
+
+Data source: same `/api/v1/admin/orders` endpoint with `order_type=single_page` filter.
+
+#### [MODIFY] [App.tsx](file:///d:/gcp/graduate_shop_admin/src/App.tsx)
+- Add route: `<Route path="/single-page-orders" element={<SinglePageOrders />} />`
+
+#### Translation files
+- Add `sidebar.singlePageOrders` key
+
+---
+
+### Phase 8: Admin Panel — All Orders Type Column + Filter
+
+#### [MODIFY] [orderData.ts](file:///d:/gcp/graduate_shop_admin/src/components/orders/all-orders/orderData.ts)
+```typescript
+export const ORDER_TYPE_OPTIONS = [
+  { id: "all", label: "All" },
+  { id: "regular", label: "Regular" },
+  { id: "guest", label: "Guest" },
+  { id: "single_page", label: "Single Page" },
+] as const;
+```
+
+#### [MODIFY] [types.ts](file:///d:/gcp/graduate_shop_admin/src/components/orders/all-orders/types.ts)
+Add `orderType` field to `OrderRow`:
+```typescript
+orderType: 'regular' | 'guest' | 'single_page';
+```
+
+#### [MODIFY] [AllOrdersView.tsx](file:///d:/gcp/graduate_shop_admin/src/components/orders/all-orders/AllOrdersView.tsx)
+- Update `orderType` state type to include all options
+- Map `o.order_type` into `OrderRow.orderType`
+
+#### [MODIFY] [OrdersTable.tsx](file:///d:/gcp/graduate_shop_admin/src/components/orders/all-orders/OrdersTable.tsx)
+Add "Type" column with colored badges:
+- **Regular** → gray badge
+- **Guest** → blue badge
+- **Single Page** → purple badge
+
+#### [MODIFY] [OrderFiltersBar.tsx](file:///d:/gcp/graduate_shop_admin/src/components/orders/all-orders/OrderFiltersBar.tsx)
+Add Order Type dropdown in advanced filters panel.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+1. Run DB migrations and verify schema changes
+2. Test `POST /api/v1/single-page-order/place` with valid/invalid data
+3. Test `GET /api/v1/admin/orders?order_type=single_page` returns filtered results
+4. Test product `has_single_product_page` toggle endpoint
+
+### Browser Verification
+1. **Shop**: Navigate to `/single-order-page/[slug]/[id]`, verify:
+   - Product display, variation selection, bulk offer table
+   - Quantity change updates pricing live
+   - "Order Now" proceeds to checkout
+2. **Shop Checkout**: Complete checkout flow, verify:
+   - Cost summary matches backend calculation (no drift)
+   - OTP modals appear when permissions require them
+   - Order is created with `order_type = 'single_page'`
+3. **Admin**: Verify "Single Page Orders" sidebar tab + page lists orders
+4. **Admin**: Verify "Type" column in All Orders shows correct badges
+5. **Admin**: Verify order type filter works
+6. **Admin**: Verify product toggle in product list
+
+### Manual Verification
+- Verify admin push notifications fire on single-page order
+- Verify email/SMS sent to customer on order placement
+- Verify order appears in admin dashboard stats
+
+---
+
+## Implementation Order
+
+1. ✅ DB migrations (ALTER TABLE)
+2. Backend: Product flag support (product.js)
+3. Backend: Single page order controller + routes
+4. Backend: Order listing filter updates (order.js)
+5. Admin: Product list toggle
+6. Admin: Single Page Orders sidebar + page
+7. Admin: All Orders type column + filter
+8. Shop: Single Product Page
+9. Shop: Single Page Checkout
+10. End-to-end verification

@@ -17,6 +17,7 @@ pub mod ipn;
 pub mod templates;
 
 /// Shared application state passed to all Actix handlers.
+#[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
     pub redis: Arc<Mutex<ConnectionManager>>,

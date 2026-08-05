@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Location Sync Tool — GCP Graduate Fashion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --border:  #30363d;
+      --text:    #e6edf3;
+      --muted:   #8b949e;
+      --accent:  #58a6ff;
+      --green:   #3fb950;
+      --red:     #f85149;
+      --yellow:  #d29922;
+      --purple:  #bc8cff;
+      --radius:  12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    .page-header { text-align: center; margin-bottom: 40px; }
+    .page-header h1 {
+      font-size: 26px; font-weight: 700; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-header p { margin-top: 8px; color: var(--muted); font-size: 14px; }
+
+    .container { max-width: 860px; margin: 0 auto; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 13px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--muted); margin-bottom: 16px;
+    }
+
+    .field-row {
+      display: grid; grid-template-columns: 120px 1fr;
+      gap: 12px; align-items: center; margin-bottom: 14px;
+    }
+    label { font-size: 13px; font-weight: 500; color: var(--muted); }
+    input[type="text"] {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; padding: 10px 14px; width: 100%;
+      transition: border-color 0.2s; outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+
+    .actions-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;
+    }
+    @media (max-width: 600px) { .actions-grid { grid-template-columns: 1fr; } }
+
+    .action-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .action-title { font-size: 15px; font-weight: 600; }
+    .action-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .endpoint {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: var(--accent); background: #0d1117;
+      border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px; border: none; border-radius: 8px; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+      padding: 10px 18px; transition: opacity 0.15s, transform 0.1s; user-select: none;
+    }
+    .btn:hover   { opacity: 0.88; }
+    .btn:active  { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-blue   { background: #1f6feb; color: #fff; }
+    .btn-green  { background: #238636; color: #fff; }
+    .btn-yellow { background: #9e6a03; color: #fff; }
+    .btn-full   { width: 100%; }
+
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.7s linear infinite; display: none;
+    }
+    .loading .spinner  { display: inline-block; }
+    .loading .btn-icon { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .merge-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;
+    }
+    @media (max-width: 600px) { .merge-grid { grid-template-columns: 1fr; } }
+
+    .log-box {
+      background: #010409; border: 1px solid var(--border); border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7;
+      padding: 16px; white-space: pre-wrap; word-break: break-all;
+      max-height: 320px; overflow-y: auto; color: #adbac7; display: none;
+    }
+    .log-box.visible { display: block; }
+
+    .log-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+    }
+    .log-label {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .status-badge {
+      font-size: 11px; font-weight: 700; padding: 2px 10px;
+      border-radius: 20px; display: none;
+    }
+    .status-badge.ok  { background: #1a3a2a; color: var(--green); display: inline-block; }
+    .status-badge.err { background: #3a1a1a; color: var(--red);   display: inline-block; }
+
+    .log-ok   { color: #3fb950; }
+    .log-err  { color: #f85149; }
+    .log-info { color: #58a6ff; }
+    .log-warn { color: #d29922; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="page-header">
+    <h1>⚙ Location Sync Tool</h1>
+    <p>Graduate Fashion API — Pathao &amp; Steadfast zone staging &amp; merge</p>
+  </div>
+
+  <!-- Auth -->
+  <div class="card">
+    <div class="card-title">🔧 Auth Config</div>
+    <div class="field-row">
+      <label>JWT Token</label>
+      <input type="text" id="token" placeholder="eyJhbGci… (Bearer prefix optional)" spellcheck="false" />
+    </div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="card">
+    <div class="card-title">Step 1 — Sync into Staging Tables</div>
+    <div class="actions-grid">
+
+      <div class="action-card">
+        <div class="action-title">🟡 Pathao Locations</div>
+        <div class="action-desc">
+          Fetches all Pathao cities → zones → areas and fills
+          <code>pathao_locations_raw</code>.<br/>
+          ⚠ Takes 2–3 min due to rate-limit sleeps.
+        </div>
+        <div class="endpoint">POST /api/v1/config/sync-pathao-locations</div>
+        <button class="btn btn-blue btn-full" id="btn-pathao">
+          <span class="btn-icon">▶ Run Pathao Sync</span>
+          <span class="spinner"></span>
+        </button>
+        <div class="log-header">
+          <span class="log-label" id="label-pathao"></span>
+          <span class="status-badge" id="badge-pathao"></span>
+        </div>
+        <div class="log-box" id="log-pathao"></div>
+      </div>
+
+      <div class="action-card">
+        <div class="action-title">🔵 Steadfast Locations</div>
+        <div class="action-desc">
+          Fetches all Steadfast districts + police stations and fills
+          <code>steadfast_locations_raw</code>.<br/>
+          Usually completes in &lt; 30 seconds.
+        </div>
+        <div class="endpoint">POST /api/v1/config/sync-steadfast-locations</div>
+        <button class="btn btn-blue btn-full" id="btn-steadfast">
+          <span class="btn-icon">▶ Run Steadfast Sync</span>
+          <span class="spinner"></span>
+        </button>
+        <div class="log-header">
+          <span class="log-label" id="label-steadfast"></span>
+          <span class="status-badge" id="badge-steadfast"></span>
+        </div>
+        <div class="log-box" id="log-steadfast"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card">
+    <div class="card-title">Step 2 — Merge into <code>location_mappings</code></div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;">
+      Run <strong>Dry-Run Preview</strong> first to see what will change without writing to the DB.
+      Then run <strong>Apply Merge</strong> to commit.
+    </p>
+    <div class="endpoint" style="margin-bottom:16px;">POST /api/v1/config/merge-location-mappings</div>
+    <div class="merge-grid">
+      <button class="btn btn-yellow btn-full" id="btn-dryrun">
+        <span class="btn-icon">🔍 Dry-Run Preview</span>
+        <span class="spinner"></span>
+      </button>
+      <button class="btn btn-green btn-full" id="btn-merge">
+        <span class="btn-icon">✅ Apply Merge</span>
+        <span class="spinner"></span>
+      </button>
+    </div>
+    <div class="log-header" style="margin-top:16px;">
+      <span class="log-label" id="label-merge"></span>
+      <span class="status-badge" id="badge-merge"></span>
+    </div>
+    <div class="log-box" id="log-merge"></div>
+  </div>
+
+</div>
+<script src="/location-sync-tool.js"></script>
+</body>
+</html>

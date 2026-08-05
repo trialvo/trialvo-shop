@@ -1,15 +1,15 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 
-use crate::cache::{cache_eps_token, get_cached_eps_token, get_token_ttl};
-use crate::db::bills::{get_bill_by_token, get_bill_items, update_bill_status};
-use crate::db::config::get_eps_credentials;
+use crate::db::bills::{get_bill_by_token, get_bill_items, hold_bill_for_verification, update_bill_status};
 use crate::db::customers::update_customer_stats_on_payment;
 use crate::db::services::get_service_by_id;
 use crate::db::transactions::{
     get_transaction_by_merchant_tx_id, update_transaction_from_callback, log_event,
+    record_callback_receipt, set_eps_transaction_id,
 };
-use crate::gateway::eps::{is_eps_success_status, EpsGateway};
+use crate::gateway::eps::is_eps_success_status;
+use crate::gateway::reconcile::check_status_with_retries;
 use crate::ipn::dispatcher::dispatch_event;
 use crate::AppState;
 
@@ -18,30 +18,39 @@ use crate::AppState;
 pub struct CallbackQuery {
     #[serde(rename = "type")]
     pub callback_type: Option<String>,
-    #[serde(rename = "TransactionId")]
+    // Live EPS redirect uses EPSTransactionId; docs/sandbox may use TransactionId
+    #[serde(
+        default,
+        rename = "EPSTransactionId",
+        alias = "TransactionId",
+        alias = "transactionId",
+        alias = "transaction_id"
+    )]
     pub transaction_id: Option<String>,
-    #[serde(rename = "MerchantTransactionId")]
+    #[serde(default, rename = "MerchantTransactionId", alias = "merchantTransactionId")]
     pub merchant_transaction_id: Option<String>,
-    #[serde(rename = "Amount")]
+    #[serde(default, rename = "Amount")]
     pub amount: Option<String>,
-    #[serde(rename = "FinancialEntity")]
+    #[serde(default, rename = "FinancialEntity", alias = "financialEntity")]
     pub financial_entity: Option<String>,
-    #[serde(rename = "Status")]
+    #[serde(default, rename = "Status")]
     pub status: Option<String>,
-    #[serde(rename = "CustomerId")]
+    #[serde(default, rename = "CustomerId", alias = "customerId")]
     pub customer_id: Option<String>,
-    #[serde(rename = "PaymentReferance")]
+    #[serde(default, rename = "PaymentReferance", alias = "PaymentReference", alias = "paymentReference")]
     pub payment_reference: Option<String>,
-    #[serde(rename = "TransactionDate")]
+    #[serde(default, rename = "TransactionDate", alias = "transactionDate")]
     pub transaction_date: Option<String>,
-    #[serde(rename = "ValueA")]
+    #[serde(default, rename = "ValueA")]
     pub value_a: Option<String>,
-    #[serde(rename = "ValueB")]
+    #[serde(default, rename = "ValueB")]
     pub value_b: Option<String>,
-    #[serde(rename = "ValueC")]
+    #[serde(default, rename = "ValueC")]
     pub value_c: Option<String>,
-    #[serde(rename = "ValueD")]
+    #[serde(default, rename = "ValueD")]
     pub value_d: Option<String>,
+    #[serde(default, rename = "ErrorCode")]
+    pub error_code: Option<String>,
 }
 
 /// GET /pay/callback?type={success|fail|cancel}&...
@@ -171,23 +180,72 @@ pub async fn callback_handler(
         return render_callback_page("cancel", Some(&redirect_url), Some(&bill.bill_token), &state.config.base_url);
     }
 
+    // Prefer EPSTransactionId from callback; fall back to init-time UUID stored on the tx
+    let eps_tx_id_hint = query
+        .transaction_id
+        .as_deref()
+        .or(tx.eps_transaction_id.as_deref());
+
     // ── EPS verification: ALWAYS call CheckStatus to confirm ──────────────
     // This prevents spoofed callbacks from marking bills as paid.
-    let verified_status = match verify_with_eps(&state, &merchant_tx_id, query.transaction_id.as_deref(), service.is_sandbox).await {
-        Ok(status) => status,
+    // Retries absorb transient EPS 302/timeouts that previously stranded paid customers.
+    let status_resp = match check_status_with_retries(
+        state.get_ref(), &merchant_tx_id, eps_tx_id_hint, service.is_sandbox, 4,
+    ).await {
+        Ok(resp) => resp,
         Err(e) => {
-            // EPS unreachable — log and fail safe (don't mark as paid)
             tracing::error!(
-                "EPS CheckStatus failed for merchant_tx_id={}: {}. Callback rejected.",
+                "EPS CheckStatus failed for merchant_tx_id={}: {}. Holding for background reconcile.",
                 merchant_tx_id, e
             );
             let _ = log_event(
                 &state.db, tx.id, "eps_verify_failed",
                 Some("processing"), Some("processing"),
-                serde_json::json!({"error": e.to_string(), "callback_type": callback_type}),
+                serde_json::json!({
+                    "error": e.to_string(),
+                    "callback_type": callback_type,
+                    "callback_status": query.status,
+                    "eps_transaction_id": query.transaction_id,
+                    "held_for_reconcile": true,
+                }),
                 "eps_callback", None,
             ).await;
-            // Don't update bill status — leave as processing for retry
+
+            // Persist callback + keep bill open so expiry worker cannot kill a paid attempt
+            let _ = record_callback_receipt(
+                &state.db,
+                tx.id,
+                query.transaction_id.as_deref(),
+                query.financial_entity.as_deref(),
+                query.customer_id.as_deref(),
+                query.payment_reference.as_deref(),
+                query.transaction_date.as_deref(),
+                &raw_response,
+            ).await;
+            let _ = hold_bill_for_verification(&state.db, bill.id).await;
+
+            let claims_success = callback_type == "success"
+                || query
+                    .status
+                    .as_deref()
+                    .map(is_eps_success_status)
+                    .unwrap_or(false);
+
+            // Do NOT show a hard fail when EPS already claimed success — background
+            // worker will complete CheckStatus + IPN. Redirect toward success URL.
+            if claims_success {
+                let redirect_url = bill
+                    .success_url
+                    .as_deref()
+                    .or(service.success_url.as_deref());
+                return render_callback_page(
+                    "confirming",
+                    redirect_url,
+                    Some(&bill.bill_token),
+                    &state.config.base_url,
+                );
+            }
+
             return render_callback_page(
                 "fail",
                 bill.fail_url.as_deref().or(service.fail_url.as_deref()),
@@ -196,6 +254,12 @@ pub async fn callback_handler(
             );
         }
     };
+
+    let verified_status = status_resp
+        .status
+        .clone()
+        .or_else(|| query.status.clone())
+        .unwrap_or_else(|| "UNKNOWN".to_string());
 
     tracing::info!(
         "EPS verified status for merchant_tx_id={}: {}",
@@ -215,20 +279,46 @@ pub async fn callback_handler(
         (None, None)
     };
 
+    // Prefer CheckStatus fields (redirect URL often omits FinancialEntity/CustomerId)
+    let financial_entity = status_resp
+        .financial_entity
+        .as_deref()
+        .or(query.financial_entity.as_deref());
+    let eps_customer_id = status_resp
+        .customer_id
+        .as_deref()
+        .or(query.customer_id.as_deref());
+    let payment_reference = status_resp
+        .payment_reference
+        .as_deref()
+        .or(query.payment_reference.as_deref());
+    let transaction_date = status_resp
+        .transaction_date
+        .as_deref()
+        .or(query.transaction_date.as_deref());
+    let confirmed_eps_tx_id = status_resp
+        .transaction_id
+        .as_deref()
+        .or(query.transaction_id.as_deref());
+
     // ── Update transaction with verified status ────────────────────────────
     let _ = update_transaction_from_callback(
         &state.db,
         tx.id,
         new_tx_status,
-        query.financial_entity.as_deref(),
-        query.customer_id.as_deref(),
-        query.payment_reference.as_deref(),
-        query.transaction_date.as_deref(),
+        financial_entity,
+        eps_customer_id,
+        payment_reference,
+        transaction_date,
         &raw_response,
         error_code,
         error_message.as_deref(),
     )
     .await;
+
+    if let Some(eps_id) = confirmed_eps_tx_id {
+        let _ = set_eps_transaction_id(&state.db, tx.id, eps_id).await;
+    }
 
     // ── Log the EPS verification event ────────────────────────────────────
     let _ = log_event(
@@ -237,6 +327,8 @@ pub async fn callback_handler(
         serde_json::json!({
             "eps_verified_status": verified_status,
             "callback_type": callback_type,
+            "financial_entity": financial_entity,
+            "eps_transaction_id": confirmed_eps_tx_id,
         }),
         "eps_callback", None,
     ).await;
@@ -283,11 +375,11 @@ pub async fn callback_handler(
                 "subtotal": bill.subtotal,
                 "final_amount": bill.final_amount,
                 "currency": tx.currency,
-                "payment_method": query.financial_entity,
-                "gateway_provider": query.financial_entity,
-                "gateway_transaction_id": query.transaction_id,
-                "payment_reference": query.payment_reference,
-                "transaction_date": query.transaction_date,
+                "payment_method": financial_entity,
+                "gateway_provider": financial_entity,
+                "gateway_transaction_id": confirmed_eps_tx_id,
+                "payment_reference": payment_reference,
+                "transaction_date": transaction_date,
                 "paid_at": if is_success { Some(chrono::Utc::now().to_rfc3339()) } else { None },
                 "customer_name": bill.customer_name,
                 "customer_email": bill.customer_email,
@@ -327,63 +419,6 @@ pub async fn callback_handler(
     )
 }
 
-/// Verify transaction status directly with EPS API.
-/// Uses cached token (reuse pattern from init_payment) to avoid extra GetToken call.
-async fn verify_with_eps(
-    state: &web::Data<AppState>,
-    merchant_tx_id: &str,
-    eps_tx_id: Option<&str>,
-    is_sandbox: bool,
-) -> anyhow::Result<String> {
-    let creds = get_eps_credentials(&state.db, &state.config.master_key, is_sandbox).await?;
-    let gateway = EpsGateway::new(creds);
-    let mode = gateway.get_mode();
-
-    // Reuse cached token; refresh if TTL ≤ 60s
-    let token = {
-        let mut redis = state.redis.lock().await;
-        match get_cached_eps_token(&mut redis, &mode).await {
-            Ok(Some(t)) => {
-                let ttl = get_token_ttl(&mut redis, &mode).await.unwrap_or(0);
-                if ttl <= 60 {
-                    match gateway.get_token().await {
-                        Ok((new_token, expire_date)) => {
-                            let ttl_secs = parse_ttl(&expire_date).unwrap_or(3600);
-                            let buffered = if ttl_secs > 300 { ttl_secs - 300 } else { 60 };
-                            let _ = cache_eps_token(&mut redis, &mode, &new_token, buffered as u64).await;
-                            new_token
-                        }
-                        Err(_) => t,
-                    }
-                } else {
-                    t
-                }
-            }
-            _ => {
-                let (new_token, expire_date) = gateway.get_token().await?;
-                let ttl_secs = parse_ttl(&expire_date).unwrap_or(3600);
-                let buffered = if ttl_secs > 300 { ttl_secs - 300 } else { 60 };
-                let _ = cache_eps_token(&mut redis, &mode, &new_token, buffered as u64).await;
-                new_token
-            }
-        }
-    };
-
-    let status_resp = gateway.check_status(&token, merchant_tx_id, eps_tx_id).await?;
-
-    let eps_status = status_resp.status.unwrap_or_else(|| "UNKNOWN".to_string());
-    Ok(eps_status)
-}
-
-fn parse_ttl(expire_date: &str) -> Option<i64> {
-    use chrono::{DateTime, Utc};
-    let dt = DateTime::parse_from_rfc3339(expire_date)
-        .or_else(|_| DateTime::parse_from_str(expire_date, "%Y-%m-%dT%H:%M:%S"))
-        .ok()?;
-    let remaining = dt.timestamp() - Utc::now().timestamp();
-    if remaining > 0 { Some(remaining) } else { None }
-}
-
 async fn handle_by_bill_token(
     state: &web::Data<AppState>,
     bill_token: &str,
@@ -412,6 +447,7 @@ fn render_callback_page(
 ) -> HttpResponse {
     let (template, status) = match callback_type {
         "success" => (include_str!("../../templates/success.html"), 200u16),
+        "confirming" => (include_str!("../../templates/confirming.html"), 200),
         "cancel"  => (include_str!("../../templates/cancelled.html"), 200),
         _         => (include_str!("../../templates/failed.html"), 200),
     };

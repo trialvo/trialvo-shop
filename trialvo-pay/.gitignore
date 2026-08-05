@@ -31,3 +31,9 @@ Trialvo*/
 
 # Dev-only artifacts
 implementation_plan.md
+
+# Local backups & deploy bundles (never commit)
+/backups/
+*.tar.gz
+_payvault_deploy_*.tar.gz
+_vps_*.sh

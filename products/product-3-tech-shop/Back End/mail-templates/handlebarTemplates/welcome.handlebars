@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:o="urn:schemas-microsoft-com:officeoffice">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no" />
+
+  <!-- Allow clients that support it to switch -->
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+
+  <title>Welcome to {{BRAND_NAME}}</title>
+
+  <!--[if mso]>
+      <xml>
+        <o:OfficeDocumentSettings>
+          <o:AllowPNG />
+          <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+      </xml>
+    <![endif]-->
+
+  <style>
+    /* Client resets */
+    html,
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    * {
+      -ms-text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    table,
+    td {
+      mso-table-lspace: 0pt !important;
+      mso-table-rspace: 0pt !important;
+      border-collapse: collapse !important;
+    }
+
+    img {
+      -ms-interpolation-mode: bicubic;
+      border: 0;
+      outline: none;
+      text-decoration: none;
+      display: block;
+      height: auto;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    .ExternalClass {
+      width: 100%;
+    }
+
+    .ExternalClass,
+    .ExternalClass * {
+      line-height: 100%;
+    }
+
+    /* Preheader (hidden) */
+    .preheader {
+      display: none !important;
+      visibility: hidden;
+      opacity: 0;
+      color: transparent;
+      height: 0;
+      width: 0;
+      max-height: 0;
+      max-width: 0;
+      overflow: hidden;
+      mso-hide: all;
+    }
+
+    /* Base */
+    .font {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans",
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    }
+
+    /* Light defaults */
+    .wrapper {
+      width: 100%;
+      background: #f3f4f6;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e5e7eb;
+      line-height: 1px;
+      font-size: 1px;
+    }
+
+    .h1 {
+      font-size: 28px;
+      line-height: 34px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .h2 {
+      font-size: 20px;
+      line-height: 26px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .p {
+      font-size: 16px;
+      line-height: 24px;
+      color: #6b7280;
+    }
+
+    .muted {
+      font-size: 14px;
+      line-height: 20px;
+      color: #6b7280;
+    }
+
+    .link {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+
+    .name {
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .btnWrap {
+      border-radius: 12px;
+      background: #111827;
+    }
+
+    .btnText {
+      display: inline-block;
+      padding: 12px 18px;
+      font-size: 15px;
+      line-height: 20px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .featureIcon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Mobile */
+    @media screen and (max-width: 600px) {
+      .container {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .px {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+
+      .cardPad {
+        padding: 18px !important;
+      }
+
+      .h1 {
+        font-size: 24px !important;
+        line-height: 30px !important;
+      }
+
+      .h2 {
+        font-size: 18px !important;
+        line-height: 24px !important;
+      }
+
+      .p {
+        font-size: 15px !important;
+        line-height: 22px !important;
+      }
+
+      .logoImg {
+        width: 150px !important;
+      }
+
+      .featureIcon {
+        width: 40px !important;
+        height: 40px !important;
+      }
+    }
+
+    /* Dark mode (supported clients only)
+         IMPORTANT: use !important to override inline display */
+    @media (prefers-color-scheme: dark) {
+      .wrapper {
+        background: #0b1220 !important;
+      }
+
+      .card {
+        background: #0f172a !important;
+        border-color: #1f2937 !important;
+      }
+
+      .divider {
+        background: #1f2937 !important;
+      }
+
+      .h1,
+      .h2 {
+        color: #f9fafb !important;
+      }
+
+      .p,
+      .muted {
+        color: #cbd5e1 !important;
+      }
+
+      .name {
+        color: #f9fafb !important;
+      }
+
+      .link {
+        color: #93c5fd !important;
+      }
+
+      .btnWrap {
+        background: #2563eb !important;
+      }
+
+      .featureIcon {
+        background: #111827 !important;
+      }
+
+      /* Swap logos */
+      .logoLight {
+        display: none !important;
+        mso-hide: all !important;
+      }
+
+      .logoDark {
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+
+<body class="font" style="margin: 0; padding: 0; background: #f3f4f6">
+  <div class="preheader">
+    Welcome to {{BRAND_NAME}}, {{name}}! We're excited to have you join our community.
+  </div>
+
+  <table role="presentation" class="wrapper" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center" style="padding: 18px 10px">
+        <table role="presentation" class="container" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td class="card">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <!-- Header -->
+                <tr>
+                  <td align="center" class="px" style="padding: 22px 22px 14px">
+                    <!-- Light logo (DEFAULT) -->
+                    <img class="logoImg logoLight" src="https://cdn.graduatefashionbd.com/logo/my_dark_logo.png"
+                      width="160" alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: block;" />
+
+                    <!-- Dark logo (HIDDEN by default via INLINE display:none) -->
+                    <img class="logoImg logoDark" src="https://cdn.graduatefashionbd.com/logo/my_light_logo.png"
+                      width="160" alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: none;" />
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="px" style="padding: 0 22px">
+                    <div class="divider"></div>
+                  </td>
+                </tr>
+
+                <!-- Body -->
+                <tr>
+                  <td class="cardPad px" style="padding: 24px 22px 6px">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <!-- Welcome Header -->
+                      <tr>
+                        <td align="center" style="padding-bottom: 16px">
+                          <img src=" https://cdn.graduatefashionbd.com/icon/otp_icon_email.png" width="84" alt="Welcome"
+                            style="width: 84px; height: auto" />
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td align="center" style="padding: 6px 0 4px">
+                          <div class="h1">Welcome to {{BRAND_NAME}}!</div>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td align="center" style="padding: 0 0 16px">
+                          <div class="p" style="margin: 0">
+                            Hello <span class="name">{{name}}</span>,
+                          </div>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td align="center" style="padding: 0 0 16px">
+                          <div class="p">
+                            Thank you for joining us! We're thrilled to have you as part of our community.
+                            Get ready to explore the latest fashion trends and exclusive collections.
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Get Started Button -->
+                      <tr>
+                        <td align="center" style="padding: 8px 0 20px">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td align="center" class="btnWrap" style="border-radius: 12px; background: #111827">
+                                <a href="{{SHOP_URL}}" target="_blank" class="btnText" style="
+                                      display: inline-block;
+                                      padding: 12px 18px;
+                                      font-size: 15px;
+                                      line-height: 20px;
+                                      font-weight: 700;
+                                      color: #ffffff;
+                                    ">
+                                  Get Started
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <!-- Features Section -->
+                      <tr>
+                        <td style="padding: 0 0 20px">
+                          <div class="h2" style="text-align: center; margin-bottom: 16px">What You Can Do</div>
+
+                          <!-- Feature 1 -->
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                            style="margin-bottom: 16px">
+                            <tr>
+
+                              <td>
+                                <div class="h2" style="font-size: 18px; margin: 0 0 4px">Browse Collections</div>
+                                <div class="p" style="margin: 0; font-size: 14px">
+                                  Explore our curated fashion collections and latest arrivals.
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <!-- Feature 2 -->
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                            style="margin-bottom: 16px">
+                            <tr>
+
+                              <td>
+                                <div class="h2" style="font-size: 18px; margin: 0 0 4px">Easy Ordering</div>
+                                <div class="p" style="margin: 0; font-size: 14px">
+                                  Place orders seamlessly with our secure checkout process.
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <!-- Feature 3 -->
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                            style="margin-bottom: 16px">
+                            <tr>
+
+                              <td>
+                                <div class="h2" style="font-size: 18px; margin: 0 0 4px">Track Orders</div>
+                                <div class="p" style="margin: 0; font-size: 14px">
+                                  Monitor your orders in real-time from purchase to delivery.
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <!-- Help Section -->
+                      <tr>
+                        <td style="padding: 0 0 14px">
+                          <div class="p" style="margin-bottom: 8px">
+                            <strong>Need help getting started?</strong> Check out our
+                            <a href="https://graduatefashionbd.com/help" class="link" target="_blank">Help Center</a>
+                            or browse our
+                            <a href="https://graduatefashionbd.com/faq" class="link" target="_blank">FAQs</a>.
+                          </div>
+                          <div class="muted">
+                            If you have any questions, feel free to reach out to our support team.
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Divider -->
+                      <tr>
+                        <td style="padding: 16px 0">
+                          <div class="divider"></div>
+                        </td>
+                      </tr>
+
+                      <!-- Next Steps -->
+                      <tr>
+                        <td style="padding: 0 0 14px">
+                          <div class="h2" style="margin-bottom: 12px">Your Next Steps</div>
+                          <div class="p" style="margin-bottom: 8px">
+                            1. Complete your profile to get personalized recommendations<br>
+                            2. Browse our latest collections<br>
+                            3. Add items to your wishlist<br>
+                            4. Follow us on social media for updates
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Footer divider -->
+                <tr>
+                  <td class="px" style="padding: 0 22px">
+                    <div class="divider"></div>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td align="center" class="px" style="padding: 16px 22px 20px">
+                    <div class="muted">{{BRAND_NAME}} | {{BRAND_ADDRESS}}</div>
+
+                    <div style="height: 10px; line-height: 10px; font-size: 10px">&nbsp;</div>
+
+                    <div class="muted">
+                      <a href="https://graduatefashionbd.com/privacy-policy" class="link">Privacy Policy</a>
+                      &nbsp;|&nbsp;
+                      <a href="https://graduatefashionbd.com/terms" class="link">Terms and Conditions</a>
+                    </div>
+
+                    <div style="height: 10px; line-height: 10px; font-size: 10px">&nbsp;</div>
+
+                    <div class="muted">
+                      If you have any questions please contact us<br />
+                      <a href="mailto:graduatefashion2020@gmail.com" class="link">graduatefashion2020@gmail.com</a>
+                      &nbsp;|&nbsp;
+                      <a href="tel:+8801970680283" class="link">+880 1970-680283</a>
+                    </div>
+
+                    <div style="height: 16px; line-height: 16px; font-size: 16px">&nbsp;</div>
+
+                    <div class="muted">
+                      <a href="https://graduatefashionbd.com" class="link">Website</a>
+                      &nbsp;•&nbsp;
+                      <a href="https://www.facebook.com/graduatefashionbd" class="link">Facebook</a>
+                      &nbsp;•&nbsp;
+                      <a href="https://www.linkedin.com/company/graduate-fashion-bd" class="link">LinkedIn</a>
+                      &nbsp;•&nbsp;
+                      <a href="https://www.instagram.com/graduatefashionbd" class="link">Instagram</a>
+                    </div>
+
+                    <div style="height: 14px; line-height: 14px; font-size: 14px">&nbsp;</div>
+
+                    <div style="font-size: 12px; line-height: 18px; color: #9ca3af">
+                      © {{year}} {{BRAND_NAME}}. All rights reserved.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="height: 18px; line-height: 18px; font-size: 18px">&nbsp;</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>

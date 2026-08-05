@@ -1,0 +1,394 @@
+# Hybrid Analytics Implementation Plan
+
+---
+
+## Layer 0 — Script Preloading Strategy
+
+This is the **performance foundation** that must be correct before any SDK loads.
+
+### Current State
+[layout.tsx](file:///d:/gcp/gcp_graduatefashion_shop/app/layout.tsx) already has `<link rel="preconnect">` and `<link rel="dns-prefetch">` for `connect.facebook.net` and `www.googletagmanager.com`. But:
+- No preloading for Microsoft Clarity domains
+- All scripts are injected via raw DOM manipulation (`document.createElement("script")`) — this bypasses Next.js's resource scheduler
+- No use of `next/script` component at all — meaning no browser priority hints
+
+### What We'll Do
+
+#### [MODIFY] [layout.tsx](file:///d:/gcp/gcp_graduatefashion_shop/app/layout.tsx)
+
+**Preconnect hints** (add these to `<head>`):
+```html
+<!-- Microsoft Clarity -->
+<link rel="preconnect" href="https://www.clarity.ms" crossOrigin="anonymous" />
+<link rel="dns-prefetch" href="https://www.clarity.ms" />
+
+<!-- Clarity script origin -->
+<link rel="preconnect" href="https://z.clarity.ms" crossOrigin="anonymous" />
+<link rel="dns-prefetch" href="https://z.clarity.ms" />
+```
+
+**GTM script loading via `next/script`** (replaces DOM injection in [initGTM](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts#11-45)):
+```tsx
+// Rendered conditionally when GTM ID is available from config
+<Script
+  id="gtm-loader"
+  src={`https://www.googletagmanager.com/gtm.js?id=${gtmId}`}
+  strategy="afterInteractive"  // Loads after page is interactive — does not block LCP/FID
+/>
+```
+
+> **Why `afterInteractive` not `lazyOnload`?**  
+> `lazyOnload` delays until all resources are idle, which can mean GTM misses early events (e.g., `page_view` fired before GTM loads). `afterInteractive` is the sweet spot — doesn't block render, but fires before the user has a chance to interact.
+
+**Clarity script via `next/script`**:
+```tsx
+<Script
+  id="clarity-loader"
+  src="https://www.clarity.ms/tag/YOUR_PROJECT_ID"
+  strategy="afterInteractive"
+/>
+```
+
+**Facebook fbevents.js** — stays as inline snippet (GTM will handle it via a GTM tag, not loaded by `next/script`). FB Pixel is best loaded *through GTM* so GTM can control consent.
+
+#### [MODIFY] [AnalyticsProvider.tsx](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/AnalyticsProvider.tsx)
+- Remove the [initGTM()](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts#11-45) DOM script injection (GTM script is now loaded by `next/script` in layout)
+- Remove the [initGA()](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/google-analytics.ts#30-63) DOM script injection (GA4 is now a GTM tag, not directly loaded)
+- Remove the [initPixel()](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts#85-155) call (FB Pixel is now a GTM tag)
+- Keep only: `initClarity()` stub for identify/tag, and the `dataLayer` pre-initialization
+
+#### [MODIFY] [gtm.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts)
+- Remove the `document.createElement("script")` injection from [initGTM()](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts#11-45)
+- [initGTM()](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts#11-45) now only sets up the `dataLayer` array and pushes the `gtm.start` event
+- The actual script tag is in layout.tsx, so it loads with proper browser-level `<link rel="preload">` hinting
+
+---
+
+## Background
+
+The codebase already has a **partially-built** client-side analytics layer:
+- ✅ [AnalyticsProvider.tsx](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/AnalyticsProvider.tsx) — config from API, stale-while-revalidate cache, idle-deferred SDK init
+- ✅ [facebook-pixel.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts) — FB Pixel client events (ViewContent, AddToCart, etc.)
+- ✅ [google-analytics.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/google-analytics.ts) — GA4 via gtag.js
+- ✅ [gtm.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts) — GTM bootstrap & [pushDataLayer()](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts#48-57) helper
+- ✅ [useAnalytics.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/useAnalytics.ts) — unified hook
+
+**What is missing (the full gap list):**
+
+| Gap | Severity |
+|-----|----------|
+| Microsoft Clarity — not touched anywhere | High |
+| GTM data layer pushes are **commented out** everywhere to avoid double-counting | High |
+| No **deduplication `event_id`** sent alongside client events | High |
+| No server-side **Facebook CAPI** (no backend route, no hashing) | Critical |
+| No **cookie handoff** (`fbp`, `fbc`, `_ga` → API payload) | Critical |
+| `system_config` / [types.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/types.ts) don't include Clarity or CAPI config keys | Medium |
+| [AnalyticsProvider](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/AnalyticsProvider.tsx#98-226) does not forward user identity to FB Advanced Matching | Medium |
+
+---
+
+## Architecture Decision
+
+```
+Browser                                GTM Container
+─────────                              ─────────────
+dataLayer.push(event)  ────────────►  triggers FB Pixel tag
+                                       triggers GA4 tag
+                                       triggers Clarity tag (via Custom HTML)
+
+                        (Purchase only)
+Express.js API ────────────────────────► Facebook CAPI (server-to-server)
+                                         ↳ hashed PII (SHA-256)
+                                         ↳ same event_id as browser
+                                         ↳ Facebook deduplicates both hits
+```
+
+**Core principle:** GTM becomes the **single source of truth** for client events. We **remove** the direct FB Pixel / gtag.js calls from [useAnalytics](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/useAnalytics.ts#46-125) and replace them with clean `dataLayer.push()` calls. GTM then fires all tags. This fixes the double-counting issue and is the industry standard.
+
+**Microsoft Clarity** is CSP-safe and injected during GTM init (one `<script>` tag).
+
+**Facebook CAPI** fires **only** from the Express API for high-value conversion events (Purchase, CompleteRegistration). The browser still fires the same event client-side via GTM. Both carry the same `event_id` so Meta deduplicates.
+
+---
+
+## What Changes Where
+
+### Layer 1 — Types & Config (`gcp_graduatefashion_shop`)
+
+#### [MODIFY] [types.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/types.ts)
+- Add `MicrosoftClarityConfig` type
+- Add `microsoft_clarity` to [AnalyticsConfig](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/types.ts#65-74)
+- Add `event_id` to [PurchasePayload](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/types.ts#106-113), [AddToCartPayload](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/types.ts#90-98), [ViewContentPayload](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/types.ts#82-89), [InitiateCheckoutPayload](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/types.ts#99-105)
+- Add `CookieIds` type (fbp, fbc, ga_client_id) for API payloads
+
+---
+
+### Layer 1.5 — Data Layer Architecture
+
+The **data layer** is a JavaScript array (`window.dataLayer`) that acts as the communication bus between your site and GTM. It must be initialized **before GTM loads** — otherwise early events (like `page_view`) get dropped.
+
+#### Initialization Order (Critical)
+
+```html
+<!-- Step 1: dataLayer init — must run BEFORE gtm.js loads -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  // Pre-load page context so it's available to all subsequent GTM events
+  window.dataLayer.push({
+    pageType: 'unknown',       // overridden per-page by route-level pushes
+    user_logged_in: false,     // overridden by AnalyticsProvider when auth is known
+    currency: 'BDT',
+  });
+</script>
+
+<!-- Step 2: GTM script (via next/script afterInteractive) -->
+<script src="https://www.googletagmanager.com/gtm.js?id=GTM-XXXX" async></script>
+```
+
+#### Data Layer Schema (Typed)
+
+All `dataLayer.push()` calls will follow a strict schema. A new `DataLayerEvent` type will be added to [types.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/types.ts):
+
+```typescript
+// E-commerce events follow GA4 ecommerce schema
+type EcommerceItem = {
+  item_id: string;       // Product SKU ID
+  item_name: string;     // Product name
+  item_category?: string;
+  price?: number;
+  quantity?: number;
+};
+
+type DataLayerEvent = {
+  event: string;               // GTM trigger name, e.g. 'purchase', 'add_to_cart'
+  event_id?: string;           // UUID for deduplication
+  ecommerce?: {
+    currency: string;
+    value: number;
+    transaction_id?: string;   // order ID — for purchase event
+    items: EcommerceItem[];
+  };
+  user_data?: {
+    em?: string;               // hashed email (SHA-256) for FB Advanced Matching
+    ph?: string;               // hashed phone
+    external_id?: string;      // user ID
+  };
+  // Custom dimensions
+  user_logged_in?: boolean;
+  page_type?: string;          // 'product', 'category', 'checkout', 'home'
+};
+```
+
+#### The Ecommerce Clear Pattern (GA4 Standard)
+
+> [!IMPORTANT]
+> Before every ecommerce event push, you **must** push `{ ecommerce: null }` first. Without this, GTM may carry over product data from a previous event, corrupting your analytics.
+
+```typescript
+// In pushEcommerceEvent() in gtm.ts:
+export function pushEcommerceEvent(eventName: string, data: DataLayerEvent) {
+  window.dataLayer.push({ ecommerce: null }); // ← Clear previous ecommerce data
+  window.dataLayer.push({ event: eventName, ...data });
+}
+```
+
+#### Pre-Initialization in [layout.tsx](file:///d:/gcp/gcp_graduatefashion_shop/app/layout.tsx)
+
+A new inline `<Script id="datalayer-init" strategy="beforeInteractive">` block in [layout.tsx](file:///d:/gcp/gcp_graduatefashion_shop/app/layout.tsx) will:
+1. Initialize `window.dataLayer = window.dataLayer || []`
+2. Push initial page context (currency, environment)
+3. This runs **synchronously before hydration** — so no event is ever dropped
+
+```tsx
+<Script id="datalayer-init" strategy="beforeInteractive">
+  {`window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ currency: 'BDT', environment: '${process.env.NODE_ENV}' });`}
+</Script>
+```
+
+---
+
+### Layer 2 — GTM becomes Single Source of Truth
+
+#### [MODIFY] [gtm.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts)
+- Add `pushEcommerceEvent(eventName, ecommerceData)` — clears previous ecommerce object before push (GA4 standard)
+- Add `generateEventId()` — `crypto.randomUUID()` with Date.now fallback
+
+#### [MODIFY] [useAnalytics.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/useAnalytics.ts)
+- **Remove** direct `fbViewContent`, `fbAddToCart`, etc. calls
+- **Remove** direct [trackGAViewItem](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/google-analytics.ts#85-100), [trackGAAddToCart](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/google-analytics.ts#101-117), etc. calls
+- Replace ALL event methods with `pushEcommerceEvent()` to GTM data layer
+- Each event generates a unique `event_id` and includes it in the payload
+- Add `getCookieIds()` helper to read `_fbp`, `_fbc`, `_ga` cookies
+
+#### [MODIFY] [AnalyticsProvider.tsx](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/AnalyticsProvider.tsx)
+- Remove [initPixel()](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts#85-155) and [initGA()](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/google-analytics.ts#30-63) calls — GTM will fire these tags
+- Keep only [initGTM()](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts#11-45) call (GTM is now the single entry point)
+- Forward user `fbp`/`fbc` cookies to Advanced Matching on FB Pixel init via GTM `dataLayer.push({ user_data: {...} })`
+- Keep Microsoft Clarity init call (injected alongside GTM)
+
+---
+
+### Layer 3 — Microsoft Clarity
+
+#### [NEW] [clarity.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/clarity.ts)
+- `initClarity(config: MicrosoftClarityConfig)` — injects the official Clarity snippet via inline `<script>`
+- `identifyClarity(userId, sessionId, customTags)` — calls `clarity("identify", ...)` and `clarity("set", ...)` for logged-in users
+- `tagClarity(key, value)` — exposes `clarity("set", key, value)` for custom property tagging
+
+#### [MODIFY] [AnalyticsProvider.tsx](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/AnalyticsProvider.tsx)
+- Call `initClarity()` in the idle-deferred `scheduleIdle()` block alongside GTM
+- When user auth state changes (from Redux), call `identifyClarity(userId, ...)` to link sessions to users
+
+---
+
+### Layer 4 — Server-Side Facebook CAPI
+
+#### [NEW] Server Route in Express API
+- `POST /api/v1/track/purchase` — accepts `{ orderId, event_id, fbp, fbc, client_ip, client_user_agent }`
+- Fetches order from DB (grand_total, items, customer email/phone)
+- SHA-256 hashes PII before sending to Meta
+- Calls Meta Conversions API with `event_name: "Purchase"`, same `event_id` as browser
+
+#### [NEW] Server Route in Express API  
+- `POST /api/v1/track/registration` — accepts `{ event_id, fbp, fbc, client_ip, client_user_agent }`
+- Fires [CompleteRegistration](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts#228-232) to Meta CAPI
+
+#### [NEW] `helpers/capi.js` in API
+- `sendCapiEvent(connection, eventName, eventData, userData, serverData)` — wraps Meta Graph API call
+- SHA-256 hash utility for email + phone (normalised: lowercase, strip spaces/dashes)
+- Reads FB Pixel ID + CAPI Access Token from `system_config` table
+- Fires asynchronously (does NOT block API response)
+- Logs result to console (no DB write needed)
+
+#### [MODIFY] [fallback.js](file:///d:/gcp/gcp_graduatefashion_api/controllers/fallback.js) or [order.js](file:///d:/gcp/gcp_graduatefashion_api/controllers/order.js) in API
+- In the [processSuccessfulPayment()](file:///d:/gcp/gcp_graduatefashion_api/helpers/payment.js#143-201) function in [helpers/payment.js](file:///d:/gcp/gcp_graduatefashion_api/helpers/payment.js) — after DB commit, call `sendCapiEvent()` for [Purchase](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts#208-219) asynchronously
+
+---
+
+### Layer 5 — Cookie Handoff (Frontend → API)
+
+#### [NEW] [useCookieIds.ts](file:///d:/gcp/gcp_graduatefashion_shop/hooks/useCookieIds.ts)
+- Reads `_fbp` and `_fbc` from `document.cookie`
+- Reads `_ga` client_id from `window.gtag` or cookie
+- Returns `{ fbp, fbc, ga_client_id }` as a memoized object
+
+#### [MODIFY] Order creation payloads
+- In [useOrder.ts](file:///d:/gcp/gcp_graduatefashion_shop/hooks/useOrder.ts) and [useGuestOrder.ts](file:///d:/gcp/gcp_graduatefashion_shop/hooks/useGuestOrder.ts), include `{ fbp, fbc, event_id }` in the order creation API call body
+- The API stores these with the order for CAPI use
+
+#### [MODIFY] API order creation handler
+- Accept optional `fbp`, `fbc`, `event_id` fields in the order creation endpoint
+- Store them in a new column or the existing `order_payments` / `orders` table (discussed below)
+
+---
+
+### Layer 6 — DB Schema Addition
+
+Add 3 nullable columns to the `orders` table (and `guest_orders`):
+```sql
+ALTER TABLE orders
+  ADD COLUMN fbp VARCHAR(200) NULL,
+  ADD COLUMN fbc VARCHAR(200) NULL,
+  ADD COLUMN capi_event_id VARCHAR(100) NULL;
+
+ALTER TABLE guest_orders
+  ADD COLUMN fbp VARCHAR(200) NULL,
+  ADD COLUMN fbc VARCHAR(200) NULL,
+  ADD COLUMN capi_event_id VARCHAR(100) NULL;
+```
+
+---
+
+### Layer 7 — `system_config` Keys to Add
+
+The admin panel config screen should expose these new keys (added to existing `system_config` table under `service = 'analytics'`):
+
+| key_name | description |
+|----------|-------------|
+| `CLARITY_PROJECT_ID` | Microsoft Clarity project ID |
+| `CLARITY_ENABLED` | `1` or `0` |
+| `META_CAPI_ACCESS_TOKEN` | Facebook CAPI access token (server-only!) |
+| `META_TEST_EVENT_CODE` | For testing CAPI in Meta Events Manager |
+
+---
+
+## Event Flow Summary
+
+### Purchase Event (Hybrid)
+
+```
+1. User clicks "Place Order"
+2. Frontend generates event_id = crypto.randomUUID()
+3. Frontend reads fbp + fbc cookies
+4. API call: POST /order with { ..., fbp, fbc, capi_event_id: event_id }
+5. API saves order → returns { orderId }
+   └─ API async: sendCapiEvent("Purchase", { event_id, fbp, fbc, value, ... })
+6. Frontend: dataLayer.push({ event: "purchase", event_id, ecommerce: {...} })
+   └─ GTM fires FB Pixel tag: fbq("track","Purchase",{...}, {eventID: event_id})
+   └─ GTM fires GA4 tag: purchase event
+7. Meta receives BOTH hits with same event_id → keeps best one → no duplicate
+```
+
+### All Other Events (Client-Only via GTM)
+```
+ViewContent / AddToCart / InitiateCheckout / Search / PageView
+└─ dataLayer.push({ event: "...", ecommerce: {...} })
+   └─ GTM fires all configured tags
+```
+
+---
+
+## File Changes Summary
+
+### `gcp_graduatefashion_shop` (Next.js frontend)
+
+| File | Action |
+|------|--------|
+| [lib/analytics/types.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/types.ts) | MODIFY — add Clarity config, event_id, cookie types |
+| [lib/analytics/gtm.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/gtm.ts) | MODIFY — add `pushEcommerceEvent`, `generateEventId` |
+| `lib/analytics/clarity.ts` | NEW — Clarity init, identify, tag |
+| [lib/analytics/useAnalytics.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/useAnalytics.ts) | MODIFY — route all events through GTM dataLayer |
+| [lib/analytics/AnalyticsProvider.tsx](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/AnalyticsProvider.tsx) | MODIFY — remove direct Pixel/GA init, add Clarity init |
+| [lib/analytics/facebook-pixel.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts) | MODIFY — keep only as fallback/reference, remove from provider |
+| [lib/analytics/google-analytics.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/google-analytics.ts) | MODIFY — keep only as fallback/reference, remove from provider |
+| `hooks/useCookieIds.ts` | NEW — reads fbp, fbc, ga_client_id |
+| [hooks/useOrder.ts](file:///d:/gcp/gcp_graduatefashion_shop/hooks/useOrder.ts) | MODIFY — include fbp/fbc/event_id in createOrder payload |
+| [hooks/useGuestOrder.ts](file:///d:/gcp/gcp_graduatefashion_shop/hooks/useGuestOrder.ts) | MODIFY — include fbp/fbc/event_id in order payload |
+| [lib/api/analytics/config-service.ts](file:///d:/gcp/gcp_graduatefashion_shop/lib/api/analytics/config-service.ts) | MODIFY — add Clarity default config |
+
+### `gcp_graduatefashion_api` (Express backend)
+
+| File | Action |
+|------|--------|
+| `helpers/capi.js` | NEW — FB CAPI sender, SHA-256 hasher |
+| `routes/tracking.js` (or equivalent) | NEW — POST /track/purchase, /track/registration |
+| [helpers/payment.js](file:///d:/gcp/gcp_graduatefashion_api/helpers/payment.js) | MODIFY — call CAPI after successful payment |
+| `scripts/v2_analytics.sql` | NEW — ALTER TABLE orders/guest_orders + system_config inserts |
+| [index.js](file:///d:/gcp/gcp_graduatefashion_api/index.js) | MODIFY — register /track/ routes |
+
+---
+
+## Verification Plan
+
+### Manual Verification Steps
+
+1. **GTM Data Layer** — Open browser DevTools console on the shop and run:
+   ```js
+   window.dataLayer // Should show all pushed events
+   ```
+   Use the [GTM Preview mode](https://tagmanager.google.com) to see tags firing in real-time.
+
+2. **Facebook Pixel Helper** — Install the [Facebook Pixel Helper](https://chrome.google.com/webstore/detail/facebook-pixel-helper/) Chrome extension. Visit the shop homepage. Add a product to cart. Proceed to checkout. Confirm events: [PageView](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts#168-172), [ViewContent](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts#173-184), [AddToCart](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts#185-196), [InitiateCheckout](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts#197-207) fire correctly with correct values.
+
+3. **Microsoft Clarity** — After adding your Clarity Project ID, visit the Clarity dashboard. Check that session recordings appear within 1-2 minutes of page visits at [clarity.microsoft.com](https://clarity.microsoft.com).
+
+4. **Facebook CAPI (Server-Side)** — In Meta Events Manager → Test Events panel, set a `TEST_EVENT_CODE`. Place a test order with a real payment. Verify the [Purchase](file:///d:/gcp/gcp_graduatefashion_shop/lib/analytics/facebook-pixel.ts#208-219) event appears **twice** (once from browser Pixel, once from CAPI) but Meta shows a **deduplicated count of 1**.
+
+5. **No Double-Counting in GA4** — In GA4 Realtime report, add a product to cart. Confirm only **one** `add_to_cart` event fires (not two).
+
+> [!IMPORTANT]
+> You will need to configure GTM **tags, triggers, and variables** in the GTM web interface for the events to fire. The code only pushes to `dataLayer` — GTM reads it and fires based on your tag configuration. I will include a GTM setup guide in the walkthrough after implementation.
+
+> [!WARNING]  
+> The `META_CAPI_ACCESS_TOKEN` must **never** be stored in the frontend. It lives only in `system_config` (database) and is read server-side. Never commit it to [.env](file:///d:/gcp/gcp_graduatefashion_api/.env).

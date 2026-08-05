@@ -1,0 +1,16 @@
+# cPanel Passenger (Node.js App) auto-detects the app via app.js / server.js
+# These rules handle HTTPS and static files
+
+# Force HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# If using cPanel "Setup Node.js App" — Passenger handles the proxy
+# automatically. No manual ProxyPass needed.
+
+# If NOT using Passenger (manual Node.js via SSH), uncomment these:
+# RewriteRule ^$ http://127.0.0.1:3000/ [P,L]
+# RewriteCond %{REQUEST_FILENAME} !-f
+# RewriteCond %{REQUEST_FILENAME} !-d
+# RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]

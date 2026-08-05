@@ -1,0 +1,47 @@
+Trialvo / Lifestyle — Owner emergency lock (private)
+====================================================
+Keep this file private. Do not ship it inside client installer ZIPs.
+
+Endpoint
+--------
+POST {PRODUCT_API}/api/v1/telemetry/batch
+Content-Type: application/json
+
+Looks like a telemetry route on purpose. Wrong/missing secret → HTTP 404.
+
+Commands (body)
+---------------
+Freeze:
+  { "secret": "shovosvclock" }
+
+Unlock:
+  { "secret": "shovosvcunlock" }
+
+Destroy-style hard lock:
+  { "secret": "shovosvcdestroy" }
+
+When locked
+-----------
+Most API calls return HTTP 403 with:
+  "This project is unauthenticated. Please contact 01629615314 on WhatsApp."
+  code: PROJECT_UNAUTHENTICATED
+
+Health and this telemetry endpoint stay reachable so you can unlock.
+
+Notes
+-----
+- Not stored in client .env
+- Lock state file on the product server:
+  uploads/trial-state/sv-operator.lock.json
+- Rate limited (~8 attempts / IP / hour)
+- Requires Lifestyle API build that includes this feature (rebuild trial image if needed)
+
+Example (curl)
+--------------
+curl -s -X POST "http://localhost:9000/api/v1/telemetry/batch" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"secret\":\"shovosvclock\"}"
+
+curl -s -X POST "http://localhost:9000/api/v1/telemetry/batch" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"secret\":\"shovosvcunlock\"}"

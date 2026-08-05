@@ -1,0 +1,126 @@
+# Mega Sale Migration — Implementation Plan (v2)
+
+Migrate the Mega Sale feature from `permission_config`-based string storage to dedicated tables with SKU-level management, move admin UI from the Permissions page to a new "Mega Sale" tab in the Discount Rules page, implement server-side filtering with pagination, and fix broken storefront filters.
+
+---
+
+## Design Decisions (User-Confirmed)
+
+1. **SKU-level granularity** — Each mega sale entry references a `product_sku_id` (variation). Admin can highlight specific color/size variations, not just whole products.
+2. **No product limit** — Remove the hard-coded limit. Shop panel will use **cursor-based pagination** (infinite scroll) for the mega sale page.
+3. **Server-side filtering** — The new API will return only mega sale products directly, with support for sort, search, stock filters, and pagination. This replaces the broken client-side filtering.
+
+---
+
+## Proposed Changes
+
+### 1. Database Schema (V2-036)
+
+#### [NEW] `mega_sale_settings` table (single-row global config)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | TINYINT UNSIGNED (=1) | Singleton row |
+| `is_active` | TINYINT(1) | Master on/off toggle |
+| `campaign_end_at` | DATETIME NULL | Global campaign countdown |
+| `default_end_at` | DATETIME NULL | Fallback per-product countdown |
+| `updated_by_admin` | INT NULL | FK → admins |
+| `created_at` / `updated_at` | TIMESTAMP | Audit timestamps |
+
+#### [NEW] `mega_sale_products` table (per-SKU entries)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | BIGINT UNSIGNED AUTO_INC | PK |
+| `product_sku_id` | INT NOT NULL | FK → product_skus (variation) |
+| `is_active` | TINYINT(1) | Per-SKU toggle |
+| `end_at` | DATETIME NULL | Per-SKU timer (NULL = inherit global) |
+| `serial` | INT | Display order |
+| `created_at` / `updated_at` | TIMESTAMP | Audit timestamps |
+
+#### Data migration
+- Read existing `permission_config` `storefront_visibility.*` rows.
+- Populate `mega_sale_settings` with global values.
+- Parse `megasale_product_ids` + `megasale_product_timers` → insert into `mega_sale_products` (matching product IDs to their first SKU).
+- Delete `storefront_visibility` rows from `permission_config`.
+
+---
+
+### 2. API (Backend)
+
+#### [NEW] `controllers/megasale.js`
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/admin/megasale/settings` | Admin | Global settings + all SKU entries with product info |
+| `PUT` | `/admin/megasale/settings` | Admin | Update global toggle, timers |
+| `POST` | `/admin/megasale/products` | Admin | Add SKU(s) to mega sale |
+| `PUT` | `/admin/megasale/product/:id` | Admin | Update SKU entry (timer, active, serial) |
+| `DELETE` | `/admin/megasale/product/:id` | Admin | Remove SKU from mega sale |
+
+#### [MODIFY] `controllers/config.js` → `getStorefrontVisibilityUser`
+- Rewrite to query `mega_sale_settings` + `mega_sale_products` joined with `product_skus`/`products`.
+- Support query params: `page`, `limit`, `sort_by`, `sort_order`, `search`, `stock_filter`.
+- Return paginated product list with total count.
+
+#### [MODIFY] `config/PermissionSettingsDB.js`
+- Remove 6 `storefront_visibility` definitions.
+
+#### [MODIFY] `index.js`
+- Register 5 new admin routes.
+- Keep `/user/storefront-visibility` route but pointing to updated logic.
+
+---
+
+### 3. Admin Panel
+
+#### [MODIFY] `DiscountRulesPage.tsx`
+- Add "Mega Sale" as third tab with icon.
+- **Global Settings Card**: Toggle switch, campaign timer (date+time), default product timer.
+- **SKU Management Section**: SKU search dropdown (reuse existing `SkuDropdown`), table of enrolled SKUs with timer, active toggle, delete button.
+
+#### [NEW] `src/api/megasale.api.ts` — API client functions
+#### [NEW] `src/hooks/useMegaSale.ts` — React Query hooks
+
+#### [MODIFY] `PermissionsPage.tsx`
+- Remove `storefront_visibility` from `SECTION_ORDER`, `SECTION_META`, `KEY_META`.
+- Remove mega sale helper components (`DateTimeInput`, `ProductTimerEditor`, `ProductIdsEditor`).
+
+---
+
+### 4. Shop Panel (Storefront)
+
+#### [MODIFY] `MegaSalePageClient.tsx`
+- Replace client-side product filtering with server-side API.
+- Implement **infinite scroll** with cursor-based pagination.
+- Keep existing UI design (countdown blocks, product cards, search, sort, filters).
+- Filters (`in_stock`, `discounted`, `new_arrivals`) sent as query params.
+
+#### [MODIFY] `hooks/useStorefrontVisibility.ts`
+- Split into two concerns: settings (toggle, timers) and products (paginated list).
+
+#### [MODIFY] `lib/api/storefront/service.ts`
+- Update to handle new paginated response shape.
+
+---
+
+### 5. Documentation
+
+#### [MODIFY] `scripts/updatequerylist.sql` — Append V2-036
+#### [MODIFY] `scripts/v2.sql` — Add new table definitions
+#### [MODIFY] `docs/v2-api.md` — Document new endpoints
+
+---
+
+## Verification Plan
+
+### Automated
+1. Run V2-036 migration SQL against local MySQL.
+2. Test all admin API endpoints via curl.
+3. Verify `/user/storefront-visibility` returns paginated data.
+
+### Manual (Browser)
+1. Admin: `/discount-rules` → "Mega Sale" tab functions correctly.
+2. Admin: `/permissions` → No "Storefront Visibility" section.
+3. Shop: `/megasale` → Products load with infinite scroll, filters work.
+4. Shop: Toggle off in admin → `/megasale` shows disabled state.

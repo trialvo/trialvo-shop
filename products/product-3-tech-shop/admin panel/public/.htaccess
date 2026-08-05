@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# If the request is a real file/folder, serve it
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Otherwise send everything to React
+RewriteRule ^ index.html [L]

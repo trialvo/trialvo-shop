@@ -24,7 +24,7 @@ pub async fn list(state: web::Data<AppState>, query: web::Query<ListQuery>) -> H
         (pp, (page - 1) * pp)
     };
     let page = if per_page > 0 { offset / per_page + 1 } else { 1 };
-    match list_transactions(&state.db, query.service_id, query.status.clone(), per_page, offset).await {
+    match list_transactions_enriched(&state.db, query.service_id, query.status.clone(), per_page, offset).await {
         Ok(txs) => {
             let total = count_transactions(&state.db, query.service_id, query.status.clone()).await.unwrap_or(txs.len() as i64);
             HttpResponse::Ok().json(serde_json::json!({"data": txs, "page": page, "per_page": per_page, "total": total}))

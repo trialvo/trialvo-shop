@@ -1,0 +1,22 @@
+# Product BE local compose — NO local MySQL.
+# Use shared server: docker compose -f ../../infra/docker-compose.yml up -d
+# phpMyAdmin: http://localhost:8283  (root / localdev2026)
+
+services:
+  phpmyadmin:
+    image: phpmyadmin:5.2.2
+    container_name: lifestyle-phpmyadmin
+    profiles: ["legacy-pma"]
+    restart: unless-stopped
+    ports:
+      - "8284:80"
+    environment:
+      # Prefer the shared stack PMA on :8283; this is only if you need a second UI
+      PMA_HOST: host.docker.internal
+      PMA_PORT: 3430
+      PMA_USER: root
+      PMA_PASSWORD: localdev2026
+      PMA_ABSOLUTE_URI: http://localhost:8284/
+      UPLOAD_LIMIT: 512M
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

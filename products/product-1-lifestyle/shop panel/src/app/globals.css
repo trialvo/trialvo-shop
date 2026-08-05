@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+/* ── Tailwind v4 CSS-first configuration ─────────────────────────────────── */
+@theme {
+  /* Fonts */
+  --font-display: 'DM Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Border radius — all derived from --radius so a single change cascades everywhere */
+  --radius-2xl: calc(var(--radius) + 12px);
+  --radius-xl:  calc(var(--radius) + 8px);
+  --radius-lg:  var(--radius);
+  --radius-md:  calc(var(--radius) - 2px);
+  --radius-sm:  calc(var(--radius) - 4px);
+
+  /* Custom colors mapped from CSS vars */
+  --color-background:            hsl(var(--background));
+  --color-foreground:            hsl(var(--foreground));
+  --color-card:                  hsl(var(--card));
+  --color-card-foreground:       hsl(var(--card-foreground));
+  --color-popover:               hsl(var(--popover));
+  --color-popover-foreground:    hsl(var(--popover-foreground));
+  --color-primary:               hsl(var(--primary));
+  --color-primary-foreground:    hsl(var(--primary-foreground));
+  --color-secondary:             hsl(var(--secondary));
+  --color-secondary-foreground:  hsl(var(--secondary-foreground));
+  --color-muted:                 hsl(var(--muted));
+  --color-muted-foreground:      hsl(var(--muted-foreground));
+  --color-accent:                hsl(var(--accent));
+  --color-accent-foreground:     hsl(var(--accent-foreground));
+  --color-destructive:           hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border:                hsl(var(--border));
+  --color-input:                 hsl(var(--input));
+  --color-ring:                  hsl(var(--ring));
+
+  /* Semantic status / domain colors */
+  --color-success:               hsl(var(--success));
+  --color-success-foreground:    hsl(var(--success-foreground));
+  --color-warning:               hsl(var(--warning));
+  --color-warning-foreground:    hsl(var(--warning-foreground));
+  --color-sale:                  hsl(var(--sale));
+  --color-sale-foreground:       hsl(var(--sale-foreground));
+  --color-info:                  hsl(var(--info));
+  --color-info-foreground:       hsl(var(--info-foreground));
+
+  /* Feature strip icon colors */
+  --color-feature-shipping:      hsl(var(--feature-shipping));
+  --color-feature-returns:       hsl(var(--feature-returns));
+  --color-feature-support:       hsl(var(--feature-support));
+
+  /* Header */
+  --color-header:                hsl(var(--header-bg));
+  --color-header-foreground:     hsl(var(--header-foreground));
+  --color-header-muted:          hsl(var(--header-muted));
+  --color-header-accent:         hsl(var(--header-accent));
+  --color-header-border:         hsl(var(--header-border));
+
+  /* Sidebar */
+  --color-sidebar:               hsl(var(--sidebar-background));
+  --color-sidebar-foreground:    hsl(var(--sidebar-foreground));
+  --color-sidebar-primary:       hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent:        hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border:        hsl(var(--sidebar-border));
+  --color-sidebar-ring:          hsl(var(--sidebar-ring));
+
+  /* Keyframes */
+  --animate-accordion-down:   accordion-down 0.2s ease-out;
+  --animate-accordion-up:     accordion-up 0.2s ease-out;
+  --animate-fade-in:          fade-in 0.4s ease-out forwards;
+  --animate-fade-in-up:       fade-in-up 0.5s ease-out forwards;
+  --animate-slide-in-right:   slide-in-right 0.3s ease-out;
+  --animate-scale-in:         scale-in 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to   { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to   { height: 0; }
+  }
+  @keyframes fade-in {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in-up {
+    0%   { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-in-right {
+    0%   { transform: translateX(100%); }
+    100% { transform: translateX(0); }
+  }
+  @keyframes scale-in {
+    0%   { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  @keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  --animate-marquee: marquee 22s linear infinite;
+}
+
+/* ── Breakpoint override for container ───────────────────────────────────── */
+@theme inline {
+  --container-2xl: 1400px;
+}
+
+/* ── Design tokens ───────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 220 20% 10%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 20% 96%;
+    --secondary-foreground: 220 20% 10%;
+    --muted: 40 10% 95%;
+    --muted-foreground: 220 10% 50%;
+    --accent: 35 60% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 10% 90%;
+    --input: 220 10% 90%;
+    --ring: 220 20% 10%;
+    --radius: 0.25rem;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --sale: 347 77% 50%;
+    --sale-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --feature-shipping: 160 84% 39%;
+    --feature-returns: 217 91% 60%;
+    --feature-support: 263 70% 50%;
+
+    --header-bg: 220 20% 10%;
+    --header-foreground: 40 20% 96%;
+    --header-muted: 40 10% 70%;
+    --header-accent: 35 60% 55%;
+    --header-border: 220 15% 20%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 20% 10%;
+    --foreground: 40 20% 96%;
+    --card: 220 20% 10%;
+    --card-foreground: 40 20% 96%;
+    --popover: 220 20% 10%;
+    --popover-foreground: 40 20% 96%;
+    --primary: 40 20% 96%;
+    --primary-foreground: 220 20% 10%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --sale: 347 77% 50%;
+    --sale-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --feature-shipping: 160 84% 39%;
+    --feature-returns: 217 91% 60%;
+    --feature-support: 263 70% 50%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* ── Utilities ───────────────────────────────────────────────────────────── */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

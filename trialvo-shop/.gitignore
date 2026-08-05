@@ -1,0 +1,7 @@
+node_modules
+.env
+.env.production
+.env.local
+*.log
+.generated_credentials.json
+uploads/

@@ -1,0 +1,20 @@
+# Exclude local and VCS metadata
+.gcloudignore
+.git
+.gitignore
+
+# Dependencies
+node_modules
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Local media/data dumps (large)
+uploads
+*.sql
+*.zip
+
+# Local-only misc
+npm-debug.log

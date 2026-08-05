@@ -128,9 +128,12 @@ pub struct EpsGateway {
 impl EpsGateway {
     pub fn new(creds: EpsCredentials) -> Self {
         Self {
+            // Follow redirects: EPS live/sandbox sometimes returns HTTP 302
+            // (http→https or path normalization). Policy::none() caused live
+            // CheckStatus/InitializeEPS to fail after customers already paid.
             client: Client::builder()
                 .timeout(std::time::Duration::from_secs(30))
-                .redirect(reqwest::redirect::Policy::none())
+                .redirect(reqwest::redirect::Policy::limited(10))
                 .build()
                 .expect("HTTP client init failed"),
             creds,
@@ -164,10 +167,22 @@ impl EpsGateway {
             .map_err(|e| anyhow!("EPS GetToken HTTP error: {}", e))?;
 
         let status = response.status();
+        let location = response
+            .headers()
+            .get("location")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_string());
         let text = response.text().await.unwrap_or_default();
 
         if !status.is_success() {
-            return Err(anyhow!("EPS GetToken failed: HTTP {} — {}", status, text));
+            return Err(anyhow!(
+                "EPS GetToken failed: HTTP {} — {}{}",
+                status,
+                text,
+                location
+                    .map(|l| format!(" (Location: {})", l))
+                    .unwrap_or_default()
+            ));
         }
 
         let parsed: EpsTokenResponse = serde_json::from_str(&text)
@@ -276,10 +291,22 @@ impl EpsGateway {
             .map_err(|e| anyhow!("EPS InitializeEPS HTTP error: {}", e))?;
 
         let status = response.status();
+        let location = response
+            .headers()
+            .get("location")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_string());
         let text = response.text().await.unwrap_or_default();
 
         if !status.is_success() {
-            return Err(anyhow!("EPS InitializeEPS failed: HTTP {} — {}", status, text));
+            return Err(anyhow!(
+                "EPS InitializeEPS failed: HTTP {} — {}{}",
+                status,
+                text,
+                location
+                    .map(|l| format!(" (Location: {})", l))
+                    .unwrap_or_default()
+            ));
         }
 
         let parsed: EpsInitResponse = serde_json::from_str(&text)
@@ -307,7 +334,7 @@ impl EpsGateway {
 
         // Live V5: also send EPSTransactionId for dual lookup
         if let Some(eps_id) = eps_tx_id {
-            url.push_str(&format!("&EPSTransactionId={}", eps_id));
+            url.push_str(&format!("&EPSTransactionId={}", urlencoding_lite(eps_id)));
         }
 
         let response = self.client
@@ -319,10 +346,22 @@ impl EpsGateway {
             .map_err(|e| anyhow!("EPS CheckStatus HTTP error: {}", e))?;
 
         let status = response.status();
+        let location = response
+            .headers()
+            .get("location")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_string());
         let text = response.text().await.unwrap_or_default();
 
         if !status.is_success() {
-            return Err(anyhow!("EPS CheckStatus failed: HTTP {} — {}", status, text));
+            return Err(anyhow!(
+                "EPS CheckStatus failed: HTTP {} — {}{}",
+                status,
+                text,
+                location
+                    .map(|l| format!(" (Location: {})", l))
+                    .unwrap_or_default()
+            ));
         }
 
         let parsed: EpsStatusResponse = serde_json::from_str(&text)
@@ -330,6 +369,17 @@ impl EpsGateway {
 
         Ok(parsed)
     }
+}
+
+/// Minimal query escaping for EPS ids (alnum / hyphen / underscore only expected).
+fn urlencoding_lite(value: &str) -> String {
+    value
+        .chars()
+        .map(|c| match c {
+            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' => c.to_string(),
+            _ => format!("%{:02X}", c as u8),
+        })
+        .collect()
 }
 
 /// Determine if an EPS status string means success

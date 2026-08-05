@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Trialvo E-Commerce - RPG Item Shop</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background: linear-gradient(135deg, #1a0d2e 0%, #2d1b4e 50%, #1a0d2e 100%);
+      overflow-x: hidden;
+      color: #fff;
+      min-height: 100vh;
+    }
+    
+    /* Sparkle background */
+    .sparkles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    
+    .sparkle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #ffd700;
+      border-radius: 50%;
+      animation: sparkle 3s ease-in-out infinite;
+      box-shadow: 0 0 10px #ffd700;
+    }
+    
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    
+    /* Container */
+    .container {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    
+    /* Shop Frame */
+    .shop-frame {
+      background: linear-gradient(135deg, #8b4513 0%, #654321 50%, #3d2817 100%);
+      border: 8px solid #ffd700;
+      border-radius: 20px;
+      box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.6),
+        inset 0 0 40px rgba(139, 69, 19, 0.8);
+      padding: 3rem 2rem;
+      max-width: 900px;
+      position: relative;
+      animation: shine-border 3s ease-in-out infinite;
+    }
+    
+    @keyframes shine-border {
+      0%, 100% { 
+        box-shadow: 
+          0 0 30px rgba(255, 215, 0, 0.6),
+          inset 0 0 40px rgba(139, 69, 19, 0.8);
+      }
+      50% { 
+        box-shadow: 
+          0 0 50px rgba(255, 215, 0, 0.9),
+          inset 0 0 60px rgba(139, 69, 19, 0.9);
+      }
+    }
+    
+    /* Treasure Chest Animation */
+    .treasure-container {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 3rem;
+      animation: chest-bounce 2s ease-in-out infinite;
+    }
+    
+    @keyframes chest-bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-10px); }
+    }
+    
+    /* Floating Coins */
+    .coins-container {
+      position: absolute;
+      top: 20px;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      pointer-events: none;
+    }
+    
+    .coin {
+      position: absolute;
+      font-size: 2rem;
+      animation: coin-float 4s ease-in-out infinite;
+    }
+    
+    .coin:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .coin:nth-child(2) { left: 25%; animation-delay: 0.5s; }
+    .coin:nth-child(3) { left: 50%; animation-delay: 1s; }
+    .coin:nth-child(4) { left: 75%; animation-delay: 1.5s; }
+    .coin:nth-child(5) { left: 90%; animation-delay: 2s; }
+    
+    @keyframes coin-float {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+      50% { transform: translateY(-30px) rotate(180deg); opacity: 1; }
+    }
+    
+    /* Title */
+    .title {
+      font-size: clamp(1.2rem, 4vw, 2.5rem);
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #ffd700;
+      text-shadow: 
+        3px 3px 0 #8b4513,
+        -1px -1px 0 #ffed4e,
+        0 0 20px rgba(255, 215, 0, 0.8);
+      line-height: 1.5;
+      animation: title-glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes title-glow {
+      from { text-shadow: 
+        3px 3px 0 #8b4513,
+        -1px -1px 0 #ffed4e,
+        0 0 20px rgba(255, 215, 0, 0.8);
+      }
+      to { text-shadow: 
+        3px 3px 0 #8b4513,
+        -1px -1px 0 #ffed4e,
+        0 0 40px rgba(255, 215, 0, 1);
+      }
+    }
+    
+    /* Merchant Welcome */
+    .merchant-text {
+      text-align: center;
+      font-size: clamp(0.6rem, 1.8vw, 1rem);
+      color: #ffed4e;
+      margin-bottom: 2rem;
+      animation: blink 2s step-start infinite;
+    }
+    
+    @keyframes blink {
+      0%, 80% { opacity: 1; }
+      81%, 100% { opacity: 0.3; }
+    }
+    
+    /* Shop Window */
+    .shop-window {
+      background: rgba(0, 0, 0, 0.7);
+      border: 4px solid #ffd700;
+      border-radius: 15px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 
+        0 0 20px rgba(255, 215, 0, 0.4),
+        inset 0 0 30px rgba(139, 69, 19, 0.5);
+      position: relative;
+    }
+    
+    .subtitle {
+      font-size: clamp(0.7rem, 2vw, 1.1rem);
+      text-align: center;
+      color: #ffed4e;
+      margin-bottom: 2rem;
+      line-height: 1.8;
+    }
+    
+    /* Item Shop Grid */
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .shop-item {
+      background: linear-gradient(135deg, #654321 0%, #3d2817 100%);
+      border: 3px solid #ffd700;
+      border-radius: 10px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .shop-item::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+      animation: item-shine 3s infinite;
+    }
+    
+    @keyframes item-shine {
+      0% { transform: translateX(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) rotate(45deg); }
+    }
+    
+    .shop-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5);
+      border-color: #ffed4e;
+    }
+    
+    .item-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      display: block;
+      animation: item-bob 2s ease-in-out infinite;
+    }
+    
+    @keyframes item-bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    .item-name {
+      font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+      color: #ffed4e;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .item-price {
+      font-size: clamp(0.4rem, 1.2vw, 0.6rem);
+      color: #ffd700;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Gold Counter */
+    .gold-counter {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: clamp(0.6rem, 1.8vw, 1rem);
+      color: #ffd700;
+      margin-bottom: 1.5rem;
+    }
+    
+    .spinning-coin {
+      display: inline-block;
+      animation: spin 2s linear infinite;
+    }
+    
+    @keyframes spin {
+      from { transform: rotateY(0deg); }
+      to { transform: rotateY(360deg); }
+    }
+    
+    /* Quest Button */
+    .quest-button {
+      display: inline-block;
+      padding: 1rem 2.5rem;
+      background: linear-gradient(135deg, #8b008b 0%, #6b2d8f 50%, #4b0082 100%);
+      color: #fff;
+      text-decoration: none;
+      border: 4px solid #ffd700;
+      border-radius: 15px;
+      font-size: clamp(0.6rem, 2vw, 1rem);
+      box-shadow: 
+        0 0 30px rgba(139, 0, 139, 0.6),
+        inset 0 0 20px rgba(255, 215, 0, 0.2);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    
+    .quest-button::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transform: rotate(45deg);
+      animation: button-shine 3s infinite;
+    }
+    
+    @keyframes button-shine {
+      0% { transform: translateX(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) rotate(45deg); }
+    }
+    
+    .quest-button:hover {
+      transform: scale(1.1);
+      box-shadow: 
+        0 0 50px rgba(139, 0, 139, 0.9),
+        inset 0 0 30px rgba(255, 215, 0, 0.4);
+      border-color: #ffed4e;
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      font-size: clamp(0.4rem, 1.2vw, 0.6rem);
+      color: #ffd700;
+      margin-top: 2rem;
+      line-height: 2;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    }
+    
+    .footer a {
+      color: #ffed4e;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    
+    .footer a:hover {
+      color: #fff;
+      text-shadow: 0 0 10px #ffd700;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .shop-frame {
+        padding: 2rem 1rem;
+      }
+      
+      .shop-window {
+        padding: 1.5rem;
+      }
+      
+      .items-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Sparkles Background -->
+  <div class="sparkles" id="sparkles"></div>
+  
+  <!-- Main Container -->
+  <div class="container">
+    <div class="shop-frame">
+      <!-- Treasure Chest -->
+      <div class="treasure-container">💎</div>
+      
+      <!-- Floating Coins -->
+      <div class="coins-container">
+        <div class="coin">🪙</div>
+        <div class="coin">🪙</div>
+        <div class="coin">🪙</div>
+        <div class="coin">🪙</div>
+        <div class="coin">🪙</div>
+      </div>
+      
+      <!-- Title -->
+      <h1 class="title">
+        ⚔️ TRIALVO ⚔️<br>
+        ITEM SHOP<br>
+        E-COMMERCE
+      </h1>
+      
+      <!-- Merchant Welcome -->
+      <div class="merchant-text">
+        ★ WELCOME, ADVENTURER! ★
+      </div>
+      
+      <!-- Shop Window -->
+      <div class="shop-window">
+        <div class="subtitle">
+          LEGENDARY COMMERCE<br>
+          SOLUTIONS AWAIT
+        </div>
+        
+        <!-- Gold Counter -->
+        <div class="gold-counter">
+          <span class="spinning-coin">🪙</span>
+          <span>INFINITE GOLD</span>
+          <span class="spinning-coin">🪙</span>
+        </div>
+        
+        <!-- Items for Sale -->
+        <div class="items-grid">
+          <div class="shop-item">
+            <span class="item-icon">🛒</span>
+            <div class="item-name">SHOPPING<br>CART+</div>
+            <div class="item-price">★ EPIC ★</div>
+          </div>
+          
+          <div class="shop-item">
+            <span class="item-icon">💳</span>
+            <div class="item-name">PAYMENT<br>CRYSTAL</div>
+            <div class="item-price">★ RARE ★</div>
+          </div>
+          
+          <div class="shop-item">
+            <span class="item-icon">🚀</span>
+            <div class="item-name">FAST<br>DELIVERY</div>
+            <div class="item-price">★ LEGENDARY ★</div>
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div style="text-align: center; font-size: clamp(0.5rem, 1.5vw, 0.7rem); color: #ffed4e; line-height: 2; margin-top: 2rem;">
+          By Team Trialvo<br>
+          Master merchants of<br>
+          the digital realm<br><br>
+          Full-stack sorcery<br>
+          meets modern commerce
+        </div>
+        
+        <!-- Quest Button -->
+        <div style="text-align: center; margin-top: 2rem;">
+          <a href="https://trialvo.com" class="quest-button">
+            ▶ START QUEST ◀
+          </a>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="footer">
+        ⚔️ TEAM TRIALVO ⚔️<br>
+        YOUR ADVENTURE BEGINS HERE<br>
+        <a href="https://trialvo.com" target="_blank">VISIT THE GUILD HALL</a>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Generate sparkles
+    const sparkles = document.getElementById('sparkles');
+    for (let i = 0; i < 50; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.className = 'sparkle';
+      sparkle.style.left = Math.random() * 100 + '%';
+      sparkle.style.top = Math.random() * 100 + '%';
+      sparkle.style.animationDelay = Math.random() * 3 + 's';
+      sparkle.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      sparkles.appendChild(sparkle);
+    }
+    
+    // Item click sound effect simulation (visual feedback)
+    const items = document.querySelectorAll('.shop-item');
+    items.forEach(item => {
+      item.addEventListener('click', function() {
+        this.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          this.style.transform = 'translateY(-5px)';
+        }, 100);
+      });
+    });
+  </script>
+</body>
+</html>

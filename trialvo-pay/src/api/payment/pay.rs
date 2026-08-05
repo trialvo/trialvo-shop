@@ -6,7 +6,9 @@ use crate::cache::{cache_eps_token, get_cached_eps_token, get_token_ttl};
 use crate::db::bills::{Bill, get_bill_by_token, get_bill_items, update_bill_status};
 use crate::db::config::get_eps_credentials;
 use crate::db::services::{Service, get_service_by_id};
-use crate::db::transactions::create_transaction;
+use crate::db::transactions::{
+    create_transaction, get_reusable_eps_transaction, mark_transaction_failed,
+};
 use crate::gateway::eps::{EpsGateway, EpsPaymentParams, EpsProductItem};
 use crate::AppState;
 
@@ -84,6 +86,23 @@ async fn perform_eps_init(
     service: &Service,
     req: &HttpRequest,
 ) -> Result<EpsInitResult, String> {
+    // Reuse an in-flight EPS session instead of creating duplicate merchant TX rows
+    // (live bug: customer retries created many initiated/processing rows for one order).
+    if let Ok(Some(existing)) = get_reusable_eps_transaction(&state.db, bill.id).await {
+        if existing.status == "processing" {
+            if let Some(redirect_url) = existing.eps_redirect_url.clone() {
+                tracing::info!(
+                    "Reusing existing EPS session for bill {} (merchant_tx={})",
+                    bill.bill_token, existing.eps_merchant_tx_id
+                );
+                return Ok(EpsInitResult {
+                    redirect_url,
+                    transaction_id: existing.id,
+                });
+            }
+        }
+    }
+
     // Get EPS credentials
     let mode_label = if service.is_sandbox { "Sandbox" } else { "Live" };
     let creds = match get_eps_credentials(&state.db, &state.config.master_key, service.is_sandbox).await {
@@ -239,11 +258,17 @@ async fn perform_eps_init(
             } else {
                 let detail = resp.message.unwrap_or_else(|| "No redirect URL".to_string());
                 tracing::error!("EPS returned no redirect URL: {}", detail);
+                let _ = mark_transaction_failed(
+                    &state.db, tx.id, "EPS_NO_REDIRECT", &detail,
+                ).await;
                 Err(format!("Payment gateway error: {}", detail))
             }
         }
         Err(e) => {
             tracing::error!("EPS initialize payment failed: {}", e);
+            let _ = mark_transaction_failed(
+                &state.db, tx.id, "EPS_INIT_FAILED", &e.to_string(),
+            ).await;
             Err("Payment gateway unavailable".to_string())
         }
     }
@@ -292,7 +317,7 @@ pub async fn init_payment(
         Err(_) => return HttpResponse::InternalServerError().json(serde_json::json!({"error": "Internal error"})),
     };
 
-    if bill.status != "pending" && bill.status != "failed" {
+    if bill.status != "pending" && bill.status != "failed" && bill.status != "processing" {
         return HttpResponse::BadRequest().json(serde_json::json!({
             "error": format!("Bill is in '{}' status", bill.status)
         }));

@@ -51,7 +51,11 @@ pub async fn submit_refund(req: HttpRequest, state: web::Data<AppState>, body: w
 
     // Verify the transaction belongs to this service
     let txn = match sqlx::query_as::<_, crate::db::transactions::Transaction>(
-        "SELECT t.* FROM transactions t JOIN bills b ON t.bill_id = b.id WHERE t.id = $1 AND b.service_id = $2 AND t.status = 'success'"
+        &format!(
+            "SELECT {} FROM transactions t JOIN bills b ON t.bill_id = b.id \
+             WHERE t.id = $1 AND b.service_id = $2 AND t.status = 'success'",
+            crate::db::transactions::TX_COLUMNS_WITH_ALIAS
+        )
     )
     .bind(body.transaction_id).bind(auth.service_id)
     .fetch_optional(&state.db).await {

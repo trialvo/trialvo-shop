@@ -1,0 +1,160 @@
+# ═══════════════════════════════════════════════════════════
+# Trialvo Shop — Production Docker Compose
+# MySQL 8 for Control Plane (trialvo_shop)
+# Postgres kept only for Trialvo Pay (trialvo_pay)
+# Host nginx handles reverse proxy (port 80/443)
+# ═══════════════════════════════════════════════════════════
+
+services:
+  # ─── MySQL — shop Control Plane ──────────────────────────
+  mysql:
+    image: mysql:8.4
+    restart: always
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=256M
+      - --max-connections=100
+    environment:
+      MYSQL_ROOT_PASSWORD: Tr1alv0DB2026Secure!
+      MYSQL_DATABASE: trialvo_shop
+      MYSQL_USER: trialvo
+      MYSQL_PASSWORD: Tr1alv0DB2026Secure!
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - shop_internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pTr1alv0DB2026Secure!"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  # ─── Postgres — Trialvo Pay only ─────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: trialvo
+      POSTGRES_PASSWORD: Tr1alv0DB2026Secure!
+      POSTGRES_DB: trialvo
+    command: postgres -c shared_buffers=256MB -c max_connections=100
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db-pay.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    networks:
+      - shop_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trialvo"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─── Redis (for trialvo-pay) ─────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --requirepass TrialvoPayRedis2026Secure! --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - shop_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "TrialvoPayRedis2026Secure!", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend (Node.js Shop API) ──────────────────────────
+  # Host nginx: shop-api.trialvo.com → 127.0.0.1:5000
+  backend:
+    build:
+      context: ./trialvo-backend
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: trialvo
+      DB_PASSWORD: Tr1alv0DB2026Secure!
+      DB_NAME: trialvo_shop
+      CORS_ORIGIN: https://shop.trialvo.com
+      JWT_SECRET: supersecretjwt2026
+      JWT_EXPIRES_IN: 7d
+      TRIALVO_PAY_BASE_URL: http://trialvo-pay:8080
+      TRIALVO_PAY_SERVICE_ID: 28280023-008f-4307-83de-5e4eabb57562
+      TRIALVO_PAY_API_KEY: e8752f2a7ca60c124f229ff3626882c5813e45a13d09a382d16654d5484cd6b2
+      TRIALVO_PAY_IPN_SECRET: 41215d634fe61aa1693bebbd9e85b935b84a7a4d2be0d4718aca335e3570177b
+      FRONTEND_URL: https://shop.trialvo.com
+      IPN_URL: http://backend:5000/api/payments/ipn
+    networks:
+      - shop_internal
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ─── Frontend (Vite React static) ───────────────────────
+  # Host nginx: shop.trialvo.com → 127.0.0.1:8090
+  frontend:
+    build:
+      context: ./trialvo-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: https://shop-api.trialvo.com/api
+    restart: always
+    ports:
+      - "127.0.0.1:8090:80"
+    networks:
+      - shop_internal
+
+  # ─── Trialvo Pay (Rust payment service) ──────────────────
+  # Host nginx: pay.trialvo.com → 127.0.0.1:8088
+  trialvo-pay:
+    build:
+      context: ../trialvo-pay
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8088:8080"
+    environment:
+      DATABASE_URL: postgresql://trialvo:Tr1alv0DB2026Secure!@postgres:5432/trialvo_pay
+      REDIS_URL: redis://:TrialvoPayRedis2026Secure!@redis:6379
+      MASTER_KEY: 45c11faf4c682130ba6610a471e76a5f5bbc4d9028b9d9ef7354d6beae681778
+      BASE_URL: https://pay.trialvo.com
+      HOST: 0.0.0.0
+      PORT: 8080
+      RUST_LOG: info
+    networks:
+      - shop_internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+networks:
+  shop_internal:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  postgres_data:
+  redis_data:

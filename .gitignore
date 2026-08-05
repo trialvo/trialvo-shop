@@ -1,7 +1,65 @@
-node_modules
+# === Trialvo monorepo (d:\our product) ===
+
+# Dependencies & build
+node_modules/
+**/node_modules/
+target/
+**/target/
+.next/
+**/.next/
+dist/
+**/dist/
+build/
+coverage/
+.turbo/
+.cache/
+
+# Env & secrets
 .env
-.env.production
-.env.local
-*.log
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+!**/license_public.pem
 .generated_credentials.json
+**/firebase-adminsdk.json
+**/credentials.txt
+**/serviceAccount*.json
+
+# Logs & temp
+*.log
+**/*.log
+.cp-be.log
+.cp-be.err
+.cp-fe.log
+.cp-fe.err
+npm-debug.log*
+yarn-error.log*
+
+# Uploads & local data
 uploads/
+**/uploads/
+**/Back End/uploads/
+data/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# Archives & junk (literal "Trialvo 12" dump folders — not trialvo-shop)
+*.zip
+*.tar.gz
+**/Trialvo 12/
+**/Trialvo 12.zip
+**/backups/
+_payvault_deploy_*.tar.gz
+
+# Docker / local runtime noise
+*.pid

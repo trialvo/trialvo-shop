@@ -1,6 +1,7 @@
 use actix_web::{web, HttpRequest, HttpResponse, HttpMessage};
 use serde::Deserialize;
 use crate::api::middleware::merchant_auth::AuthenticatedMerchant;
+use crate::db::transactions::TX_COLUMNS_WITH_ALIAS;
 use crate::AppState;
 
 #[derive(Deserialize)]
@@ -15,9 +16,15 @@ pub async fn list_transactions(req: HttpRequest, state: web::Data<AppState>, que
     let limit = query.limit.unwrap_or(50).min(200);
     let offset = query.offset.unwrap_or(0);
 
+    // Must cast enum/inet columns — raw `t.*` breaks sqlx FromRow and returns 500
     let result = if let Some(ref status) = query.status {
         sqlx::query_as::<_, crate::db::transactions::Transaction>(
-            "SELECT t.* FROM transactions t JOIN bills b ON t.bill_id = b.id WHERE b.service_id = $1 AND t.status::text = $2 ORDER BY t.created_at DESC LIMIT $3 OFFSET $4"
+            &format!(
+                "SELECT {} FROM transactions t JOIN bills b ON t.bill_id = b.id \
+                 WHERE b.service_id = $1 AND t.status::text = $2 \
+                 ORDER BY t.created_at DESC LIMIT $3 OFFSET $4",
+                TX_COLUMNS_WITH_ALIAS
+            )
         )
         .bind(auth.service_id)
         .bind(status)
@@ -27,7 +34,12 @@ pub async fn list_transactions(req: HttpRequest, state: web::Data<AppState>, que
         .await
     } else {
         sqlx::query_as::<_, crate::db::transactions::Transaction>(
-            "SELECT t.* FROM transactions t JOIN bills b ON t.bill_id = b.id WHERE b.service_id = $1 ORDER BY t.created_at DESC LIMIT $2 OFFSET $3"
+            &format!(
+                "SELECT {} FROM transactions t JOIN bills b ON t.bill_id = b.id \
+                 WHERE b.service_id = $1 \
+                 ORDER BY t.created_at DESC LIMIT $2 OFFSET $3",
+                TX_COLUMNS_WITH_ALIAS
+            )
         )
         .bind(auth.service_id)
         .bind(limit)
@@ -38,7 +50,10 @@ pub async fn list_transactions(req: HttpRequest, state: web::Data<AppState>, que
 
     match result {
         Ok(txns) => HttpResponse::Ok().json(serde_json::json!({"data": txns, "limit": limit, "offset": offset})),
-        Err(_) => HttpResponse::InternalServerError().json(serde_json::json!({"error": "Failed to list transactions"})),
+        Err(e) => {
+            tracing::error!("merchant list_transactions failed: {:?}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({"error": "Failed to list transactions"}))
+        }
     }
 }
 
@@ -47,7 +62,11 @@ pub async fn get_transaction(req: HttpRequest, state: web::Data<AppState>, path:
     let txn_id = path.into_inner();
 
     let txn = match sqlx::query_as::<_, crate::db::transactions::Transaction>(
-        "SELECT t.* FROM transactions t JOIN bills b ON t.bill_id = b.id WHERE t.id = $1 AND b.service_id = $2"
+        &format!(
+            "SELECT {} FROM transactions t JOIN bills b ON t.bill_id = b.id \
+             WHERE t.id = $1 AND b.service_id = $2",
+            TX_COLUMNS_WITH_ALIAS
+        )
     )
     .bind(txn_id)
     .bind(auth.service_id)
@@ -55,10 +74,12 @@ pub async fn get_transaction(req: HttpRequest, state: web::Data<AppState>, path:
     .await {
         Ok(Some(t)) => t,
         Ok(None) => return HttpResponse::NotFound().json(serde_json::json!({"error": "Transaction not found"})),
-        Err(_) => return HttpResponse::InternalServerError().json(serde_json::json!({"error": "Lookup failed"})),
+        Err(e) => {
+            tracing::error!("merchant get_transaction failed: {:?}", e);
+            return HttpResponse::InternalServerError().json(serde_json::json!({"error": "Lookup failed"}));
+        }
     };
 
-    // Get events
     let events = crate::db::transactions::get_events_for_transaction(&state.db, txn_id).await.unwrap_or_default();
 
     HttpResponse::Ok().json(serde_json::json!({

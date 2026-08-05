@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
+ xmlns:o="urn:schemas-microsoft-com:office:office">
+
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width,initial-scale=1" />
+ <meta http-equiv="x-ua-compatible" content="ie=edge" />
+ <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no" />
+
+ <!-- Allow clients that support it to switch -->
+ <meta name="color-scheme" content="light dark" />
+ <meta name="supported-color-schemes" content="light dark" />
+
+ <title>{{BRAND_NAME}} Reset Password</title>
+
+ <!--[if mso]>
+      <xml>
+        <o:OfficeDocumentSettings>
+          <o:AllowPNG />
+          <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+      </xml>
+    <![endif]-->
+
+ <style>
+  /* Client resets */
+  html,
+  body {
+   margin: 0 !important;
+   padding: 0 !important;
+   width: 100% !important;
+   height: 100% !important;
+  }
+
+  * {
+   -ms-text-size-adjust: 100%;
+   -webkit-text-size-adjust: 100%;
+  }
+
+  table,
+  td {
+   mso-table-lspace: 0pt !important;
+   mso-table-rspace: 0pt !important;
+   border-collapse: collapse !important;
+  }
+
+  img {
+   -ms-interpolation-mode: bicubic;
+   border: 0;
+   outline: none;
+   text-decoration: none;
+   display: block;
+   height: auto;
+  }
+
+  a {
+   text-decoration: none;
+  }
+
+  .ExternalClass {
+   width: 100%;
+  }
+
+  .ExternalClass,
+  .ExternalClass * {
+   line-height: 100%;
+  }
+
+  /* Preheader (hidden) */
+  .preheader {
+   display: none !important;
+   visibility: hidden;
+   opacity: 0;
+   color: transparent;
+   height: 0;
+   width: 0;
+   max-height: 0;
+   max-width: 0;
+   overflow: hidden;
+   mso-hide: all;
+  }
+
+  /* Base */
+  .font {
+   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans",
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  }
+
+  /* Light defaults */
+  .wrapper {
+   width: 100%;
+   background: #f3f4f6;
+  }
+
+  .container {
+   width: 100%;
+   max-width: 600px;
+   margin: 0 auto;
+  }
+
+  .card {
+   background: #ffffff;
+   border: 1px solid #e5e7eb;
+   border-radius: 18px;
+   overflow: hidden;
+  }
+
+  .divider {
+   height: 1px;
+   background: #e5e7eb;
+   line-height: 1px;
+   font-size: 1px;
+  }
+
+  .h1 {
+   font-size: 28px;
+   line-height: 34px;
+   font-weight: 800;
+   color: #111827;
+  }
+
+  .p {
+   font-size: 16px;
+   line-height: 24px;
+   color: #6b7280;
+  }
+
+  .muted {
+   font-size: 14px;
+   line-height: 20px;
+   color: #6b7280;
+  }
+
+  .link {
+   color: #2563eb;
+   text-decoration: underline;
+  }
+
+  .name {
+   font-weight: 700;
+   color: #111827;
+  }
+
+  /* Button */
+  .btnWrap {
+   border-radius: 12px;
+   background: #111827;
+  }
+
+  .btnText {
+   display: inline-block;
+   padding: 12px 18px;
+   font-size: 15px;
+   line-height: 20px;
+   font-weight: 800;
+   color: #ffffff;
+  }
+
+  /* Code box (OTP) */
+  .codeWrap {
+   width: 100%;
+   max-width: 360px;
+   background: #f9fafb;
+   border: 1px solid #e5e7eb;
+   border-radius: 12px;
+  }
+
+  .codeLabel {
+   font-size: 14px;
+   line-height: 20px;
+   font-weight: 700;
+   color: #6b7280;
+   margin-bottom: 6px;
+  }
+
+  .codeValue {
+   font-size: 28px;
+   line-height: 34px;
+   font-weight: 900;
+   letter-spacing: 3px;
+   color: #111827;
+  }
+
+  /* Mobile */
+  @media screen and (max-width: 600px) {
+   .container {
+    width: 100% !important;
+    max-width: 100% !important;
+   }
+
+   .px {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+   }
+
+   .cardPad {
+    padding: 18px !important;
+   }
+
+   .h1 {
+    font-size: 24px !important;
+    line-height: 30px !important;
+   }
+
+   .p {
+    font-size: 15px !important;
+    line-height: 22px !important;
+   }
+
+   .codeValue {
+    font-size: 24px !important;
+    line-height: 30px !important;
+    letter-spacing: 2px !important;
+   }
+
+   .logoImg {
+    width: 150px !important;
+   }
+  }
+
+  /* Dark mode (supported clients only) */
+  @media (prefers-color-scheme: dark) {
+   .wrapper {
+    background: #0b1220 !important;
+   }
+
+   .card {
+    background: #0f172a !important;
+    border-color: #1f2937 !important;
+   }
+
+   .divider {
+    background: #1f2937 !important;
+   }
+
+   .h1 {
+    color: #f9fafb !important;
+   }
+
+   .p,
+   .muted {
+    color: #cbd5e1 !important;
+   }
+
+   .name {
+    color: #f9fafb !important;
+   }
+
+   .codeWrap {
+    background: #111827 !important;
+    border-color: #1f2937 !important;
+   }
+
+   .codeLabel {
+    color: #cbd5e1 !important;
+   }
+
+   .codeValue {
+    color: #f9fafb !important;
+   }
+
+   .link {
+    color: #93c5fd !important;
+   }
+
+   .btnWrap {
+    background: #2563eb !important;
+   }
+
+   /* Swap logos */
+   .logoLight {
+    display: none !important;
+    mso-hide: all !important;
+   }
+
+   .logoDark {
+    display: block !important;
+   }
+  }
+ </style>
+</head>
+
+<body class="font" style="margin: 0; padding: 0; background: #f3f4f6">
+ <div class="preheader">
+  Hi {{name}}, reset your {{BRAND_NAME}} password. This link expires in {{expire_at}} minutes.
+ </div>
+
+ <table role="presentation" class="wrapper" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+   <td align="center" style="padding: 18px 10px">
+    <table role="presentation" class="container" width="100%" cellpadding="0" cellspacing="0" border="0">
+     <tr>
+      <td class="card">
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <!-- Header -->
+        <tr>
+         <td align="center" class="px" style="padding: 22px 22px 14px">
+          <!-- Light logo -->
+          <img class="logoImg logoLight" src="https://cdn.graduatefashionbd.com/logo/my_dark_logo.png" width="160"
+           alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: block" />
+          <!-- Dark logo (hidden by default) -->
+          <img class="logoImg logoDark" src="https://cdn.graduatefashionbd.com/logo/my_light_logo.png" width="160"
+           alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: none" />
+         </td>
+        </tr>
+
+        <tr>
+         <td class="px" style="padding: 0 22px">
+          <div class="divider"></div>
+         </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+         <td class="cardPad px" style="padding: 24px 22px 6px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+           <tr>
+            <td align="center" style="padding-bottom: 10px">
+             <img src="https://cdn.graduatefashionbd.com/icon/otp_icon_email.png" width="84" alt="Reset Password"
+              style="width: 84px; height: auto" />
+            </td>
+           </tr>
+
+           <tr>
+            <td align="center" style="padding: 6px 0 4px">
+             <div class="h1">Forgot Password</div>
+            </td>
+           </tr>
+
+           <tr>
+            <td align="center" style="padding: 0 0 10px">
+             <div class="p" style="margin: 0">
+              Hi <span class="name">{{name}}</span>,
+             </div>
+            </td>
+           </tr>
+
+           <tr>
+            <td align="center" style="padding: 0 0 16px">
+             <div class="p">
+              We received a request to reset your password. Use the code below to continue.
+              This code will expire in <strong>{{expire_at}} minutes</strong>.
+             </div>
+            </td>
+           </tr>
+
+           <!-- OTP / Code -->
+           <tr>
+            <td align="center" style="padding: 0 0 12px">
+             <table role="presentation" class="codeWrap" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+               <td align="center" style="padding: 14px 16px">
+                <div class="codeLabel">RESET CODE</div>
+                <div class="codeValue">{{otp}}</div>
+               </td>
+              </tr>
+             </table>
+            </td>
+           </tr>
+
+           <!-- Reset button -->
+           <tr>
+            <td align="center" style="padding: 8px 0 10px">
+             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+               <td align="center" class="btnWrap" style="border-radius: 12px; background: #111827">
+                <a href="{{verifyLink}}" target="_blank" class="btnText" style="
+                                      display: inline-block;
+                                      padding: 12px 18px;
+                                      font-size: 15px;
+                                      line-height: 20px;
+                                      font-weight: 800;
+                                      color: #ffffff;
+                                    ">
+                 Reset Password
+                </a>
+               </td>
+              </tr>
+             </table>
+            </td>
+           </tr>
+
+           <!-- Fallback link -->
+           <tr>
+            <td align="center" style="padding: 0 0 14px">
+             <div class="muted">
+              If the button doesn’t work, copy and paste this link into your browser:
+             </div>
+             <div style="height: 6px; line-height: 6px; font-size: 6px">&nbsp;</div>
+             <div class="muted" style="word-break: break-all">
+              <a class="link" href="{{verifyLink}}" target="_blank">{{verifyLink}}</a>
+             </div>
+            </td>
+           </tr>
+
+           <tr>
+            <td align="center" style="padding: 0 0 14px">
+             <div class="p">If you didn’t request a password reset, you can safely ignore this email.</div>
+            </td>
+           </tr>
+          </table>
+         </td>
+        </tr>
+
+        <!-- Footer divider -->
+        <tr>
+         <td class="px" style="padding: 0 22px">
+          <div class="divider"></div>
+         </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+         <td align="center" class="px" style="padding: 16px 22px 20px">
+          <div class="muted">{{BRAND_NAME}} | {{BRAND_ADDRESS}}</div>
+
+          <div style="height: 10px; line-height: 10px; font-size: 10px">&nbsp;</div>
+
+          <div class="muted">
+           <a href="https://graduatefashionbd.com/privacy-policy" class="link">Privacy Policy</a>
+           &nbsp;|&nbsp;
+           <a href="https://graduatefashionbd.com/terms" class="link">Terms and Conditions</a>
+          </div>
+
+          <div style="height: 10px; line-height: 10px; font-size: 10px">&nbsp;</div>
+
+          <div class="muted">
+           If you have any questions please contact us<br />
+           <a href="mailto:graduatefashion2020@gmail.com" class="link">graduatefashion2020@gmail.com</a>
+           &nbsp;|&nbsp;
+           <a href="tel:+8801970680283" class="link">+880 1970-680283</a>
+          </div>
+
+          <div style="height: 16px; line-height: 16px; font-size: 16px">&nbsp;</div>
+
+          <div class="muted">
+           <a href="https://graduatefashionbd.com" class="link">Website</a>
+           &nbsp;•&nbsp;
+           <a href="https://www.facebook.com/graduatefashionbd" class="link">Facebook</a>
+           &nbsp;•&nbsp;
+           <a href="https://www.linkedin.com/company/graduate-fashion-bd" class="link">LinkedIn</a>
+           &nbsp;•&nbsp;
+           <a href="https://www.instagram.com/graduatefashionbd" class="link">Instagram</a>
+          </div>
+
+          <div style="height: 14px; line-height: 14px; font-size: 14px">&nbsp;</div>
+
+          <div style="font-size: 12px; line-height: 18px; color: #9ca3af">
+           © {{year}} {{BRAND_NAME}}. All rights reserved.
+          </div>
+         </td>
+        </tr>
+       </table>
+      </td>
+     </tr>
+
+     <tr>
+      <td style="height: 18px; line-height: 18px; font-size: 18px">&nbsp;</td>
+     </tr>
+    </table>
+   </td>
+  </tr>
+ </table>
+</body>
+
+</html>

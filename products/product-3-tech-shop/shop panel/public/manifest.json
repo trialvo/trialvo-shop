@@ -1,0 +1,16 @@
+{
+  "name": "ShopLinkBD — Premium Tech Accessories & Gadgets",
+  "short_name": "ShopLinkBD",
+  "description": "Bangladesh's trusted destination for premium gadgets, tech accessories, and smart devices.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1a56db",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

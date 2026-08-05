@@ -1,0 +1,217 @@
+# Per-product Option 1 demos — one MySQL (infra), three isolated stacks.
+#
+# Prerequisite:
+#   docker compose -f infra/docker-compose.yml up -d
+#
+# Databases (trialvo-mysql :3430):
+#   lifestyle_demo | fashion_demo | techshop_demo
+#
+# Ports:
+#   Lifestyle shop/admin/api  :5100 / :5174 / :9100
+#   Fashion   shop/admin/api  :5101 / :5175 / :9101
+#   Techshop  shop/admin/api  :5102 / :5176 / :9102
+
+services:
+  # ─── Lifestyle ───────────────────────────────────────────
+  lifestyle-api:
+    image: lifestyle-api:trial
+    restart: unless-stopped
+    container_name: lifestyle-demo-api
+    environment:
+      PORT: "5000"
+      NODE_ENV: production
+      DB_HOST: host.docker.internal
+      DB_PORT: "3430"
+      DB_USER: root
+      DB_PASSWORD: localdev2026
+      DB_NAME: lifestyle_demo
+      JWTSECRET: lifestyle-demo-jwt-secret-change-me
+      ADMIN_URL: http://localhost:5174
+      SHOP_URL: http://localhost:5100
+      STORAGE_DRIVER: local
+      STORAGE_URL: http://localhost:9100
+    ports:
+      - "9100:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - lifestyle_demo_uploads:/usr/src/app/uploads
+    networks:
+      - demo_net
+
+  lifestyle-admin:
+    image: lifestyle-admin:trial
+    restart: unless-stopped
+    container_name: lifestyle-demo-admin
+    environment:
+      API_ORIGIN: "http://localhost:9100"
+      IMAGE_URL: "http://localhost:9100"
+      API_PREFIX: "/api/v1"
+      APP_VERTICAL: "lifestyle"
+      APP_NAME: "Lifestyle Admin"
+      APP_SHORT_NAME: "Lifestyle"
+    ports:
+      - "5174:80"
+    depends_on:
+      - lifestyle-api
+    networks:
+      - demo_net
+
+  lifestyle-shop:
+    image: lifestyle-shop:trial
+    restart: unless-stopped
+    container_name: lifestyle-demo-shop
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      API_URL: "http://lifestyle-api:5000"
+      IMAGE_URL: "http://localhost:9100"
+      ADMIN_URL: "http://localhost:5174"
+      SITE_URL: "http://localhost:5100"
+      SHOP_URL: "http://localhost:5100"
+      APP_URL: "http://localhost:5100"
+    ports:
+      - "5100:5000"
+    depends_on:
+      - lifestyle-api
+    networks:
+      - demo_net
+
+  # ─── Fashion ─────────────────────────────────────────────
+  fashion-api:
+    image: fashion-api:trial
+    restart: unless-stopped
+    container_name: fashion-demo-api
+    environment:
+      PORT: "5000"
+      NODE_ENV: production
+      DB_HOST: host.docker.internal
+      DB_PORT: "3430"
+      DB_USER: root
+      DB_PASSWORD: localdev2026
+      DB_NAME: fashion_demo
+      JWTSECRET: fashion-demo-jwt-secret-change-me
+      ADMIN_URL: http://localhost:5175
+      SHOP_URL: http://localhost:5101
+      STORAGE_DRIVER: local
+      STORAGE_URL: http://localhost:9101
+    ports:
+      - "9101:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - fashion_demo_uploads:/usr/src/app/uploads
+    networks:
+      - demo_net
+
+  fashion-admin:
+    image: fashion-admin:trial
+    restart: unless-stopped
+    container_name: fashion-demo-admin
+    environment:
+      API_ORIGIN: "http://localhost:9101"
+      IMAGE_URL: "http://localhost:9101"
+      API_PREFIX: "/api/v1"
+      APP_VERTICAL: "fashion"
+      APP_NAME: "Fashion Admin"
+      APP_SHORT_NAME: "Fashion"
+    ports:
+      - "5175:80"
+    depends_on:
+      - fashion-api
+    networks:
+      - demo_net
+
+  fashion-shop:
+    image: fashion-shop:trial
+    restart: unless-stopped
+    container_name: fashion-demo-shop
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      API_URL: "http://fashion-api:5000"
+      IMAGE_URL: "http://localhost:9101"
+      ADMIN_URL: "http://localhost:5175"
+      SITE_URL: "http://localhost:5101"
+      SHOP_URL: "http://localhost:5101"
+      APP_URL: "http://localhost:5101"
+    ports:
+      - "5101:5000"
+    depends_on:
+      - fashion-api
+    networks:
+      - demo_net
+
+  # ─── Techshop ────────────────────────────────────────────
+  techshop-api:
+    image: techshop-api:trial
+    restart: unless-stopped
+    container_name: techshop-demo-api
+    environment:
+      PORT: "5000"
+      NODE_ENV: production
+      DB_HOST: host.docker.internal
+      DB_PORT: "3430"
+      DB_USER: root
+      DB_PASSWORD: localdev2026
+      DB_NAME: techshop_demo
+      JWTSECRET: techshop-demo-jwt-secret-change-me
+      ADMIN_URL: http://localhost:5176
+      SHOP_URL: http://localhost:5102
+      STORAGE_DRIVER: local
+      STORAGE_URL: http://localhost:9102
+    ports:
+      - "9102:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - techshop_demo_uploads:/usr/src/app/uploads
+    networks:
+      - demo_net
+
+  techshop-admin:
+    image: techshop-admin:trial
+    restart: unless-stopped
+    container_name: techshop-demo-admin
+    environment:
+      API_ORIGIN: "http://localhost:9102"
+      IMAGE_URL: "http://localhost:9102"
+      API_PREFIX: "/api/v1"
+      APP_VERTICAL: "techshop"
+      APP_NAME: "Techshop Admin"
+      APP_SHORT_NAME: "Techshop"
+    ports:
+      - "5176:80"
+    depends_on:
+      - techshop-api
+    networks:
+      - demo_net
+
+  techshop-shop:
+    image: techshop-shop:trial
+    restart: unless-stopped
+    container_name: techshop-demo-shop
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      API_URL: "http://techshop-api:5000"
+      IMAGE_URL: "http://localhost:9102"
+      ADMIN_URL: "http://localhost:5176"
+      SITE_URL: "http://localhost:5102"
+      SHOP_URL: "http://localhost:5102"
+      APP_URL: "http://localhost:5102"
+    ports:
+      - "5102:5000"
+    depends_on:
+      - techshop-api
+    networks:
+      - demo_net
+
+volumes:
+  lifestyle_demo_uploads:
+  fashion_demo_uploads:
+  techshop_demo_uploads:
+
+networks:
+  demo_net:
+    driver: bridge

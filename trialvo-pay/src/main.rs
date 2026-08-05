@@ -85,6 +85,12 @@ async fn main() -> std::io::Result<()> {
         ipn_client,
     });
 
+    // Auto-complete payments that got EPS success callback but CheckStatus failed once
+    let reconcile_state = state.get_ref().clone();
+    tokio::spawn(async move {
+        trialvo_pay::gateway::reconcile::run_eps_reconcile_worker(reconcile_state).await;
+    });
+
     let host = config.host.clone();
     let port = config.port;
 

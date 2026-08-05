@@ -1,0 +1,16 @@
+.git
+.gitignore
+.next
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.env*
+*.local
+coverage
+# Leftover Lifestyle tree — graduate app uses app/ at root
+src
+tmp
+t1.txt
+README.md

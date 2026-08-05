@@ -303,12 +303,42 @@ pub async fn update_bill_status(pool: &PgPool, bill_id: Uuid, status: &str) -> R
 }
 
 pub async fn expire_stale_bills(pool: &PgPool) -> Result<u64> {
+    // Never expire a bill that already received an EPS callback but is still
+    // awaiting CheckStatus — that is how paid customers got stuck before.
     let result = sqlx::query(
-        "UPDATE bills SET status = 'expired', expired_at = NOW() WHERE status IN ('pending', 'processing') AND expires_at < NOW()"
+        r#"UPDATE bills b
+           SET status = 'expired', expired_at = NOW()
+           WHERE b.status IN ('pending', 'processing')
+             AND b.expires_at < NOW()
+             AND NOT EXISTS (
+               SELECT 1 FROM transactions t
+               WHERE t.bill_id = b.id
+                 AND t.callback_received_at IS NOT NULL
+                 AND t.status IN ('processing', 'initiated')
+             )"#
     )
     .execute(pool)
     .await?;
     Ok(result.rows_affected())
+}
+
+/// Keep a bill open while EPS CheckStatus is retried in the background.
+pub async fn hold_bill_for_verification(pool: &PgPool, bill_id: Uuid) -> Result<()> {
+    sqlx::query(
+        r#"UPDATE bills SET
+            expires_at = GREATEST(expires_at, NOW() + INTERVAL '24 hours'),
+            status = CASE
+                WHEN status IN ('expired', 'pending', 'failed') THEN 'processing'::bill_status
+                ELSE status
+            END,
+            expired_at = NULL,
+            updated_at = NOW()
+        WHERE id = $1 AND status <> 'paid'"#
+    )
+    .bind(bill_id)
+    .execute(pool)
+    .await?;
+    Ok(())
 }
 
 pub async fn list_bills(

@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>{{BRAND_NAME}} Payment {{#if (eq attempt_status "success")}}Successful{{else if (eq attempt_status "partial")}}Partially Successful{{else if (eq attempt_status "failed")}}Failed{{else}}Cancelled{{/if}}</title>
+  <!--[if mso]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG />
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
+  <style>
+    /* Client resets */
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    * {
+      -ms-text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+    table, td {
+      mso-table-lspace: 0pt !important;
+      mso-table-rspace: 0pt !important;
+      border-collapse: collapse !important;
+    }
+    img {
+      -ms-interpolation-mode: bicubic;
+      border: 0;
+      outline: none;
+      text-decoration: none;
+      display: block;
+      height: auto;
+    }
+    a { text-decoration: none; }
+    .ExternalClass { width: 100%; }
+    .ExternalClass, .ExternalClass * { line-height: 100%; }
+    
+    /* Preheader (hidden) */
+    .preheader {
+      display: none !important;
+      visibility: hidden;
+      opacity: 0;
+      color: transparent;
+      height: 0;
+      width: 0;
+      max-height: 0;
+      max-width: 0;
+      overflow: hidden;
+      mso-hide: all;
+    }
+    
+    /* Base */
+    .font {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Noto Sans",
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    }
+    
+    /* Light defaults */
+    .wrapper {
+      width: 100%;
+      background: #f3f4f6;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .divider {
+      height: 1px;
+      background: #e5e7eb;
+      line-height: 1px;
+      font-size: 1px;
+    }
+    
+    .h1 {
+      font-size: 28px;
+      line-height: 34px;
+      font-weight: 800;
+      color: #111827;
+    }
+    .p {
+      font-size: 16px;
+      line-height: 24px;
+      color: #6b7280;
+    }
+    .muted {
+      font-size: 14px;
+      line-height: 20px;
+      color: #6b7280;
+    }
+    .link {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+    .name {
+      font-weight: 700;
+      color: #111827;
+    }
+    
+    /* Button */
+    .btnWrap {
+      border-radius: 12px;
+      background: #111827;
+    }
+    .btnText {
+      display: inline-block;
+      padding: 12px 18px;
+      font-size: 15px;
+      line-height: 20px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    
+    /* Status-specific colors */
+    .btnWrap-success { background: #10b981; }
+    .btnWrap-partial { background: #f59e0b; }
+    .btnWrap-failed { background: #ef4444; }
+    .btnWrap-cancelled { background: #6b7280; }
+    
+    .statusBadge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .statusBadge-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .statusBadge-partial {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .statusBadge-failed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .statusBadge-cancelled {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    
+    /* Meta cards */
+    .metaBox {
+      width: 100%;
+      max-width: 520px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+    }
+    .metaKey {
+      font-size: 12px;
+      line-height: 18px;
+      color: #6b7280;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .metaVal {
+      font-size: 14px;
+      line-height: 20px;
+      color: #111827;
+      font-weight: 700;
+    }
+    
+    /* Payment summary box */
+    .paymentBox {
+      width: 100%;
+      max-width: 520px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid;
+    }
+    .paymentBox-success {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+    .paymentBox-partial {
+      border-color: #f59e0b;
+      background: #fffbeb;
+    }
+    .paymentBox-failed {
+      border-color: #ef4444;
+      background: #fef2f2;
+    }
+    .paymentBox-cancelled {
+      border-color: #6b7280;
+      background: #f9fafb;
+    }
+    .paymentTitle {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 10px 14px;
+      border-bottom: 2px solid;
+    }
+    .paymentTitle-success {
+      background: #10b981;
+      color: white;
+      border-bottom-color: #10b981;
+    }
+    .paymentTitle-partial {
+      background: #f59e0b;
+      color: white;
+      border-bottom-color: #f59e0b;
+    }
+    .paymentTitle-failed {
+      background: #ef4444;
+      color: white;
+      border-bottom-color: #ef4444;
+    }
+    .paymentTitle-cancelled {
+      background: #6b7280;
+      color: white;
+      border-bottom-color: #6b7280;
+    }
+    
+    .amountRow {
+      padding: 10px 14px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .amountRow:last-child {
+      border-bottom: none;
+    }
+    .amountLabel {
+      font-size: 14px;
+      color: #6b7280;
+      font-weight: 600;
+      display: inline-block;
+      width: 50%;
+    }
+    .amountValue {
+      font-size: 16px;
+      font-weight: 800;
+      color: #111827;
+      display: inline-block;
+      width: 50%;
+      text-align: right;
+    }
+    .amountValue-paid { color: #10b981; }
+    .amountValue-due { color: #ef4444; }
+    .amountValue-total { color: #111827; }
+    
+    /* Order table */
+    .tableWrap {
+      width: 100%;
+      max-width: 520px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+    .th {
+      font-size: 12px;
+      line-height: 18px;
+      color: #6b7280;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .td {
+      font-size: 14px;
+      line-height: 20px;
+      color: #111827;
+    }
+    .tdMuted {
+      font-size: 12px;
+      line-height: 18px;
+      color: #6b7280;
+    }
+    .rowBorder { border-bottom: 1px solid #f3f4f6; }
+    .right { text-align: right; }
+    
+    /* Total box */
+    .totalBox {
+      width: 100%;
+      max-width: 520px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+    }
+    
+    /* Logos (prevent double logo) */
+    .logoLight { display: block; }
+    .logoDark { display: none; }
+    
+    /* Mobile */
+    @media screen and (max-width: 600px) {
+      .container {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .px {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+      .cardPad {
+        padding: 18px !important;
+      }
+      .h1 {
+        font-size: 24px !important;
+        line-height: 30px !important;
+      }
+      .p {
+        font-size: 15px !important;
+        line-height: 22px !important;
+      }
+      .logoImg { width: 150px !important; }
+      .paymentBox { max-width: 100% !important; }
+    }
+    
+    /* Dark mode (supported clients only) */
+    @media (prefers-color-scheme: dark) {
+      .wrapper { background: #0b1220 !important; }
+      .card {
+        background: #0f172a !important;
+        border-color: #1f2937 !important;
+      }
+      .divider { background: #1f2937 !important; }
+      .h1 { color: #f9fafb !important; }
+      .p, .muted { color: #cbd5e1 !important; }
+      .name { color: #f9fafb !important; }
+      .link { color: #93c5fd !important; }
+      .btnWrap { background: #2563eb !important; }
+      .btnWrap-success { background: #059669 !important; }
+      .btnWrap-partial { background: #d97706 !important; }
+      .btnWrap-failed { background: #dc2626 !important; }
+      .btnWrap-cancelled { background: #4b5563 !important; }
+      
+      /* Status badges dark mode */
+      .statusBadge-success {
+        background: #065f46 !important;
+        color: #d1fae5 !important;
+      }
+      .statusBadge-partial {
+        background: #92400e !important;
+        color: #fef3c7 !important;
+      }
+      .statusBadge-failed {
+        background: #991b1b !important;
+        color: #fee2e2 !important;
+      }
+      .statusBadge-cancelled {
+        background: #374151 !important;
+        color: #f3f4f6 !important;
+      }
+      
+      /* Payment boxes dark mode */
+      .paymentBox-success {
+        background: #064e3b !important;
+        border-color: #059669 !important;
+      }
+      .paymentBox-partial {
+        background: #78350f !important;
+        border-color: #d97706 !important;
+      }
+      .paymentBox-failed {
+        background: #7f1d1d !important;
+        border-color: #dc2626 !important;
+      }
+      .paymentBox-cancelled {
+        background: #1f2937 !important;
+        border-color: #4b5563 !important;
+      }
+      .paymentTitle-success {
+        background: #059669 !important;
+        border-bottom-color: #059669 !important;
+      }
+      .paymentTitle-partial {
+        background: #d97706 !important;
+        border-bottom-color: #d97706 !important;
+      }
+      .paymentTitle-failed {
+        background: #dc2626 !important;
+        border-bottom-color: #dc2626 !important;
+      }
+      .paymentTitle-cancelled {
+        background: #4b5563 !important;
+        border-bottom-color: #4b5563 !important;
+      }
+      
+      .metaBox, .totalBox {
+        background: #111827 !important;
+        border-color: #1f2937 !important;
+      }
+      .metaKey { color: #cbd5e1 !important; }
+      .metaVal { color: #f9fafb !important; }
+      
+      .tableWrap {
+        background: #0f172a !important;
+        border-color: #1f2937 !important;
+      }
+      .th {
+        background: #111827 !important;
+        border-bottom-color: #1f2937 !important;
+        color: #cbd5e1 !important;
+      }
+      .td { color: #f9fafb !important; }
+      .tdMuted { color: #cbd5e1 !important; }
+      .rowBorder { border-bottom-color: #1f2937 !important; }
+      
+      /* Amount colors dark mode */
+      .amountLabel { color: #cbd5e1 !important; }
+      .amountValue { color: #f9fafb !important; }
+      .amountValue-paid { color: #34d399 !important; }
+      .amountValue-due { color: #f87171 !important; }
+      .amountValue-total { color: #f9fafb !important; }
+      
+      /* Swap logos */
+      .logoLight {
+        display: none !important;
+        mso-hide: all !important;
+      }
+      .logoDark { display: block !important; }
+    }
+  </style>
+</head>
+
+<body class="font" style="margin: 0; padding: 0; background: #f3f4f6">
+  <div class="preheader">
+    {{#if (eq attempt_status "success")}}
+    Hi {{name}}, your payment of {{order.paid_amount}} for order {{order.id}} was successful. {{#if order.transaction_ref}}Transaction ID: {{order.transaction_ref}}{{/if}}
+    {{else if (eq attempt_status "partial")}}
+    Hi {{name}}, your partial payment of {{order.paid_amount}} for order {{order.id}} was received. Due: {{order.due_amount}}{{#if order.transaction_ref}} Transaction ID: {{order.transaction_ref}}{{/if}}
+    {{else if (eq attempt_status "failed")}}
+    Hi {{name}}, your payment for order {{order.id}} failed. Please try again.
+    {{else}}
+    Hi {{name}}, your payment for order {{order.id}} was cancelled.
+    {{/if}}
+  </div>
+
+  <table role="presentation" class="wrapper" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center" style="padding: 18px 10px">
+        <table role="presentation" class="container" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td class="card">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <!-- Header -->
+                <tr>
+                  <td align="center" class="px" style="padding: 22px 22px 14px">
+                    <!-- Light logo (DEFAULT) -->
+                    <img class="logoImg logoLight" src="https://cdn.graduatefashionbd.com/logo/my_dark_logo.png" width="160" alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: block" />
+                    <!-- Dark logo (HIDDEN by default) -->
+                    <img class="logoImg logoDark" src="https://cdn.graduatefashionbd.com/logo/my_light_logo.png" width="160" alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: none" />
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="px" style="padding: 0 22px">
+                    <div class="divider"></div>
+                  </td>
+                </tr>
+
+                <!-- Body -->
+                <tr>
+                  <td class="cardPad px" style="padding: 24px 22px 6px">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <!-- Icon -->
+                      <tr>
+                        <td align="center" style="padding-bottom: 10px">
+                          {{!-- {{#if (eq attempt_status "success")}}
+                          <img src="https://cdn.graduatefashionbd.com/icon/payment_success.png" width="84" alt="Payment Successful" style="width: 84px; height: auto" />
+                          {{else if (eq attempt_status "partial")}}
+                          <img src="https://cdn.graduatefashionbd.com/icon/payment_partial.png" width="84" alt="Partial Payment" style="width: 84px; height: auto" />
+                          {{else if (eq attempt_status "failed")}}
+                          <img src="https://cdn.graduatefashionbd.com/icon/payment_failed.png" width="84" alt="Payment Failed" style="width: 84px; height: auto" />
+                          {{else}}
+                          <img src="https://cdn.graduatefashionbd.com/icon/payment_cancelled.png" width="84" alt="Payment Cancelled" style="width: 84px; height: auto" />
+                          {{/if}} --}}
+                        </td>
+                      </tr>
+
+                      <!-- Title -->
+                      <tr>
+                        <td align="center" style="padding: 6px 0 4px">
+                          <div class="h1">
+                            {{#if (eq attempt_status "success")}}
+                              {{#if (eq order.current_order_payment_status "paid")}}
+                              Payment Successful!
+                              {{else if (eq order.current_order_payment_status "partial_paid")}}
+                              Partial Payment Received!
+                              {{else}}
+                              Payment Processed!
+                              {{/if}}
+                            {{else if (eq attempt_status "partial")}}
+                            Partial Payment Received!
+                            {{else if (eq attempt_status "failed")}}
+                            Payment Failed
+                            {{else}}
+                            Payment Cancelled
+                            {{/if}}
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Status Badge -->
+                      <tr>
+                        <td align="center" style="padding: 0 0 10px">
+                          <div class="statusBadge statusBadge-{{attempt_status}}">
+                            {{#if (eq attempt_status "success")}}
+                            {{order.current_order_payment_status}}
+                            {{else if (eq attempt_status "partial")}}
+                            PARTIAL
+                            {{else if (eq attempt_status "failed")}}
+                            FAILED
+                            {{else}}
+                            CANCELLED
+                            {{/if}}
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Greeting -->
+                      <tr>
+                        <td align="center" style="padding: 0 0 10px">
+                          <div class="p" style="margin: 0">
+                            Hi <span class="name">{{name}}</span>,
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Intro -->
+                      <tr>
+                        <td align="center" style="padding: 0 0 16px">
+                          <div class="p">
+                            {{#if (eq attempt_status "success")}}
+                              {{#if (eq order.current_order_payment_status "paid")}}
+                              Your payment has been received successfully. Thank you for your order!
+                              {{else if (eq order.current_order_payment_status "partial_paid")}}
+                              Your partial payment has been received. Please pay the remaining amount to complete your order.
+                              {{else}}
+                              Your payment has been processed successfully.
+                              {{/if}}
+                              {{#if order.transaction_ref}}
+                              <br>Transaction Reference: <strong>{{order.transaction_ref}}</strong>
+                              {{/if}}
+                            {{else if (eq attempt_status "partial")}}
+                            Your partial payment has been received. Please pay the remaining amount to complete your order.
+                            {{#if order.transaction_ref}}
+                            <br>Transaction Reference: <strong>{{order.transaction_ref}}</strong>
+                            {{/if}}
+                            {{else if (eq attempt_status "failed")}}
+                            We were unable to process your payment. Please try again or use a different payment method.
+                            {{else}}
+                            Your payment was cancelled. No amount has been deducted from your account.
+                            {{/if}}
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Payment Summary (ALWAYS show for all statuses) -->
+                      <tr>
+                        <td align="center" style="padding: 0 0 14px">
+                          <table role="presentation" class="paymentBox paymentBox-{{attempt_status}}" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td class="paymentTitle paymentTitle-{{attempt_status}}" style="padding: 10px 14px; text-align: center;">
+                                Payment Summary
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 0">
+                                <!-- Order Total -->
+                                <div class="amountRow">
+                                  <span class="amountLabel">Order Total</span>
+                                  <span class="amountValue amountValue-total">{{order.total}}</span>
+                                </div>
+                                
+                                <!-- Paid Amount -->
+                                <div class="amountRow">
+                                  <span class="amountLabel">Paid Amount</span>
+                                  <span class="amountValue amountValue-paid">{{order.paid_amount}}</span>
+                                </div>
+                                
+                                <!-- Due Amount -->
+                                <div class="amountRow">
+                                  <span class="amountLabel">Due Amount</span>
+                                  <span class="amountValue amountValue-due">{{order.due_amount}}</span>
+                                </div>
+                                
+                                <!-- Payment Status -->
+                                <div class="amountRow">
+                                  <span class="amountLabel">Payment Status</span>
+                                  <span class="amountValue">{{order.current_order_payment_status}}</span>
+                                </div>
+
+                                <!-- Payment Method -->
+                                <div class="amountRow">
+                                  <span class="amountLabel">Payment Method</span>
+                                  <span class="amountValue">{{order.payment_method}}</span>
+                                </div>
+
+                                <!-- Transaction Reference (only show if exists and for success/partial) -->
+                                {{#if order.transaction_ref}}
+                                {{#if (or (eq attempt_status "success") (eq attempt_status "partial"))}}
+                                <div class="amountRow" style="border-bottom: none;">
+                                  <span class="amountLabel">Transaction ID</span>
+                                  <span class="amountValue">{{order.transaction_ref}}</span>
+                                </div>
+                                {{/if}}
+                                {{/if}}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <!-- Order meta (ALWAYS show for all statuses) -->
+                      <tr>
+                        <td align="center" style="padding: 0 0 14px">
+                          <table role="presentation" class="metaBox" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td style="padding: 14px 14px">
+                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                  <tr>
+                                    <td style="padding: 6px 0">
+                                      <div class="metaKey">Order ID</div>
+                                      <div class="metaVal">{{order.id}}</div>
+                                    </td>
+                                    <td style="padding: 6px 0" class="right">
+                                      <div class="metaKey">Date</div>
+                                      <div class="metaVal">{{order.date}}</div>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding: 6px 0">
+                                      <div class="metaKey">Payment Method</div>
+                                      <div class="metaVal">{{order.payment_method}}</div>
+                                    </td>
+                                    <td style="padding: 6px 0" class="right">
+                                      <div class="metaKey">Order Status</div>
+                                      <div class="metaVal">{{order.status}}</div>
+                                    </td>
+                                  </tr>
+                                  {{#if order.transaction_ref}}
+                                  {{#if (or (eq attempt_status "success") (eq attempt_status "partial"))}}
+                                  <tr>
+                                    <td colspan="2" style="padding: 6px 0">
+                                      <div class="metaKey">Transaction ID</div>
+                                      <div class="metaVal">{{order.transaction_ref}}</div>
+                                    </td>
+                                  </tr>
+                                  {{/if}}
+                                  {{/if}}
+                                  <tr>
+                                    <td colspan="2" style="padding: 6px 0">
+                                      <div class="metaKey">Delivery Address</div>
+                                      <div class="metaVal">{{order.shipping_address}}</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <!-- Items table (ONLY for success/partial attempts) -->
+                      {{#if (or (eq attempt_status "success") (eq attempt_status "partial"))}}
+                      <tr>
+                        <td style="padding: 0 0 16px">
+                          <div class="h1" style="font-size: 18px; margin-bottom: 12px; text-align: center;">Order Items</div>
+                          
+                          <table role="presentation" class="tableWrap" cellpadding="0" cellspacing="0" border="0">
+                            <!-- Table header -->
+                            <tr>
+                              <td class="th" style="padding: 10px 12px">Item</td>
+                              <td class="th right" style="padding: 10px 12px">Qty</td>
+                              <td class="th right" style="padding: 10px 12px">Price</td>
+                              <td class="th right" style="padding: 10px 12px">Subtotal</td>
+                            </tr>
+
+                            <!-- ORDER ITEMS LOOP -->
+                            {{#each order.items}}
+                            <tr>
+                              <td class="td rowBorder" style="padding: 12px 12px; vertical-align: top;">
+                                <div class="td" style="font-weight: 800;">{{this.name}}</div>
+                                {{#if this.variant}}
+                                <div class="tdMuted">Variant: {{this.variant}}</div>
+                                {{/if}}
+                                {{#if this.sku}}
+                                <div class="tdMuted">SKU: {{this.sku}}</div>
+                                {{/if}}
+                              </td>
+                              <td class="td right rowBorder" style="padding: 12px 12px; vertical-align: top;">{{this.qty}}</td>
+                              <td class="td right rowBorder" style="padding: 12px 12px; vertical-align: top;">{{this.price}}</td>
+                              <td class="td right rowBorder" style="padding: 12px 12px; vertical-align: top;">{{this.subtotal}}</td>
+                            </tr>
+                            {{/each}}
+                          </table>
+                        </td>
+                      </tr>
+
+                      <!-- Totals (ONLY for success/partial attempts) -->
+                      <tr>
+                        <td align="center" style="padding: 0 0 20px">
+                          <table role="presentation" class="totalBox" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td style="padding: 14px 14px">
+                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                  <tr>
+                                    <td class="muted" style="padding: 6px 0">Subtotal</td>
+                                    <td class="muted right" style="padding: 6px 0">{{order.subtotal}}</td>
+                                  </tr>
+                                  <tr>
+                                    <td class="muted" style="padding: 6px 0">Delivery Charge</td>
+                                    <td class="muted right" style="padding: 6px 0">{{order.shipping_fee}}</td>
+                                  </tr>
+                                  {{#if order.weight_surcharge}}
+                                  <tr>
+                                    <td class="muted" style="padding: 6px 0">⚖ Weight Surcharge{{#if order.weight_kg}} ({{order.weight_kg}} kg){{/if}}</td>
+                                    <td class="muted right" style="padding: 6px 0; color: #f97316;">+{{order.weight_surcharge}}</td>
+                                  </tr>
+                                  {{/if}}
+                                  {{#if order.discount}}
+                                  <tr>
+                                    <td class="muted" style="padding: 6px 0">Item Discount</td>
+                                    <td class="muted right" style="padding: 6px 0; color: #10b981;">-{{order.discount}}</td>
+                                  </tr>
+                                  {{/if}}
+                                  {{#if order.bulk_discount}}
+                                  <tr>
+                                    <td class="muted" style="padding: 6px 0">⚡ Bulk Discount</td>
+                                    <td class="muted right" style="padding: 6px 0; color: #10b981;">-{{order.bulk_discount}}</td>
+                                  </tr>
+                                  {{/if}}
+                                  {{#if order.combo_discount}}
+                                  <tr>
+                                    <td class="muted" style="padding: 6px 0">🎁 Combo Discount</td>
+                                    <td class="muted right" style="padding: 6px 0; color: #10b981;">-{{order.combo_discount}}</td>
+                                  </tr>
+                                  {{/if}}
+                                  {{#if order.cart_wide_discount}}
+                                  <tr>
+                                    <td class="muted" style="padding: 6px 0">🏷️ Cart Discount</td>
+                                    <td class="muted right" style="padding: 6px 0; color: #10b981;">-{{order.cart_wide_discount}}</td>
+                                  </tr>
+                                  {{/if}}
+                                  {{#if order.coupon_discount}}
+                                  <tr>
+                                    <td class="muted" style="padding: 6px 0">🎟️ Coupon Discount</td>
+                                    <td class="muted right" style="padding: 6px 0; color: #10b981;">-{{order.coupon_discount}}</td>
+                                  </tr>
+                                  {{/if}}
+                                  <tr>
+                                    <td style="padding: 8px 0">
+                                      <div class="metaKey">Total</div>
+                                    </td>
+                                    <td class="right" style="padding: 8px 0">
+                                      <div class="metaVal" style="font-size: 16px; font-weight: 900;">{{order.total}}</div>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      {{/if}}
+
+                      <!-- CTA -->
+                      <tr>
+                        <td align="center" style="padding: 8px 0 10px">
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td align="center" class="btnWrap btnWrap-{{attempt_status}}" style="border-radius: 12px;">
+                                <a href="{{order.track_url}}" target="_blank" class="btnText" style="display: inline-block; padding: 12px 18px; font-size: 15px; line-height: 20px; font-weight: 800; color: #ffffff;">
+                                  {{#if (eq attempt_status "success")}}
+                                  View Order Details
+                                  {{else if (eq attempt_status "partial")}}
+                                  Pay Remaining Amount
+                                  {{else if (eq attempt_status "failed")}}
+                                  Try Payment Again
+                                  {{else}}
+                                  Contact Support
+                                  {{/if}}
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      {{#if order.track_url}}
+                      <tr>
+                        <td align="center" style="padding: 0 0 14px">
+                          <div class="muted">If the button doesn't work, open this link:</div>
+                          <div style="height: 6px; line-height: 6px; font-size: 6px">&nbsp;</div>
+                          <div class="muted" style="word-break: break-all">
+                            <a class="link" href="{{order.track_url}}" target="_blank">{{order.track_url}}</a>
+                          </div>
+                        </td>
+                      </tr>
+                      {{/if}}
+
+                      <!-- Additional Info -->
+                      <tr>
+                        <td align="center" style="padding: 0 0 14px">
+                          <div class="p">
+                            {{#if (eq attempt_status "success")}}
+                            <strong>What happens next?</strong><br>
+                            {{#if (eq order.current_order_payment_status "paid")}}
+                            Your order is now being processed. We'll notify you when it ships.
+                            {{else if (eq order.current_order_payment_status "partial_paid")}}
+                            Please complete the remaining payment to proceed with order processing.
+                            {{/if}}
+                            {{#if order.transaction_ref}}
+                            <br>Keep your Transaction ID (<strong>{{order.transaction_ref}}</strong>) for future reference.
+                            {{/if}}
+                            {{else if (eq attempt_status "partial")}}
+                            <strong>What happens next?</strong><br>
+                            Please complete the remaining payment to proceed with order processing.
+                            {{#if order.transaction_ref}}
+                            <br>Keep your Transaction ID (<strong>{{order.transaction_ref}}</strong>) for future reference.
+                            {{/if}}
+                            {{else if (eq attempt_status "failed")}}
+                            <strong>Need help with payment?</strong><br>
+                            Try using a different payment method or contact your bank.
+                            <br>Order Total: <strong>{{order.total}}</strong> | Due Amount: <strong>{{order.due_amount}}</strong>
+                            {{else}}
+                            <strong>Changed your mind?</strong><br>
+                            You can place a new order anytime from our website.
+                            <br>Order Total: <strong>{{order.total}}</strong> | Due Amount: <strong>{{order.due_amount}}</strong>
+                            {{/if}}
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Support -->
+                      <tr>
+                        <td align="center" style="padding: 0 0 14px">
+                          <div class="muted">
+                            Have questions about your payment?<br>
+                            Reply to this email or contact our support team.
+                            {{#if (or (eq attempt_status "success") (eq attempt_status "partial"))}}
+                            {{#if order.transaction_ref}}
+                            <br>Please mention Transaction ID: <strong>{{order.transaction_ref}}</strong> when contacting support.
+                            {{/if}}
+                            {{/if}}
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Footer divider -->
+                <tr>
+                  <td class="px" style="padding: 0 22px">
+                    <div class="divider"></div>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td align="center" class="px" style="padding: 16px 22px 20px">
+                    <div class="muted">{{BRAND_NAME}} | {{BRAND_ADDRESS}}</div>
+                    <div style="height: 10px; line-height: 10px; font-size: 10px">&nbsp;</div>
+                    <div class="muted">
+                      <a href="https://graduatefashionbd.com/privacy-policy" class="link">Privacy Policy</a>
+                      &nbsp;|&nbsp;
+                      <a href="https://graduatefashionbd.com/terms" class="link">Terms and Conditions</a>
+                    </div>
+                    <div style="height: 10px; line-height: 10px; font-size: 10px">&nbsp;</div>
+                    <div class="muted">
+                      If you have any questions please contact us<br />
+                      <a href="mailto:graduatefashion2020@gmail.com" class="link">graduatefashion2020@gmail.com</a>
+                      &nbsp;|&nbsp;
+                      <a href="tel:+8801970680283" class="link">+880 1970-680283</a>
+                    </div>
+                    <div style="height: 16px; line-height: 16px; font-size: 16px">&nbsp;</div>
+                    <div class="muted">
+                      <a href="https://graduatefashionbd.com" class="link">Website</a>
+                      &nbsp;•&nbsp;
+                      <a href="https://www.facebook.com/graduatefashionbd" class="link">Facebook</a>
+                      &nbsp;•&nbsp;
+                      <a href="https://www.linkedin.com/company/graduate-fashion-bd" class="link">LinkedIn</a>
+                      &nbsp;•&nbsp;
+                      <a href="https://www.instagram.com/graduatefashionbd" class="link">Instagram</a>
+                    </div>
+                    <div style="height: 14px; line-height: 14px; font-size: 14px">&nbsp;</div>
+                    <div style="font-size: 12px; line-height: 18px; color: #9ca3af">
+                      © {{year}} {{BRAND_NAME}}. All rights reserved.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="height: 18px; line-height: 18px; font-size: 18px">&nbsp;</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

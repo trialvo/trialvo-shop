@@ -1,0 +1,69 @@
+# ═══════════════════════════════════════════════════════════
+# Shared MySQL for all Trialvo local products + Control Plane
+# One container, many databases — easier ops & lower RAM.
+#
+# Host port 3430 (Windows Hyper-V often blocks 3306–3405).
+#
+# Start:
+#   docker compose -f infra/docker-compose.yml up -d
+# ═══════════════════════════════════════════════════════════
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: trialvo-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --mysql-native-password=ON
+      - --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+      - --max-connections=200
+      - --innodb-buffer-pool-size=512M
+    environment:
+      MYSQL_ROOT_PASSWORD: localdev2026
+      # Default DB; init script creates the rest
+      MYSQL_DATABASE: trialvo_shop
+      MYSQL_USER: trialvo
+      MYSQL_PASSWORD: localdev2026
+    ports:
+      - "3430:3306"
+    volumes:
+      - trialvo_shared_mysql:/var/lib/mysql
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - trialvo_shared
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-plocaldev2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 45s
+
+  phpmyadmin:
+    image: phpmyadmin:5.2.2
+    container_name: trialvo-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8283:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: localdev2026
+      PMA_ABSOLUTE_URI: http://localhost:8283/
+      UPLOAD_LIMIT: 512M
+    networks:
+      - trialvo_shared
+
+networks:
+  trialvo_shared:
+    name: trialvo_shared
+    driver: bridge
+
+volumes:
+  trialvo_shared_mysql:
+    name: trialvo_shared_mysql

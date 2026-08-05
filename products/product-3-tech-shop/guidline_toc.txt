@@ -1,0 +1,151 @@
+# Version 2 Change Guideline
+## Scope
+## Working Agreement
+## Migration Principles
+## Change Record Template
+### Change ID: V2-XXX
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+## Current Baseline Snapshot
+## Open Items
+### Change ID: V2-001
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-002
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-003
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-004
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-005
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-006
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-007
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-008
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-015
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Status
+### Change ID: V2-016
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Status
+### Change ID: V2-017
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-011
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-014
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-012
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Status
+### Change ID: V2-013
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-009
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Status
+### Change ID: V2-010
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-018
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-019
+#### Previous State (DB)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status
+### Change ID: V2-020
+#### Previous State (DB)
+#### Current Codebase Flows Mapped (for this schema)
+#### Schema Changes in `v2.sql`
+#### Migration SQL Added to `updatequerylist.sql`
+#### Required Code Changes
+#### Testing Checklist
+#### Status

@@ -1370,7 +1370,7 @@ const Pages = {
                       <td><span class="tx-amount ${tx.status === 'success' ? 'success' : ''}">${formatCurrency(tx.amount)}</span></td>
                       <td>${statusBadge(tx.status)}</td>
                       <td>${tx.eps_financial_entity || '—'}</td>
-                      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tx.eps_customer_id || '—'}</td>
+                      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tx.customer_name || tx.customer_email || tx.eps_customer_id || '—'}</td>
                       <td>${formatDate(tx.created_at)}</td>
                       <td>
                         <div class="tx-row-actions">
@@ -1552,6 +1552,7 @@ const Pages = {
                   ${dRow('Gateway Provider', tx.gateway_provider || '—')}
                   ${dRow('Payment Method', tx.eps_financial_entity || '—')}
                   ${dRow('Customer ID', tx.eps_customer_id || '—', !!tx.eps_customer_id)}
+                  ${dRow('Customer', bill?.customer_name || bill?.customer_email || '—')}
                   ${dRow('Payment Ref', tx.eps_payment_ref || '—', !!tx.eps_payment_ref)}
                   ${dRow('Customer Order ID', tx.eps_customer_order_id || '—')}
                 </div>
