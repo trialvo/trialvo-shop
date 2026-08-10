@@ -164,8 +164,11 @@ jobs:
 
   deploy-demos-new:
     name: NEW VPS — product demos
-    needs: detect
-    if: needs.detect.outputs.demos == '1'
+    needs: [detect, deploy-shop-old]
+    if: >-
+      always() &&
+      needs.detect.outputs.demos == '1' &&
+      (needs.deploy-shop-old.result == 'success' || needs.deploy-shop-old.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -175,25 +178,30 @@ jobs:
           chmod +x scripts/ci/package-demos-bundle.sh
           scripts/ci/package-demos-bundle.sh demos-deploy.tgz
 
-      - name: Upload bundle to NEW VPS
+      - name: Upload demos bundle to OLD VPS (relay staging)
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.NEW_VPS_HOST }}
-          username: ${{ secrets.NEW_VPS_USER }}
-          key: ${{ secrets.NEW_VPS_SSH_KEY }}
-          password: ${{ secrets.NEW_VPS_PASSWORD }}
+          host: ${{ secrets.OLD_VPS_HOST }}
+          username: ${{ secrets.OLD_VPS_USER }}
+          key: ${{ secrets.OLD_VPS_SSH_KEY }}
           source: demos-deploy.tgz
-          target: ${{ env.NEW_VPS_DEPLOY_ROOT }}/
+          target: /home/opc/
 
-      - name: Deploy on NEW VPS
+      - name: Relay to NEW VPS and deploy demos
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.NEW_VPS_HOST }}
-          username: ${{ secrets.NEW_VPS_USER }}
-          key: ${{ secrets.NEW_VPS_SSH_KEY }}
-          password: ${{ secrets.NEW_VPS_PASSWORD }}
+          host: ${{ secrets.OLD_VPS_HOST }}
+          username: ${{ secrets.OLD_VPS_USER }}
+          key: ${{ secrets.OLD_VPS_SSH_KEY }}
           command_timeout: 90m
           script: |
+            set -euo pipefail
+            NEW_HOST="${{ secrets.NEW_VPS_HOST }}"
+            NEW_ROOT="${{ env.NEW_VPS_DEPLOY_ROOT }}"
+            ssh-keyscan -H "$NEW_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+            rsync -az --progress -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=no" \
+              /home/opc/demos-deploy.tgz "root@${NEW_HOST}:${NEW_ROOT}/demos-deploy.tgz"
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=no "root@${NEW_HOST}" <<'REMOTE'
             set -euo pipefail
             cd ${{ env.NEW_VPS_DEPLOY_ROOT }}
             if [[ -f demos-deploy.tgz ]]; then
@@ -207,6 +215,7 @@ jobs:
             export DEPLOY_COMBO=${{ needs.detect.outputs.demos_combo }}
             export DEPLOY_INFRA=${{ needs.detect.outputs.demos_infra }}
             bash scripts/ci/remote-deploy-demos.sh
+            REMOTE
 
   deploy-pay-old:
     name: OLD VPS — Trialvo Pay (optional)
@@ -285,21 +294,20 @@ jobs:
             curl -sf http://127.0.0.1:8088/health
             echo "OLD VPS verify OK"
 
-      - name: Verify NEW VPS (demos)
+      - name: Verify NEW VPS (demos via OLD relay)
         if: needs.detect.outputs.demos == '1' && needs.deploy-demos-new.result == 'success'
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.NEW_VPS_HOST }}
-          username: ${{ secrets.NEW_VPS_USER }}
-          key: ${{ secrets.NEW_VPS_SSH_KEY }}
-          password: ${{ secrets.NEW_VPS_PASSWORD }}
+          host: ${{ secrets.OLD_VPS_HOST }}
+          username: ${{ secrets.OLD_VPS_USER }}
+          key: ${{ secrets.OLD_VPS_SSH_KEY }}
           command_timeout: 5m
           script: |
             set -euo pipefail
-            curl -sf http://127.0.0.1:5100/ >/dev/null
-            curl -sf http://127.0.0.1:5101/ >/dev/null
-            curl -sf http://127.0.0.1:5102/ >/dev/null
-            echo "NEW VPS verify OK"
+            NEW_HOST="${{ secrets.NEW_VPS_HOST }}"
+            ssh-keyscan -H "$NEW_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=no "root@${NEW_HOST}" \
+              'curl -sf http://127.0.0.1:5100/ >/dev/null && curl -sf http://127.0.0.1:5101/ >/dev/null && curl -sf http://127.0.0.1:5102/ >/dev/null && curl -sf http://127.0.0.1:5103/ >/dev/null && echo NEW VPS verify OK'
 
   summary:
     name: Deploy summary

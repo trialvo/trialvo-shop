@@ -18,8 +18,15 @@ docker ps --filter name=payvault-app --format '{{.Names}} {{.Status}}'
 
 if [[ -f shop-deploy.tgz ]]; then
   echo "=== Extract shop bundle ==="
+  if [[ -d trialvo-backend ]] && [[ ! -w trialvo-backend ]]; then
+    sudo rm -rf trialvo-backend
+  fi
+  if [[ -d trialvo-frontend ]] && [[ ! -w trialvo-frontend ]]; then
+    sudo rm -rf trialvo-frontend
+  fi
   tar -xzf shop-deploy.tgz -C "$DEPLOY_DIR"
   chmod +x scripts/ci/*.sh 2>/dev/null || true
+  chmod -R u+w trialvo-backend trialvo-frontend deploy 2>/dev/null || true
 fi
 
 COMPOSE="docker compose -f docker-compose.prod.yml"
@@ -29,17 +36,13 @@ fi
 
 if [[ "$DEPLOY_FRONTEND" == "1" ]]; then
   echo "=== Build & deploy frontend ==="
-  if [[ -d trialvo-frontend ]] && [[ ! -w trialvo-frontend ]]; then
-    sudo rm -rf trialvo-frontend
-    tar -xzf shop-deploy.tgz trialvo-frontend 2>/dev/null || tar -xzf shop-deploy.tgz
-  fi
   $COMPOSE build --no-cache frontend
   $COMPOSE up -d --no-deps frontend
 fi
 
 if [[ "$DEPLOY_BACKEND" == "1" ]]; then
   echo "=== Build & deploy backend ==="
-  $COMPOSE build backend
+  $COMPOSE build --no-cache backend
   $COMPOSE up -d --no-deps backend
   sleep 8
 fi
