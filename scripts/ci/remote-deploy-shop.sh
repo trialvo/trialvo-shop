@@ -22,7 +22,10 @@ if [[ -f shop-deploy.tgz ]]; then
   chmod +x scripts/ci/*.sh 2>/dev/null || true
 fi
 
-COMPOSE="docker compose -f docker-compose.prod.yml -f docker-compose.shared-demo-remote.yml"
+COMPOSE="docker compose -f docker-compose.prod.yml"
+if [[ -f docker-compose.shared-demo-remote.yml ]]; then
+  COMPOSE="$COMPOSE -f docker-compose.shared-demo-remote.yml"
+fi
 
 if [[ "$DEPLOY_FRONTEND" == "1" ]]; then
   echo "=== Build & deploy frontend ==="
