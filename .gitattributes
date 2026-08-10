@@ -1,0 +1,3 @@
+# CI deploy scripts must use LF (Linux VPS / GitHub Actions)
+*.sh text eol=lf
+scripts/ci/* text eol=lf

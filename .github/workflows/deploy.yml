@@ -1,0 +1,315 @@
+name: Deploy (deploy branch)
+
+# Push to `deploy` → dynamic deploy to OLD VPS (Shop CP + optional Pay) and NEW VPS (demos).
+# See .github/DEPLOY.md for required secrets.
+
+on:
+  push:
+    branches:
+      - deploy
+  workflow_dispatch:
+    inputs:
+      force_shop:
+        description: "Force deploy Shop CP to OLD VPS"
+        type: boolean
+        default: false
+      force_demos:
+        description: "Force deploy demos to NEW VPS"
+        type: boolean
+        default: false
+      force_pay:
+        description: "Force deploy Pay (payvault-app) on OLD VPS"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trialvo-production-deploy
+  cancel-in-progress: false
+
+env:
+  OLD_VPS_DEPLOY_DIR: /home/opc/trialvo-shop
+  NEW_VPS_DEPLOY_ROOT: /opt/trialvo
+  PAY_VPS_DEPLOY_DIR: /home/opc/payvault
+
+jobs:
+  validate:
+    name: Validate secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required secrets
+        env:
+          OLD_HOST: ${{ secrets.OLD_VPS_HOST }}
+          OLD_USER: ${{ secrets.OLD_VPS_USER }}
+          OLD_KEY: ${{ secrets.OLD_VPS_SSH_KEY }}
+          NEW_HOST: ${{ secrets.NEW_VPS_HOST }}
+          NEW_USER: ${{ secrets.NEW_VPS_USER }}
+          NEW_KEY: ${{ secrets.NEW_VPS_SSH_KEY }}
+          NEW_PASS: ${{ secrets.NEW_VPS_PASSWORD }}
+        run: |
+          set -euo pipefail
+          missing=0
+          [[ -n "$OLD_HOST" ]] || { echo "::error::Missing secret OLD_VPS_HOST"; missing=1; }
+          [[ -n "$OLD_USER" ]] || { echo "::error::Missing secret OLD_VPS_USER"; missing=1; }
+          [[ -n "$OLD_KEY" ]] || { echo "::error::Missing secret OLD_VPS_SSH_KEY"; missing=1; }
+          [[ -n "$NEW_HOST" ]] || { echo "::error::Missing secret NEW_VPS_HOST"; missing=1; }
+          [[ -n "$NEW_USER" ]] || { echo "::error::Missing secret NEW_VPS_USER"; missing=1; }
+          if [[ -z "$NEW_KEY" && -z "$NEW_PASS" ]]; then
+            echo "::error::Set NEW_VPS_SSH_KEY or NEW_VPS_PASSWORD"
+            missing=1
+          fi
+          if [[ "$missing" -ne 0 ]]; then
+            exit 1
+          fi
+          echo "All required secrets present"
+
+  detect:
+    name: Detect deploy targets
+    needs: validate
+    runs-on: ubuntu-latest
+    outputs:
+      shop_cp: ${{ steps.detect.outputs.shop_cp }}
+      shop_frontend: ${{ steps.detect.outputs.shop_frontend }}
+      shop_backend: ${{ steps.detect.outputs.shop_backend }}
+      demos: ${{ steps.detect.outputs.demos }}
+      demos_lifestyle: ${{ steps.detect.outputs.demos_lifestyle }}
+      demos_fashion: ${{ steps.detect.outputs.demos_fashion }}
+      demos_tech: ${{ steps.detect.outputs.demos_tech }}
+      demos_infra: ${{ steps.detect.outputs.demos_infra }}
+      pay: ${{ steps.detect.outputs.pay }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths
+        id: detect
+        env:
+          FORCE_SHOP: ${{ github.event_name == 'workflow_dispatch' && inputs.force_shop }}
+          FORCE_DEMOS: ${{ github.event_name == 'workflow_dispatch' && inputs.force_demos }}
+          FORCE_PAY: ${{ github.event_name == 'workflow_dispatch' && inputs.force_pay }}
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ci/detect-deploy-targets.sh
+
+          BEFORE="$EVENT_BEFORE"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -z "$BEFORE" ]]; then
+            if git rev-parse HEAD^ >/dev/null 2>&1; then
+              BEFORE="$(git rev-parse HEAD^)"
+            fi
+          fi
+
+          scripts/ci/detect-deploy-targets.sh "$BEFORE" "${{ github.sha }}"
+
+          if [[ "${FORCE_SHOP}" == "true" ]]; then
+            echo "shop_cp=1" >> "$GITHUB_OUTPUT"
+            echo "shop_frontend=1" >> "$GITHUB_OUTPUT"
+            echo "shop_backend=1" >> "$GITHUB_OUTPUT"
+          fi
+          if [[ "${FORCE_DEMOS}" == "true" ]]; then
+            echo "demos=1" >> "$GITHUB_OUTPUT"
+            echo "demos_lifestyle=1" >> "$GITHUB_OUTPUT"
+            echo "demos_fashion=1" >> "$GITHUB_OUTPUT"
+            echo "demos_tech=1" >> "$GITHUB_OUTPUT"
+            echo "demos_infra=1" >> "$GITHUB_OUTPUT"
+          fi
+          if [[ "${FORCE_PAY}" == "true" ]]; then
+            echo "pay=1" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy-shop-old:
+    name: OLD VPS — Trialvo Shop CP
+    needs: detect
+    if: needs.detect.outputs.shop_cp == '1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package shop bundle
+        run: |
+          chmod +x scripts/ci/package-shop-bundle.sh
+          scripts/ci/package-shop-bundle.sh shop-deploy.tgz
+
+      - name: Upload bundle to OLD VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.OLD_VPS_HOST }}
+          username: ${{ secrets.OLD_VPS_USER }}
+          key: ${{ secrets.OLD_VPS_SSH_KEY }}
+          source: shop-deploy.tgz
+          target: ${{ env.OLD_VPS_DEPLOY_DIR }}/
+
+      - name: Deploy on OLD VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.OLD_VPS_HOST }}
+          username: ${{ secrets.OLD_VPS_USER }}
+          key: ${{ secrets.OLD_VPS_SSH_KEY }}
+          command_timeout: 45m
+          script: |
+            set -euo pipefail
+            cd ${{ env.OLD_VPS_DEPLOY_DIR }}
+            if [[ -f shop-deploy.tgz ]]; then
+              tar -xzf shop-deploy.tgz
+              chmod +x scripts/ci/*.sh 2>/dev/null || true
+            fi
+            export DEPLOY_FRONTEND=${{ needs.detect.outputs.shop_frontend }}
+            export DEPLOY_BACKEND=${{ needs.detect.outputs.shop_backend }}
+            bash scripts/ci/remote-deploy-shop.sh
+
+  deploy-demos-new:
+    name: NEW VPS — product demos
+    needs: detect
+    if: needs.detect.outputs.demos == '1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package demos bundle
+        run: |
+          chmod +x scripts/ci/package-demos-bundle.sh
+          scripts/ci/package-demos-bundle.sh demos-deploy.tgz
+
+      - name: Upload bundle to NEW VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.NEW_VPS_HOST }}
+          username: ${{ secrets.NEW_VPS_USER }}
+          key: ${{ secrets.NEW_VPS_SSH_KEY }}
+          password: ${{ secrets.NEW_VPS_PASSWORD }}
+          source: demos-deploy.tgz
+          target: ${{ env.NEW_VPS_DEPLOY_ROOT }}/
+
+      - name: Deploy on NEW VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.NEW_VPS_HOST }}
+          username: ${{ secrets.NEW_VPS_USER }}
+          key: ${{ secrets.NEW_VPS_SSH_KEY }}
+          password: ${{ secrets.NEW_VPS_PASSWORD }}
+          command_timeout: 90m
+          script: |
+            set -euo pipefail
+            cd ${{ env.NEW_VPS_DEPLOY_ROOT }}
+            if [[ -f demos-deploy.tgz ]]; then
+              tar -xzf demos-deploy.tgz
+              chmod +x scripts/ci/*.sh 2>/dev/null || true
+            fi
+            export DEPLOY_ROOT=${{ env.NEW_VPS_DEPLOY_ROOT }}
+            export DEPLOY_LIFESTYLE=${{ needs.detect.outputs.demos_lifestyle }}
+            export DEPLOY_FASHION=${{ needs.detect.outputs.demos_fashion }}
+            export DEPLOY_TECH=${{ needs.detect.outputs.demos_tech }}
+            export DEPLOY_INFRA=${{ needs.detect.outputs.demos_infra }}
+            bash scripts/ci/remote-deploy-demos.sh
+
+  deploy-pay-old:
+    name: OLD VPS — Trialvo Pay (optional)
+    needs: detect
+    if: needs.detect.outputs.pay == '1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip unless DEPLOY_PAY_ENABLED
+        id: gate
+        env:
+          PAY_ENABLED: ${{ secrets.DEPLOY_PAY_ENABLED }}
+        run: |
+          if [[ "$PAY_ENABLED" == "true" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "DEPLOY_PAY_ENABLED is not true — skipping pay deploy"
+          fi
+
+      - name: Package pay source
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          mkdir -p scripts/ci
+          tar -czf pay-deploy.tgz trialvo-pay scripts/ci/remote-deploy-pay.sh scripts/ci/lib.sh
+
+      - name: Upload to OLD VPS
+        if: steps.gate.outputs.enabled == 'true'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.OLD_VPS_HOST }}
+          username: ${{ secrets.OLD_VPS_USER }}
+          key: ${{ secrets.OLD_VPS_SSH_KEY }}
+          source: pay-deploy.tgz
+          target: ${{ env.PAY_VPS_DEPLOY_DIR }}/
+
+      - name: Deploy Pay (payvault-app)
+        if: steps.gate.outputs.enabled == 'true'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.OLD_VPS_HOST }}
+          username: ${{ secrets.OLD_VPS_USER }}
+          key: ${{ secrets.OLD_VPS_SSH_KEY }}
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+            mkdir -p ${{ env.PAY_VPS_DEPLOY_DIR }}
+            cd ${{ env.PAY_VPS_DEPLOY_DIR }}
+            if [[ -f pay-deploy.tgz ]]; then
+              tar -xzf pay-deploy.tgz
+              chmod +x scripts/ci/*.sh 2>/dev/null || true
+            fi
+            bash scripts/ci/remote-deploy-pay.sh
+
+  verify:
+    name: Post-deploy health checks
+    needs: [detect, deploy-shop-old, deploy-demos-new]
+    if: >-
+      always() &&
+      needs.detect.result == 'success' &&
+      (needs.detect.outputs.shop_cp == '1' || needs.detect.outputs.demos == '1')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify OLD VPS (Shop + Pay)
+        if: needs.detect.outputs.shop_cp == '1' && needs.deploy-shop-old.result == 'success'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.OLD_VPS_HOST }}
+          username: ${{ secrets.OLD_VPS_USER }}
+          key: ${{ secrets.OLD_VPS_SSH_KEY }}
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+            curl -sf http://127.0.0.1:8090/ >/dev/null
+            curl -sf http://127.0.0.1:5000/api/health
+            curl -sf http://127.0.0.1:8088/health
+            echo "OLD VPS verify OK"
+
+      - name: Verify NEW VPS (demos)
+        if: needs.detect.outputs.demos == '1' && needs.deploy-demos-new.result == 'success'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.NEW_VPS_HOST }}
+          username: ${{ secrets.NEW_VPS_USER }}
+          key: ${{ secrets.NEW_VPS_SSH_KEY }}
+          password: ${{ secrets.NEW_VPS_PASSWORD }}
+          command_timeout: 5m
+          script: |
+            set -euo pipefail
+            curl -sf http://127.0.0.1:5100/ >/dev/null
+            curl -sf http://127.0.0.1:5101/ >/dev/null
+            curl -sf http://127.0.0.1:5102/ >/dev/null
+            echo "NEW VPS verify OK"
+
+  summary:
+    name: Deploy summary
+    needs: [detect, deploy-shop-old, deploy-demos-new, deploy-pay-old, verify]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print summary
+        run: |
+          echo "## Deploy branch push summary"
+          echo "| Target | Triggered | Job result |"
+          echo "|--------|-----------|------------|"
+          echo "| Shop CP (OLD) | ${{ needs.detect.outputs.shop_cp }} | ${{ needs.deploy-shop-old.result }} |"
+          echo "| Demos (NEW) | ${{ needs.detect.outputs.demos }} | ${{ needs.deploy-demos-new.result }} |"
+          echo "| Pay (OLD) | ${{ needs.detect.outputs.pay }} | ${{ needs.deploy-pay-old.result }} |"
+          echo "| Verify | — | ${{ needs.verify.result }} |"

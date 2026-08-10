@@ -26,6 +26,10 @@ coverage/
 .generated_credentials.json
 **/firebase-adminsdk.json
 **/credentials.txt
+
+# Live migration dumps / secrets (never commit)
+.migration-backups/
+**/.migration-backups/
 **/serviceAccount*.json
 
 # Logs & temp
@@ -54,6 +58,8 @@ desktop.ini
 *~
 
 # Archives & junk (literal "Trialvo 12" dump folders — not trialvo-shop)
+.ci-staging-shop/
+.ci-staging-demos/
 *.zip
 *.tar.gz
 **/Trialvo 12/
