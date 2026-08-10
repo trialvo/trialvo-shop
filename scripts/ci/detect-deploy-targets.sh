@@ -43,7 +43,8 @@ while IFS= read -r path; do
     products/product-2-fashion/*) demos_fashion=1 ;;
     products/product-3-tech-shop/*) demos_tech=1 ;;
     products/product-4-combo-basket/*) demos_combo=1 ;;
-    infra/*|trialvo-shop/deploy/shared-demo/*) demos_infra=1 ;;
+    infra/*|trialvo-shop/deploy/shared-demo/docker-compose.vps.yml) demos_infra=1 ;;
+    trialvo-shop/deploy/shared-demo/docker-compose.yml) demos_infra=1; demos_combo=1 ;;
     trialvo-pay/*) pay=1 ;;
     scripts/ci/*|.github/workflows/deploy.yml|.github/DEPLOY.md) shop_other=1; demos_infra=1 ;;
   esac

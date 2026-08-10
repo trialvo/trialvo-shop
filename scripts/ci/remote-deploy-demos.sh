@@ -52,6 +52,9 @@ if [[ "$DEPLOY_COMBO" == "1" ]]; then
 fi
 
 if [[ "$DEPLOY_INFRA" == "1" && "$DEPLOY_LIFESTYLE" == "0" && "$DEPLOY_FASHION" == "0" && "$DEPLOY_TECH" == "0" && "$DEPLOY_COMBO" == "0" ]]; then
+  if grep -q 'combobasket' trialvo-shop/deploy/shared-demo/docker-compose.yml 2>/dev/null; then
+    bash "$BUILD_SCRIPT" combo
+  fi
   $COMPOSE up -d
 fi
 
@@ -59,7 +62,9 @@ echo "=== Smoke demos ==="
 http_smoke "http://127.0.0.1:5100/" "lifestyle-shop"
 http_smoke "http://127.0.0.1:5101/" "fashion-shop"
 http_smoke "http://127.0.0.1:5102/" "tech-shop"
-http_smoke "http://127.0.0.1:5103/" "combo-shop"
-http_smoke "http://127.0.0.1:9103/api/health" "combo-api"
+if [[ "$DEPLOY_COMBO" == "1" ]] || docker ps --format '{{.Names}}' | grep -q combobasket-demo-shop; then
+  http_smoke "http://127.0.0.1:5103/" "combo-shop"
+  http_smoke "http://127.0.0.1:9103/api/health" "combo-api"
+fi
 docker ps --format 'table {{.Names}}\t{{.Status}}' | head -15
 echo "Demos deploy OK"
