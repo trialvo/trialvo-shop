@@ -35,9 +35,9 @@ pay=0
 while IFS= read -r path; do
   [[ -z "$path" ]] && continue
   case "$path" in
-    trialvo-shop/trialvo-frontend/*) shop_frontend=1 ;;
-    trialvo-shop/trialvo-backend/*) shop_backend=1 ;;
-    trialvo-shop/*) shop_other=1 ;;
+    trialvo-shop/trialvo-frontend/*|trialvo-frontend/*) shop_frontend=1 ;;
+    trialvo-shop/trialvo-backend/*|trialvo-backend/*) shop_backend=1 ;;
+    trialvo-shop/*|trialvo-backend/*|trialvo-frontend/*|docker-compose*) shop_other=1 ;;
     products/product-1-lifestyle/*) demos_lifestyle=1 ;;
     products/product-2-fashion/*) demos_fashion=1 ;;
     products/product-3-tech-shop/*) demos_tech=1 ;;
