@@ -17,10 +17,30 @@ if [[ -f "$ROOT/demos-deploy.tgz" ]]; then
   echo "=== Extract demos bundle ==="
   tar -xzf "$ROOT/demos-deploy.tgz" -C "$ROOT"
   chmod +x "$ROOT/scripts/ci/"*.sh 2>/dev/null || true
+  chmod -R u+w "$ROOT/trialvo-shop/deploy/shared-demo" "$ROOT/deploy/shared-demo" 2>/dev/null || true
 fi
 
 cd "$ROOT"
 export DEPLOY_ROOT="$ROOT"
+
+SHARED_COMPOSE_DIR=""
+if [[ -f "$ROOT/trialvo-shop/deploy/shared-demo/docker-compose.yml" ]]; then
+  SHARED_COMPOSE_DIR="$ROOT/trialvo-shop/deploy/shared-demo"
+elif [[ -f "$ROOT/deploy/shared-demo/docker-compose.yml" ]]; then
+  SHARED_COMPOSE_DIR="$ROOT/deploy/shared-demo"
+else
+  echo "ERROR: shared-demo docker-compose.yml not found under trialvo-shop/ or deploy/"
+  exit 1
+fi
+
+# Keep legacy deploy/shared-demo path in sync when monorepo overlay is present.
+if [[ -f "$ROOT/trialvo-shop/deploy/shared-demo/docker-compose.yml" ]]; then
+  mkdir -p "$ROOT/deploy/shared-demo"
+  cp -f "$ROOT/trialvo-shop/deploy/shared-demo/docker-compose.yml" "$ROOT/deploy/shared-demo/"
+  if [[ -f "$ROOT/trialvo-shop/deploy/shared-demo/docker-compose.vps.yml" ]]; then
+    cp -f "$ROOT/trialvo-shop/deploy/shared-demo/docker-compose.vps.yml" "$ROOT/deploy/shared-demo/"
+  fi
+fi
 
 echo "=== Ensure shared MySQL ==="
 docker compose -f infra/docker-compose.yml up -d
@@ -29,7 +49,12 @@ sleep 5
 BUILD_SCRIPT="$ROOT/scripts/ci/build-demo-images.sh"
 chmod +x "$BUILD_SCRIPT" "$ROOT/scripts/ci/remote-deploy-demos.sh" 2>/dev/null || true
 
-COMPOSE="docker compose -f trialvo-shop/deploy/shared-demo/docker-compose.yml -f trialvo-shop/deploy/shared-demo/docker-compose.vps.yml"
+COMPOSE="docker compose -f $SHARED_COMPOSE_DIR/docker-compose.yml"
+if [[ -f "$SHARED_COMPOSE_DIR/docker-compose.vps.yml" ]]; then
+  COMPOSE="$COMPOSE -f $SHARED_COMPOSE_DIR/docker-compose.vps.yml"
+fi
+
+echo "Compose services: $($COMPOSE config --services | tr '\n' ' ')"
 
 if [[ "$DEPLOY_LIFESTYLE" == "1" ]]; then
   bash "$BUILD_SCRIPT" lifestyle

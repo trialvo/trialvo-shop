@@ -1,3 +1,3 @@
 # VPS-specific overrides (public demo URLs, image origins).
 # Merged with docker-compose.yml on NEW VPS deploy.
-services: {}
+# Add per-service overrides below when a VPS needs different ports or env.
