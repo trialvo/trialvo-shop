@@ -7,7 +7,7 @@ const { logEvent } = require('../services/trialEvents');
 const { getTrialSettings, defaultDaysForType, clampDays } = require('../services/trialSettings');
 const { listBackups, getBackupForInstance, openStoredBackup, backupKeepCount } = require('../services/backupService');
 const { buildMigrationZip } = require('../services/trialBackupCodec');
-const { buildInstallerZip } = require('../services/packager');
+const { buildInstallerZip, buildTrialInstallerZip } = require('../services/packager');
 
 /** Strip secrets from admin list/detail JSON (credentials via dedicated endpoints only). */
 function sanitizeInstanceForAdminList(row) {
@@ -382,7 +382,7 @@ async function downloadInstaller(req, res, next) {
             );
         }
 
-        const zip = buildInstallerZip({
+        const zip = buildTrialInstallerZip({
             installId: inst.install_id,
             agentSecret: decrypt(inst.agent_secret_enc),
             bootstrapToken: decrypt(inst.bootstrap_token_enc),

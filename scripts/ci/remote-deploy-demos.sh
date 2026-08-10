@@ -10,6 +10,7 @@ ROOT="${DEPLOY_ROOT:-/opt/trialvo}"
 DEPLOY_LIFESTYLE="${DEPLOY_LIFESTYLE:-0}"
 DEPLOY_FASHION="${DEPLOY_FASHION:-0}"
 DEPLOY_TECH="${DEPLOY_TECH:-0}"
+DEPLOY_COMBO="${DEPLOY_COMBO:-0}"
 DEPLOY_INFRA="${DEPLOY_INFRA:-0}"
 
 if [[ -f "$ROOT/demos-deploy.tgz" ]]; then
@@ -45,7 +46,12 @@ if [[ "$DEPLOY_TECH" == "1" ]]; then
   $COMPOSE up -d --no-deps techshop-api techshop-admin techshop-shop
 fi
 
-if [[ "$DEPLOY_INFRA" == "1" && "$DEPLOY_LIFESTYLE" == "0" && "$DEPLOY_FASHION" == "0" && "$DEPLOY_TECH" == "0" ]]; then
+if [[ "$DEPLOY_COMBO" == "1" ]]; then
+  bash "$BUILD_SCRIPT" combo
+  $COMPOSE up -d --no-deps combobasket-api combobasket-admin combobasket-shop
+fi
+
+if [[ "$DEPLOY_INFRA" == "1" && "$DEPLOY_LIFESTYLE" == "0" && "$DEPLOY_FASHION" == "0" && "$DEPLOY_TECH" == "0" && "$DEPLOY_COMBO" == "0" ]]; then
   $COMPOSE up -d
 fi
 
@@ -53,5 +59,7 @@ echo "=== Smoke demos ==="
 http_smoke "http://127.0.0.1:5100/" "lifestyle-shop"
 http_smoke "http://127.0.0.1:5101/" "fashion-shop"
 http_smoke "http://127.0.0.1:5102/" "tech-shop"
+http_smoke "http://127.0.0.1:5103/" "combo-shop"
+http_smoke "http://127.0.0.1:9103/api/health" "combo-api"
 docker ps --format 'table {{.Names}}\t{{.Status}}' | head -15
 echo "Demos deploy OK"

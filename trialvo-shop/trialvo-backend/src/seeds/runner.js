@@ -10,6 +10,7 @@ async function runSeeds() {
       require('./lifestyleProductSeed'),
       require('./fashionProductSeed'),
       require('./techShopProductSeed'),
+      require('./comboBasketProductSeed'),
       // After real products exist — drop Unsplash sample rows
       require('./cleanupPlaceholderProducts'),
     ];

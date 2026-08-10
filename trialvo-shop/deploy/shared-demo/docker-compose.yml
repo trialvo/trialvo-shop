@@ -4,12 +4,13 @@
 #   docker compose -f infra/docker-compose.yml up -d
 #
 # Databases (trialvo-mysql :3430):
-#   lifestyle_demo | fashion_demo | techshop_demo
+#   lifestyle_demo | fashion_demo | techshop_demo | combobasket_demo
 #
 # Ports:
 #   Lifestyle shop/admin/api  :5100 / :5174 / :9100
 #   Fashion   shop/admin/api  :5101 / :5175 / :9101
 #   Techshop  shop/admin/api  :5102 / :5176 / :9102
+#   Combo     shop/admin/api  :5103 / :5177 / :9103
 
 services:
   # ─── Lifestyle ───────────────────────────────────────────
@@ -207,10 +208,67 @@ services:
     networks:
       - demo_net
 
+  # ─── Combo Basket ────────────────────────────────────────
+  combobasket-api:
+    image: combobasket-api:trial
+    restart: unless-stopped
+    container_name: combobasket-demo-api
+    environment:
+      PORT: "5000"
+      NODE_ENV: production
+      TRIAL_MODE: "1"
+      TRIAL_SEED: "1"
+      DB_HOST: host.docker.internal
+      DB_PORT: "3430"
+      DB_USER: root
+      DB_PASSWORD: localdev2026
+      DB_NAME: combobasket_demo
+      JWT_SECRET: combobasket-demo-jwt-secret
+      ADMIN_JWT_SECRET: combobasket-demo-admin-jwt-secret
+      CORS_ORIGIN: "*"
+    ports:
+      - "9103:5000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - combobasket_demo_uploads:/usr/src/app/uploads
+    networks:
+      - demo_net
+
+  combobasket-admin:
+    image: combobasket-admin:trial
+    restart: unless-stopped
+    container_name: combobasket-demo-admin
+    environment:
+      API_URL: "http://localhost:9103/api"
+      IMAGE_BASE_URL: "http://localhost:9103"
+      APP_TITLE: "Combo Basket Admin"
+    ports:
+      - "5177:80"
+    depends_on:
+      - combobasket-api
+    networks:
+      - demo_net
+
+  combobasket-shop:
+    image: combobasket-shop:trial
+    restart: unless-stopped
+    container_name: combobasket-demo-shop
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+    ports:
+      - "5103:5000"
+    depends_on:
+      - combobasket-api
+    networks:
+      - demo_net
+
 volumes:
   lifestyle_demo_uploads:
   fashion_demo_uploads:
   techshop_demo_uploads:
+  combobasket_demo_uploads:
 
 networks:
   demo_net:

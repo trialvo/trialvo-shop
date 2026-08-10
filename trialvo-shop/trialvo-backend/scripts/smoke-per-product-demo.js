@@ -82,6 +82,15 @@ const PRODUCTS = [
     admin: 'http://localhost:5176',
     api: 'http://localhost:9102',
   },
+  {
+    key: 'combobasket',
+    slug: 'combo-basket-ecommerce',
+    db: 'combobasket_demo',
+    shop: 'http://localhost:5103',
+    admin: 'http://localhost:5177',
+    api: 'http://localhost:9103',
+    healthPath: '/api/health',
+  },
 ];
 
 async function checkHttp(name, url, expectStatuses = [200]) {
@@ -113,7 +122,7 @@ async function main() {
     // APIs often have no root route — accept 200/404 as "alive"
     await checkHttp(`${p.key}-api-root`, p.api, [200, 404]);
     // Common BFF/API paths
-    for (const path of ['/api/v1/settings', '/api/settings', '/api/v1/health', '/health']) {
+    for (const path of ['/api/health', '/api/v1/settings', '/api/settings', '/api/v1/health', '/health']) {
       try {
         const res = await request(`${p.api}${path}`);
         if (res.status < 500) {
@@ -156,7 +165,7 @@ async function main() {
               JSON_UNQUOTE(JSON_EXTRACT(deploy_config, '$.shared_demo_admin_url')) AS admin,
               JSON_UNQUOTE(JSON_EXTRACT(deploy_config, '$.shared_demo_api_url')) AS api
        FROM products
-       WHERE slug IN ('lifestyle-ecommerce','fashion-ecommerce','tech-shop-ecommerce')`
+       WHERE slug IN ('lifestyle-ecommerce','fashion-ecommerce','tech-shop-ecommerce','combo-basket-ecommerce')`
     );
     for (const p of PRODUCTS) {
       const row = rows.find((r) => r.slug === p.slug);

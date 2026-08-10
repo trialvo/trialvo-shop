@@ -77,6 +77,7 @@ jobs:
       demos_lifestyle: ${{ steps.detect.outputs.demos_lifestyle }}
       demos_fashion: ${{ steps.detect.outputs.demos_fashion }}
       demos_tech: ${{ steps.detect.outputs.demos_tech }}
+      demos_combo: ${{ steps.detect.outputs.demos_combo }}
       demos_infra: ${{ steps.detect.outputs.demos_infra }}
       pay: ${{ steps.detect.outputs.pay }}
     steps:
@@ -114,6 +115,7 @@ jobs:
             echo "demos_lifestyle=1" >> "$GITHUB_OUTPUT"
             echo "demos_fashion=1" >> "$GITHUB_OUTPUT"
             echo "demos_tech=1" >> "$GITHUB_OUTPUT"
+            echo "demos_combo=1" >> "$GITHUB_OUTPUT"
             echo "demos_infra=1" >> "$GITHUB_OUTPUT"
           fi
           if [[ "${FORCE_PAY}" == "true" ]]; then
@@ -202,6 +204,7 @@ jobs:
             export DEPLOY_LIFESTYLE=${{ needs.detect.outputs.demos_lifestyle }}
             export DEPLOY_FASHION=${{ needs.detect.outputs.demos_fashion }}
             export DEPLOY_TECH=${{ needs.detect.outputs.demos_tech }}
+            export DEPLOY_COMBO=${{ needs.detect.outputs.demos_combo }}
             export DEPLOY_INFRA=${{ needs.detect.outputs.demos_infra }}
             bash scripts/ci/remote-deploy-demos.sh
 

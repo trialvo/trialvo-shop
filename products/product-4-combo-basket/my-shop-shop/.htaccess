@@ -1,0 +1,8 @@
+# Force HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Passenger Node.js config
+PassengerAppType node
+PassengerStartupFile server.js

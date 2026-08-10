@@ -35,7 +35,32 @@ const PRODUCTS = [
     admin: 'http://localhost:5176',
     api: 'http://localhost:9102',
   },
+  {
+    slug: 'combo-basket-ecommerce',
+    db: 'combobasket_demo',
+    shop: 'http://localhost:5103',
+    admin: 'http://localhost:5177',
+    api: 'http://localhost:9103',
+  },
 ];
+
+/** Treat localhost and 127.0.0.1 as equivalent for local E2E. */
+function normalizeUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  try {
+    const u = new URL(url);
+    if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+      u.hostname = '127.0.0.1';
+    }
+    return u.origin + u.pathname.replace(/\/$/, '');
+  } catch {
+    return url.trim();
+  }
+}
+
+function urlsMatch(got, expected) {
+  return normalizeUrl(got) === normalizeUrl(expected);
+}
 
 function get(url) {
   return new Promise((resolve) => {
@@ -134,9 +159,9 @@ async function main() {
 
     const meta = result.meta || {};
     const urlsOk =
-      result.shopUrl === p.shop &&
-      result.adminUrl === p.admin &&
-      result.apiUrl === p.api;
+      urlsMatch(result.shopUrl, p.shop) &&
+      urlsMatch(result.adminUrl, p.admin) &&
+      urlsMatch(result.apiUrl, p.api);
     const dbOk = meta.sharedDemoDbName === p.db && meta.sharedDemo === true;
 
     // Persist check on trial_instances row
@@ -150,9 +175,9 @@ async function main() {
       try { instMeta = JSON.parse(instMeta); } catch { instMeta = {}; }
     }
     const instanceOk =
-      inst.shop_url === p.shop &&
-      inst.admin_url === p.admin &&
-      inst.api_url === p.api &&
+      urlsMatch(inst.shop_url, p.shop) &&
+      urlsMatch(inst.admin_url, p.admin) &&
+      urlsMatch(inst.api_url, p.api) &&
       instMeta?.sharedDemoDbName === p.db;
 
     const conn = await mysql.createConnection({ ...dbBase, database: p.db });

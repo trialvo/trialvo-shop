@@ -19,6 +19,7 @@ function parseDeployConfig(raw) {
 /** Map catalog slug → short image prefix used in registry tags. */
 function imagePrefixForSlug(slug) {
   const s = String(slug || '').toLowerCase();
+  if (s.includes('combo')) return 'combobasket';
   if (s.includes('tech')) return 'techshop';
   if (s.includes('fashion') && !s.includes('lifestyle')) return 'fashion';
   if (s.includes('lifestyle')) return 'lifestyle';
@@ -28,6 +29,7 @@ function imagePrefixForSlug(slug) {
 function packLabelForSlug(slug) {
   const prefix = imagePrefixForSlug(slug);
   if (prefix === 'techshop') return 'tech-shop';
+  if (prefix === 'combobasket') return 'combo-basket';
   return prefix;
 }
 

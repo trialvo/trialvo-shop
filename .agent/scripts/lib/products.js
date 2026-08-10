@@ -31,6 +31,14 @@ const PRODUCTS = {
     defaultDb: 'techshop_demo',
     databases: ['techshop_demo', 'techshop_ecom'],
   },
+  combobasket: {
+    key: 'combobasket',
+    folder: path.join(ROOT, 'products', 'product-4-combo-basket'),
+    backupDir: path.join(ROOT, 'products', 'product-4-combo-basket', 'my-shop-api', 'db-backup'),
+    legacyBackupDir: path.join(ROOT, 'products', 'product-4-combo-basket', 'my-shop-api', 'db backup'),
+    defaultDb: 'combobasket_demo',
+    databases: ['combobasket_demo', 'combobasket_ecom'],
+  },
 };
 
 const MYSQL = {
@@ -56,11 +64,16 @@ function resolveProduct(name) {
     tech: 'techshop',
     'product-3-tech-shop': 'techshop',
     'product-3': 'techshop',
+    combobasket: 'combobasket',
+    combo: 'combobasket',
+    'combo-basket': 'combobasket',
+    'product-4-combo-basket': 'combobasket',
+    'product-4': 'combobasket',
   };
   const resolved = aliases[key];
   if (!resolved || !PRODUCTS[resolved]) {
     throw new Error(
-      `Unknown product "${name}". Use: lifestyle | fashion | techshop | all`
+      `Unknown product "${name}". Use: lifestyle | fashion | techshop | combobasket | all`
     );
   }
   return PRODUCTS[resolved];

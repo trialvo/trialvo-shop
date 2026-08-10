@@ -1,0 +1,22 @@
+# Trial API image — Combo Basket (Express + Sequelize)
+FROM node:20-slim
+
+WORKDIR /usr/src/app
+
+COPY my-shop-api/package.json my-shop-api/package-lock.json* ./
+RUN npm ci --omit=dev || npm install --omit=dev
+
+COPY my-shop-api/ ./
+
+RUN mkdir -p uploads/images uploads/products \
+  && groupadd -g 1001 nodejs && useradd -m -u 1001 -g nodejs nodejs \
+  && chown -R nodejs:nodejs /usr/src/app
+
+USER nodejs
+
+EXPOSE 5000
+ENV NODE_ENV=production
+ENV TRIAL_MODE=1
+ENV TRIAL_SEED=1
+
+CMD ["node", "src/server.js"]

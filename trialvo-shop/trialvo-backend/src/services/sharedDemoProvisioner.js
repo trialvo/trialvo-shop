@@ -8,6 +8,26 @@ const bcrypt = require('bcryptjs');
 
 const ADMIN_ROLE_ID = 2; // roles.name = ADMIN
 
+function parseDeployConfig(dc) {
+  if (!dc) return {};
+  if (typeof dc === 'object') return { ...dc };
+  try {
+    return JSON.parse(dc);
+  } catch {
+    return {};
+  }
+}
+
+/** Combo Basket uses a different admins table (password column, no admin_roles). */
+function isComboBasketSchema(deployConfig = {}) {
+  const dc = parseDeployConfig(deployConfig);
+  return (
+    dc.demo_admin_schema === 'combo_basket' ||
+    String(dc.shared_demo_db_name || '').includes('combobasket') ||
+    String(dc.image_api || '').includes('combobasket')
+  );
+}
+
 function sharedDemoEnabled() {
   return process.env.SHARED_DEMO_ENABLED === '1' || process.env.SHARED_DEMO_ENABLED === 'true';
 }
@@ -103,6 +123,35 @@ async function createTrialAdmin({ email, password, name, deployConfig = {} } = {
   const hash = await bcrypt.hash(password, 10);
   const database = resolveDemoDbName(deployConfig);
 
+  if (isComboBasketSchema(deployConfig)) {
+    const comboHash = await bcrypt.hash(password, 12);
+    const displayName = (name || 'Trial Admin').trim().slice(0, 100);
+    try {
+      const result = await withDemoDb(async (conn) => {
+        await conn.query(
+          `INSERT INTO admins (email, password, name, role, is_active, created_at, updated_at)
+           VALUES (?, ?, ?, 'admin', 1, NOW(), NOW())
+           ON DUPLICATE KEY UPDATE
+             password = VALUES(password),
+             is_active = 1,
+             name = VALUES(name),
+             role = 'admin'`,
+          [email.trim().toLowerCase(), comboHash, displayName]
+        );
+        const [rows] = await conn.query(
+          'SELECT id FROM admins WHERE email = ? LIMIT 1',
+          [email.trim().toLowerCase()]
+        );
+        const adminId = rows[0]?.id;
+        if (!adminId) throw new Error('admin row missing after upsert');
+        return { adminId };
+      }, deployConfig);
+      return { ok: true, adminId: result.adminId, database, schema: 'combo_basket' };
+    } catch (e) {
+      return { ok: false, error: e.message || String(e), database };
+    }
+  }
+
   try {
     const result = await withDemoDb(async (conn) => {
       await conn.query(
@@ -151,6 +200,17 @@ async function revokeTrialAdmin({ email, deployConfig, database, instance } = {}
     (database ? { shared_demo_db_name: database } : null) ||
     (instance ? { shared_demo_db_name: dbConfigFromInstance(instance).database } : {});
   try {
+    if (isComboBasketSchema(dc)) {
+      const result = await withDemoDb(async (conn) => {
+        const [res] = await conn.query(
+          `UPDATE admins SET is_active = 0 WHERE email = ?`,
+          [email.trim().toLowerCase()]
+        );
+        return { affected: res.affectedRows || 0 };
+      }, dc);
+      return { ok: true, ...result, database: resolveDemoDbName(dc), schema: 'combo_basket' };
+    }
+
     const result = await withDemoDb(async (conn) => {
       const [res] = await conn.query(
         `UPDATE admins
@@ -177,6 +237,29 @@ async function reactivateTrialAdmin({ email, password, deployConfig, database, i
     (database ? { shared_demo_db_name: database } : null) ||
     (instance ? { shared_demo_db_name: dbConfigFromInstance(instance).database } : {});
   try {
+    if (isComboBasketSchema(dc)) {
+      return await withDemoDb(async (conn) => {
+        if (password) {
+          const hash = await bcrypt.hash(password, 12);
+          await conn.query(
+            `UPDATE admins SET is_active = 1, password = ? WHERE email = ?`,
+            [hash, email.trim().toLowerCase()]
+          );
+        } else {
+          await conn.query(
+            `UPDATE admins SET is_active = 1 WHERE email = ?`,
+            [email.trim().toLowerCase()]
+          );
+        }
+        const [rows] = await conn.query(
+          'SELECT id FROM admins WHERE email = ? LIMIT 1',
+          [email.trim().toLowerCase()]
+        );
+        if (!rows[0]) return { ok: false, error: 'admin not found' };
+        return { ok: true, adminId: rows[0].id, database: resolveDemoDbName(dc), schema: 'combo_basket' };
+      }, dc);
+    }
+
     return await withDemoDb(async (conn) => {
       if (password) {
         const hash = await bcrypt.hash(password, 10);

@@ -290,9 +290,68 @@ function buildPaidCpanelZip(ctx) {
   return { buffer, filename, files: entries.map((e) => e.name) };
 }
 
+/**
+ * Trial self-hosted pack for Node/cPanel products (no Docker / Go license-agent).
+ */
+function buildTrialCpanelZip(ctx) {
+  const images = resolveProductImages({
+    productSlug: ctx.productSlug,
+    deployConfig: ctx.deployConfig,
+    registry: REGISTRY,
+  });
+  const root = `trialvo-${images.packLabel}-trial-cpanel`;
+  const licenseEnv = buildAgentEnv({
+    ...ctx,
+    registryCreds: null,
+    mode: 'trial',
+    nodeOnly: true,
+  });
+  const title = images.packLabel.replace(/-/g, ' ');
+
+  const readme = [
+    `# Trialvo ${title} — Trial (Option 2, cPanel / Node)`,
+    '',
+    'For Passenger / CloudLinux Node or VPS Node hosting.',
+    '',
+    '1. Deploy `my-shop-api` as your Node app (see product README).',
+    '2. Build `my-shop-admin` (Vite) and `my-shop-shop` (Next standalone) — point API URLs at your API.',
+    '3. Place `license.env` next to the API and load at boot.',
+    '4. Copy `license_public.pem` to API `config/` if required by your build.',
+    '5. Set TRIAL_DOMAIN to your public hostname and restart.',
+    '',
+    `Product: ${ctx.productSlug || images.prefix}`,
+    `Install ID: ${ctx.installId}`,
+    `Control plane: ${ctx.controlPlaneUrl || CP_URL}`,
+    '',
+  ].join('\n');
+
+  const entries = [
+    { name: `${root}/license.env`, data: licenseEnv },
+    { name: `${root}/license_public.pem`, data: ctx.licensePublicKey || loadLicensePublicKey() },
+    { name: `${root}/README.md`, data: readme },
+  ];
+
+  const buffer = createZipBuffer(entries);
+  const filename = `trialvo-${images.packLabel}-trial-cpanel-${ctx.installId.slice(0, 12)}.zip`;
+  return { buffer, filename, files: entries.map((e) => e.name) };
+}
+
+/**
+ * Route trial Option 2 installer to Docker template or Node/cPanel pack.
+ */
+function buildTrialInstallerZip(ctx) {
+  const dc = parseDeployConfig(ctx.deployConfig);
+  if (dc.installer_mode === 'node_only') {
+    return buildTrialCpanelZip(ctx);
+  }
+  return buildInstallerZip(ctx);
+}
+
 module.exports = {
   issueRegistryCredentials,
   buildInstallerZip,
+  buildTrialInstallerZip,
+  buildTrialCpanelZip,
   buildPaidDockerZip,
   buildPaidCpanelZip,
   buildAgentEnv,

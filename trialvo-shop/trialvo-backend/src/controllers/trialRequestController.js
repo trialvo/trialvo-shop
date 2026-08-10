@@ -5,7 +5,7 @@ const { sendMail } = require('../services/mailer');
 const { provisionFromRequest } = require('../services/provisioner');
 const { getTrialSettings, defaultDaysForType, clampDays } = require('../services/trialSettings');
 const { trialRequestReceivedEmail, FRONTEND, API_PUBLIC } = require('../services/trialEmails');
-const { buildInstallerZip, issueRegistryCredentials, parseDeployConfig } = require('../services/packager');
+const { buildInstallerZip, buildTrialInstallerZip, issueRegistryCredentials, parseDeployConfig } = require('../services/packager');
 const { supportsTrialOption } = require('../services/packager/productImages');
 const { logEvent } = require('../services/trialEvents');
 
@@ -301,7 +301,7 @@ async function downloadPublicInstaller(req, res, next) {
             meta.registry = registry;
         }
 
-        const zip = buildInstallerZip({
+        const zip = buildTrialInstallerZip({
             installId: inst.install_id,
             agentSecret: decrypt(inst.agent_secret_enc),
             bootstrapToken: inst.bootstrap_token_enc ? decrypt(inst.bootstrap_token_enc) : '',

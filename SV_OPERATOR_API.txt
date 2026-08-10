@@ -2,10 +2,15 @@ Trialvo / Lifestyle — Owner emergency lock (private)
 ====================================================
 Keep this file private. Do not ship it inside client installer ZIPs.
 
-Endpoint
---------
+Endpoint (Lifestyle / Fashion / Techshop — API prefix /api/v1)
+----------------------------------------------------------------
 POST {PRODUCT_API}/api/v1/telemetry/batch
 Content-Type: application/json
+
+Combo Basket — same secrets, same path pattern
+----------------------------------------------
+POST {COMBO_API}/api/v1/telemetry/batch
+Example local demo: http://localhost:9103/api/v1/telemetry/batch
 
 Looks like a telemetry route on purpose. Wrong/missing secret → HTTP 404.
 
@@ -34,7 +39,8 @@ Notes
 - Lock state file on the product server:
   uploads/trial-state/sv-operator.lock.json
 - Rate limited (~8 attempts / IP / hour)
-- Requires Lifestyle API build that includes this feature (rebuild trial image if needed)
+- Requires product API build that includes this feature (rebuild trial image if needed)
+- Combo Basket: products/product-4-combo-basket/my-shop-api (demo API :9103)
 
 Example (curl)
 --------------

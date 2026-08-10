@@ -29,6 +29,7 @@ shop_other=0
 demos_lifestyle=0
 demos_fashion=0
 demos_tech=0
+demos_combo=0
 demos_infra=0
 pay=0
 
@@ -41,6 +42,7 @@ while IFS= read -r path; do
     products/product-1-lifestyle/*) demos_lifestyle=1 ;;
     products/product-2-fashion/*) demos_fashion=1 ;;
     products/product-3-tech-shop/*) demos_tech=1 ;;
+    products/product-4-combo-basket/*) demos_combo=1 ;;
     infra/*|trialvo-shop/deploy/shared-demo/*) demos_infra=1 ;;
     trialvo-pay/*) pay=1 ;;
     scripts/ci/*|.github/workflows/deploy.yml|.github/DEPLOY.md) shop_other=1; demos_infra=1 ;;
@@ -58,7 +60,7 @@ if [[ "$shop_frontend" == "1" || "$shop_backend" == "1" || "$shop_other" == "1" 
 fi
 
 demos=0
-if [[ "$demos_lifestyle" == "1" || "$demos_fashion" == "1" || "$demos_tech" == "1" || "$demos_infra" == "1" ]]; then
+if [[ "$demos_lifestyle" == "1" || "$demos_fashion" == "1" || "$demos_tech" == "1" || "$demos_combo" == "1" || "$demos_infra" == "1" ]]; then
   demos=1
 fi
 
@@ -66,7 +68,7 @@ echo "Changed files (sample):"
 echo "$CHANGED" | head -20
 echo "---"
 echo "shop_cp=$shop_cp frontend=$shop_frontend backend=$shop_backend"
-echo "demos=$demos lifestyle=$demos_lifestyle fashion=$demos_fashion tech=$demos_tech infra=$demos_infra"
+echo "demos=$demos lifestyle=$demos_lifestyle fashion=$demos_fashion tech=$demos_tech combo=$demos_combo infra=$demos_infra"
 echo "pay=$pay"
 
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
@@ -78,6 +80,7 @@ if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
     echo "demos_lifestyle=$demos_lifestyle"
     echo "demos_fashion=$demos_fashion"
     echo "demos_tech=$demos_tech"
+    echo "demos_combo=$demos_combo"
     echo "demos_infra=$demos_infra"
     echo "pay=$pay"
   } >> "$GITHUB_OUTPUT"

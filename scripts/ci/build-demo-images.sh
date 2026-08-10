@@ -40,17 +40,27 @@ build_tech() {
     || docker build -t techshop-shop:trial "$P/shop panel"
 }
 
+build_combo() {
+  echo "==> Building combobasket demo images"
+  local P="$ROOT/products/product-4-combo-basket"
+  docker build -f "$P/deploy/Dockerfile.api.trial" -t combobasket-api:trial "$P"
+  docker build -t combobasket-admin:trial "$P/my-shop-admin"
+  docker build -f "$P/deploy/Dockerfile.shop.trial" -t combobasket-shop:trial "$P/my-shop-shop"
+}
+
 case "$TARGET" in
   lifestyle) build_lifestyle ;;
   fashion) build_fashion ;;
   tech) build_tech ;;
+  combo) build_combo ;;
   all)
     build_lifestyle
     build_fashion
     build_tech
+    build_combo
     ;;
   *)
-    echo "Unknown target: $TARGET (use lifestyle|fashion|tech|all)"
+    echo "Unknown target: $TARGET (use lifestyle|fashion|tech|combo|all)"
     exit 1
     ;;
 esac
