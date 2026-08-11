@@ -54,6 +54,17 @@ echo "=== Ensure shared MySQL ==="
 docker compose -f infra/docker-compose.yml up -d
 sleep 5
 
+echo "=== Ensure combobasket demo databases ==="
+if docker ps --format '{{.Names}}' | grep -qx trialvo-mysql; then
+  docker exec -i trialvo-mysql mysql -uroot -plocaldev2026 <<'SQL'
+CREATE DATABASE IF NOT EXISTS combobasket_demo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS combobasket_ecom CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON combobasket_demo.* TO 'trialvo'@'%';
+GRANT ALL PRIVILEGES ON combobasket_ecom.* TO 'trialvo'@'%';
+FLUSH PRIVILEGES;
+SQL
+fi
+
 BUILD_SCRIPT="$ROOT/scripts/ci/build-demo-images.sh"
 chmod +x "$BUILD_SCRIPT" "$ROOT/scripts/ci/remote-deploy-demos.sh" 2>/dev/null || true
 
@@ -90,7 +101,7 @@ if [[ "$DEPLOY_COMBO" == "1" ]]; then
   bash "$BUILD_SCRIPT" combo
   $COMPOSE up -d --no-deps combobasket-api combobasket-admin combobasket-shop
   echo "Waiting for combobasket API to become ready..."
-  sleep 12
+  sleep 15
 fi
 
 if [[ "$DEPLOY_INFRA" == "1" && "$DEPLOY_LIFESTYLE" == "0" && "$DEPLOY_FASHION" == "0" && "$DEPLOY_TECH" == "0" && "$DEPLOY_COMBO" == "0" ]]; then
@@ -106,12 +117,12 @@ http_smoke "http://127.0.0.1:5101/" "fashion-shop"
 http_smoke "http://127.0.0.1:5102/" "tech-shop"
 if [[ "$DEPLOY_COMBO" == "1" ]] || docker ps --format '{{.Names}}' | grep -q combobasket-demo-shop; then
   http_smoke "http://127.0.0.1:5103/" "combo-shop"
-  for i in 1 2 3 4 5; do
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
     if curl -sf --max-time 10 "http://127.0.0.1:9103/api/health" >/dev/null; then
       echo "combo-api: OK"
       break
     fi
-    if [[ "$i" -eq 5 ]]; then
+    if [[ "$i" -eq 12 ]]; then
       echo "combo-api: FAIL (http://127.0.0.1:9103/api/health)"
       exit 1
     fi
