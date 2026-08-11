@@ -45,20 +45,25 @@ declare global {
 function fromProcess(key: string): string | undefined {
   const env = process.env;
   const direct = env[key];
-  if (direct && String(direct).trim()) return String(direct).trim();
+  if (direct !== undefined && direct !== null) return String(direct).trim();
   const pub = env[`NEXT_PUBLIC_${key}`];
-  if (pub && String(pub).trim()) return String(pub).trim();
+  if (pub !== undefined && pub !== null) return String(pub).trim();
   return undefined;
 }
 
 function fromWindow(key: keyof ShopRuntimeConfig): string | undefined {
   if (typeof window === "undefined") return undefined;
-  const v = window.__SHOP_CONFIG__?.[key];
-  return v && String(v).trim() ? String(v).trim() : undefined;
+  const cfg = window.__SHOP_CONFIG__;
+  if (!cfg || !(key in cfg)) return undefined;
+  return String(cfg[key] ?? "").trim();
 }
 
 function resolve(key: keyof ShopRuntimeConfig): string {
-  return fromWindow(key) || fromProcess(key) || compiled[key] || "";
+  const fromW = fromWindow(key);
+  if (fromW !== undefined) return fromW;
+  const fromP = fromProcess(key);
+  if (fromP !== undefined) return fromP;
+  return compiled[key] || "";
 }
 
 export let API_URL = resolve("API_URL");

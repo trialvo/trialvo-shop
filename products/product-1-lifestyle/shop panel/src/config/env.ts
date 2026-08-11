@@ -86,20 +86,27 @@ function compiledFallback(key: keyof typeof production): string {
 }
 
 function fromProcess(key: string): string | undefined {
-  // On the server (and in the Node runtime of `next start`) these are live.
-  // On the client bundle Next may have replaced missing keys with undefined.
-  return process.env[key] || undefined;
+  const direct = process.env[key];
+  if (direct !== undefined && direct !== null) return String(direct).trim();
+  const pub = process.env[`NEXT_PUBLIC_${key}`];
+  if (pub !== undefined && pub !== null) return String(pub).trim();
+  return undefined;
 }
 
 function fromWindow(key: keyof ShopRuntimeConfig): string | undefined {
   if (typeof window === "undefined") return undefined;
-  const v = window.__SHOP_CONFIG__?.[key];
-  return v && String(v).trim() ? String(v).trim() : undefined;
+  const cfg = window.__SHOP_CONFIG__;
+  if (!cfg || !(key in cfg)) return undefined;
+  return String(cfg[key] ?? "").trim();
 }
 
 /** Resolve media/API base: window (trial) → process.env → compiled default. */
 function resolve(key: keyof ShopRuntimeConfig & keyof typeof production): string {
-  return fromWindow(key) || fromProcess(key) || compiledFallback(key);
+  const fromW = fromWindow(key);
+  if (fromW !== undefined) return fromW;
+  const fromP = fromProcess(key);
+  if (fromP !== undefined) return fromP;
+  return compiledFallback(key);
 }
 
 // `let` + live ESM bindings so client modules pick up window config after apply().
