@@ -22,6 +22,12 @@ const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  async rewrites() {
+    const apiBase = (process.env.API_URL || "http://fashion-api:5000").replace(/\/+$/, "");
+    return [
+      { source: "/uploads/:path*", destination: `${apiBase}/uploads/:path*` },
+    ];
+  },
   async redirects() {
     return [
       { source: "/sitemap", destination: "/sitemap.xml", permanent: true },

@@ -9,6 +9,14 @@ const nextConfig = {
     ],
   },
 
+  // Same-origin /uploads → product API (trial demos on public VPS IP).
+  async rewrites() {
+    const apiBase = (process.env.API_URL || "http://lifestyle-api:5000").replace(/\/+$/, "");
+    return [
+      { source: "/uploads/:path*", destination: `${apiBase}/uploads/:path*` },
+    ];
+  },
+
   // ── Security Headers ──────────────────────────────────────────────────────
   async headers() {
     return [
@@ -42,9 +50,9 @@ const nextConfig = {
               "font-src 'self' data:",
               // Images: self + API/CDN. `http://localhost:*` covers Option 1 local
               // port-mode trials (each instance gets a different API host port).
-              "img-src 'self' data: blob: http://localhost:* http://127.0.0.1:* https://images.unsplash.com https://lh3.googleusercontent.com https://lifestyle-api.example.com https://cdn.lifestyle.example.com https://stylishwave-api.trialvo.com https://graduatefashion-api-641431966702.asia-south1.run.app https://storage.googleapis.com https://shop-api.shoplinkbd.com https://shop.shoplinkbd.com",
+              "img-src 'self' data: blob: http://localhost:* http://127.0.0.1:* http://217.216.108.119:* https://images.unsplash.com https://lh3.googleusercontent.com https://lifestyle-api.example.com https://cdn.lifestyle.example.com https://stylishwave-api.trialvo.com https://graduatefashion-api-641431966702.asia-south1.run.app https://storage.googleapis.com https://shop-api.shoplinkbd.com https://shop.shoplinkbd.com",
               // Allow fetch/XHR to same origin + API servers
-              "connect-src 'self' http://localhost:* http://127.0.0.1:* https://accounts.google.com https://oauth2.googleapis.com https://lifestyle-api.example.com https://stylishwave-api.trialvo.com https://graduatefashion-api-641431966702.asia-south1.run.app https://storage.googleapis.com https://shop-api.shoplinkbd.com",
+              "connect-src 'self' http://localhost:* http://127.0.0.1:* http://217.216.108.119:* https://accounts.google.com https://oauth2.googleapis.com https://lifestyle-api.example.com https://stylishwave-api.trialvo.com https://graduatefashion-api-641431966702.asia-south1.run.app https://storage.googleapis.com https://shop-api.shoplinkbd.com",
               "frame-src 'self' https://accounts.google.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",

@@ -4,6 +4,12 @@ const nextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  async rewrites() {
+    const apiBase = (process.env.API_URL || "http://techshop-api:5000").replace(/\/+$/, "");
+    return [
+      { source: "/uploads/:path*", destination: `${apiBase}/uploads/:path*` },
+    ];
+  },
   images: {
     // Demo/trial: avoid optimizer cache/permission issues in containers
     unoptimized: true,

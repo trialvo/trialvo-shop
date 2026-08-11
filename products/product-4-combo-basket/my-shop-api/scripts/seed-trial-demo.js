@@ -10,6 +10,25 @@ const {
   sequelize,
 } = require('../src/models');
 
+const U = 'https://images.unsplash.com';
+const DEMO_PRODUCT_IMAGES = {
+  'chocolate-truffle-box': `${U}/photo-1549465220-1a8b9238cd48?w=600&h=600&fit=crop&q=85`,
+  'mixed-nut-jar': `${U}/photo-1513885535751-8b47f1f3e2c0?w=600&h=600&fit=crop&q=85`,
+  'premium-cookies': `${U}/photo-1607082348824-0a96f2a4b9da?w=600&h=600&fit=crop&q=85`,
+};
+
+async function upsertDemoProductImages() {
+  for (const [slug, image] of Object.entries(DEMO_PRODUCT_IMAGES)) {
+    const row = await Product.findOne({ where: { slug } });
+    if (!row) continue;
+    if (!row.image) {
+      row.image = image;
+      row.images = [image];
+      await row.save();
+    }
+  }
+}
+
 async function seedTrialDemo() {
   const email = process.env.TRIAL_DEMO_ADMIN_EMAIL || 'demo@trialvo.com';
   const password = process.env.TRIAL_DEMO_ADMIN_PASSWORD || 'Trialvo@Demo123';
@@ -61,6 +80,8 @@ async function seedTrialDemo() {
         in_stock: true,
         category_id: gifts.id,
         is_combo_eligible: true,
+        image: DEMO_PRODUCT_IMAGES['chocolate-truffle-box'],
+        images: [DEMO_PRODUCT_IMAGES['chocolate-truffle-box']],
       },
       {
         name: 'Mixed Nut Jar',
@@ -71,6 +92,8 @@ async function seedTrialDemo() {
         in_stock: true,
         category_id: snacks.id,
         is_combo_eligible: true,
+        image: DEMO_PRODUCT_IMAGES['mixed-nut-jar'],
+        images: [DEMO_PRODUCT_IMAGES['mixed-nut-jar']],
       },
       {
         name: 'Premium Cookies Pack',
@@ -81,6 +104,8 @@ async function seedTrialDemo() {
         in_stock: true,
         category_id: snacks.id,
         is_combo_eligible: true,
+        image: DEMO_PRODUCT_IMAGES['premium-cookies'],
+        images: [DEMO_PRODUCT_IMAGES['premium-cookies']],
       },
     ];
 
@@ -89,6 +114,8 @@ async function seedTrialDemo() {
     }
     console.log('[trial-seed] categories + products');
   }
+
+  await upsertDemoProductImages();
 
   console.log('[trial-seed] done');
 }

@@ -1,3 +1,79 @@
-# VPS-specific overrides (public demo URLs, image origins).
-# Merged with docker-compose.yml on NEW VPS deploy.
-# Add per-service overrides below when a VPS needs different ports or env.
+# VPS-specific overrides (public demo URLs + same-origin shop images).
+# Merged with docker-compose.yml on NEW VPS deploy via remote-deploy-demos.sh.
+#
+# Shops use IMAGE_URL="" so the browser loads /uploads via Next.js rewrites.
+# APIs keep STORAGE_URL on the public API port for admin panels.
+
+x-demo-host: &demo_host 217.216.108.119
+
+services:
+  lifestyle-api:
+    environment:
+      STORAGE_URL: http://217.216.108.119:9100
+      SHOP_URL: http://217.216.108.119:5100
+      ADMIN_URL: http://217.216.108.119:5174
+
+  lifestyle-admin:
+    environment:
+      API_ORIGIN: http://217.216.108.119:9100
+      IMAGE_URL: http://217.216.108.119:9100
+
+  lifestyle-shop:
+    environment:
+      IMAGE_URL: ""
+      SITE_URL: http://217.216.108.119:5100
+      SHOP_URL: http://217.216.108.119:5100
+      APP_URL: http://217.216.108.119:5100
+      ADMIN_URL: http://217.216.108.119:5174
+
+  fashion-api:
+    environment:
+      STORAGE_URL: http://217.216.108.119:9101
+      SHOP_URL: http://217.216.108.119:5101
+      ADMIN_URL: http://217.216.108.119:5175
+
+  fashion-admin:
+    environment:
+      API_ORIGIN: http://217.216.108.119:9101
+      IMAGE_URL: http://217.216.108.119:9101
+
+  fashion-shop:
+    environment:
+      IMAGE_URL: ""
+      SITE_URL: http://217.216.108.119:5101
+      SHOP_URL: http://217.216.108.119:5101
+      APP_URL: http://217.216.108.119:5101
+      ADMIN_URL: http://217.216.108.119:5175
+
+  techshop-api:
+    environment:
+      STORAGE_URL: http://217.216.108.119:9102
+      SHOP_URL: http://217.216.108.119:5102
+      ADMIN_URL: http://217.216.108.119:5176
+
+  techshop-admin:
+    environment:
+      API_ORIGIN: http://217.216.108.119:9102
+      IMAGE_URL: http://217.216.108.119:9102
+
+  techshop-shop:
+    environment:
+      IMAGE_URL: ""
+      SITE_URL: http://217.216.108.119:5102
+      SHOP_URL: http://217.216.108.119:5102
+      APP_URL: http://217.216.108.119:5102
+      ADMIN_URL: http://217.216.108.119:5176
+
+  combobasket-api:
+    environment:
+      SHOP_URL: http://217.216.108.119:5103
+      ADMIN_URL: http://217.216.108.119:5177
+
+  combobasket-admin:
+    environment:
+      API_URL: http://217.216.108.119:9103/api
+      IMAGE_BASE_URL: http://217.216.108.119:9103
+
+  combobasket-shop:
+    environment:
+      PUBLIC_ORIGIN: http://217.216.108.119:5103

@@ -111,6 +111,16 @@ if [[ "$DEPLOY_INFRA" == "1" && "$DEPLOY_LIFESTYLE" == "0" && "$DEPLOY_FASHION" 
   $COMPOSE up -d
 fi
 
+# Recreate demo shops when VPS overlay changes IMAGE_URL / public URLs.
+if [[ -f "$SHARED_COMPOSE_DIR/docker-compose.vps.yml" ]]; then
+  echo "=== Apply VPS demo URL overlay (recreate shops) ==="
+  $COMPOSE up -d --force-recreate \
+    lifestyle-shop fashion-shop techshop-shop combobasket-shop \
+    lifestyle-api fashion-api techshop-api combobasket-api 2>/dev/null || \
+  $COMPOSE up -d --force-recreate \
+    lifestyle-shop fashion-shop techshop-shop combobasket-shop
+fi
+
 echo "=== Smoke demos ==="
 http_smoke "http://127.0.0.1:5100/" "lifestyle-shop"
 http_smoke "http://127.0.0.1:5101/" "fashion-shop"
