@@ -10,8 +10,9 @@ const DEV = {
 };
 
 const PROD = {
-  API_URL: "http://localhost:9103/api/shop",
-  IMAGE_BASE_URL: "http://localhost:9103",
+  // Browser uses same-origin proxy; server uses SHOP_API_INTERNAL_URL (see apiBase.ts).
+  API_URL: "/api/shop",
+  IMAGE_BASE_URL: "",
   BASE_URL: "http://localhost:5103",
   SITE_URL: "http://localhost:5103",
 };

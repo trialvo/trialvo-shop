@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const catalogImages = require('./catalogImages');
 
 /**
  * Fashion e-commerce — own demo API/admin/shop + fashion_demo DB.
@@ -44,10 +45,10 @@ module.exports = {
       category: 'fashion',
       price_bdt: 45000,
       price_usd: 450,
-      thumbnail: `${SHOP_URL}/favicon.ico`,
+      thumbnail: catalogImages.fashion.thumbnail,
       images: JSON.stringify({
-        admin: [`${ADMIN_URL}/favicon.ico`],
-        shop: [`${SHOP_URL}/favicon.ico`],
+        admin: catalogImages.fashion.admin,
+        shop: catalogImages.fashion.shop,
       }),
       demo,
       name: JSON.stringify({

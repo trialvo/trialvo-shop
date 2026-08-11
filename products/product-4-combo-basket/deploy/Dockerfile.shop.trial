@@ -8,8 +8,8 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG NEXT_PUBLIC_API_URL=http://localhost:9103/api/shop
-ARG NEXT_PUBLIC_IMAGE_BASE_URL=http://localhost:9103
+ARG NEXT_PUBLIC_API_URL=/api/shop
+ARG NEXT_PUBLIC_IMAGE_BASE_URL=
 ARG NEXT_PUBLIC_BASE_URL=http://localhost:5103
 ARG NEXT_PUBLIC_SITE_URL=http://localhost:5103
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL

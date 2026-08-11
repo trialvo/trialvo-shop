@@ -257,6 +257,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: "5000"
+      SHOP_API_INTERNAL_URL: http://combobasket-api:5000/api/shop
+      UPLOADS_INTERNAL_URL: http://combobasket-api:5000
     ports:
       - "5103:5000"
     depends_on:

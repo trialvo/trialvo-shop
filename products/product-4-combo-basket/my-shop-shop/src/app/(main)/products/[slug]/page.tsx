@@ -6,8 +6,9 @@ import ProductCard from "@/components/ProductCard";
 import ProductDetailClient from "@/components/ProductDetailClient";
 import { ArrowRight } from "lucide-react";
 import config from "@/config";
+import { getServerApiBaseUrl } from "@/lib/apiBase";
 
-const API_URL = config.apiUrl;
+const API_URL = getServerApiBaseUrl();
 const BASE_URL = config.baseUrl;
 
 type Params = Promise<{ slug: string }>;

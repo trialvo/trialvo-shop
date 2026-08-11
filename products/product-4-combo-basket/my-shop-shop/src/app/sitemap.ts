@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import config from "../config";
+import { getServerApiBaseUrl } from "@/lib/apiBase";
 
-const API_URL = config.apiUrl;
+const API_URL = getServerApiBaseUrl();
 const BASE_URL = config.baseUrl;
 
 async function fetchProductSlugs(): Promise<

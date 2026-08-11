@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const catalogImages = require('./catalogImages');
 
 /**
  * Combo Basket — gift/combo ecommerce (distinct stack: Express API + Vite admin + Next shop).
@@ -44,10 +45,10 @@ module.exports = {
       category: 'gifting',
       price_bdt: 55000,
       price_usd: 550,
-      thumbnail: `${SHOP_URL}/favicon.ico`,
+      thumbnail: catalogImages.combobasket.thumbnail,
       images: JSON.stringify({
-        admin: [`${ADMIN_URL}/favicon.ico`],
-        shop: [`${SHOP_URL}/favicon.ico`],
+        admin: catalogImages.combobasket.admin,
+        shop: catalogImages.combobasket.shop,
       }),
       demo,
       name: JSON.stringify({

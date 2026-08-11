@@ -6,8 +6,8 @@ import { ENV } from "@/config/env";
  * Rules:
  *  - null/undefined → placeholder
  *  - Already correct absolute URL (production domain) → return as-is
- *  - Old absolute URL (localhost:5000, localhost:5001, etc) → strip domain, re-apply IMAGE_BASE_URL
- *  - Relative path like /uploads/images/... → prepend IMAGE_BASE_URL
+ *  - Old absolute URL (localhost:5000, localhost:5001, etc) → strip domain, re-apply base
+ *  - Relative path like /uploads/images/... → same-origin or IMAGE_BASE_URL
  */
 const IMAGE_BASE_URL = ENV.IMAGE_BASE_URL;
 
@@ -22,14 +22,14 @@ export function getImageUrl(imagePath: string | null | undefined): string {
     cleaned === imagePath &&
     (imagePath.startsWith("http://") || imagePath.startsWith("https://"))
   ) {
-    // It's an absolute URL but NOT localhost — check if it matches our IMAGE_BASE_URL
-    if (imagePath.startsWith(IMAGE_BASE_URL)) return imagePath;
+    if (IMAGE_BASE_URL && imagePath.startsWith(IMAGE_BASE_URL)) return imagePath;
     // External URL — return as-is
     return imagePath;
   }
 
-  // Build from relative path
+  const relative = cleaned.startsWith("/") ? cleaned : `/${cleaned}`;
+  if (!IMAGE_BASE_URL) return relative;
+
   const base = IMAGE_BASE_URL.replace(/\/$/, "");
-  const p = cleaned.startsWith("/") ? cleaned : `/${cleaned}`;
-  return `${base}${p}`;
+  return `${base}${relative}`;
 }

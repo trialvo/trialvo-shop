@@ -77,7 +77,7 @@ function SuccessContent() {
     const token = typeof window !== "undefined" ? localStorage.getItem("shop_token") : null;
     if (!token) { setLoading(false); return; }
 
-    fetch(`/api/orders/my/${orderId}`, {
+    fetch(`/api/shop/orders/my/${orderId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())

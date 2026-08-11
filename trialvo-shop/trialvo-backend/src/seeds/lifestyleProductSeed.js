@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const catalogImages = require('./catalogImages');
 
 const SHOP_URL = process.env.SHARED_DEMO_SHOP_URL || 'http://localhost:5100';
 const ADMIN_URL = process.env.SHARED_DEMO_ADMIN_URL || 'http://localhost:5174';
@@ -35,10 +36,10 @@ module.exports = {
             category: 'fashion',
             price_bdt: 45000,
             price_usd: 450,
-            thumbnail: `${SHOP_URL}/favicon.ico`,
+            thumbnail: catalogImages.lifestyle.thumbnail,
             images: JSON.stringify({
-                admin: [`${ADMIN_URL}/favicon.ico`],
-                shop: [`${SHOP_URL}/favicon.ico`],
+                admin: catalogImages.lifestyle.admin,
+                shop: catalogImages.lifestyle.shop,
             }),
             demo,
             name: JSON.stringify({
