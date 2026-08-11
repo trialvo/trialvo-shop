@@ -89,6 +89,8 @@ fi
 if [[ "$DEPLOY_COMBO" == "1" ]]; then
   bash "$BUILD_SCRIPT" combo
   $COMPOSE up -d --no-deps combobasket-api combobasket-admin combobasket-shop
+  echo "Waiting for combobasket API to become ready..."
+  sleep 12
 fi
 
 if [[ "$DEPLOY_INFRA" == "1" && "$DEPLOY_LIFESTYLE" == "0" && "$DEPLOY_FASHION" == "0" && "$DEPLOY_TECH" == "0" && "$DEPLOY_COMBO" == "0" ]]; then
@@ -104,7 +106,17 @@ http_smoke "http://127.0.0.1:5101/" "fashion-shop"
 http_smoke "http://127.0.0.1:5102/" "tech-shop"
 if [[ "$DEPLOY_COMBO" == "1" ]] || docker ps --format '{{.Names}}' | grep -q combobasket-demo-shop; then
   http_smoke "http://127.0.0.1:5103/" "combo-shop"
-  http_smoke "http://127.0.0.1:9103/api/health" "combo-api"
+  for i in 1 2 3 4 5; do
+    if curl -sf --max-time 10 "http://127.0.0.1:9103/api/health" >/dev/null; then
+      echo "combo-api: OK"
+      break
+    fi
+    if [[ "$i" -eq 5 ]]; then
+      echo "combo-api: FAIL (http://127.0.0.1:9103/api/health)"
+      exit 1
+    fi
+    sleep 4
+  done
 fi
 docker ps --format 'table {{.Names}}\t{{.Status}}' | head -15
 echo "Demos deploy OK"
