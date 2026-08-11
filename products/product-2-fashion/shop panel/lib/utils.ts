@@ -138,7 +138,6 @@ const API_ORIGINS = [
 ];
 
 import {
-  API_URL,
   IMAGE_URL,
   applyShopRuntimeConfig,
 } from "@/config/env";
