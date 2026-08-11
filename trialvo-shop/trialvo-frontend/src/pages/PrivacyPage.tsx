@@ -45,7 +45,7 @@ const PrivacyPage: React.FC = () => {
         },
         {
           title: '৬. যোগাযোগ',
-          content: 'গোপনীয়তা সংক্রান্ত কোনো প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন: info@eshopmarket.com',
+          content: 'গোপনীয়তা সংক্রান্ত কোনো প্রশ্ন থাকলে আমাদের সাথে যোগাযোগ করুন: trialvo3@gmail.com',
         },
       ],
     },
@@ -75,7 +75,7 @@ const PrivacyPage: React.FC = () => {
         },
         {
           title: '6. Contact',
-          content: 'For any privacy-related questions, contact us at: info@eshopmarket.com',
+          content: 'For any privacy-related questions, contact us at: trialvo3@gmail.com',
         },
       ],
     },

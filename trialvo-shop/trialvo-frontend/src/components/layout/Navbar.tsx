@@ -5,6 +5,7 @@ import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
 import { BrandLogo } from "@/components/brand";
+import { brandName } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
@@ -36,7 +37,7 @@ export default function Navbar() {
     href === "/" ? location.pathname === "/" : location.pathname.startsWith(href);
 
   const transparent = isHome && !isScrolled && !isMobileMenuOpen;
-  const brandName = language === "bn" ? "ইশপ মার্কেট" : "eShop Market";
+  const name = brandName(language);
 
   return (
     <header
@@ -52,12 +53,12 @@ export default function Navbar() {
           <Link
             to="/"
             className="group inline-flex items-center transition-opacity hover:opacity-90"
-            aria-label={brandName}
+            aria-label={name}
           >
             <span className="hidden sm:inline-flex">
               <BrandLogo
                 withWordmark
-                wordmark={brandName}
+                wordmark={name}
                 size="md"
                 tone={transparent ? "onDark" : "default"}
                 markClassName="transition-transform duration-200 group-hover:scale-[1.04]"

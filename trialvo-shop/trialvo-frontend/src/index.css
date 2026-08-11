@@ -47,13 +47,12 @@
     --radius: 0.5rem;
 
     /*
-     * Typography aligned with Fiverr.com:
-     * Fiverr uses proprietary "Macan" (not redistributable).
-     * Figtree is the closest open geometric sans; Hind Siliguri covers Bangla.
+     * Typography: Noto Sans Bengali / Hind Siliguri first for proper Bangla
+     * conjuncts (juktakkhor). Figtree is Latin-only — never put it first for BN.
      */
-    --font-bangla: "Hind Siliguri", "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-bangla: "Noto Sans Bengali", "Hind Siliguri", "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
     --font-english: "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-display: "Figtree", "Hind Siliguri", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-display: "Noto Sans Bengali", "Hind Siliguri", "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
     --shadow-sm: 0 1px 2px 0 hsl(210 6% 14% / 0.04);
     --shadow-md:
@@ -173,12 +172,15 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-bangla);
-    font-feature-settings: "ss01" on, "cv01" on;
-    letter-spacing: -0.011em;
+    /* Latin stylistic sets + negative tracking break Bangla conjunct shaping */
+    font-feature-settings: normal;
+    letter-spacing: normal;
   }
 
   body.lang-en {
     font-family: var(--font-english);
+    font-feature-settings: "ss01" on, "cv01" on;
+    letter-spacing: -0.011em;
   }
 
   h1,
@@ -187,14 +189,26 @@
   h4,
   h5,
   h6 {
-    @apply font-semibold tracking-tight;
+    @apply font-semibold;
     font-family: var(--font-display);
+    letter-spacing: normal;
+  }
+
+  body.lang-en h1,
+  body.lang-en h2,
+  body.lang-en h3,
+  body.lang-en h4,
+  body.lang-en h5,
+  body.lang-en h6 {
+    font-family: var(--font-english);
     letter-spacing: -0.02em;
   }
 
   /* Bengali Typography Optimization */
   .font-bangla {
     font-family: var(--font-bangla);
+    letter-spacing: normal;
+    font-feature-settings: normal;
   }
 
   .font-english {
@@ -203,6 +217,29 @@
 
   .font-display {
     font-family: var(--font-display);
+    letter-spacing: normal;
+  }
+
+  body.lang-en .font-display {
+    font-family: var(--font-english);
+  }
+
+  /*
+   * Tailwind tracking-* utilities break Bangla ligatures/diacritics.
+   * Force normal letter-spacing whenever UI language is Bangla.
+   */
+  html[lang="bn"] .tracking-tighter,
+  html[lang="bn"] .tracking-tight,
+  html[lang="bn"] .tracking-normal,
+  html[lang="bn"] .tracking-wide,
+  html[lang="bn"] .tracking-wider,
+  html[lang="bn"] .tracking-widest,
+  body.lang-bn .tracking-tighter,
+  body.lang-bn .tracking-tight,
+  body.lang-bn .tracking-wide,
+  body.lang-bn .tracking-wider,
+  body.lang-bn .tracking-widest {
+    letter-spacing: normal !important;
   }
 }
 

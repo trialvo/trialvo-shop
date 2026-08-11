@@ -9,14 +9,14 @@ import type { HeroContent } from "@/types/marketplace";
 import { localize } from "@/lib/localize";
 
 const HERO_CONTENT: HeroContent = {
-  brand: { bn: "ইশপ মার্কেট", en: "eShop Market" },
+  brand: { bn: "ট্রায়ালভো", en: "Trialvo" },
   headline: {
     bn: "রেডিমেড ইকমার্স সলিউশন খুঁজুন",
     en: "Find ready-made ecommerce solutions",
   },
   supporting: {
-    bn: "এডমিন প্যানেল ও শপ একসাথে—ট্রায়াল চালান, তারপর কিনুন।",
-    en: "Admin panel and shop together—trial live, then buy.",
+    bn: "এডমিন ও শপ ট্রায়াল করুন—কাস্টমাইজেশন, DevOps, মেইনটেন্যান্স, অথবা প্রয়োজনমতো নতুন সফটওয়্যারও বানাই।",
+    en: "Trial admin and shop—plus customization, DevOps, maintenance, or custom software built for your needs.",
   },
   primaryCta: { bn: "সব প্রোডাক্ট", en: "Browse all" },
   secondaryCta: { bn: "যোগাযোগ", en: "Contact" },

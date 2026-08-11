@@ -36,11 +36,21 @@ const SIDE_GRADIENTS = [
   "from-sky-500 to-blue-500",
 ] as const;
 
+/** Avoid showing raw enum values like "Home Top" / "Default" as UI copy. */
+function friendlyBannerSubtitle(
+  banner: Banner,
+  fallback: string,
+): string {
+  const type = (banner.type || "").trim();
+  if (type && type !== "Default" && type !== "Custom URL") return type;
+  return fallback;
+}
+
 export function toHeroSlide(banner: Banner): HeroSlideViewModel {
   return {
     id: banner.id,
     title: banner.title,
-    subtitle: banner.zone || "Limited time offer",
+    subtitle: friendlyBannerSubtitle(banner, "Limited time offer"),
     cta: "Shop Now",
     link: sanitizeAppHref(banner.path),
     image: resolveMediaUrl(banner.img_path),
@@ -54,7 +64,7 @@ export function toSideBanner(
   return {
     id: banner.id,
     title: banner.title,
-    subtitle: banner.type || "Special offer",
+    subtitle: friendlyBannerSubtitle(banner, "Special offer"),
     image: resolveMediaUrl(banner.img_path),
     link: sanitizeAppHref(banner.path),
     bg: SIDE_GRADIENTS[index % SIDE_GRADIENTS.length],
@@ -69,7 +79,7 @@ export function toOfferBanner(
     id: banner.id,
     eyebrow: index === 0 ? "Special Offer" : "New Collection",
     title: banner.title,
-    subtitle: banner.type || "Explore exclusive deals",
+    subtitle: friendlyBannerSubtitle(banner, "Explore exclusive deals"),
     cta: index === 0 ? "Shop Now" : "Explore",
     link: sanitizeAppHref(banner.path),
     image: resolveMediaUrl(banner.img_path),

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { BRAND, brandName } from '@/lib/brand';
 
 interface SEOHeadProps {
   title: string;
@@ -26,10 +27,10 @@ const SEOHead: React.FC<SEOHeadProps> = ({
   noindex = false,
 }) => {
   const { language } = useLanguage();
-  const siteUrl = 'https://eshopmarket.com';
+  const siteUrl = BRAND.siteUrl;
   const currentUrl = canonicalUrl || (typeof window !== 'undefined' ? window.location.href : siteUrl);
 
-  const siteName = language === 'bn' ? 'ইশপ মার্কেট' : 'eShop Market';
+  const siteName = brandName(language);
   const fullTitle = `${title} | ${siteName}`;
 
   // Organization Schema
@@ -39,24 +40,38 @@ const SEOHead: React.FC<SEOHeadProps> = ({
     '@id': `${siteUrl}/#organization`,
     name: siteName,
     url: siteUrl,
+    email: BRAND.contactEmail,
     logo: {
       '@type': 'ImageObject',
       url: `${siteUrl}/favicon.svg`,
       width: '112',
       height: '112'
     },
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Jamgora',
+      addressLocality: 'Savar',
+      addressRegion: 'Dhaka',
+      addressCountry: 'BD',
+    },
     sameAs: [
-      'https://facebook.com/eshopmarket',
-      'https://youtube.com/@eshopmarket',
-      'https://wa.me/8801700000000'
+      BRAND.social.facebook,
+      BRAND.social.youtube,
+      BRAND.social.whatsapp,
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+880-1700-000000',
+      telephone: '+880-1629-615314',
+      email: BRAND.contactEmail,
       contactType: 'customer service',
       availableLanguage: ['Bengali', 'English'],
       areaServed: 'BD'
-    }
+    },
+    parentOrganization: {
+      '@type': 'Organization',
+      name: BRAND.company.name,
+      url: BRAND.company.url,
+    },
   };
 
   // Website Schema with SearchAction
@@ -119,7 +134,7 @@ const SEOHead: React.FC<SEOHeadProps> = ({
 
       {/* Twitter Card Tags */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:site" content="@eshopmarket" />
+      <meta name="twitter:site" content={BRAND.social.twitter} />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />

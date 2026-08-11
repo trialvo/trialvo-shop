@@ -24,6 +24,22 @@ module.exports = {
         updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+
+    // Older/partial installs may lack columns that CREATE TABLE IF NOT EXISTS will not add.
+    const ensureColumn = async (column, ddl) => {
+      const result = await client.query(
+        `SELECT COUNT(*) AS c FROM information_schema.columns
+         WHERE table_schema = DATABASE() AND table_name = 'products' AND column_name = ?`,
+        [column]
+      );
+      if (Number(result.rows[0]?.c) === 0) {
+        await client.query(`ALTER TABLE products ADD COLUMN ${ddl}`);
+      }
+    };
+    await ensureColumn('category', "category VARCHAR(100) NOT NULL DEFAULT 'ecommerce'");
+    await ensureColumn('is_active', 'is_active SMALLINT DEFAULT 1');
+    await ensureColumn('is_featured', 'is_featured SMALLINT DEFAULT 0');
+
     await client.query('CREATE INDEX IF NOT EXISTS idx_products_slug ON products(slug)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)');
     await client.query('CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(is_active)');

@@ -34,10 +34,10 @@ const BENEFITS: TrustItem[] = [
   {
     id: "support",
     icon: Headphones,
-    title: { bn: "সেটআপ সাপোর্ট", en: "Setup support" },
+    title: { bn: "সফটওয়্যার সার্ভিস", en: "Software services" },
     description: {
-      bn: "লঞ্চ পর্যন্ত হেল্প পাবেন যখন দরকার।",
-      en: "Get help whenever you need it through launch.",
+      bn: "কাস্টমাইজেশন, DevOps, মেইনটেন্যান্স—এবং আপনার প্রয়োজন অনুযায়ী যেকোনো সফটওয়্যার ডেভেলপমেন্ট।",
+      en: "Customization, DevOps, maintenance—and we can build any software according to your needs.",
     },
   },
 ];

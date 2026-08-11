@@ -36,8 +36,8 @@ export const ABOUT_PAGE_CONTENT: AboutPageContent = {
       en: "Who we are at eShop Market",
     },
     supporting: {
-      bn: "রেডিমেড ইকমার্স সলিউশনের একটি সহজ মার্কেটপ্লেস। ব্রাউজ করুন, ট্রায়াল করুন, তারপর কিনুন।",
-      en: "A simple marketplace for ready-made ecommerce solutions. Browse, trial, then buy.",
+      bn: "রেডিমেড ইকমার্স সলিউশন—কাস্টমাইজেশন, DevOps, মেইনটেন্যান্স, এবং প্রয়োজনমতো যেকোনো সফটওয়্যার বিল্ড।",
+      en: "Ready-made ecommerce—plus customization, DevOps, maintenance, and custom software built to your needs.",
     },
     primaryCta: {
       bn: "প্রোডাক্ট দেখুন",
@@ -66,12 +66,12 @@ export const ABOUT_PAGE_CONTENT: AboutPageContent = {
     },
     paragraphs: [
       {
-        bn: "আমরা রেডিমেড ইকমার্স সলিউশন অফার করি—এডমিন প্যানেল ও শপ ওয়েবসাইটসহ। জটিল কাস্টম ডেভেলপমেন্ট ছাড়াই দ্রুত লঞ্চ করতে পারবেন।",
-        en: "We offer ready-made ecommerce solutions—with admin panel and shop website included. Launch faster without heavy custom development.",
+        bn: "আমরা রেডিমেড ইকমার্স সলিউশন অফার করি—এডমিন প্যানেল ও শপ ওয়েবসাইটসহ। দ্রুত লঞ্চ করতে পারবেন, আবার প্রয়োজনে পুরো কাস্টমাইজও করাতে পারবেন।",
+        en: "We offer ready-made ecommerce solutions—with admin panel and shop included. Launch fast, or customize deeply when your business needs it.",
       },
       {
-        bn: "প্রথমে প্রোডাক্ট দেখুন। যেখানে ট্রায়াল আছে, লাইভে টেস্ট করুন। পছন্দ হলে নিরাপদে অর্ডার সম্পন্ন করুন।",
-        en: "Start by browsing products. Where a trial is available, test it live. When you are ready, complete a secure order.",
+        bn: "প্রোডাক্ট ব্রাউজ ও ট্রায়ালের পাশাপাশি আমরা সফটওয়্যার সার্ভিস দিই—কাস্টমাইজেশন, DevOps, মেইনটেন্যান্স, এবং আপনার প্রয়োজন অনুযায়ী সম্পূর্ণ নতুন সফটওয়্যার ডেভেলপমেন্ট।",
+        en: "Alongside browsing and trials, we provide software services—customization, DevOps, maintenance, and we can build any software according to your needs.",
       },
     ],
   },
@@ -97,10 +97,10 @@ export const ABOUT_PAGE_CONTENT: AboutPageContent = {
     {
       id: "service",
       icon: Users,
-      title: { bn: "সাপোর্ট", en: "Support" },
+      title: { bn: "সার্ভিস", en: "Services" },
       description: {
-        bn: "সেটআপ থেকে লঞ্চ পর্যন্ত সাহায্য করি।",
-        en: "We help from setup through launch.",
+        bn: "কাস্টমাইজেশন থেকে শুরু করে প্রয়োজনমতো যেকোনো সফটওয়্যার বিল্ড, DevOps ও মেইনটেন্যান্স।",
+        en: "From customization to building any software you need—plus DevOps and maintenance.",
       },
     },
     {
@@ -174,8 +174,8 @@ export const ABOUT_PAGE_CONTENT: AboutPageContent = {
       en: "Start by browsing products",
     },
     supporting: {
-      bn: "ক্যাটাগরি থেকে সলিউশন বেছে নিন, অথবা প্রশ্ন থাকলে আমাদের লিখুন।",
-      en: "Pick a solution from the catalog, or message us if you have questions.",
+      bn: "ক্যাটাগরি থেকে সলিউশন বেছে নিন—অথবা কাস্টম সফটওয়্যার, DevOps বা মেইনটেন্যান্সের জন্য লিখুন।",
+      en: "Pick a solution from the catalog—or message us to build custom software, or for DevOps and maintenance.",
     },
     primaryCta: {
       bn: "সব প্রোডাক্ট",

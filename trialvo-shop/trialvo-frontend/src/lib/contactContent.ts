@@ -1,20 +1,21 @@
 import { Mail, MapPin, Phone } from "lucide-react";
 import type { ContactPageContent } from "@/types/contact";
+import { BRAND } from "@/lib/brand";
 
-/** Typed Contact page copy — single source of truth */
+/** Typed Contact page copy — channels pull live values from BRAND */
 export const CONTACT_PAGE_CONTENT: ContactPageContent = {
   seo: {
     bn: {
-      title: "যোগাযোগ - eShop Market",
+      title: `যোগাযোগ - ${BRAND.nameBn}`,
       description:
-        "প্রশ্ন, সাপোর্ট বা পার্টনারশিপ—eShop Market-এর সাথে যোগাযোগ করুন।",
-      keywords: ["যোগাযোগ", "eShop Market", "সাপোর্ট"],
+        `প্রশ্ন, সাপোর্ট বা পার্টনারশিপ—${BRAND.nameBn}-এর সাথে যোগাযোগ করুন।`,
+      keywords: ["যোগাযোগ", BRAND.nameBn, "সাপোর্ট"],
     },
     en: {
-      title: "Contact - eShop Market",
+      title: `Contact - ${BRAND.name}`,
       description:
-        "Questions, support, or partnership—get in touch with eShop Market.",
-      keywords: ["contact", "eShop Market", "support"],
+        `Questions, support, or partnership—get in touch with ${BRAND.name}.`,
+      keywords: ["contact", BRAND.name, "support"],
     },
   },
   hero: {
@@ -27,11 +28,10 @@ export const CONTACT_PAGE_CONTENT: ContactPageContent = {
       en: "Get in touch with us",
     },
     supporting: {
-      bn: "প্রোডাক্ট, ট্রায়াল বা অর্ডার নিয়ে প্রশ্ন থাকলে মেসেজ পাঠান—আমরা দ্রুত উত্তর দিই।",
-      en: "Have a question about products, trials, or orders? Send a message—we reply quickly.",
+      bn: "প্রোডাক্ট, ট্রায়াল, কাস্টম সফটওয়্যার, DevOps বা মেইনটেন্যান্স—যা দরকার লিখুন, আমরা দ্রুত উত্তর দিই।",
+      en: "Products, trials, custom software built to your needs, DevOps, or maintenance—tell us what you need; we reply quickly.",
     },
     image: {
-      // Calm desk / customer-support style banner (standard contact pages)
       src: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1920&h=900&fit=crop&q=80",
       alt: {
         bn: "কাস্টমার সাপোর্ট ওয়ার্কস্পেস",
@@ -78,21 +78,21 @@ export const CONTACT_PAGE_CONTENT: ContactPageContent = {
       id: "email",
       icon: Mail,
       label: { bn: "ইমেইল", en: "Email" },
-      value: { bn: "info@eshopmarket.com", en: "info@eshopmarket.com" },
-      href: "mailto:info@eshopmarket.com",
+      value: { bn: BRAND.contactEmail, en: BRAND.contactEmail },
+      href: `mailto:${BRAND.contactEmail}`,
     },
     {
       id: "phone",
       icon: Phone,
       label: { bn: "ফোন", en: "Phone" },
-      value: { bn: "+880 1700-000000", en: "+880 1700-000000" },
-      href: "tel:+8801700000000",
+      value: { bn: BRAND.contactPhone, en: BRAND.contactPhone },
+      href: BRAND.contactPhoneHref,
     },
     {
       id: "address",
       icon: MapPin,
       label: { bn: "ঠিকানা", en: "Address" },
-      value: { bn: "ঢাকা, বাংলাদেশ", en: "Dhaka, Bangladesh" },
+      value: { bn: BRAND.address.bn, en: BRAND.address.en },
       href: null,
     },
   ],

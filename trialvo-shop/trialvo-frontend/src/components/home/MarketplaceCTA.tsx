@@ -26,8 +26,8 @@ export function MarketplaceCTA() {
             </h2>
             <p className="mt-2 text-sm text-muted-foreground md:text-base">
               {language === "bn"
-                ? "ইকমার্স টেমপ্লেট ও অ্যাডমিন প্যানেল—ট্রায়াল করে কিনুন।"
-                : "Ecommerce templates and admin panels—trial first, then buy."}
+                ? "ট্রায়াল করে কিনুন—অথবা কাস্টম সফটওয়্যার, DevOps ও মেইনটেন্যান্সের জন্য যোগাযোগ করুন।"
+                : "Trial then buy—or contact us for custom software, DevOps, and maintenance."}
             </p>
           </div>
           <Button

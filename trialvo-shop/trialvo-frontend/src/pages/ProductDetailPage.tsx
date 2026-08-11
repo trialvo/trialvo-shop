@@ -5,7 +5,6 @@ import { ArrowLeft, Check, ShoppingCart, Play, Star, Award, Clock, Package, Head
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
-import DemoAccessCard from '@/components/cards/DemoAccessCard';
 import RequestTrialModal from '@/components/trial/RequestTrialModal';
 import ProductCard from '@/components/cards/ProductCard';
 import FAQ from '@/components/sections/FAQ';
@@ -298,43 +297,35 @@ const ProductDetailPage: React.FC = () => {
                   <Award className="w-5 h-5 text-primary" />
                   {t('product.features')}
                 </h2>
-                <ul className="grid sm:grid-cols-2 gap-3">
-                  {product.features[language].map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                      <Check className="w-5 h-5 text-success flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
+                <ul className="grid sm:grid-cols-2 gap-2.5">
+                  {(product.features?.[language] || []).map((feature, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-card/40 p-3 transition-colors hover:bg-muted/50"
+                    >
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                      <span className="text-sm leading-snug">{feature}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
               {/* Facilities */}
-              <div className="p-6 bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl border border-primary/10">
-                <h2 className="font-semibold text-xl mb-4">{t('product.facilities')}</h2>
-                <ul className="space-y-3">
-                  {product.facilities[language].map((facility, index) => (
-                    <li key={index} className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                        <Check className="w-4 h-4 text-primary-foreground" />
+              <div className="rounded-xl border border-primary/10 bg-gradient-to-br from-primary/5 to-accent/5 p-6">
+                <h2 className="mb-4 text-xl font-semibold">{t('product.facilities')}</h2>
+                <ul className="grid gap-3 sm:grid-cols-2">
+                  {(product.facilities?.[language] || []).map((facility, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary">
+                        <Check className="h-3.5 w-3.5 text-primary-foreground" />
                       </div>
-                      <span className="text-sm font-medium">{facility}</span>
+                      <span className="text-sm font-medium leading-snug">{facility}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             </motion.div>
           </div>
-
-          {/* Demo Access — only when CMS / deploy_config provides URLs */}
-          {demos.length > 0 && (
-            <section className="mt-12">
-              <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-                <Play className="w-6 h-6 text-primary" />
-                {language === 'bn' ? 'ডেমো অ্যাক্সেস' : 'Demo Access'}
-              </h2>
-              <DemoAccessCard demos={demos} />
-            </section>
-          )}
 
           {/* Video Section */}
           {product.videoUrl && (

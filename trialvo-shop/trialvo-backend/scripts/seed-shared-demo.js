@@ -1,10 +1,13 @@
 /**
  * Seed Option 1 demo databases (same MySQL container, separate schemas).
  * Imports myecomv2.sql + trial_v1.sql into each target DB.
+ * For techshop_demo / techshop_ecom, always runs product-3 replace-tech-catalog.js
+ * after import (or when dump is skipped) so the storefront is gadgets, not fashion.
  *
  * Usage (after infra MySQL is healthy):
  *   node scripts/seed-shared-demo.js
  *   node scripts/seed-shared-demo.js lifestyle_demo fashion_demo
+ *   node scripts/seed-shared-demo.js techshop_demo
  *
  * Prefers host `mysql` CLI; falls back to `docker exec` into trialvo-mysql.
  */
@@ -15,6 +18,8 @@ const { spawn, spawnSync } = require('child_process');
 
 const LIFESTYLE_REPO = process.env.LIFESTYLE_REPO
   || path.resolve(__dirname, '../../../products/product-1-lifestyle');
+const TECHSHOP_REPO = process.env.TECHSHOP_REPO
+  || path.resolve(__dirname, '../../../products/product-3-tech-shop');
 
 const baseCfg = {
   host: process.env.SHARED_DEMO_DB_HOST || '127.0.0.1',
@@ -84,14 +89,42 @@ async function importSqlFile(filePath, database, useDocker) {
   return importViaHostMysql(filePath, database);
 }
 
+function applyTechCatalog(database) {
+  const script = path.join(TECHSHOP_REPO, 'Back End', 'scripts', 'replace-tech-catalog.js');
+  if (!fs.existsSync(script)) {
+    console.warn(`==> ${database}: tech replace script missing at ${script}`);
+    return;
+  }
+  console.log(`==> ${database}: applying authentic tech catalog...`);
+  const r = spawnSync(
+    process.execPath,
+    [script],
+    {
+      env: {
+        ...process.env,
+        DB_HOST: baseCfg.host,
+        DB_PORT: String(baseCfg.port),
+        DB_USER: baseCfg.user,
+        DB_PASSWORD: baseCfg.password,
+        DB_NAME: database,
+      },
+      stdio: 'inherit',
+    }
+  );
+  if (r.status !== 0) {
+    throw new Error(`tech catalog replace failed for ${database}`);
+  }
+}
+
 async function seedDatabase(database, demo, trial, useDocker) {
   console.log(`\n==> Seeding ${database}`);
   const conn = await mysql.createConnection({ ...baseCfg, database });
+  let skipped = false;
   try {
     const [rows] = await conn.query('SELECT COUNT(*) AS c FROM admins');
     if (Number(rows[0]?.c) > 0) {
-      console.log(`==> ${database}: already seeded (admins present) — skip`);
-      return;
+      console.log(`==> ${database}: already seeded (admins present) — skip dump import`);
+      skipped = true;
     }
   } catch {
     // table missing — continue import
@@ -99,13 +132,20 @@ async function seedDatabase(database, demo, trial, useDocker) {
     await conn.end();
   }
 
-  console.log(`==> ${database}: importing demo dump...`);
-  await importSqlFile(demo, database, useDocker);
-  if (fs.existsSync(trial)) {
-    console.log(`==> ${database}: importing trial_v1.sql...`);
-    await importSqlFile(trial, database, useDocker);
+  if (!skipped) {
+    console.log(`==> ${database}: importing demo dump...`);
+    await importSqlFile(demo, database, useDocker);
+    if (fs.existsSync(trial)) {
+      console.log(`==> ${database}: importing trial_v1.sql...`);
+      await importSqlFile(trial, database, useDocker);
+    }
+    console.log(`✅ ${database} seeded`);
   }
-  console.log(`✅ ${database} seeded`);
+
+  // Tech shop must never keep the shared fashion dump as its storefront catalog.
+  if (database === 'techshop_demo' || database === 'techshop_ecom') {
+    applyTechCatalog(database);
+  }
 }
 
 async function main() {

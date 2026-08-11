@@ -16,6 +16,8 @@ export type ProductCardViewModel = {
   description: string;
   categoryLabel: string;
   thumbnail: string;
+  /** Card gallery — prefers API shop images (up to 4); falls back to thumbnail. */
+  images: string[];
   priceBDT: number;
   priceUSD: number;
   isTrialable: boolean;
@@ -43,6 +45,23 @@ function pickLocalizedList(
   return list.map((item) => item.trim()).filter(Boolean);
 }
 
+const CARD_GALLERY_LIMIT = 4;
+
+/** Prefer shop gallery images; fill from thumbnail; keep unique; max 4. */
+function pickCardImages(product: Product): string[] {
+  const out: string[] = [];
+  const push = (url?: string) => {
+    const trimmed = url?.trim();
+    if (!trimmed || out.includes(trimmed) || out.length >= CARD_GALLERY_LIMIT) return;
+    out.push(trimmed);
+  };
+
+  const shop = product.images?.shop || [];
+  for (const url of shop) push(url);
+  push(product.thumbnail);
+  return out;
+}
+
 /**
  * Maps API product + resolved category label into card view-model.
  * No invented ratings or fake feature copy.
@@ -60,12 +79,10 @@ export function toProductCardViewModel(
   const facilityLabels = pickLocalizedList(product.facilities, language);
   const source = featureLabels.length > 0 ? featureLabels : facilityLabels;
 
-  const features: ProductCardFeatureItem[] = source
-    .slice(0, 3)
-    .map((label, index) => ({
-      id: `api-feature-${index}`,
-      label,
-    }));
+  const features: ProductCardFeatureItem[] = source.map((label, index) => ({
+    id: `api-feature-${index}`,
+    label,
+  }));
 
   return {
     href: `/products/${product.slug}`,
@@ -73,6 +90,7 @@ export function toProductCardViewModel(
     description,
     categoryLabel: categoryLabel || product.category,
     thumbnail: product.thumbnail?.trim() || "",
+    images: pickCardImages(product),
     priceBDT: Number(product.priceBDT) || 0,
     priceUSD: Number(product.priceUSD) || 0,
     isTrialable: Boolean(product.isTrialable),

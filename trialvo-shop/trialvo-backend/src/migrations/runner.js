@@ -1,6 +1,6 @@
 const { pool } = require('../config/db');
 
-/** MySQL has no CREATE INDEX IF NOT EXISTS — ignore duplicate index errors. */
+/** MySQL has no CREATE INDEX IF NOT EXISTS — ignore duplicate / already-shaped errors. */
 function wrapMigrationClient(client) {
   return {
     async query(sql, params) {
@@ -10,7 +10,13 @@ function wrapMigrationClient(client) {
         try {
           return await client.query(rewritten, params);
         } catch (e) {
-          if (e.errno === 1061 || e.code === 'ER_DUP_KEYNAME') {
+          // 1061 duplicate key name; 1072 missing column (partial schema — caller should add col first)
+          if (
+            e.errno === 1061 ||
+            e.code === 'ER_DUP_KEYNAME' ||
+            e.errno === 1072 ||
+            e.code === 'ER_KEY_COLUMN_DOES_NOT_EXITS'
+          ) {
             return { rows: [], rowCount: 0 };
           }
           throw e;

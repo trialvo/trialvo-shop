@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# L-3.2 — Apply demo DB + trial tables into MySQL for a Lifestyle trial stack.
+# Apply demo DB + trial tables + tech catalog for Tech Shop.
 # Usage:
 #   ./deploy/seed-demo-db.sh [mysql_host] [mysql_user] [mysql_password] [database]
 set -euo pipefail
@@ -19,9 +19,10 @@ echo "==> Creating database $DB (if needed)"
 DEMO="$ROOT/Back End/db backup/myecomv2.sql"
 TRIAL="$ROOT/Back End/scripts/trial_v1.sql"
 ADMIN_SEED="$ROOT/Back End/scripts/trial_admin_seed.sql"
+TECH_REPLACE="$ROOT/Back End/scripts/replace-tech-catalog.js"
 
 if [[ -f "$DEMO" ]]; then
-  echo "==> Importing myecomv2 demo dump (may take a while)"
+  echo "==> Importing myecomv2 schema/dump (base)"
   "${MYSQL[@]}" "$DB" < "$DEMO"
 else
   echo "WARN: demo dump missing at $DEMO — skipping"
@@ -32,9 +33,15 @@ if [[ -f "$TRIAL" ]]; then
   "${MYSQL[@]}" "$DB" < "$TRIAL"
 fi
 
+if [[ -f "$TECH_REPLACE" ]]; then
+  echo "==> Replacing catalog with authentic tech products"
+  DB_HOST="$HOST" DB_PORT="$PORT" DB_USER="$USER" DB_PASSWORD="$PASS" DB_NAME="$DB" \
+    node "$TECH_REPLACE"
+fi
+
 if [[ -f "$ADMIN_SEED" ]]; then
   echo "==> Applying trial ADMIN seed"
   "${MYSQL[@]}" "$DB" < "$ADMIN_SEED"
 fi
 
-echo "Done. Demo + trial schema ready on $HOST/$DB"
+echo "Done. Tech Shop demo + trial schema ready on $HOST/$DB"

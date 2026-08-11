@@ -65,7 +65,7 @@ export function ProductCard({
         aria-label={card.title}
       >
         <ProductCardMedia
-          imageSrc={card.thumbnail}
+          images={card.images}
           imageAlt={card.title}
           badges={card.badges}
           language={language}

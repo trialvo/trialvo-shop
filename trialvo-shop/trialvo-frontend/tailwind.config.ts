@@ -14,11 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        // Fiverr uses Macan (proprietary). Figtree is the open lookalike.
-        bangla: ['Hind Siliguri', 'Figtree', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+        // Bangla-capable fonts first — Figtree has no Bengali glyphs/shaping.
+        bangla: ['Noto Sans Bengali', 'Hind Siliguri', 'Figtree', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
         english: ['Figtree', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
-        display: ['Figtree', 'Hind Siliguri', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
-        sans: ['Figtree', 'Hind Siliguri', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+        display: ['Noto Sans Bengali', 'Hind Siliguri', 'Figtree', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+        sans: ['Noto Sans Bengali', 'Hind Siliguri', 'Figtree', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

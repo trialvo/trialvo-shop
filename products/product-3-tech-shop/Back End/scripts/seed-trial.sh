@@ -14,6 +14,7 @@ DB_HOST="${DB_HOST:-db}"
 DB_NAME="${DB_NAME:-ecom}"
 MAIN_SQL="/usr/src/app/db backup/myecomv2.sql"
 TRIAL_SQL="/usr/src/app/scripts/trial_v1.sql"
+TECH_REPLACE="/usr/src/app/scripts/replace-tech-catalog.js"
 
 echo "[seed] waiting for MySQL at ${DB_HOST}..."
 until mysql -h "$DB_HOST" -uroot -p"$DB_ROOT_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; do
@@ -29,9 +30,20 @@ if [ "$TABLES" -eq 0 ]; then
   mysql -h "$DB_HOST" -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" < "$MAIN_SQL"
   # trial_v1.sql creates the license_state table; tolerate if already present.
   mysql -h "$DB_HOST" -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" < "$TRIAL_SQL" 2>/dev/null || true
+  echo "[seed] replacing fashion catalog with tech products..."
+  DB_HOST="$DB_HOST" DB_NAME="$DB_NAME" DB_USER="root" DB_PASSWORD="$DB_ROOT_PASSWORD" \
+    node "$TECH_REPLACE"
   echo "[seed] done"
 else
-  echo "[seed] database already has ${TABLES} tables; skipping"
+  echo "[seed] database already has ${TABLES} tables; skipping full import"
+  # If an old fashion dump is present, swap catalog to tech once.
+  FASHION_LEFT=$(mysql -h "$DB_HOST" -uroot -p"$DB_ROOT_PASSWORD" -N "$DB_NAME" -e \
+    "SELECT COUNT(*) FROM main_categories WHERE name='Fashion'" 2>/dev/null || echo 0)
+  if [ "${FASHION_LEFT:-0}" -gt 0 ] && [ -f "$TECH_REPLACE" ]; then
+    echo "[seed] fashion catalog detected — applying tech catalog replace..."
+    DB_HOST="$DB_HOST" DB_NAME="$DB_NAME" DB_USER="root" DB_PASSWORD="$DB_ROOT_PASSWORD" \
+      node "$TECH_REPLACE"
+  fi
 fi
 
 # Always upsert the Trialvo-issued admin so the emailed credentials actually work.
