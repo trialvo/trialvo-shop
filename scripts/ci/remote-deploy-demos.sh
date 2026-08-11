@@ -15,6 +15,7 @@ DEPLOY_INFRA="${DEPLOY_INFRA:-0}"
 
 if [[ -f "$ROOT/demos-deploy.tgz" ]]; then
   echo "=== Extract demos bundle ==="
+  rm -rf "$ROOT/trialvo-shop/deploy/shared-demo" "$ROOT/deploy/shared-demo"
   tar -xzf "$ROOT/demos-deploy.tgz" -C "$ROOT"
   chmod +x "$ROOT/scripts/ci/"*.sh 2>/dev/null || true
   chmod -R u+w "$ROOT/trialvo-shop/deploy/shared-demo" "$ROOT/deploy/shared-demo" 2>/dev/null || true
@@ -55,6 +56,13 @@ if [[ -f "$SHARED_COMPOSE_DIR/docker-compose.vps.yml" ]]; then
 fi
 
 echo "Compose services: $($COMPOSE config --services | tr '\n' ' ')"
+
+if grep -q 'combobasket-api:' "$SHARED_COMPOSE_DIR/docker-compose.yml" 2>/dev/null; then
+  if [[ "$DEPLOY_COMBO" != "1" ]]; then
+    echo "Combo services in compose — enabling DEPLOY_COMBO"
+    DEPLOY_COMBO=1
+  fi
+fi
 
 if [[ "$DEPLOY_LIFESTYLE" == "1" ]]; then
   bash "$BUILD_SCRIPT" lifestyle
