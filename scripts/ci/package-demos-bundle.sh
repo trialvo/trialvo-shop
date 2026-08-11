@@ -31,7 +31,7 @@ if [[ -z "$SHARED_DEMO_SRC" ]]; then
   echo "ERROR: shared-demo compose not found"
   exit 1
 fi
-rsync -a "$SHARED_DEMO_SRC" "$STAGE/trialvo-shop/deploy/shared-demo"
+rsync -a "$SHARED_DEMO_SRC/" "$STAGE/trialvo-shop/deploy/shared-demo/"
 
 cp "$ROOT/scripts/ci/lib.sh" "$STAGE/scripts/ci/"
 cp "$ROOT/scripts/ci/build-demo-images.sh" "$STAGE/scripts/ci/"

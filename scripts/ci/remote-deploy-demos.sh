@@ -15,10 +15,13 @@ DEPLOY_INFRA="${DEPLOY_INFRA:-0}"
 
 if [[ -f "$ROOT/demos-deploy.tgz" ]]; then
   echo "=== Extract demos bundle ==="
-  rm -rf "$ROOT/trialvo-shop/deploy/shared-demo" "$ROOT/deploy/shared-demo"
   tar -xzf "$ROOT/demos-deploy.tgz" -C "$ROOT"
   chmod +x "$ROOT/scripts/ci/"*.sh 2>/dev/null || true
-  chmod -R u+w "$ROOT/trialvo-shop/deploy/shared-demo" "$ROOT/deploy/shared-demo" 2>/dev/null || true
+  chmod -R u+w "$ROOT/trialvo-shop/deploy" "$ROOT/deploy" 2>/dev/null || true
+  # Refresh shared-demo overlay (safe even when full extract already ran)
+  tar -xzf "$ROOT/demos-deploy.tgz" -C "$ROOT" \
+    trialvo-shop/deploy/shared-demo/docker-compose.yml \
+    trialvo-shop/deploy/shared-demo/docker-compose.vps.yml 2>/dev/null || true
 fi
 
 cd "$ROOT"
@@ -31,6 +34,10 @@ elif [[ -f "$ROOT/deploy/shared-demo/docker-compose.yml" ]]; then
   SHARED_COMPOSE_DIR="$ROOT/deploy/shared-demo"
 else
   echo "ERROR: shared-demo docker-compose.yml not found under trialvo-shop/ or deploy/"
+  if [[ -f "$ROOT/demos-deploy.tgz" ]]; then
+    echo "Tarball shared-demo paths:"
+    tar -tzf "$ROOT/demos-deploy.tgz" | grep -E 'shared-demo|docker-compose' | head -30 || true
+  fi
   exit 1
 fi
 
