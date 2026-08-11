@@ -28,7 +28,12 @@ export function getImageUrl(imagePath: string | null | undefined): string {
   }
 
   const relative = cleaned.startsWith("/") ? cleaned : `/${cleaned}`;
-  if (!IMAGE_BASE_URL) return relative;
+  if (!IMAGE_BASE_URL) {
+    if (relative.startsWith("/uploads/")) {
+      return `/api/uploads${relative.slice("/uploads".length)}`;
+    }
+    return relative;
+  }
 
   const base = IMAGE_BASE_URL.replace(/\/$/, "");
   return `${base}${relative}`;
