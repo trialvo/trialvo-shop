@@ -45,6 +45,12 @@ if [[ "$DEPLOY_BACKEND" == "1" ]]; then
   $COMPOSE build --no-cache backend
   $COMPOSE up -d --no-deps backend
   sleep 8
+  echo "=== Run catalog seeds (Combo Basket + cleanup) ==="
+  if ! grep -q comboBasketProductSeed trialvo-backend/src/seeds/runner.js; then
+    echo "ERROR: trialvo-backend bundle missing comboBasketProductSeed — aborting"
+    exit 1
+  fi
+  $COMPOSE exec -T backend node -e "require('./src/seeds/runner').runSeeds().then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1)})"
 fi
 
 if [[ -f nginx/host-live-old-vps.conf ]]; then
