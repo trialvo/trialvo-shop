@@ -17,6 +17,7 @@ const nextConfig = {
       { protocol: "http", hostname: "localhost", pathname: "/**" },
       { protocol: "http", hostname: "127.0.0.1", pathname: "/**" },
       { protocol: "http", hostname: "46.250.224.125", pathname: "/**" },
+      { protocol: "http", hostname: "217.216.108.119", pathname: "/**" },
     ],
   },
   output: "standalone",

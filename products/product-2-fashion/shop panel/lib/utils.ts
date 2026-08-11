@@ -151,17 +151,23 @@ import {
 function resolveImageBase(): string {
   if (typeof window !== "undefined") {
     applyShopRuntimeConfig();
-    const fromWindow = window.__SHOP_CONFIG__?.IMAGE_URL?.trim();
-    if (fromWindow) return fromWindow.replace(/\/+$/, "");
+    const cfg = window.__SHOP_CONFIG__;
+    if (cfg && "IMAGE_URL" in cfg) {
+      return String(cfg.IMAGE_URL ?? "").trim().replace(/\/+$/, "");
+    }
   }
 
-  // Dynamic lookup survives Next client-bundle inlining better than process.env.IMAGE_URL
   const env = typeof process !== "undefined" ? process.env : undefined;
-  const fromEnv = (env?.IMAGE_URL || env?.NEXT_PUBLIC_IMAGE_URL || "").trim();
-  if (fromEnv) return fromEnv.replace(/\/+$/, "");
+  if (env?.IMAGE_URL !== undefined && env.IMAGE_URL !== null) {
+    return String(env.IMAGE_URL).trim().replace(/\/+$/, "");
+  }
+  const pub = env?.NEXT_PUBLIC_IMAGE_URL;
+  if (pub !== undefined && pub !== null) {
+    return String(pub).trim().replace(/\/+$/, "");
+  }
 
-  const compiled = (IMAGE_URL || API_URL || "").trim();
-  return compiled.replace(/\/+$/, "");
+  // Never fall back to API_URL — empty IMAGE_URL means same-origin /uploads proxy.
+  return (IMAGE_URL || "").trim().replace(/\/+$/, "");
 }
 
 /** Strip absolute CDN/API origins down to `/uploads/...` (or other app path). */
