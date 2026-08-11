@@ -111,20 +111,35 @@ if [[ "$DEPLOY_INFRA" == "1" && "$DEPLOY_LIFESTYLE" == "0" && "$DEPLOY_FASHION" 
   $COMPOSE up -d
 fi
 
-# Recreate demo shops when VPS overlay changes IMAGE_URL / public URLs.
+# Recreate demo stacks when VPS overlay is present (public URLs + same-origin images).
 if [[ -f "$SHARED_COMPOSE_DIR/docker-compose.vps.yml" ]]; then
-  echo "=== Apply VPS demo URL overlay (recreate shops) ==="
+  echo "=== Rebuild all demo shops (uploads proxy in next.config) ==="
+  bash "$BUILD_SCRIPT" all
+  echo "=== Apply VPS demo URL overlay ==="
   $COMPOSE up -d --force-recreate \
-    lifestyle-shop fashion-shop techshop-shop combobasket-shop \
-    lifestyle-api fashion-api techshop-api combobasket-api 2>/dev/null || \
-  $COMPOSE up -d --force-recreate \
+    lifestyle-api fashion-api techshop-api combobasket-api \
+    lifestyle-admin fashion-admin techshop-admin combobasket-admin \
     lifestyle-shop fashion-shop techshop-shop combobasket-shop
+  sleep 20
+
+  if docker ps --format '{{.Names}}' | grep -qx lifestyle-demo-api; then
+    echo "=== Sync demo uploads to fashion/tech volumes (if needed) ==="
+    TMP=/tmp/lifestyle-uploads-sync
+    rm -rf "$TMP"
+    mkdir -p "$TMP"
+    docker cp lifestyle-demo-api:/usr/src/app/uploads/. "$TMP/" 2>/dev/null || true
+    if find "$TMP" -type f 2>/dev/null | head -1 | grep -q .; then
+      docker cp "$TMP/." fashion-demo-api:/usr/src/app/uploads/ 2>/dev/null || true
+      docker cp "$TMP/." techshop-demo-api:/usr/src/app/uploads/ 2>/dev/null || true
+    fi
+    rm -rf "$TMP"
+  fi
 fi
 
 echo "=== Smoke demos ==="
-http_smoke "http://127.0.0.1:5100/" "lifestyle-shop"
-http_smoke "http://127.0.0.1:5101/" "fashion-shop"
-http_smoke "http://127.0.0.1:5102/" "tech-shop"
+http_smoke "http://127.0.0.1:5100/" "lifestyle-shop" 6
+http_smoke "http://127.0.0.1:5101/" "fashion-shop" 6
+http_smoke "http://127.0.0.1:5102/" "tech-shop" 6
 if [[ "$DEPLOY_COMBO" == "1" ]] || docker ps --format '{{.Names}}' | grep -q combobasket-demo-shop; then
   http_smoke "http://127.0.0.1:5103/" "combo-shop"
   for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
