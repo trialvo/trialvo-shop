@@ -154,10 +154,6 @@ jobs:
           script: |
             set -euo pipefail
             cd ${{ env.OLD_VPS_DEPLOY_DIR }}
-            if [[ -f shop-deploy.tgz ]]; then
-              tar -xzf shop-deploy.tgz
-              chmod +x scripts/ci/*.sh 2>/dev/null || true
-            fi
             export DEPLOY_FRONTEND=${{ needs.detect.outputs.shop_frontend }}
             export DEPLOY_BACKEND=${{ needs.detect.outputs.shop_backend }}
             bash scripts/ci/remote-deploy-shop.sh

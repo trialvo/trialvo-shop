@@ -18,6 +18,8 @@ docker ps --filter name=payvault-app --format '{{.Names}} {{.Status}}'
 
 if [[ -f shop-deploy.tgz ]]; then
   echo "=== Extract shop bundle ==="
+  # Stale nested layout from broken rsync bundles (trialvo-backend/trialvo-backend).
+  rm -rf trialvo-backend/trialvo-backend trialvo-frontend/trialvo-frontend
   if [[ -d trialvo-backend ]] && [[ ! -w trialvo-backend ]]; then
     sudo rm -rf trialvo-backend
   fi
@@ -27,6 +29,10 @@ if [[ -f shop-deploy.tgz ]]; then
   tar -xzf shop-deploy.tgz -C "$DEPLOY_DIR"
   chmod +x scripts/ci/*.sh 2>/dev/null || true
   chmod -R u+w trialvo-backend trialvo-frontend deploy 2>/dev/null || true
+  if ! grep -q comboBasketProductSeed trialvo-backend/src/seeds/runner.js; then
+    echo "ERROR: extracted shop bundle missing comboBasketProductSeed in runner.js"
+    exit 1
+  fi
 fi
 
 COMPOSE="docker compose -f docker-compose.prod.yml"

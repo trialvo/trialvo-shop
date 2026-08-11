@@ -9,14 +9,20 @@ OUT="${1:-shop-deploy.tgz}"
 STAGE="$ROOT/.ci-staging-shop"
 
 rm -rf "$STAGE"
-mkdir -p "$STAGE/scripts/ci"
+mkdir -p "$STAGE/scripts/ci" "$STAGE/trialvo-backend" "$STAGE/trialvo-frontend"
 
+# Trailing slashes are required: without them rsync nests as trialvo-backend/trialvo-backend.
 rsync -a \
   --exclude node_modules --exclude dist --exclude .git \
-  "$BACKEND_SRC" "$STAGE/trialvo-backend"
+  "$BACKEND_SRC/" "$STAGE/trialvo-backend/"
 rsync -a \
   --exclude node_modules --exclude dist --exclude .git \
-  "$FRONTEND_SRC" "$STAGE/trialvo-frontend"
+  "$FRONTEND_SRC/" "$STAGE/trialvo-frontend/"
+
+if [[ ! -f "$STAGE/trialvo-backend/src/seeds/runner.js" ]]; then
+  echo "ERROR: staged bundle layout wrong — trialvo-backend/src/seeds/runner.js missing"
+  exit 1
+fi
 
 cp "$SHOP_COMPOSE_DIR/docker-compose.prod.yml" "$STAGE/"
 if [[ -f "$SHOP_COMPOSE_DIR/docker-compose.shared-demo-remote.yml" ]]; then
