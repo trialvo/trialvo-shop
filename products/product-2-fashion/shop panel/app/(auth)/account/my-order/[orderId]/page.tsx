@@ -7,7 +7,7 @@ type Props = {
   params: { orderId: string };
 };
 
-const title = "My Order | Graduate";
+const title = "My Order | Vellora";
 const description = "View your order invoice details.";
 
 export const generateMetadata = async ({ params }: Props): Promise<Metadata> =>

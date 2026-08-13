@@ -14,11 +14,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const shopUrl = getSiteUrl();
 
   return buildMetadata({
-    title: `${title} — Checkout | Graduate`,
+    title: `${title} — Checkout | Vellora`,
     description: `Complete your order for ${title}. Secure checkout with multiple payment options.`,
     canonical: `${shopUrl}/single-order-page/${normalizedSlug}/${id}/checkout`,
     robots: "noindex, nofollow",
-    ogTitle: `${title} — Checkout | Graduate`,
+    ogTitle: `${title} — Checkout | Vellora`,
     ogDescription: `Checkout for ${title}`,
   });
 }

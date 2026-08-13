@@ -3,9 +3,9 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "Offers | Graduate";
+const title = "Offers | Vellora";
 const description =
-  "Discover the latest bulk offers and combo deals at Graduate. Save more with quantity discounts and curated bundle pricing.";
+  "Discover the latest bulk offers and combo deals at Vellora. Save more with quantity discounts and curated bundle pricing.";
 
 export const metadata: Metadata = buildMetadata({
   title,
@@ -13,7 +13,7 @@ export const metadata: Metadata = buildMetadata({
   canonical: "/offers",
   ogTitle: title,
   ogDescription:
-    "Explore exclusive bulk and combo offers from Graduate with transparent savings and easy add-to-cart shopping.",
+    "Explore exclusive bulk and combo offers from Vellora with transparent savings and easy add-to-cart shopping.",
   ogImage: "/og-offers.jpg",
 });
 

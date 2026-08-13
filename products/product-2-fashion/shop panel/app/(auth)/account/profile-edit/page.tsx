@@ -3,7 +3,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "Edit Profile | Graduate";
+const title = "Edit Profile | Vellora";
 const description = "Update your personal profile information.";
 
 export const metadata: Metadata = buildMetadata({

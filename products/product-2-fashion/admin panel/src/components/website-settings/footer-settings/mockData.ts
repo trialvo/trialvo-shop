@@ -9,7 +9,7 @@ export const INITIAL_FOOTER_SETTINGS: FooterSettings = {
   branding: {
     enabled: true,
     logoUrl: "/logo.png",
-    brandName: "Graduate Shop",
+    brandName: "Vellora",
     tagline: "Quality products, fast delivery, trusted service.",
   },
   columns: [
@@ -87,7 +87,7 @@ export const INITIAL_FOOTER_SETTINGS: FooterSettings = {
       priority: "High",
       contactAddress: "House 29, Road 05, Sector 11, Uttara, Dhaka 1230",
       contactPhones: ["+8801970680283"],
-      contactEmails: ["graduatefashion2020@gmail.com"],
+      contactEmails: ["support@vellora.demo"],
     },
     {
       id: "col-4",
@@ -126,7 +126,7 @@ export const INITIAL_FOOTER_SETTINGS: FooterSettings = {
   },
   legal: {
     enabled: true,
-    copyrightText: "© {year} Graduate Shop. All rights reserved.",
+    copyrightText: "© {year} Vellora. All rights reserved.",
     showPolicies: true,
     policies: [
       {

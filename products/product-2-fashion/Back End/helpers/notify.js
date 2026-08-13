@@ -71,7 +71,7 @@ async function buildTransporter(conn) {
     return null;
   }
 
-  const fromName = cfg.MAIL_FROM_NAME || cfg.EMAIL_FROM_NAME || 'Graduate Fashion';
+  const fromName = cfg.MAIL_FROM_NAME || cfg.EMAIL_FROM_NAME || 'Vellora';
   const fromAddr = cfg.MAIL_FROM     || cfg.EMAIL_FROM     || user;
 
   return {
@@ -235,9 +235,9 @@ function sendAdminOrderNotification(connection, orderId, eventType = 'new_order'
       }
 
       const subject  = eventType === 'new_order'
-        ? `🛒 New Order #${orderId} — Graduate Fashion`
+        ? `🛒 New Order #${orderId} — Vellora`
         : eventType === 'order_assigned'
-        ? `📋 Order #${orderId} Assigned to You — Graduate Fashion`
+        ? `📋 Order #${orderId} Assigned to You — Vellora`
         : `📦 Order #${orderId} Status Updated to "${order.order_status}"`;
       const bodyText = eventType === 'new_order'
         ? `A new order (#${orderId}) has been placed by ${order.customer_name || 'a customer'} for BDT ${order.grand_total}. Please review and process it.`
@@ -321,7 +321,7 @@ function sendAdminOrderNotification(connection, orderId, eventType = 'new_order'
                   </a>
                 </p>
                 <hr style="margin-top:24px;"/>
-                <p style="font-size:11px;color:#999;">Graduate Fashion Admin System</p>
+                <p style="font-size:11px;color:#999;">Vellora Admin System</p>
               </div>`;
             await mailerInfo.transporter.sendMail({
               from: mailerInfo.from, to: admin.email, subject, html,
@@ -339,7 +339,7 @@ function sendAdminOrderNotification(connection, orderId, eventType = 'new_order'
         if (global.sms && admin.want_sms && admin.phone) {
           let smsStatus = 'sent'; let smsErr = null;
           try {
-            const smsText = `[Graduate Fashion] ${bodyText}`;
+            const smsText = `[Vellora] ${bodyText}`;
             await sendSMS(conn, admin.phone, smsText);
             console.log(`[Notify] ✅ Admin SMS sent to #${admin.id} (${admin.phone})`);
           } catch (e) {
@@ -404,7 +404,7 @@ function sendOrderAssignmentNotification(adminId, orderId) {
         return;
       }
 
-      const subject  = `📋 Order #${orderId} Assigned to You — Graduate Fashion`;
+      const subject  = `📋 Order #${orderId} Assigned to You — Vellora`;
       const bodyText = `Order #${orderId} has been assigned to you. Please log in to the admin panel and process it at your earliest convenience.`;
 
       // 3. Fetch target admin + per-admin notification perms
@@ -444,7 +444,7 @@ function sendOrderAssignmentNotification(adminId, orderId) {
                   </a>
                 </p>
                 <hr style="margin-top:24px;"/>
-                <p style="font-size:11px;color:#999;">Graduate Fashion Admin System</p>
+                <p style="font-size:11px;color:#999;">Vellora Admin System</p>
               </div>`;
             await mailerInfo.transporter.sendMail({ from: mailerInfo.from, to: admin.email, subject, html });
             console.log(`[Notify] ✅ Assignment email → #${admin.id} (${admin.email})`);
@@ -461,7 +461,7 @@ function sendOrderAssignmentNotification(adminId, orderId) {
       if (global.sms && admin.want_sms && admin.phone) {
         let smsStatus = 'sent'; let smsErr = null;
         try {
-          await sendSMS(conn, admin.phone, `[Graduate Fashion] ${bodyText}`);
+          await sendSMS(conn, admin.phone, `[Vellora] ${bodyText}`);
           console.log(`[Notify] ✅ Assignment SMS → #${admin.id} (${admin.phone})`);
         } catch (e) {
           smsStatus = 'failed'; smsErr = e.message;
@@ -548,7 +548,7 @@ function sendPersonalNotification(connection, adminId, subject, bodyText, extraD
                 <h2 style="color:#111;">${subject}</h2>
                 <p>Hi <strong>${admin.admin_name}</strong>,</p>
                 <p>${bodyText}</p>
-                <hr/><p style="font-size:11px;color:#999;">Graduate Fashion Admin System</p>
+                <hr/><p style="font-size:11px;color:#999;">Vellora Admin System</p>
               </div>`;
             await mailerInfo.transporter.sendMail({
               from: mailerInfo.from, to: admin.email, subject, html,
@@ -567,7 +567,7 @@ function sendPersonalNotification(connection, adminId, subject, bodyText, extraD
       if (global.sms && admin.want_sms && admin.phone) {
         let smsSt = 'sent'; let smsEr = null;
         try {
-          await sendSMS(conn, admin.phone, `[Graduate Fashion] ${bodyText}`);
+          await sendSMS(conn, admin.phone, `[Vellora] ${bodyText}`);
           console.log(`[Notify] Personal SMS sent to admin #${adminId}`);
         } catch (e) {
           smsSt = 'failed'; smsEr = e.message;
@@ -870,7 +870,7 @@ function sendAdminContactNotification(connection, messageId, eventType = 'contac
         return;
       }
 
-      const subject  = `💬 New Contact Message Assigned #${messageId} — Graduate Fashion`;
+      const subject  = `💬 New Contact Message Assigned #${messageId} — Vellora`;
       const bodyText = `A contact message (Subject: "${msg.subject || 'N/A'}") has been assigned to you. Please log in to the admin panel to review and respond.`;
 
       // ── Push (fire first — instantaneous) ─────────────────────────────────
@@ -896,7 +896,7 @@ function sendAdminContactNotification(connection, messageId, eventType = 'contac
                 <p>Hi <strong>${admin.admin_name}</strong>,</p>
                 <p>${bodyText}</p>
                 <hr style="margin-top:24px;"/>
-                <p style="font-size:11px;color:#999;">Graduate Fashion Admin System</p>
+                <p style="font-size:11px;color:#999;">Vellora Admin System</p>
               </div>`;
             await mailerInfo.transporter.sendMail({
               from: mailerInfo.from, to: admin.email, subject, html,
@@ -915,7 +915,7 @@ function sendAdminContactNotification(connection, messageId, eventType = 'contac
       if (global.sms && admin.want_sms && admin.phone) {
         let smsSt = 'sent'; let smsEr = null;
         try {
-          await sendSMS(conn, admin.phone, `[Graduate Fashion] ${bodyText}`);
+          await sendSMS(conn, admin.phone, `[Vellora] ${bodyText}`);
           console.log(`[Notify] ✅ Contact SMS sent to admin #${admin.id}`);
         } catch (e) {
           smsSt = 'failed'; smsEr = e.message;
@@ -990,7 +990,7 @@ function sendAdminReportNotification(connection, reportId, eventType = 'report_a
         return;
       }
 
-      const subject  = `🚩 Report #${reportId} Assigned to You — Graduate Fashion`;
+      const subject  = `🚩 Report #${reportId} Assigned to You — Vellora`;
       const bodyText = `A customer report (Subject: "${report.subject || 'N/A'}", Category: ${report.category || 'general'}) has been assigned to you. Please log in to the admin panel to review and respond.`;
 
       // ── Push (fire FIRST — instant delivery, don't block on email/SMS) ────
@@ -1025,7 +1025,7 @@ function sendAdminReportNotification(connection, reportId, eventType = 'report_a
                   </a>
                 </p>
                 <hr style="margin-top:24px;"/>
-                <p style="font-size:11px;color:#999;">Graduate Fashion Admin System</p>
+                <p style="font-size:11px;color:#999;">Vellora Admin System</p>
               </div>`;
             await mailerInfo.transporter.sendMail({
               from: mailerInfo.from, to: admin.email, subject, html,
@@ -1044,7 +1044,7 @@ function sendAdminReportNotification(connection, reportId, eventType = 'report_a
       if (global.sms && admin.want_sms && admin.phone) {
         let smsSt = 'sent'; let smsEr = null;
         try {
-          await sendSMS(conn, admin.phone, `[Graduate Fashion] ${bodyText}`);
+          await sendSMS(conn, admin.phone, `[Vellora] ${bodyText}`);
           console.log(`[Notify] ✅ Report SMS sent to admin #${admin.id}`);
         } catch (e) {
           smsSt = 'failed'; smsEr = e.message;

@@ -1,6 +1,6 @@
 # Google Tag Manager — Configuration Guide
 **Container:** `GTM-WQDNF2TP`
-**Project:** Graduate Fashion Shop
+**Project:** Vellora
 
 ---
 

@@ -3,7 +3,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "Compare Products | Graduate";
+const title = "Compare Products | Vellora";
 const description =
   "Compare two products side-by-side and use a budget planner to evaluate pricing, stock, and discount value before you buy.";
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = buildMetadata({
   canonical: "/compare",
   ogTitle: title,
   ogDescription:
-    "Use Graduate's product comparison and budget tools to choose smarter across pricing, variations, delivery, and savings.",
+    "Use Vellora's product comparison and budget tools to choose smarter across pricing, variations, delivery, and savings.",
   ogImage: "/og-compare.jpg",
 });
 

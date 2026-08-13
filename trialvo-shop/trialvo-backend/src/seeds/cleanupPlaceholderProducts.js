@@ -1,6 +1,6 @@
 /**
- * Keep only the real catalog products visible.
- * Placeholder Unsplash samples are deactivated (not hard-deleted — may have FK refs).
+ * Keep only the real catalog products.
+ * Hard-deletes leftover demo/placeholder rows (no longer seeded).
  */
 const REAL_SLUGS = [
   'lifestyle-ecommerce',
@@ -15,14 +15,13 @@ module.exports = {
   async run(client) {
     const placeholders = REAL_SLUGS.map((_, i) => `$${i + 1}`).join(', ');
     const { rowCount } = await client.query(
-      `UPDATE products
-       SET is_active = 0, is_trialable = 0, is_featured = 0, updated_at = NOW()
-       WHERE slug NOT IN (${placeholders})
-         AND (is_active = 1 OR is_trialable = 1 OR is_featured = 1)`,
+      `DELETE FROM products WHERE slug NOT IN (${placeholders})`,
       REAL_SLUGS
     );
     if (rowCount > 0) {
-      console.log(`    🧹 Deactivated ${rowCount} placeholder product(s); active catalog = ${REAL_SLUGS.join(', ')}`);
+      console.log(
+        `    🧹 Removed ${rowCount} demo/placeholder product(s); catalog = ${REAL_SLUGS.join(', ')}`
+      );
     } else {
       console.log(`    🧹 Catalog already clean (${REAL_SLUGS.length} real products)`);
     }

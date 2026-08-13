@@ -24,6 +24,7 @@ export async function fetchPublicPolicies(): Promise<PolicySummary[]> {
   try {
     const res = await fetch(`${API_BASE}/policies`, {
       next: { revalidate: 60 }, // revalidate every 60 seconds in production
+      signal: AbortSignal.timeout(8_000),
     });
     if (!res.ok) return [];
     const json = await res.json();

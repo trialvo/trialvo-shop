@@ -245,7 +245,7 @@ export default function SingleOrderPageClient({ slug, id }: Props) {
           <div className="flex h-17.5 items-center">
             <div className="overflow-hidden mr-8.25">
               <Link href="/" className="flex items-center gap-2 focus:outline-none" aria-label="Go to homepage">
-                <img src="/logo-default.svg" alt="Graduate" width={140} height={36} className="h-11.25 w-36.25 object-contain" />
+                <img src="/logo-default.svg" alt="Vellora" width={140} height={36} className="h-11.25 w-36.25 object-contain" />
               </Link>
             </div>
           </div>

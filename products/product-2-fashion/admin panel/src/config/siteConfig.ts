@@ -117,6 +117,6 @@ export const activeUiTheme: AppUiTheme = uiTheme;
 /** LocalStorage keys used across the app (keep centralized). */
 export const storageKeys = {
   theme: "theme",
-  /** Bumped to drop stale product-specific names (Trialvo / Graduate Fashion). */
+  /** Bumped to drop stale product-specific names (Trialvo / Vellora). */
   branding: "app_branding_v2",
 } as const;

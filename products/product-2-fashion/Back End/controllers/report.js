@@ -36,7 +36,7 @@ async function buildTransporter(conn) {
   const port = Number(cfg.MAIL_PORT || cfg.EMAIL_PORT || 587);
   const secure = String(cfg.MAIL_SECURE || cfg.EMAIL_SECURE || (port === 465 ? 'true' : 'false')) === 'true';
   if (!host || !user || !pass) return null;
-  const fromName = cfg.MAIL_FROM_NAME || cfg.EMAIL_FROM_NAME || 'Graduate Fashion';
+  const fromName = cfg.MAIL_FROM_NAME || cfg.EMAIL_FROM_NAME || 'Vellora';
   const fromAddr = cfg.MAIL_FROM || cfg.EMAIL_FROM || user;
   return {
     transporter: nodemailer.createTransport({ host, port, secure, auth: { user, pass } }),
@@ -541,7 +541,7 @@ exports.adminReplyReport = reportUploadApi(
     if (wantEmail && report.reporter_email && mailerInfo) {
       let emailSt = 'sent'; let emailEr = null;
       try {
-        const subject = `Re: Your Report #${reportId} — Graduate Fashion`;
+        const subject = `Re: Your Report #${reportId} — Vellora`;
 
         // Build inline image CIDs for email
         const attachments = [];
@@ -565,7 +565,7 @@ exports.adminReplyReport = reportUploadApi(
             ${inlineHtml.length ? '<p style="font-size:12px;color:#666;">Attachments:</p>' + inlineHtml.join('') : ''}
             <p>You can check your report status anytime using your tracking token.</p>
             <hr style="margin-top:24px;"/>
-            <p style="font-size:11px;color:#999;">Graduate Fashion · Automated reply from support team</p>
+            <p style="font-size:11px;color:#999;">Vellora · Automated reply from support team</p>
           </div>`;
         await mailerInfo.transporter.sendMail({
           from: mailerInfo.from, to: report.reporter_email, subject, html, attachments,
@@ -582,7 +582,7 @@ exports.adminReplyReport = reportUploadApi(
     if (wantSms && report.reporter_phone) {
       let smsSt = 'sent'; let smsEr = null;
       try {
-        const smsText = `[Graduate Fashion] Re: Report #${reportId}: ${reply_text.substring(0, 140)}`;
+        const smsText = `[Vellora] Re: Report #${reportId}: ${reply_text.substring(0, 140)}`;
         await sendSMS(connection, report.reporter_phone, smsText);
         console.log(`[Report] ✅ Reply SMS sent to ${report.reporter_phone} for report #${reportId}`);
       } catch (e) {

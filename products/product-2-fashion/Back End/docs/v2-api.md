@@ -3558,7 +3558,7 @@ Added `'order_assigned'` to the subject/bodyText builder in `sendAdminOrderNotif
 
 | Event Type | Subject | Body |
 |---|---|---|
-| `order_assigned` | `📋 Order #X Assigned to You — Graduate Fashion` | `Order #X has been assigned to you. Please log in to process it.` |
+| `order_assigned` | `📋 Order #X Assigned to You — Vellora` | `Order #X has been assigned to you. Please log in to process it.` |
 
 ### Target Resolution
 

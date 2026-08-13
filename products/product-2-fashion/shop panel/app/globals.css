@@ -63,37 +63,43 @@ html {
 .overlay-scrollbar {
   position: fixed;
   top: 0;
-  right: 4px;
-  width: 6px;
+  right: 0;
+  /* Wide invisible hit zone on the right edge only */
+  width: 24px;
   height: 100vh;
   z-index: 9999;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms ease;
+  transition: opacity 160ms ease;
 }
 
-body:hover .overlay-scrollbar,
-html.is-scrolling .overlay-scrollbar {
+/* Reveal only when cursor is on the right edge (or while dragging) */
+.overlay-scrollbar[data-visible="true"],
+.overlay-scrollbar[data-dragging="true"] {
   opacity: 1;
-}
-
-body:hover .overlay-scrollbar[data-visible="false"],
-html.is-scrolling .overlay-scrollbar[data-visible="false"] {
-  opacity: 0;
+  pointer-events: auto;
 }
 
 .overlay-scrollbar-thumb {
   position: absolute;
-  right: 0;
-  width: 6px;
+  top: 0;
+  right: 3px;
+  width: 10px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.4);
-  transition: background 120ms ease;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+  transition: background 120ms ease, width 120ms ease;
 }
 
-body:hover .overlay-scrollbar-thumb,
-html.is-scrolling .overlay-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.6);
+.overlay-scrollbar[data-visible="true"] .overlay-scrollbar-thumb:hover,
+.overlay-scrollbar[data-dragging="true"] .overlay-scrollbar-thumb {
+  width: 12px;
+  right: 2px;
+  background: rgba(0, 0, 0, 0.7);
+  cursor: grabbing;
 }
 
 :root {

@@ -890,7 +890,7 @@ app.post(`${BASE_URL}/debug/test-sms`, async (req, res) => {
     const conn = await database.getConnection();
     const { phone, message } = req.body;
     if (!phone) { return res.status(400).json({ error: 'phone required' }); }
-    await sendSMS(conn, phone, message || 'Test SMS from Graduate Fashion API');
+    await sendSMS(conn, phone, message || 'Test SMS from Vellora API');
     await conn.release();
     res.json({ success: true, message: `SMS sent to ${phone}` });
   } catch (err) {

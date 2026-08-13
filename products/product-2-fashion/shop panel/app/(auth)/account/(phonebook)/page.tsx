@@ -2,7 +2,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "Phone Book | Graduate";
+const title = "Phone Book | Vellora";
 const description =
   "Manage your saved phone numbers, set a default number, and verify status.";
 

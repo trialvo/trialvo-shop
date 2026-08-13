@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import React from "react";
 import CheckoutClient from "./CheckoutClient";
 
-const title = "Checkout | Graduate";
+const title = "Checkout | Vellora";
 const description =
   "Complete your purchase securely. Choose delivery address, delivery area and payment method.";
 

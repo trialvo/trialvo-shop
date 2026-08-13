@@ -1,56 +1,122 @@
 /**
- * HTTPS marketing screenshots for Trialvo catalog cards.
- * 16 unique Unsplash images — 4 per product, no cross-product reuse.
- * Admin uploads can replace these later via images.shop.
+ * Catalog card / gallery images for Trialvo shop products.
+ * WebP screenshots from product-images/ (served via /uploads/catalog/...).
  */
-const U = 'https://images.unsplash.com';
-
-const ADMIN_DASHBOARD = `${U}/photo-1460925895917-afdab827c52f?w=1200&h=750&fit=crop&q=85`;
-const ADMIN_ORDERS = `${U}/photo-1551288049-bebda4e38f71?w=1200&h=750&fit=crop&q=85`;
-
-const q = (id, w = 1200, h = 750) =>
-  `${U}/${id}?w=${w}&h=${h}&fit=crop&q=85`;
-
 module.exports = {
   lifestyle: {
-    thumbnail: q('photo-1441986300917-64674bd600d8', 800, 500),
+    thumbnail: "/uploads/catalog/lifestyle-ecommerce/shop/shop-01.webp",
     shop: [
-      q('photo-1441986300917-64674bd600d8'),
-      q('photo-1556740738-b6a63e27c4df'),
-      q('photo-1472851294608-062f824d29cc'),
-      q('photo-1556228578-0d85b1a4d571'),
+      "/uploads/catalog/lifestyle-ecommerce/shop/shop-01.webp",
+      "/uploads/catalog/lifestyle-ecommerce/shop/shop-02.webp",
+      "/uploads/catalog/lifestyle-ecommerce/shop/shop-03.webp",
+      "/uploads/catalog/lifestyle-ecommerce/shop/shop-04.webp",
+      "/uploads/catalog/lifestyle-ecommerce/shop/shop-05.webp",
+      "/uploads/catalog/lifestyle-ecommerce/shop/shop-06.webp",
+      "/uploads/catalog/lifestyle-ecommerce/shop/shop-07.webp",
+      "/uploads/catalog/lifestyle-ecommerce/shop/shop-08.webp",
     ],
-    admin: [ADMIN_DASHBOARD, ADMIN_ORDERS],
+    admin: [
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-01.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-02.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-03.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-04.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-05.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-06.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-07.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-08.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-09.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-10.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-11.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-12.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-13.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-14.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-15.webp",
+      "/uploads/catalog/lifestyle-ecommerce/admin/admin-16.webp",
+    ],
   },
   fashion: {
-    thumbnail: q('photo-1515886657613-9f3515b0c78f', 800, 500),
+    thumbnail: "/uploads/catalog/fashion-ecommerce/shop/shop-01.webp",
     shop: [
-      q('photo-1515886657613-9f3515b0c78f'),
-      q('photo-1483985988355-763728e1935b'),
-      q('photo-1490481651871-ab68de25d43d'),
-      q('photo-1469334031218-e382a71b716b'),
+      "/uploads/catalog/fashion-ecommerce/shop/shop-01.webp",
+      "/uploads/catalog/fashion-ecommerce/shop/shop-02.webp",
+      "/uploads/catalog/fashion-ecommerce/shop/shop-03.webp",
+      "/uploads/catalog/fashion-ecommerce/shop/shop-04.webp",
+      "/uploads/catalog/fashion-ecommerce/shop/shop-05.webp",
+      "/uploads/catalog/fashion-ecommerce/shop/shop-06.webp",
+      "/uploads/catalog/fashion-ecommerce/shop/shop-07.webp",
+      "/uploads/catalog/fashion-ecommerce/shop/shop-08.webp",
     ],
-    admin: [ADMIN_DASHBOARD, ADMIN_ORDERS],
+    admin: [
+      "/uploads/catalog/fashion-ecommerce/admin/admin-01.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-02.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-03.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-04.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-05.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-06.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-07.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-08.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-09.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-10.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-11.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-12.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-13.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-14.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-15.webp",
+      "/uploads/catalog/fashion-ecommerce/admin/admin-16.webp",
+    ],
   },
   tech: {
-    thumbnail: q('photo-1498049794561-7780e7231661', 800, 500),
+    thumbnail: "/uploads/catalog/tech-shop-ecommerce/shop/shop-01.webp",
     shop: [
-      q('photo-1498049794561-7780e7231661'),
-      q('photo-1505740420928-5e560c06d30e'),
-      q('photo-1519389950473-47ba0277781c'),
-      q('photo-1525547719571-a2d4ac8945e2'),
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-01.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-02.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-03.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-04.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-05.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-06.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-07.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-08.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-09.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-10.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-11.webp",
+      "/uploads/catalog/tech-shop-ecommerce/shop/shop-12.webp",
     ],
-    admin: [ADMIN_DASHBOARD, ADMIN_ORDERS],
+    admin: [
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-01.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-02.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-03.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-04.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-05.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-06.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-07.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-08.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-09.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-10.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-11.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-12.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-13.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-14.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-15.webp",
+      "/uploads/catalog/tech-shop-ecommerce/admin/admin-16.webp",
+    ],
   },
   combobasket: {
-    // Gift / combo — all URLs verified 200 (replaced broken 404s)
-    thumbnail: q('photo-1549465220-1a8b9238cd48', 800, 500),
+    thumbnail: "/uploads/catalog/combo-basket-ecommerce/shop/shop-01.webp",
     shop: [
-      q('photo-1549465220-1a8b9238cd48'), // wrapped gifts
-      q('photo-1544776193-352d25ca82cd'), // gift box
-      q('photo-1607082348824-0a96f2a4b9da'), // shopping bags
-      q('photo-1481391319762-47dff72954d9'), // gift wrap / presents
+      "/uploads/catalog/combo-basket-ecommerce/shop/shop-01.webp",
+      "/uploads/catalog/combo-basket-ecommerce/shop/shop-02.webp",
+      "/uploads/catalog/combo-basket-ecommerce/shop/shop-03.webp",
+      "/uploads/catalog/combo-basket-ecommerce/shop/shop-04.webp",
+      "/uploads/catalog/combo-basket-ecommerce/shop/shop-05.webp",
+      "/uploads/catalog/combo-basket-ecommerce/shop/shop-06.webp",
+      "/uploads/catalog/combo-basket-ecommerce/shop/shop-07.webp",
     ],
-    admin: [ADMIN_DASHBOARD, ADMIN_ORDERS],
+    admin: [
+      "/uploads/catalog/combo-basket-ecommerce/admin/admin-01.webp",
+      "/uploads/catalog/combo-basket-ecommerce/admin/admin-02.webp",
+      "/uploads/catalog/combo-basket-ecommerce/admin/admin-03.webp",
+      "/uploads/catalog/combo-basket-ecommerce/admin/admin-04.webp",
+      "/uploads/catalog/combo-basket-ecommerce/admin/admin-05.webp",
+    ],
   },
 };

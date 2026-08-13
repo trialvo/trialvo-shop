@@ -32,7 +32,7 @@ var ApplicationSettings = {
      BRAND INFO
   ========================= */
   BRAND_ADDRESS: process.env.BRAND_ADDRESS || "Jamgora",
-  BRAND_NAME: process.env.BRAND_NAME || "Trialvo",
+  BRAND_NAME: process.env.BRAND_NAME || "Vellora",
 
   /* =========================
      IMAGE SETTINGS

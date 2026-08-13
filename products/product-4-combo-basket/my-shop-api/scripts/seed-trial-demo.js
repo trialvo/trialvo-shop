@@ -13,7 +13,8 @@ const {
 const U = 'https://images.unsplash.com';
 const DEMO_PRODUCT_IMAGES = {
   'chocolate-truffle-box': `${U}/photo-1549465220-1a8b9238cd48?w=600&h=600&fit=crop&q=85`,
-  'mixed-nut-jar': `${U}/photo-1513885535751-8b47f1f3e2c0?w=600&h=600&fit=crop&q=85`,
+  // photo-1513885535751-8b47f1f3e2c0 returns 404 — use a working nuts still life
+  'mixed-nut-jar': `${U}/photo-1599599810769-bcde5a160d32?w=600&h=600&fit=crop&q=85`,
   'premium-cookies': `${U}/photo-1607082348824-0a96f2a4b9da?w=600&h=600&fit=crop&q=85`,
 };
 
@@ -21,11 +22,11 @@ async function upsertDemoProductImages() {
   for (const [slug, image] of Object.entries(DEMO_PRODUCT_IMAGES)) {
     const row = await Product.findOne({ where: { slug } });
     if (!row) continue;
-    if (!row.image) {
-      row.image = image;
-      row.images = [image];
-      await row.save();
-    }
+    const current = typeof row.image === 'string' ? row.image.trim() : '';
+    if (current === image) continue;
+    row.image = image;
+    row.images = [image];
+    await row.save();
   }
 }
 

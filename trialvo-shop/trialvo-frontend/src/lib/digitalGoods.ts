@@ -71,11 +71,9 @@ export function resolveCategoryLabel(
 }
 
 export function getPrimaryDemoUrl(product: Product): string | null {
-  if (!Array.isArray(product.demo) || product.demo.length === 0) return null;
-  const match = product.demo.find(
-    (entry) => typeof entry?.url === "string" && entry.url.length > 0,
-  );
-  return match?.url ?? null;
+  const shopUrl = product.deployConfig?.shared_demo_shop_url;
+  if (typeof shopUrl === "string" && shopUrl.trim()) return shopUrl.trim();
+  return null;
 }
 
 /**

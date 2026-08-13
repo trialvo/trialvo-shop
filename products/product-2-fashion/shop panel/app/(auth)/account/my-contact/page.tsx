@@ -4,7 +4,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "My Messages | Graduate Fashion";
+const title = "My Messages | Vellora";
 const description =
   "View your submitted contact inquiries and read our support team replies.";
 

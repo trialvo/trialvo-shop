@@ -1,6 +1,6 @@
-# Graduate Fashion API
+# Vellora API
 
-Backend API for the Graduate Fashion e-commerce platform.
+Backend API for the Vellora e-commerce platform.
 
 ## What This Service Does
 - Auth and user/admin account APIs

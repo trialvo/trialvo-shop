@@ -16,8 +16,8 @@ import {
 interface AddToCartRowProps {
   quantity: number;
   onQuantityChange: (q: number) => void;
-  onAddToCart: () => void;
-  onShopNow: () => void;          // validate + add + redirect to checkout
+  onAddToCart: () => boolean | void;
+  onShopNow: () => boolean | void; // validate + add + redirect to checkout
   onToggleWishlist: () => void;
   inWishlist: boolean;
   className?: string;
@@ -31,14 +31,19 @@ export function AddToCartRow({
   const [shopping,  setShopping]  = useState(false);
 
   const handleAdd = () => {
-    onAddToCart();
+    const ok = onAddToCart();
+    if (ok === false) return;
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
   const handleShopNow = async () => {
     setShopping(true);
-    onShopNow();             // parent handles validation + addItem + router.push
+    const ok = onShopNow(); // parent handles validation + addItem + router.push
+    if (ok === false) {
+      setShopping(false);
+      return;
+    }
     // Keep spinner briefly — navigation clears it
     setTimeout(() => setShopping(false), 3000);
   };

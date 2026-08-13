@@ -3,7 +3,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "My Account | Graduate";
+const title = "My Account | Vellora";
 const description =
   "Manage your profile, address book, orders, favorites and payment methods.";
 

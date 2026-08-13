@@ -53,7 +53,7 @@ export default function PushNotificationManager() {
     function handleSWMessage(event: MessageEvent) {
       if (event.data?.type === "GF_PUSH_NOTIFICATION") {
         const { title: rawTitle, body: rawBody, data, showToast: shouldToast } = event.data;
-        const title = rawTitle || "Graduate Fashion";
+        const title = rawTitle || "Vellora";
         const body  = rawBody  || "You have a new notification.";
 
         // ── Hard dedup (catches ALL duplication sources) ──────────────────

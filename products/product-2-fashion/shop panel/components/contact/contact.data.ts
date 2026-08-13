@@ -36,7 +36,7 @@ export const CONTACT_INFO: ContactInfoItem[] = [
     id: "mail",
     icon: Mail,
     title: "Mail Us",
-    lines: ["graduatefashion2020@gmail.com"],
+    lines: ["support@vellora.demo"],
   },
   {
     id: "hours",
@@ -51,10 +51,10 @@ export const CONTACT_INFO: ContactInfoItem[] = [
 ];
 
 export const CONTACT_SOCIALS: SocialLink[] = [
-  { id: "fb", label: "Facebook", href: "https://www.facebook.com/Graduatefashion2020?rdid=T4tozQFHBUz1BAmW&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F17Wh44z3FD%2F#", icon: FaFacebookF },
-  { id: "ig", label: "Instagram", href: "https://www.instagram.com/graduate01620680283?utm_source=qr&igsh=OGU1YjVsOXFjNGE2", icon: FaInstagram },
-  { id: "wa", label: "Whats app", href: "https://api.whatsapp.com/message/CAOMDXFCTULPD1?autoload=1&app_absent=0", icon: FaWhatsapp },
-  { id: "tt", label: "Ticktok", href: "https://www.tiktok.com/@graduate.fashion?_r=1&_t=ZS-936tAcqT81R", icon: FaTiktok },
+  { id: "fb", label: "Facebook", href: "#", icon: FaFacebookF },
+  { id: "ig", label: "Instagram", href: "#", icon: FaInstagram },
+  { id: "wa", label: "Whats app", href: "#", icon: FaWhatsapp },
+  { id: "tt", label: "Ticktok", href: "#", icon: FaTiktok },
 ];
 
 export const CONTACT_MAP = {

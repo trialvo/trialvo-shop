@@ -108,7 +108,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
       {
         id: "p3",
         question: "Do you sell both retail and wholesale/export products?",
-        answer: "Yes. Graduate Fashion serves retail customers and also provides export-oriented garment supply.",
+        answer: "Yes. Vellora serves retail customers and also provides export-oriented garment supply.",
       },
       {
         id: "p4",

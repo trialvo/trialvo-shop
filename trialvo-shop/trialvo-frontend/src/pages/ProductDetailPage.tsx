@@ -17,32 +17,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import type { Product } from '@/data/products';
 
-/** Prefer CMS demo[]; fall back to deploy_config shared demo URLs (dynamic catalog). */
-function resolveProductDemos(product: Product): Product['demo'] {
-  if (Array.isArray(product.demo) && product.demo.some((d) => d?.url)) {
-    return product.demo.filter((d) => d?.url);
-  }
+/** Public shop browse URL from deploy_config (trials still gate admin). */
+function resolveShopDemoUrl(product: Product): string {
   const dc = product.deployConfig || {};
   const shopUrl = typeof dc.shared_demo_shop_url === 'string' ? dc.shared_demo_shop_url.trim() : '';
-  const adminUrl = typeof dc.shared_demo_admin_url === 'string' ? dc.shared_demo_admin_url.trim() : '';
-  const demos: Product['demo'] = [];
-  if (shopUrl) {
-    demos.push({
-      label: { bn: 'শপ ওয়েবসাইট (পাবলিক)', en: 'Shop website (public)' },
-      url: shopUrl,
-      username: '',
-      password: '',
-    });
-  }
-  if (adminUrl) {
-    demos.push({
-      label: { bn: 'অ্যাডমিন প্যানেল', en: 'Admin panel' },
-      url: adminUrl,
-      username: '',
-      password: '',
-    });
-  }
-  return demos;
+  return shopUrl;
 }
 
 const ProductDetailPage: React.FC = () => {
@@ -56,16 +35,10 @@ const ProductDetailPage: React.FC = () => {
   const { data: trialConfig } = usePublicTrialConfig();
   const canRequestTrial = Boolean(product?.isTrialable && trialConfig?.trialsEnabled !== false);
 
-  const demos = useMemo(
-    () => (product ? resolveProductDemos(product) : []),
+  const shopDemoUrl = useMemo(
+    () => (product ? resolveShopDemoUrl(product) : ''),
     [product],
   );
-  const shopDemoUrl = useMemo(() => {
-    const shop = demos.find((d) =>
-      /shop|শপ/i.test(typeof d.label === 'string' ? d.label : (d.label?.en || d.label?.bn || '')),
-    );
-    return (shop || demos[0])?.url || '';
-  }, [demos]);
 
   if (isLoading) {
     return (

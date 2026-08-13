@@ -16,7 +16,6 @@
  */
 
 import { getFirebaseConfig } from "@/lib/firebase";
-import { API_URL } from "@/config/env";
 import AuthCookies from "@/lib/auth/cookies";
 import { Bell, BellOff, ExternalLink, Info, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -24,7 +23,8 @@ import { getMessaging, getToken, deleteToken } from "firebase/messaging";
 import { initializeApp, getApps, getApp } from "firebase/app";
 
 const STORAGE_KEY = "gf_shop_fcm_token";
-const API_BASE    = `${API_URL.replace(/\/+$/, "")}/api/v1`;
+// Same-origin BFF — never use docker-internal API_URL in the browser
+const API_BASE = "/api/v1";
 
 // ── Auth-aware fetch helpers ───────────────────────────────────────────────────
 async function apiPost(path: string, body: object) {

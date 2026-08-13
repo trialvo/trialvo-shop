@@ -14,7 +14,7 @@ const FooterBrand: React.FC = () => {
     <div>
       <ImageWithFallback
         src="/logo-white.svg"
-        alt="Graduate Fashion"
+        alt="Vellora"
         width={140}
         height={40}
         preload
@@ -36,7 +36,7 @@ const FooterBrand: React.FC = () => {
         </p>
         <p className="flex items-center gap-3">
           <FiMail className="text-white h-5 w-5" />
-          <span>graduatefashion2020@gmail.com</span>
+          <span>support@vellora.demo</span>
         </p>
       </div>
     </div>

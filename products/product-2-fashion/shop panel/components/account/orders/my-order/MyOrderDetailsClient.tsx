@@ -94,7 +94,7 @@ const MyOrderDetailsClient: React.FC<Props> = ({ orderId }) => {
         name: "Store Name",
         address: `House 29, Road 5, Sector 11, Uttara,
 Dhaka Bangladesh`,
-        email: "graduatefashion2020@gmail.com",
+        email: "support@vellora.demo",
         phone: "+880 1970680283",
       },
 

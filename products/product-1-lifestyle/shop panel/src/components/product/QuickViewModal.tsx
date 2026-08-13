@@ -88,8 +88,8 @@ interface QuickViewModalContentProps {
   onSizeSelect: (size: string) => void;
   onColorSelect: (color: string) => void;
   onQuantityChange: (quantity: number) => void;
-  onAddToCart: () => void;
-  onShopNow: () => void;
+  onAddToCart: () => boolean | void;
+  onShopNow: () => boolean | void;
   onToggleWishlist: () => void;
 }
 
@@ -192,12 +192,13 @@ const QuickViewModal = () => {
 
   const inWishlist = useAppSelector(selectIsInWishlist(productId ?? 0));
 
-  // Reset state when product changes
+  // Seed first size/color like fashion PDP (and when product changes)
   useEffect(() => {
-    setSelectedSize("");
-    setSelectedColor("");
+    if (!product) return;
+    setSelectedSize(product.sizes[0] || "");
+    setSelectedColor(product.colors[0]?.name || "");
     setQuantity(1);
-  }, [productId]);
+  }, [productId, product]);
 
   useEffect(() => {
     if (product) setCachedProduct(product);
@@ -223,15 +224,15 @@ const QuickViewModal = () => {
     }) ?? productDetail.variations[0];
   };
 
-  const handleAdd = () => {
-    if (!product) return;
+  const handleAdd = (): boolean => {
+    if (!product) return false;
     if (product.sizes.length > 0 && product.sizes[0] !== "One Size" && !selectedSize) {
       toast.error("Please select a size");
-      return;
+      return false;
     }
     if (product.colors.length > 0 && !selectedColor) {
-      toast.error("Please select a color");
-      return;
+      toast.error("Please select a colour");
+      return false;
     }
     const variation = selectedVariation();
     const price = variation?.final_price ?? product.price;
@@ -251,6 +252,7 @@ const QuickViewModal = () => {
       freeDelivery: variation?.free_delivery === true,
     }));
     toast.success(`${product.name} added to cart`);
+    return true;
   };
 
   const handleWishlist = () => {
@@ -273,13 +275,13 @@ const QuickViewModal = () => {
     dispatch(closeQuickView());
   };
 
-  const handleShopNow = () => {
-    if (!product) return;
+  const handleShopNow = (): boolean => {
+    if (!product) return false;
     if (product.sizes.length > 0 && product.sizes[0] !== "One Size" && !selectedSize) {
-      toast.error("Please select a size"); return;
+      toast.error("Please select a size"); return false;
     }
     if (product.colors.length > 0 && !selectedColor) {
-      toast.error("Please select a color"); return;
+      toast.error("Please select a colour"); return false;
     }
     const variation = selectedVariation();
     const price = variation?.final_price ?? product.price;
@@ -292,7 +294,7 @@ const QuickViewModal = () => {
       size: selectedSize || product.sizes[0] || "One Size",
       color: selectedColor || product.colors[0]?.name || "Default",
       image: product.image,
-      quantity: 1,
+      quantity,
       stock: variation?.stock ?? 10,
       slug: product.slug,
       weight_kg: variation?.weight_kg ?? 0,
@@ -300,6 +302,7 @@ const QuickViewModal = () => {
     }));
     handleClose();
     router.push("/checkout");
+    return true;
   };
 
   return (

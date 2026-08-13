@@ -45,13 +45,22 @@ const toDate = (value?: string | null): Date => {
   return Number.isNaN(date.getTime()) ? new Date() : date;
 };
 
-const getProducts = async (): Promise<ProductItem[]> => {
-  try {
-    const res = await fetch(
-      `${API_ORIGIN}/api/v1/user/products?limit=1000&offset=0&status=true`,
-    );
+const FETCH_TIMEOUT_MS = 8_000;
 
-    if (!res.ok) return [];
+const fetchJson = async (url: string): Promise<Response | null> => {
+  try {
+    return await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  } catch {
+    return null;
+  }
+};
+
+const getProducts = async (): Promise<ProductItem[]> => {
+  const res = await fetchJson(
+    `${API_ORIGIN}/api/v1/user/products?limit=1000&offset=0&status=true`,
+  );
+  if (!res?.ok) return [];
+  try {
     const data = (await res.json()) as ProductListResponse;
     return Array.isArray(data?.products) ? data.products : [];
   } catch {
@@ -60,12 +69,11 @@ const getProducts = async (): Promise<ProductItem[]> => {
 };
 
 const getCategories = async (): Promise<CategoryItem[]> => {
+  const res = await fetchJson(
+    `${API_ORIGIN}/api/v1/categories/mainCategories?status=true`,
+  );
+  if (!res?.ok) return [];
   try {
-    const res = await fetch(
-      `${API_ORIGIN}/api/v1/categories/mainCategories?status=true`,
-    );
-
-    if (!res.ok) return [];
     const data = (await res.json()) as CategoryListResponse;
     return Array.isArray(data?.data) ? data.data : [];
   } catch {
@@ -74,9 +82,9 @@ const getCategories = async (): Promise<CategoryItem[]> => {
 };
 
 const getStorefrontVisibility = async (): Promise<boolean> => {
+  const res = await fetchJson(`${API_ORIGIN}/api/v1/user/storefront-visibility`);
+  if (!res?.ok) return false;
   try {
-    const res = await fetch(`${API_ORIGIN}/api/v1/user/storefront-visibility`);
-    if (!res.ok) return false;
     const data = (await res.json()) as StorefrontVisibilityResponse;
     return data?.data?.show_megasale === true;
   } catch {

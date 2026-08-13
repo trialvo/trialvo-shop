@@ -47,9 +47,16 @@ export const metadata: Metadata = {
  * runs. Required for Option 1/2 trials: one shop image, many host ports.
  */
 function ShopRuntimeConfigScript() {
+  // Browser must not receive docker-internal hostnames (lifestyle-api:5000).
+  const browserApi =
+    process.env.PUBLIC_API_URL ||
+    process.env.SHOP_URL ||
+    process.env.SITE_URL ||
+    process.env.APP_URL ||
+    "";
   const config = {
     IMAGE_URL: process.env.IMAGE_URL || "",
-    API_URL: process.env.API_URL || "",
+    API_URL: browserApi,
     SITE_URL: process.env.SITE_URL || "",
     SHOP_URL: process.env.SHOP_URL || "",
     APP_URL: process.env.APP_URL || "",

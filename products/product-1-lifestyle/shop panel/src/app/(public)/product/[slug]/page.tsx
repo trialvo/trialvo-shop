@@ -88,8 +88,8 @@ interface ProductInfoPanelProps {
   quantity: number;
   setQuantity: (q: number) => void;
   inWishlist: boolean;
-  onAddToCart: () => void;
-  onShopNow: () => void;
+  onAddToCart: () => boolean | void;
+  onShopNow: () => boolean | void;
   onToggleWishlist: () => void;
   onShare: () => void;
   avgRating: number;
@@ -293,6 +293,10 @@ export default function ProductDetailPage() {
   const [isFading, setIsFading]             = useState(false);
   const [pendingProduct, setPendingProduct] = useState<ProductDetail | null>(null);
 
+  const [selectedSize,  setSelectedSize]  = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+  const [quantity,      setQuantity]      = useState(1);
+
   // Sync pending product when fetched successfully
   useEffect(() => {
     if (product) {
@@ -315,9 +319,6 @@ export default function ProductDetailPage() {
     if (isFading && pendingProduct && pendingProduct.id !== activeProduct?.id) {
       const timer = setTimeout(() => {
         setActiveProduct(pendingProduct);
-        setSelectedSize("");
-        setSelectedColor("");
-        setQuantity(1);
         setIsFading(false);
       }, 350); // Matches the 350ms transition duration
       return () => clearTimeout(timer);
@@ -331,6 +332,17 @@ export default function ProductDetailPage() {
     }
   }, [product, activeProduct]);
 
+  // Fashion-style: always pre-select first size + color so Shop Now / Add to Cart
+  // work without forcing a manual click when only one option exists.
+  useEffect(() => {
+    if (!activeProduct) return;
+    const sizes = (activeProduct.available_variants ?? []).map((v) => v.name).filter(Boolean);
+    const colors = activeProduct.available_colors ?? [];
+    setSelectedSize(sizes[0] || "");
+    setSelectedColor(colors[0]?.name || "");
+    setQuantity(1);
+  }, [activeProduct?.id]);
+
   useEffect(() => {
     if (!activeProduct) return;
     dispatch(setWishlistProductState({
@@ -342,10 +354,6 @@ export default function ProductDetailPage() {
   const { data: reviewsData }        = useProductReviews(activeProduct?.id ?? 0);
   const { data: related }            = useRelatedProducts(activeProduct?.id ?? 0);
   const { products: allProducts }    = useProducts();
-
-  const [selectedSize,  setSelectedSize]  = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
-  const [quantity,      setQuantity]      = useState(1);
 
   const inWishlist = useAppSelector(selectIsInWishlist(activeProduct?.id ?? 0));
 
@@ -395,7 +403,10 @@ export default function ProductDetailPage() {
   };
 
   const validateSelections = () => {
-    if (hasVariants && activeProduct.available_variants.length > 0 && !selectedSize) {
+    const sizeNames = (activeProduct.available_variants ?? []).map((v) => v.name);
+    const needsSize =
+      sizeNames.length > 0 && sizeNames[0] !== "One Size";
+    if (needsSize && !selectedSize) {
       toast({ title: "Please select a size", variant: "destructive" });
       return false;
     }
@@ -406,8 +417,8 @@ export default function ProductDetailPage() {
     return true;
   };
 
-  const handleAddToCart = () => {
-    if (!validateSelections()) return;
+  const handleAddToCart = (): boolean => {
+    if (!validateSelections()) return false;
 
     const activeVar = getActiveVariation();
 
@@ -446,10 +457,11 @@ export default function ProductDetailPage() {
     }));
 
     toast({ title: `${activeProduct.name} added to cart` });
+    return true;
   };
 
-  const handleShopNow = () => {
-    if (!validateSelections()) return;
+  const handleShopNow = (): boolean => {
+    if (!validateSelections()) return false;
 
     const activeVar = getActiveVariation();
 
@@ -488,6 +500,7 @@ export default function ProductDetailPage() {
     }));
 
     router.push("/checkout");
+    return true;
   };
 
   const handleToggleWishlist = () => {

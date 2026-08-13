@@ -3,7 +3,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "About Us | Graduate";
+const title = "About Us | Vellora";
 const description =
   "Learn who we are, what we do, our best features, and what our partners say about us.";
 

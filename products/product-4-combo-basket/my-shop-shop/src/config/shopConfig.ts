@@ -1,5 +1,5 @@
-// Default shop configuration
-// Admin can override these via the Admin Panel (/admin)
+// Default shop configuration (overridden at runtime from API).
+// Edit live values in the real admin app (Shop Config), not on the storefront.
 
 export type OrderMode = "single" | "combo" | "combo-bundle";
 

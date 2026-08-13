@@ -1,6 +1,6 @@
 /**
  * lib/firebase.ts  — V2-050
- * Firebase app + FCM messaging singleton for Graduate Fashion Shop (Next.js).
+ * Firebase app + FCM messaging singleton for Vellora (Next.js).
  *
  * Config is fetched from the API at runtime (GET /config/firebase-client-config)
  * and cached in localStorage. No hardcoded Firebase config in the codebase.
@@ -39,6 +39,14 @@ type CachedFirebaseConfig = {
 // ── Cache key ────────────────────────────────────────────────────────────────
 const CACHE_KEY = "gf_firebase_client_config";
 
+/** Browser → same-origin BFF; server → configured API_URL. */
+function firebaseConfigUrl(): string {
+  if (typeof window !== "undefined") {
+    return "/api/v1/config/firebase-client-config";
+  }
+  return `${String(API_URL || "").replace(/\/+$/, "")}/api/v1/config/firebase-client-config`;
+}
+
 // ── In-memory singleton ──────────────────────────────────────────────────────
 let _configPromise: Promise<CachedFirebaseConfig | null> | null = null;
 let _firebaseApp: FirebaseApp | null = null;
@@ -74,7 +82,7 @@ export async function getFirebaseConfig(): Promise<CachedFirebaseConfig | null> 
 
 async function _fetchAndCacheConfig(): Promise<CachedFirebaseConfig | null> {
   try {
-    const res = await fetch(`${API_URL}/api/v1/config/firebase-client-config`);
+    const res = await fetch(firebaseConfigUrl());
     const json = await res.json();
     if (json?.success && json?.data?.firebase_config) {
       const config: CachedFirebaseConfig = json.data;

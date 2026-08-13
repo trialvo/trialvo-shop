@@ -31,6 +31,7 @@ services:
       STORAGE_URL: http://217.216.108.119:9101
       SHOP_URL: http://217.216.108.119:5101
       ADMIN_URL: http://217.216.108.119:5175
+      BRAND_NAME: Vellora
 
   fashion-admin:
     environment:
@@ -77,3 +78,6 @@ services:
   combobasket-shop:
     environment:
       PUBLIC_ORIGIN: http://217.216.108.119:5103
+      SITE_URL: http://217.216.108.119:5103
+      SHOP_URL: http://217.216.108.119:5103
+      ADMIN_URL: http://217.216.108.119:5177

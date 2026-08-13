@@ -1,6 +1,6 @@
 /**
  * public/firebase-messaging-sw.js  — V2-056
- * Firebase background push service worker for Graduate Fashion Admin Panel.
+ * Firebase background push service worker for Vellora Admin Panel.
  *
  * DUAL-PATH STRATEGY (prevents duplicate notifications):
  *   PATH A: Firebase IS initialized → onBackgroundMessage handles it
@@ -51,7 +51,7 @@ async function loadConfigFromIDB() {
 async function handleIncomingPush(payload) {
   const notification = payload.notification || {};
   const data = payload.data || {};
-  const title = notification.title || data.title || 'Graduate Fashion';
+  const title = notification.title || data.title || 'Vellora';
   const body  = notification.body  || data.body  || 'You have a new notification.';
 
   const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });

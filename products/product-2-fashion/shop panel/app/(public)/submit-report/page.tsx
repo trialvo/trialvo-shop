@@ -4,9 +4,9 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "Submit a Report | Graduate Fashion";
+const title = "Submit a Report | Vellora";
 const description =
-  "Submit a formal report or support request to Graduate Fashion. Describe your issue and receive a tracking token to monitor your report status.";
+  "Submit a formal report or support request to Vellora. Describe your issue and receive a tracking token to monitor your report status.";
 
 export const metadata: Metadata = buildMetadata({
   title,

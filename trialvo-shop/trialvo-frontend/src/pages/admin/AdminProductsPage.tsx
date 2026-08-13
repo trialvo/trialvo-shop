@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Pencil, Trash2, Star, Eye, EyeOff, Search, Loader2,
-  X, Image as ImageIcon, Link2, ChevronDown, ChevronUp, Package,
+  X, Image as ImageIcon, ChevronDown, ChevronUp, Package,
   Copy, CheckSquare, Square, ChevronLeft, ChevronRight, Settings2,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,13 +27,6 @@ import { useCleanupMediaUrls } from '@/hooks/useMedia';
 import { isManagedUploadUrl, normalizeProductImages, resolveMediaUrl } from '@/lib/mediaUrl';
 
 // ─── Types ─────────────────────────────────────────────────────
-interface DemoItem {
-  label: { bn: string; en: string };
-  url: string;
-  username: string;
-  password: string;
-}
-
 interface FaqItem {
   question: { bn: string; en: string };
   answer: { bn: string; en: string };
@@ -59,7 +52,6 @@ interface ProductFormData {
   thumbnail: string;
   images: { admin: string[]; shop: string[] };
   video_url: string;
-  demo: DemoItem[];
   name: { bn: string; en: string };
   short_description: { bn: string; en: string };
   features: { bn: string[]; en: string[] };
@@ -75,13 +67,6 @@ interface ProductFormData {
   is_trialable: boolean;
   deploy_config: DeployConfigForm;
 }
-
-const emptyDemo = (): DemoItem => ({
-  label: { bn: '', en: '' },
-  url: '',
-  username: '',
-  password: '',
-});
 
 const emptyFaq = (): FaqItem => ({
   question: { bn: '', en: '' },
@@ -99,16 +84,6 @@ const emptyDeployConfig = (): DeployConfigForm => ({
   shared_demo_shop_url: '',
   shared_demo_admin_url: '',
 });
-
-function normalizeDemoList(raw: any): DemoItem[] {
-  if (!Array.isArray(raw) || raw.length === 0) return [emptyDemo()];
-  return raw.map((d) => ({
-    label: { bn: d?.label?.bn ?? '', en: d?.label?.en ?? '' },
-    url: d?.url ?? '',
-    username: d?.username ?? '',
-    password: d?.password ?? '',
-  }));
-}
 
 function normalizeFaqList(raw: any): FaqItem[] {
   if (!Array.isArray(raw) || raw.length === 0) return [emptyFaq()];
@@ -148,7 +123,6 @@ const emptyForm: ProductFormData = {
   thumbnail: '',
   images: { admin: [''], shop: [''] },
   video_url: '',
-  demo: [emptyDemo()],
   name: { bn: '', en: '' },
   short_description: { bn: '', en: '' },
   features: { bn: [''], en: [''] },
@@ -445,7 +419,6 @@ const AdminProductsPage: React.FC = () => {
       thumbnail: product.thumbnail || '',
       images: normalizeProductImages(product.images),
       video_url: product.videoUrl || '',
-      demo: normalizeDemoList(product.demo),
       name: { bn: product.name?.bn ?? '', en: product.name?.en ?? '' },
       short_description: {
         bn: product.shortDescription?.bn ?? '',
@@ -500,15 +473,8 @@ const AdminProductsPage: React.FC = () => {
         admin: form.images.admin.filter((u) => u.trim()),
         shop: form.images.shop.filter((u) => u.trim()),
       },
-      // Keep demo if any useful field is filled (not URL-only)
-      demo: form.demo.filter(
-        (d) =>
-          d.url.trim()
-          || d.label.en.trim()
-          || d.label.bn.trim()
-          || d.username.trim()
-          || d.password.trim(),
-      ),
+      // Legacy static demo credentials removed — public shop + trials use deploy_config.
+      demo: [],
       features: {
         bn: (form.features?.bn || []).filter((f) => f.trim()),
         en: (form.features?.en || []).filter((f) => f.trim()),
@@ -825,120 +791,6 @@ const AdminProductsPage: React.FC = () => {
                     placeholder="https://youtube.com/embed/..."
                   />
                 </div>
-              </div>
-            </div>
-
-            {/* Demo Access */}
-            <div className={sectionClass}>
-              <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2 pb-2 border-b border-border/50">
-                <Link2 className="w-4 h-4 text-primary" />
-                Demo Access
-              </h3>
-              <div className="space-y-4">
-                {form.demo.map((d, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-muted/50 border border-border space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Demo #{i + 1}</span>
-                      {form.demo.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-destructive text-xs hover:bg-destructive/10"
-                          onClick={() => setForm((prev) => ({
-                            ...prev,
-                            demo: prev.demo.filter((_, j) => j !== i),
-                          }))}
-                        >
-                          <X className="w-3 h-3 mr-1" /> Remove
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        value={d.label.en}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setForm((prev) => {
-                            const arr = [...prev.demo];
-                            arr[i] = { ...arr[i], label: { ...arr[i].label, en: val } };
-                            return { ...prev, demo: arr };
-                          });
-                        }}
-                        className={`text-sm ${inputClass}`}
-                        placeholder="Label (EN)"
-                      />
-                      <Input
-                        value={d.label.bn}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setForm((prev) => {
-                            const arr = [...prev.demo];
-                            arr[i] = { ...arr[i], label: { ...arr[i].label, bn: val } };
-                            return { ...prev, demo: arr };
-                          });
-                        }}
-                        className={`text-sm ${inputClass}`}
-                        placeholder="লেবেল (BN)"
-                      />
-                    </div>
-                    <Input
-                      value={d.url}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setForm((prev) => {
-                          const arr = [...prev.demo];
-                          arr[i] = { ...arr[i], url: val };
-                          return { ...prev, demo: arr };
-                        });
-                      }}
-                      className={`text-sm ${inputClass}`}
-                      placeholder="https://demo.example.com"
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        value={d.username}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setForm((prev) => {
-                            const arr = [...prev.demo];
-                            arr[i] = { ...arr[i], username: val };
-                            return { ...prev, demo: arr };
-                          });
-                        }}
-                        className={`text-sm ${inputClass}`}
-                        placeholder="Username"
-                      />
-                      <Input
-                        value={d.password}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setForm((prev) => {
-                            const arr = [...prev.demo];
-                            arr[i] = { ...arr[i], password: val };
-                            return { ...prev, demo: arr };
-                          });
-                        }}
-                        className={`text-sm ${inputClass}`}
-                        placeholder="Password"
-                      />
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-primary hover:text-primary/80 text-xs"
-                  onClick={() =>
-                    setForm((prev) => ({
-                      ...prev,
-                      demo: [...prev.demo, emptyDemo()],
-                    }))
-                  }
-                >
-                  <Plus className="w-3 h-3 mr-1" /> Add Demo
-                </Button>
               </div>
             </div>
 
@@ -1360,20 +1212,6 @@ const AdminProductsPage: React.FC = () => {
                         </li>
                       ))}
                     </ul>
-                  </div>
-                )}
-
-                {/* Demo */}
-                {form.demo.some((d) => d.url.trim()) && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Demo Access</p>
-                    {form.demo.filter((d) => d.url.trim()).map((d, i) => (
-                      <div key={i} className="p-3 rounded-lg bg-muted/50 border border-border text-xs space-y-1 mb-2">
-                        <p className="font-medium text-foreground">{d.label.en || `Demo #${i + 1}`}</p>
-                        <p className="text-primary">{d.url}</p>
-                        <p className="text-muted-foreground">User: {d.username} | Pass: {d.password}</p>
-                      </div>
-                    ))}
                   </div>
                 )}
 

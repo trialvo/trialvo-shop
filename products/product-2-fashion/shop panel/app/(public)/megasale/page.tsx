@@ -3,9 +3,9 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "Mega Sale | Graduate";
+const title = "Mega Sale | Vellora";
 const description =
-  "Explore Graduate Mega Sale campaign products with admin-controlled visibility, featured selections, and live campaign timers.";
+  "Explore Vellora Mega Sale campaign products with admin-controlled visibility, featured selections, and live campaign timers.";
 
 export const metadata: Metadata = buildMetadata({
   title,

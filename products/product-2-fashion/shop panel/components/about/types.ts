@@ -46,5 +46,5 @@ export type TestimonialItem = {
 
   // optional small labels
   name?: string; // e.g. "Sazzad Hossen"
-  role?: string; // e.g. "Proprietor, Graduate Fashion"
+  role?: string; // e.g. "Proprietor, Vellora"
 };

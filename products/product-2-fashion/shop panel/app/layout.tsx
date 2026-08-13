@@ -24,9 +24,17 @@ import "./globals.css";
 export const dynamic = "force-dynamic";
 
 function ShopRuntimeConfigScript() {
+  // Browser-facing API must NOT be the docker-internal hostname (e.g. fashion-api:5000).
+  // Prefer an explicit PUBLIC_API_URL, otherwise the shop origin so /api/v1 hits the BFF.
+  const browserApi =
+    process.env.PUBLIC_API_URL ||
+    process.env.SHOP_URL ||
+    process.env.SITE_URL ||
+    process.env.APP_URL ||
+    "";
   const config = {
     IMAGE_URL: process.env.IMAGE_URL || "",
-    API_URL: process.env.API_URL || "",
+    API_URL: browserApi,
     SITE_URL: process.env.SITE_URL || "",
     SHOP_URL: process.env.SHOP_URL || "",
     APP_URL: process.env.APP_URL || "",
@@ -67,14 +75,13 @@ const siteUrl = getSiteUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Graduate | A Clothing Brand",
+    default: "Vellora | A Clothing Brand",
     template: "%s",
   },
-  applicationName: "Graduate",
+  applicationName: "Vellora",
   category: "fashion",
   keywords: [
-    "Graduate",
-    "Graduate Fashion",
+    "Vellora",
     "clothing brand",
     "fashion",
     "apparel",
@@ -84,9 +91,9 @@ export const metadata: Metadata = {
     "Bangladesh",
     "online store",
   ],
-  authors: [{ name: "Graduate" }],
-  creator: "Graduate",
-  publisher: "Graduate",
+  authors: [{ name: "Vellora" }],
+  creator: "Vellora",
+  publisher: "Vellora",
   robots: {
     index: true,
     follow: true,

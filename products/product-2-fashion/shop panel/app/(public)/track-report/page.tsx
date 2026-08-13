@@ -3,7 +3,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "Track Report | Graduate Fashion";
+const title = "Track Report | Vellora";
 const description =
   "Track the status of your submitted support report using your tracking token. See all replies and current resolution status.";
 

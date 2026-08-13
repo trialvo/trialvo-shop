@@ -3,15 +3,24 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useRef, useState } from "react";
 
-const SCROLLING_CLASS = "is-scrolling";
-const SCROLLING_TIMEOUT_MS = 600;
-const MIN_THUMB_PX = 28;
+const MIN_THUMB_PX = 40;
+const EDGE_ZONE_PX = 24;
 
 type ThumbState = {
   height: number;
   top: number;
   visible: boolean;
 };
+
+function getScrollMetrics() {
+  const root = document.documentElement;
+  const scrollHeight = root.scrollHeight;
+  const clientHeight = root.clientHeight;
+  const maxScroll = scrollHeight - clientHeight;
+  const height = Math.max(MIN_THUMB_PX, Math.round(clientHeight * (clientHeight / scrollHeight)));
+  const maxTop = Math.max(0, clientHeight - height);
+  return { root, scrollHeight, clientHeight, maxScroll, height, maxTop };
+}
 
 export default function ScrollbarVisibility() {
   const isMobile = useIsMobile();
@@ -21,32 +30,27 @@ export default function ScrollbarVisibility() {
     visible: false,
   });
 
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isNearEdge, setIsNearEdge] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startY: number; startTop: number } | null>(null);
+  const thumbRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (isMobile || typeof document === "undefined") return;
 
-    let timeoutId: number | null = null;
     let rafId = 0;
     const root = document.documentElement;
 
     const updateThumb = () => {
-      const scrollHeight = root.scrollHeight;
-      const clientHeight = root.clientHeight;
+      const { maxScroll, height, maxTop } = getScrollMetrics();
 
-      if (scrollHeight <= clientHeight) {
+      if (maxScroll <= 0) {
         setThumb({ height: 0, top: 0, visible: false });
         return;
       }
 
-      const trackHeight = clientHeight;
-      const ratio = clientHeight / scrollHeight;
-      const height = Math.max(MIN_THUMB_PX, Math.round(trackHeight * ratio));
-      const maxTop = trackHeight - height;
       const scrollTop = root.scrollTop || document.body.scrollTop || 0;
-      const top = Math.round((scrollTop / (scrollHeight - clientHeight)) * maxTop);
-
+      const top = Math.round((scrollTop / maxScroll) * maxTop);
       setThumb({ height, top, visible: true });
     };
 
@@ -58,34 +62,22 @@ export default function ScrollbarVisibility() {
       });
     };
 
-    const handleScrollStart = () => {
-      setIsScrolling(true);
-
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, SCROLLING_TIMEOUT_MS);
+    const onPointerMove = (e: PointerEvent) => {
+      if (isDragging) return;
+      const fromRight = window.innerWidth - e.clientX;
+      setIsNearEdge(fromRight <= EDGE_ZONE_PX);
     };
 
-    const handleScroll = () => {
-      root.classList.add(SCROLLING_CLASS);
-      if (timeoutId !== null) window.clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(() => {
-        root.classList.remove(SCROLLING_CLASS);
-        timeoutId = null;
-      }, SCROLLING_TIMEOUT_MS);
-
-      handleScrollStart();
-      requestUpdate();
+    const onPointerLeaveWindow = () => {
+      if (!isDragging) setIsNearEdge(false);
     };
 
     requestUpdate();
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", requestUpdate, { passive: true });
     window.addEventListener("resize", requestUpdate);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    document.documentElement.addEventListener("mouseleave", onPointerLeaveWindow);
 
     const resizeObserver =
       typeof ResizeObserver !== "undefined"
@@ -98,40 +90,90 @@ export default function ScrollbarVisibility() {
     }
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", requestUpdate);
       window.removeEventListener("resize", requestUpdate);
+      window.removeEventListener("pointermove", onPointerMove);
+      document.documentElement.removeEventListener("mouseleave", onPointerLeaveWindow);
       if (resizeObserver) resizeObserver.disconnect();
-      if (timeoutId !== null) window.clearTimeout(timeoutId);
       if (rafId) window.cancelAnimationFrame(rafId);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
     };
-  }, [isMobile]);
+  }, [isMobile, isDragging]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const onMove = (e: PointerEvent) => {
+      if (!dragRef.current) return;
+      const { root, maxScroll, maxTop } = getScrollMetrics();
+      if (maxScroll <= 0 || maxTop <= 0) return;
+
+      const deltaY = e.clientY - dragRef.current.startY;
+      const nextTop = Math.min(maxTop, Math.max(0, dragRef.current.startTop + deltaY));
+      root.scrollTop = (nextTop / maxTop) * maxScroll;
+    };
+
+    const onUp = () => {
+      setIsDragging(false);
+      dragRef.current = null;
+      document.body.style.removeProperty("user-select");
+      document.body.style.removeProperty("cursor");
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [isDragging]);
 
   if (isMobile) {
     return null;
   }
 
+  const show = thumb.visible && (isNearEdge || isDragging);
+
+  const scrollToClientY = (clientY: number) => {
+    const { root, maxScroll, height, maxTop } = getScrollMetrics();
+    if (maxScroll <= 0 || maxTop <= 0) return;
+    const nextTop = Math.min(maxTop, Math.max(0, clientY - height / 2));
+    root.scrollTop = (nextTop / maxTop) * maxScroll;
+  };
+
   return (
     <div
       className="overlay-scrollbar"
-      data-visible={isScrolling ? "true" : "false"}
+      data-visible={show ? "true" : "false"}
+      data-dragging={isDragging ? "true" : "false"}
       aria-hidden="true"
       suppressHydrationWarning
-      style={{
-        opacity: isScrolling ? 1 : 0,
-        transition: 'opacity 0.3s ease'
+      onPointerDown={(e) => {
+        if ((e.target as HTMLElement).closest(".overlay-scrollbar-thumb")) return;
+        if (!thumb.visible) return;
+        e.preventDefault();
+        scrollToClientY(e.clientY);
       }}
     >
       <div
+        ref={thumbRef}
         className="overlay-scrollbar-thumb"
         suppressHydrationWarning
         style={{
           height: `${thumb.height}px`,
           transform: `translateY(${thumb.top}px)`,
-          opacity: isScrolling ? 1 : 0.5,
-          transition: 'opacity 0.3s ease'
+        }}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dragRef.current = { startY: e.clientY, startTop: thumb.top };
+          setIsDragging(true);
+          setIsNearEdge(true);
+          document.body.style.userSelect = "none";
+          document.body.style.cursor = "grabbing";
+          thumbRef.current?.setPointerCapture?.(e.pointerId);
         }}
       />
     </div>

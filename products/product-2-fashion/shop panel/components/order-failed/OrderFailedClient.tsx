@@ -43,7 +43,7 @@ const OrderFailedClient: React.FC = () => {
       id: orderDetail?.order?.id,
       title: "Payment Failed",
       message: "We're sorry, but there was a problem processing your payment. Our team has been notified and will contact you shortly.",
-      supportEmail: "support@graduatefashion.com",
+      supportEmail: "support@vellora.demo",
       confirmationEmail: orderDetail?.order.customer_email || "",
       deliveryAddress: {
         name: orderDetail?.order.customer_name || "Customer",

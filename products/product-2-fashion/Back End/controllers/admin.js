@@ -1393,7 +1393,7 @@ exports.forgotPassword = api(
             auth: { user: cfg.MAIL_USER, pass: cfg.MAIL_PASS }
           });
           await transporter.sendMail({
-            from: `"Graduate Team" <${cfg.MAIL_USER}>`,
+            from: `"Vellora Team" <${cfg.MAIL_USER}>`,
             to: admin.email,
             subject: "Admin Password Reset OTP",
             html: `<p>Hello ${admin.first_name || 'Admin'},</p>
@@ -1414,7 +1414,7 @@ exports.forgotPassword = api(
       const phoneToSend = admin.phone;
       if (phoneToSend) {
         try {
-          const smsMessage = `Your Graduate Fashion admin password reset OTP is: ${otp}. Valid for 10 minutes. Do not share.`;
+          const smsMessage = `Your Vellora admin password reset OTP is: ${otp}. Valid for 10 minutes. Do not share.`;
           await sendSMS(connection, phoneToSend, smsMessage);
           smsSent = true;
         } catch (err) {

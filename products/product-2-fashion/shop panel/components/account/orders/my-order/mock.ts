@@ -5,7 +5,7 @@ export const MOCK_ORDER_INVOICE: OrderInvoice = {
   currency: "BDT",
 
   brand: {
-    name: "Graduate",
+    name: "Vellora",
     logoSrc: "/logo-default.svg",
     address: "House 25, Road 5, Sector 11, Uttara, Dhaka Bangladesh",
     email: "companyemail@gmail.com",

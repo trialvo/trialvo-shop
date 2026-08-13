@@ -3,7 +3,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "Favorites | Graduate";
+const title = "Favorites | Vellora";
 const description = "View your favorite products and manage your wishlist.";
 
 export const metadata: Metadata = buildMetadata({

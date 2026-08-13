@@ -14,13 +14,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!policy) {
     return buildMetadata({
-      title: "Policy Not Found | Graduate",
+      title: "Policy Not Found | Vellora",
       robots: "noindex,nofollow",
     });
   }
 
-  const title = `${policy.title} | Graduate`;
-  const description = `Read Graduate's ${policy.title} for important information about our policies and terms.`;
+  const title = `${policy.title} | Vellora`;
+  const description = `Read Vellora's ${policy.title} for important information about our policies and terms.`;
 
   return buildMetadata({
     title,

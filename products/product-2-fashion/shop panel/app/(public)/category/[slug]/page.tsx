@@ -20,10 +20,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonical = `${siteUrl}/category/${normalizedSlug}`;
 
   return buildMetadata({
-    title: `${title} | Graduate`,
+    title: `${title} | Vellora`,
     description,
     canonical,
-    ogTitle: `${title} | Graduate`,
+    ogTitle: `${title} | Vellora`,
     ogDescription: description,
     ogImage: "/og-category.jpg",
   });

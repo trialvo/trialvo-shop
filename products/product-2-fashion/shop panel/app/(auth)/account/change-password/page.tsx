@@ -3,7 +3,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import React from "react";
 
-const title = "Change Password | Graduate";
+const title = "Change Password | Vellora";
 const description =
   "Update your account password securely. Use a strong password to keep your account protected.";
 

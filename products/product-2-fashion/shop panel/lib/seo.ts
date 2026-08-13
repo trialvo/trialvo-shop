@@ -12,7 +12,7 @@ export type SeoInput = {
   ogImage?: string | null;
 };
 
-const DEFAULT_TITLE = "Graduate | A Clothing Brand";
+const DEFAULT_TITLE = "Vellora | A Clothing Brand";
 const DEFAULT_DESCRIPTION = "A Clothing Brand - Where we sell clothing goods.";
 
 export const getSiteUrl = () =>
@@ -48,7 +48,7 @@ export const buildMetadata = (input?: SeoInput): Metadata => {
       title: input?.ogTitle ?? title,
       description: input?.ogDescription ?? description,
       url: canonical,
-      siteName: "Graduate",
+      siteName: "Vellora",
       type: "website",
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },

@@ -83,12 +83,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     metaFromApi?.canonicalUrl ?? `${shopUrl}/single-order-page/${normalizedSlug}/${id}`;
 
   return buildMetadata({
-    title: `${title} — Quick Order | Graduate`,
+    title: `${title} — Quick Order | Vellora`,
     description,
     canonical,
     keywords: metaFromApi?.keywords,
     robots: metaFromApi?.robots ?? "noindex, nofollow",
-    ogTitle: metaFromApi?.ogTitle ?? `${title} — Quick Order | Graduate`,
+    ogTitle: metaFromApi?.ogTitle ?? `${title} — Quick Order | Vellora`,
     ogDescription: metaFromApi?.ogDescription ?? description,
     ogImage: metaFromApi?.ogImage ?? "/og-product.jpg",
   });

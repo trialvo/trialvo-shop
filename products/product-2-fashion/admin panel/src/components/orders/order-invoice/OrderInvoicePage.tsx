@@ -189,7 +189,7 @@ export default function OrderInvoicePage() {
   const billedBy = useMemo(() => {
     // Company display name comes from branding so one admin serves fashion / tech / lifestyle.
     const name = branding.appName;
-    const email = "graduatefashion2020@gmail.com"
+    const email = "support@vellora.demo"
     const phone = "+880 1970680283"
     const address = "House 29, Road 5, Sector 11, Uttara, Dhaka Bangladesh"
     return { name, email: email || "—", phone: phone || "—", address: address || "—" };

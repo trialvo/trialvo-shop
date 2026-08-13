@@ -220,12 +220,12 @@ exports.googleAuth = api(
 
       // try {
       //   await transporter.sendMail({
-      //     from: `"Graduate Team" <${cfg.MAIL_USER}>`,
+      //     from: `"Vellora Team" <${cfg.MAIL_USER}>`,
       //     to: email,
-      //     subject: "Wellcome to Graduate",
+      //     subject: "Welcome to Vellora",
       //     html: `
       //     <p>Hello ${firstName || 'User'},</p>
-      //     <p>Welcome to Graduate! Your account has been successfully created using Google authentication.</p>
+      //     <p>Welcome to Vellora! Your account has been successfully created using Google authentication.</p>
       //   `
       //   });
       // } catch (err) {
@@ -521,7 +521,7 @@ exports.createUser = api(
 
     // try {
     //     await transporter.sendMail({
-    //       from: `"Graduate Team" <${cfg.MAIL_USER}>`,
+    //       from: `"Vellora Team" <${cfg.MAIL_USER}>`,
     //       to: email,
     //       subject: "Email verification",
     //       html: `<p>Hello ${ first_name || 'user'},</p>
@@ -619,7 +619,7 @@ exports.resendVerificationOtp = api(
 
     // try {
     //   await transporter.sendMail({
-    //     from: `"Graduate Team" <${cfg.MAIL_USER}>`,
+    //     from: `"Vellora Team" <${cfg.MAIL_USER}>`,
     //     to: email,
     //     subject: "Your Email Verification Code",
     //     html: `

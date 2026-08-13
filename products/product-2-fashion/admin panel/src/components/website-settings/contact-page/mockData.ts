@@ -15,7 +15,7 @@ export const INITIAL_CONTACT_SETTINGS: ContactPageSettings = {
     callNote: "(10am-10pm, Open Everyday)",
 
     mailTitle: "Mail Us",
-    emails: ["graduatefashion2020@gmail.com"],
+    emails: ["support@vellora.demo"],
 
     businessTitle: "Business Hours",
     businessRows: [

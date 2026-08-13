@@ -7,9 +7,16 @@ import JsonLd from "@/components/layout/JsonLd";
 export const dynamic = "force-dynamic";
 
 function ShopRuntimeConfigScript() {
+  // Browser must not receive docker-internal hostnames (techshop-api:5000).
+  const browserApi =
+    process.env.PUBLIC_API_URL ||
+    process.env.SHOP_URL ||
+    process.env.SITE_URL ||
+    process.env.APP_URL ||
+    "";
   const config = {
     IMAGE_URL: process.env.IMAGE_URL || "",
-    API_URL: process.env.API_URL || "",
+    API_URL: browserApi,
     SITE_URL: process.env.SITE_URL || "",
     SHOP_URL: process.env.SHOP_URL || "",
     APP_URL: process.env.APP_URL || "",

@@ -243,7 +243,7 @@ const LanguageSelectModal: React.FC = () => {
     }}>
      <div style={{ flex: 1, height: 1, background: "#f0f0f0" }} />
      <span style={{ fontSize: 10, color: "#bbb", letterSpacing: "0.12em", textTransform: "uppercase" }}>
-      Graduate Fashion · 2025
+      Vellora · 2025
      </span>
      <div style={{ flex: 1, height: 1, background: "#f0f0f0" }} />
     </div>
