@@ -5,6 +5,7 @@ import {
   API_URL,
   APP_URL,
   GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
   SHOP_URL,
   SITE_URL,
 } from "@/config/env";
@@ -109,7 +110,7 @@ export async function POST(req: NextRequest) {
     }
 
     const clientId = GOOGLE_CLIENT_ID?.trim();
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+    const clientSecret = GOOGLE_CLIENT_SECRET?.trim() || process.env.GOOGLE_CLIENT_SECRET?.trim();
     const apiBaseRaw = API_URL;
 
     if (!clientId) {

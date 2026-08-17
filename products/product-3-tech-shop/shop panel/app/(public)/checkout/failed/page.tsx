@@ -5,7 +5,7 @@ import CheckoutFailedClient from "@/components/checkout/result/CheckoutFailedCli
 import { CheckoutResultSkeleton } from "@/components/checkout/result/CheckoutResultSummary";
 
 export const metadata: Metadata = {
-  title: "Payment Failed | ShopLinkBD",
+  title: "Payment Failed | Techshop",
   description: "Your payment could not be completed.",
   robots: { index: false, follow: false },
 };

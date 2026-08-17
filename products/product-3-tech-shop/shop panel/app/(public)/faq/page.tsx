@@ -4,9 +4,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 export const metadata: Metadata = {
   title: 'FAQ — Frequently Asked Questions',
-  description: 'Find answers to common questions about ShopLinkBD — delivery times, payment methods, return policy, warranty, and more.',
+  description: 'Find answers to common questions about Techshop — delivery times, payment methods, return policy, warranty, and more.',
   openGraph: {
-    title: 'FAQ — ShopLinkBD',
+    title: 'FAQ — Techshop',
     description: 'Answers to common questions about delivery, returns, payments, and warranty.',
   },
 };

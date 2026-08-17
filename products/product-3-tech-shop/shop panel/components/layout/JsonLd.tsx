@@ -2,9 +2,9 @@ export default function JsonLd() {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "ShopLinkBD",
-    url: "https://shoplinkbd.com",
-    logo: "https://shoplinkbd.com/icon.svg",
+    name: "Techshop",
+    url: "https://techshop-demo.trialvo.com",
+    logo: "https://techshop-demo.trialvo.com/icon.svg",
     description:
       "Bangladesh's trusted destination for premium gadgets, tech accessories, and smart devices.",
     address: {
@@ -26,13 +26,13 @@ export default function JsonLd() {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "ShopLinkBD",
-    url: "https://shoplinkbd.com",
+    name: "Techshop",
+    url: "https://techshop-demo.trialvo.com",
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://shoplinkbd.com/shop?q={search_term_string}",
+        urlTemplate: "https://techshop-demo.trialvo.com/shop?q={search_term_string}",
       },
       "query-input": "required name=search_term_string",
     },
@@ -41,8 +41,8 @@ export default function JsonLd() {
   const storeSchema = {
     "@context": "https://schema.org",
     "@type": "Store",
-    name: "ShopLinkBD",
-    url: "https://shoplinkbd.com",
+    name: "Techshop",
+    url: "https://techshop-demo.trialvo.com",
     description:
       "Premium tech accessories and gadgets online store in Bangladesh",
     currenciesAccepted: "BDT",

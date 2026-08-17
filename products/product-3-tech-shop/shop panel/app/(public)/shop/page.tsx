@@ -28,22 +28,22 @@ export async function generateMetadata({
   const category = sanitizeCategorySlug(searchParams.category);
   const { badge, brand, q } = searchParams;
 
-  let title = "Shop All Products | ShopLinkBD";
+  let title = "Shop All Products | Techshop";
   let description =
     "Explore our wide range of premium tech accessories and gadgets in Bangladesh. Authentic products with official warranty.";
 
   if (category) {
     const label = humanizeCategorySlug(category);
-    title = `${label} | ShopLinkBD`;
-    description = `Buy authentic ${label} gadgets and accessories from ShopLinkBD. 100% genuine products with fast delivery in Bangladesh.`;
+    title = `${label} | Techshop`;
+    description = `Buy authentic ${label} gadgets and accessories from Techshop. 100% genuine products with fast delivery in Bangladesh.`;
   } else if (badge) {
-    title = `${badge.charAt(0).toUpperCase() + badge.slice(1)} Deals | ShopLinkBD`;
+    title = `${badge.charAt(0).toUpperCase() + badge.slice(1)} Deals | Techshop`;
     description = `Check out our ${badge} products. Best prices on premium tech gadgets with official warranty and fast shipping.`;
   } else if (brand) {
-    title = `${brand} Products | ShopLinkBD`;
-    description = `Shop the latest ${brand} collection at ShopLinkBD. Genuine ${brand} accessories and gadgets with nationwide delivery.`;
+    title = `${brand} Products | Techshop`;
+    description = `Shop the latest ${brand} collection at Techshop. Genuine ${brand} accessories and gadgets with nationwide delivery.`;
   } else if (q) {
-    title = `Search results for "${q}" | ShopLinkBD`;
+    title = `Search results for "${q}" | Techshop`;
   }
 
   const siteUrl = "https://shoplinkbd.com";
@@ -62,7 +62,7 @@ export async function generateMetadata({
       title,
       description,
       url: `${siteUrl}${canonicalPath}`,
-      siteName: "ShopLinkBD",
+      siteName: "Techshop",
       type: "website",
     },
     alternates: {

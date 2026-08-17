@@ -13,7 +13,7 @@ const dev = {
   SHOP_URL: "http://localhost:3000",
   APP_URL: "http://localhost:3000",
   GTM_ID: "GTM-WQDNF2TP",
-  GOOGLE_CLIENT_ID: "641431966702-5vs5seanqb0cm8kq1bihlpumat58fn5r.apps.googleusercontent.com",
+  GOOGLE_CLIENT_ID: "637133097087-7rmoop30gjlunpdok5bi4dv5cvb4891d.apps.googleusercontent.com",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
 };
 
@@ -24,7 +24,7 @@ const live_dev = {
   SHOP_URL: "https://shop-api.shoplinkbd.com",
   APP_URL: "https://shop-api.shoplinkbd.com",
   GTM_ID: "GTM-WQDNF2TP",
-  GOOGLE_CLIENT_ID: "641431966702-5vs5seanqb0cm8kq1bihlpumat58fn5r.apps.googleusercontent.com",
+  GOOGLE_CLIENT_ID: "637133097087-7rmoop30gjlunpdok5bi4dv5cvb4891d.apps.googleusercontent.com",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
 };
 
@@ -35,7 +35,7 @@ const production = {
   SHOP_URL: "https://graduatefashionbd.com",
   APP_URL: "https://graduatefashionbd.com",
   GTM_ID: "GTM-WQDNF2TP",
-  GOOGLE_CLIENT_ID: "641431966702-5vs5seanqb0cm8kq1bihlpumat58fn5r.apps.googleusercontent.com",
+  GOOGLE_CLIENT_ID: "637133097087-7rmoop30gjlunpdok5bi4dv5cvb4891d.apps.googleusercontent.com",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
 };
 
@@ -46,7 +46,7 @@ const vps = {
   SHOP_URL: "https://graduatefashionbd.com",
   APP_URL: "https://graduatefashionbd.com",
   GTM_ID: "GTM-WQDNF2TP",
-  GOOGLE_CLIENT_ID: "1064748421416-enkuk4h8pklfr20lmlepkrjkc79bf4cg.apps.googleusercontent.com",
+  GOOGLE_CLIENT_ID: "637133097087-7rmoop30gjlunpdok5bi4dv5cvb4891d.apps.googleusercontent.com",
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "",
 };
 
@@ -109,7 +109,9 @@ export let SITE_URL = resolve("SITE_URL");
 export let SHOP_URL = resolve("SHOP_URL");
 export let APP_URL = resolve("APP_URL");
 export const GTM_ID = compiled.GTM_ID;
-export const GOOGLE_CLIENT_ID = compiled.GOOGLE_CLIENT_ID;
+/** Prefer runtime/build env; same Trialvo OAuth client for local + live demos. */
+export const GOOGLE_CLIENT_ID =
+  fromProcess("GOOGLE_CLIENT_ID") || compiled.GOOGLE_CLIENT_ID;
 export const GOOGLE_CLIENT_SECRET =
   process.env.GOOGLE_CLIENT_SECRET || compiled.GOOGLE_CLIENT_SECRET;
 

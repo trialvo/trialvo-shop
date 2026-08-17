@@ -1,16 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="hsl(217,91%,30%)"/>
-      <stop offset="100%" stop-color="hsl(217,91%,50%)"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="hsl(25,95%,53%)"/>
-      <stop offset="100%" stop-color="hsl(25,95%,63%)"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
-  <text x="256" y="340" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="320" fill="white" letter-spacing="-15">S</text>
-  <circle cx="400" cy="130" r="60" fill="url(#accent)"/>
-  <path d="M380 130 L395 145 L420 115" stroke="white" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Techshop">
+  <rect width="32" height="32" rx="6" fill="#11192a"/>
+  <rect x="7" y="7" width="18" height="5" rx="1.2" fill="#6f86b5"/>
+  <rect x="13.2" y="10" width="5.6" height="15" rx="1.2" fill="#3d5a8a"/>
 </svg>

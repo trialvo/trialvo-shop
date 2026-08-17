@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: policy.title,
     description: policy.description,
     openGraph: {
-      title: `${policy.title} | ShopLinkBD`,
+      title: `${policy.title} | Techshop`,
       description: policy.description,
     },
   };

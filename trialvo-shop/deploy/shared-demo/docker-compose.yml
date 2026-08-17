@@ -31,6 +31,7 @@ services:
       SHOP_URL: http://localhost:5100
       STORAGE_DRIVER: local
       STORAGE_URL: http://localhost:9100
+      GAUTH_CLIENT_ID: ${GAUTH_CLIENT_ID}
     ports:
       - "9100:5000"
     extra_hosts:
@@ -71,6 +72,9 @@ services:
       SITE_URL: "http://localhost:5100"
       SHOP_URL: "http://localhost:5100"
       APP_URL: "http://localhost:5100"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     ports:
       - "5100:5000"
     depends_on:
@@ -97,6 +101,7 @@ services:
       BRAND_NAME: Vellora
       STORAGE_DRIVER: local
       STORAGE_URL: http://localhost:9101
+      GAUTH_CLIENT_ID: ${GAUTH_CLIENT_ID}
     ports:
       - "9101:5000"
     extra_hosts:
@@ -137,6 +142,9 @@ services:
       SITE_URL: "http://localhost:5101"
       SHOP_URL: "http://localhost:5101"
       APP_URL: "http://localhost:5101"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     ports:
       - "5101:5000"
     depends_on:
@@ -162,6 +170,7 @@ services:
       SHOP_URL: http://localhost:5102
       STORAGE_DRIVER: local
       STORAGE_URL: http://localhost:9102
+      GAUTH_CLIENT_ID: ${GAUTH_CLIENT_ID}
     ports:
       - "9102:5000"
     extra_hosts:
@@ -202,6 +211,9 @@ services:
       SITE_URL: "http://localhost:5102"
       SHOP_URL: "http://localhost:5102"
       APP_URL: "http://localhost:5102"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     ports:
       - "5102:5000"
     depends_on:

@@ -46,7 +46,7 @@ const WhyChooseUs = () => (
     <div className="container">
       <SectionHeader
         align="center"
-        title="Why Choose ShopLinkBD?"
+        title="Why Choose Techshop?"
         subtitle="Your trusted tech partner in Bangladesh"
       />
       <div className="grid grid-cols-3 md:grid-cols-6 gap-3 md:gap-4">

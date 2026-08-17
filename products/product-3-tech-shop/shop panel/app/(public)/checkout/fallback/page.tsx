@@ -4,7 +4,7 @@ import PaymentFallbackClient from "@/components/checkout/result/PaymentFallbackC
 import { sanitizeAuthText } from "@/lib/security/auth";
 
 export const metadata: Metadata = {
-  title: "Confirming Payment | ShopLinkBD",
+  title: "Confirming Payment | Techshop",
   description: "Confirming your payment status.",
   robots: { index: false, follow: false },
 };

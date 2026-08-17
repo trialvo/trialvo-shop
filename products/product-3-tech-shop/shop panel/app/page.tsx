@@ -14,11 +14,11 @@ import Newsletter from '@/components/home/Newsletter';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'ShopLinkBD | Best Tech Shop in Bangladesh',
-  description: 'Shop for premium tech accessories, gadgets, and electronics at ShopLinkBD. 100% authentic products with official warranty and fast delivery across Bangladesh.',
+  title: 'Techshop | Best Tech Shop in Bangladesh',
+  description: 'Shop for premium tech accessories, gadgets, and electronics at Techshop. 100% authentic products with official warranty and fast delivery across Bangladesh.',
   openGraph: {
-    title: 'ShopLinkBD | Best Tech Shop in Bangladesh',
-    description: 'Shop for premium tech accessories, gadgets, and electronics at ShopLinkBD.',
+    title: 'Techshop | Best Tech Shop in Bangladesh',
+    description: 'Shop for premium tech accessories, gadgets, and electronics at Techshop.',
   },
 };
 

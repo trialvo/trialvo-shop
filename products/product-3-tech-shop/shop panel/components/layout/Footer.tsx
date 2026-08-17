@@ -26,7 +26,7 @@ const Footer = () => (
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
         <div className="col-span-2 md:col-span-1">
           <Link href="/" className="font-heading text-xl font-bold text-background">
-            ShopLink<span className="text-accent">BD</span>
+            Tech<span className="text-accent">shop</span>
           </Link>
           <p className="mt-3 text-xs leading-relaxed text-background/60">
             Bangladesh&apos;s trusted destination for premium gadgets, tech accessories, and smart devices. 100% authentic products with warranty.
@@ -79,7 +79,7 @@ const Footer = () => (
     </div>
     <div className="border-t border-background/10">
       <div className="container py-3 flex flex-col md:flex-row items-center justify-between gap-2 text-[10px] text-background/40">
-        <p>© 2026 ShopLinkBD. All rights reserved.</p>
+        <p>© 2026 Techshop. All rights reserved.</p>
         <div className="flex items-center gap-4">
           <Link href="/policies/terms" className="hover:text-background/70 transition-colors">Terms</Link>
           <Link href="/policies/privacy" className="hover:text-background/70 transition-colors">Privacy</Link>

@@ -16,13 +16,13 @@ export type AboutPromise = Readonly<{
 
 export const ABOUT_PAGE = {
   eyebrow: "Since 2020",
-  brand: "ShopLinkBD",
+  brand: "Techshop",
   headline: "Premium tech, delivered with trust.",
   summary:
     "Bangladesh's go-to shop for authentic accessories and smart gadgets — fair prices, fast delivery, and real after-sales support.",
   storyTitle: "Our story",
   storyParagraphs: [
-    "ShopLinkBD started with a simple idea: premium, authentic tech should be easy to buy anywhere in Bangladesh — without inflated prices or shady sellers.",
+    "Techshop started with a simple idea: premium, authentic tech should be easy to buy anywhere in Bangladesh — without inflated prices or shady sellers.",
     "Today we serve customers across all 64 districts with genuine products from authorized partners, official warranty coverage, and a support team that actually picks up.",
   ],
   stats: [

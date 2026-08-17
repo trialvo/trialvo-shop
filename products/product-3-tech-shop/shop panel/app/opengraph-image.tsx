@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "ShopLinkBD — Premium Tech Accessories & Gadgets in Bangladesh";
+export const alt = "Techshop — Premium Tech Accessories & Gadgets in Bangladesh";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -52,7 +52,7 @@ export default async function OGImage() {
               letterSpacing: "-1px",
             }}
           >
-            ShopLinkBD
+            Techshop
           </span>
         </div>
         <p

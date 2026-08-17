@@ -22,11 +22,11 @@ type AuthPanelProps = {
 const titles: Record<AuthMode, { title: string; subtitle: string }> = {
   signin: {
     title: "Welcome Back",
-    subtitle: "Sign in to your ShopLinkBD account",
+    subtitle: "Sign in to your Techshop account",
   },
   signup: {
     title: "Create Account",
-    subtitle: "Register your ShopLinkBD account",
+    subtitle: "Register your Techshop account",
   },
   verify: {
     title: "Verify Email",
@@ -34,7 +34,7 @@ const titles: Record<AuthMode, { title: string; subtitle: string }> = {
   },
   "forgot-request": {
     title: "Forgot Password",
-    subtitle: "Recover access to your ShopLinkBD account",
+    subtitle: "Recover access to your Techshop account",
   },
   "forgot-verify": {
     title: "Enter OTP",

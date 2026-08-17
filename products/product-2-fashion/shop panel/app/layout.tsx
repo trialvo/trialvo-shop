@@ -109,7 +109,7 @@ export const metadata: Metadata = {
   },
   ...buildMetadata({ canonical: "/" }),
   icons: {
-    icon: "/favicon.ico",
+    icon: [{ url: "/favicon-32x32.png" }, { url: "/favicon.ico" }],
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },

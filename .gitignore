@@ -26,6 +26,10 @@ coverage/
 .generated_credentials.json
 **/firebase-adminsdk.json
 **/credentials.txt
+client_secret*.json
+**/client_secret*.json
+.agent/scripts/_tmp*
+.agent/scripts/*.tgz
 
 # Live migration dumps / secrets (never commit)
 .migration-backups/

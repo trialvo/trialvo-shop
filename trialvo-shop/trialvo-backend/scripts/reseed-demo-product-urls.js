@@ -10,6 +10,7 @@ async function main() {
     require('../src/seeds/lifestyleProductSeed'),
     require('../src/seeds/fashionProductSeed'),
     require('../src/seeds/techShopProductSeed'),
+    require('../src/seeds/comboBasketProductSeed'),
   ];
   const client = { query: (...a) => pool.query(...a) };
   for (const s of seeds) {
@@ -23,7 +24,7 @@ async function main() {
             JSON_UNQUOTE(JSON_EXTRACT(deploy_config, '$.shared_demo_api_url')) AS api,
             JSON_UNQUOTE(JSON_EXTRACT(deploy_config, '$.shared_demo_shop_url')) AS shop
      FROM products
-     WHERE slug IN ('lifestyle-ecommerce','fashion-ecommerce','tech-shop-ecommerce')
+     WHERE slug IN ('lifestyle-ecommerce','fashion-ecommerce','tech-shop-ecommerce','combo-basket-ecommerce')
      ORDER BY slug`
   );
   console.table(rows);

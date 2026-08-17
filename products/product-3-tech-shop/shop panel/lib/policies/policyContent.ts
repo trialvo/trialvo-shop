@@ -42,7 +42,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
     type: "privacy",
     title: "Privacy Policy",
     description:
-      "Learn how ShopLinkBD collects, uses, and protects your personal information.",
+      "Learn how Techshop collects, uses, and protects your personal information.",
     summary:
       "We collect only what we need to deliver your order — and we never sell your data.",
     highlights: [
@@ -83,11 +83,11 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
       {
         question: "Who sees my address?",
         answer:
-          "Only ShopLinkBD and the courier partner needed to deliver your order.",
+          "Only Techshop and the courier partner needed to deliver your order.",
       },
     ],
     sections: [
-      "At ShopLinkBD, we respect your privacy and are committed to protecting your personal information.",
+      "At Techshop, we respect your privacy and are committed to protecting your personal information.",
       "We collect your name, phone number, email, and address only to process and deliver your orders.",
       "We do not share your personal data with third parties except for delivery partners required to fulfill your order.",
       "Your payment information is processed securely and we do not store card details on our servers.",
@@ -100,7 +100,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
   terms: {
     type: "terms",
     title: "Terms & Conditions",
-    description: "Read the terms and conditions for using ShopLinkBD online store.",
+    description: "Read the terms and conditions for using Techshop online store.",
     summary:
       "Simple rules for shopping with us — accurate details, fair pricing, and clear responsibilities.",
     highlights: [
@@ -145,7 +145,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
       },
     ],
     sections: [
-      "By using ShopLinkBD, you agree to these terms and conditions.",
+      "By using Techshop, you agree to these terms and conditions.",
       "All products are subject to availability. Prices may change without prior notice.",
       "We reserve the right to cancel orders if products are out of stock or pricing errors occur.",
       "Users must provide accurate delivery information. We are not responsible for failed deliveries due to incorrect addresses.",
@@ -160,7 +160,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
     type: "return",
     title: "Return Policy",
     description:
-      "ShopLinkBD offers a 7-day return policy. Learn about our return process and conditions.",
+      "Techshop offers a 7-day return policy. Learn about our return process and conditions.",
     summary:
       "Changed your mind about a defective or wrong item? You have 7 days from delivery to start a return.",
     highlights: [
@@ -200,7 +200,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
       {
         question: "Who pays return shipping?",
         answer:
-          "ShopLinkBD covers return shipping for defective or wrong items. Other cases may differ — we will confirm when you contact us.",
+          "Techshop covers return shipping for defective or wrong items. Other cases may differ — we will confirm when you contact us.",
       },
       {
         question: "How fast is the refund?",
@@ -219,7 +219,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
       "Returns are accepted only for manufacturing defects, wrong items, or damaged products.",
       "To initiate a return, contact our support team with your Order ID and product photos.",
       "Refunds will be processed within 5-7 business days after receiving the returned product.",
-      "Shipping costs for returns are covered by ShopLinkBD for defective/wrong items.",
+      "Shipping costs for returns are covered by Techshop for defective/wrong items.",
     ],
     updatedAt: "March 2026",
     primaryCta: { label: "Start a return", href: "/contact" },
@@ -229,7 +229,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
     type: "refund",
     title: "Refund Policy",
     description:
-      "Understand how refunds work at ShopLinkBD — processing times, methods, and conditions.",
+      "Understand how refunds work at Techshop — processing times, methods, and conditions.",
     summary:
       "Once your return is approved, we refund the same way you paid — usually within 5–7 business days.",
     highlights: [
@@ -288,7 +288,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
     type: "delivery",
     title: "Delivery Policy",
     description:
-      "ShopLinkBD delivery information — shipping times, fees, and coverage across Bangladesh.",
+      "Techshop delivery information — shipping times, fees, and coverage across Bangladesh.",
     summary:
       "Fast delivery across Bangladesh — usually 1–2 days inside Dhaka, with SMS before arrival.",
     highlights: [
@@ -346,7 +346,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
     type: "warranty",
     title: "Warranty Policy",
     description:
-      "All ShopLinkBD products come with manufacturer warranty. Learn about warranty coverage and claims.",
+      "All Techshop products come with manufacturer warranty. Learn about warranty coverage and claims.",
     summary:
       "Every product includes official manufacturer warranty — we help you claim it when something goes wrong.",
     highlights: [
@@ -391,7 +391,7 @@ export const POLICY_DOCUMENTS: Record<PolicyType, PolicyDocument> = {
       },
     ],
     sections: [
-      "All products sold on ShopLinkBD come with official manufacturer warranty.",
+      "All products sold on Techshop come with official manufacturer warranty.",
       "Warranty periods vary by product: typically 6 months to 2 years depending on the brand.",
       "Warranty covers manufacturing defects only. Physical damage, water damage, and misuse are not covered.",
       "To claim warranty, contact us with your Order ID, product photos, and description of the issue.",

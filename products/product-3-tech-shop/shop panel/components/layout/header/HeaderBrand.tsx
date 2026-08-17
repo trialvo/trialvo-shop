@@ -10,7 +10,7 @@ export type HeaderBrandProps = Readonly<{
 }>;
 
 /**
- * ShopLinkBD wordmark. Parent owns layout position per breakpoint.
+ * Techshop wordmark. Parent owns layout position per breakpoint.
  */
 export function HeaderBrand({
   className,
@@ -25,9 +25,9 @@ export function HeaderBrand({
         placement === "center" && "text-center tracking-tight",
         className,
       )}
-      aria-label="ShopLinkBD home"
+      aria-label="Techshop home"
     >
-      ShopLink<span className="text-accent">BD</span>
+      Tech<span className="text-accent">shop</span>
     </Link>
   );
 }

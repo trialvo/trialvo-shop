@@ -21,7 +21,7 @@ const dev = {
 
   GTM_ID: "GTM-WQDNF2TP",
 
-  GOOGLE_CLIENT_ID: "641431966702-5vs5seanqb0cm8kq1bihlpumat58fn5r.apps.googleusercontent.com",
+  GOOGLE_CLIENT_ID: "637133097087-7rmoop30gjlunpdok5bi4dv5cvb4891d.apps.googleusercontent.com",
 };
 
 // ── Live Dev Environment ─────────────────────────────────────────────────────
@@ -34,7 +34,7 @@ const live_dev = {
 
   GTM_ID: "GTM-WQDNF2TP",
 
-  GOOGLE_CLIENT_ID: "641431966702-5vs5seanqb0cm8kq1bihlpumat58fn5r.apps.googleusercontent.com",
+  GOOGLE_CLIENT_ID: "637133097087-7rmoop30gjlunpdok5bi4dv5cvb4891d.apps.googleusercontent.com",
 };
 
 // ── Production Environment ───────────────────────────────────────────────────
@@ -47,7 +47,7 @@ const production = {
 
   GTM_ID: "GTM-WQDNF2TP",
 
-  GOOGLE_CLIENT_ID: "641431966702-5vs5seanqb0cm8kq1bihlpumat58fn5r.apps.googleusercontent.com",
+  GOOGLE_CLIENT_ID: "637133097087-7rmoop30gjlunpdok5bi4dv5cvb4891d.apps.googleusercontent.com",
 };
 
 type AppEnvName = "dev" | "live_dev" | "production" | "auto";
@@ -116,7 +116,11 @@ export let SITE_URL = resolve("SITE_URL");
 export let SHOP_URL = resolve("SHOP_URL");
 export let APP_URL = resolve("APP_URL");
 export const GTM_ID = env.GTM_ID;
-export const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
+/** Prefer runtime/build env; same Trialvo OAuth client for local + live demos. */
+export const GOOGLE_CLIENT_ID =
+  fromProcess("GOOGLE_CLIENT_ID") || env.GOOGLE_CLIENT_ID;
+export const GOOGLE_CLIENT_SECRET =
+  process.env.GOOGLE_CLIENT_SECRET?.trim() || "";
 
 /** Re-read window.__SHOP_CONFIG__ (safe to call anytime on the client). */
 export function applyShopRuntimeConfig(): void {

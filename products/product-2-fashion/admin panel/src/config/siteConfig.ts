@@ -97,8 +97,9 @@ export const siteConfig: SiteConfig = {
   logoIconUrl: "",
   authLogoUrl: "",
 
-  faviconUrl: "/favicon.ico",
-  faviconDarkUrl: "/favicon-dark.ico",
+  faviconUrl: "/favicon.ico?v=20260816",
+  faviconDarkUrl: "/favicon-dark.ico?v=20260816",
+  appleTouchIconUrl: "/apple-touch-icon.png?v=20260816",
 
   titleSeparator: "|",
 

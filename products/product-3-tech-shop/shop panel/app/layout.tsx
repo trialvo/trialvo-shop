@@ -30,14 +30,18 @@ function ShopRuntimeConfigScript() {
   );
 }
 
-const siteUrl = "https://shoplinkbd.com";
+const siteUrl =
+  process.env.SITE_URL ||
+  process.env.SHOP_URL ||
+  process.env.APP_URL ||
+  "https://techshop-demo.trialvo.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
 
   title: {
-    default: "ShopLinkBD — Premium Tech Accessories & Gadgets in Bangladesh",
-    template: "%s | ShopLinkBD",
+    default: "Techshop — Premium Tech Accessories & Gadgets",
+    template: "%s | Techshop",
   },
   description:
     "Bangladesh's trusted destination for premium gadgets, tech accessories, and smart devices. 100% authentic products with warranty. Fast delivery & COD available.",
@@ -49,13 +53,13 @@ export const metadata: Metadata = {
     "power bank",
     "gaming accessories",
     "online shop Bangladesh",
-    "ShopLinkBD",
+    "Techshop",
     "authentic gadgets",
     "COD Bangladesh",
   ],
-  authors: [{ name: "ShopLinkBD" }],
-  creator: "ShopLinkBD",
-  publisher: "ShopLinkBD",
+  authors: [{ name: "Techshop" }],
+  creator: "Techshop",
+  publisher: "Techshop",
 
   formatDetection: {
     email: false,
@@ -67,8 +71,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_BD",
     url: siteUrl,
-    siteName: "ShopLinkBD",
-    title: "ShopLinkBD — Premium Tech Accessories & Gadgets in Bangladesh",
+    siteName: "Techshop",
+    title: "Techshop — Premium Tech Accessories & Gadgets",
     description:
       "Bangladesh's trusted destination for premium gadgets, tech accessories, and smart devices. 100% authentic products with warranty.",
     images: [
@@ -76,14 +80,14 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "ShopLinkBD — Premium Tech Accessories & Gadgets",
+        alt: "Techshop — Premium Tech Accessories & Gadgets",
       },
     ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "ShopLinkBD — Premium Tech Accessories & Gadgets in Bangladesh",
+    title: "Techshop — Premium Tech Accessories & Gadgets",
     description:
       "Bangladesh's trusted destination for premium gadgets, tech accessories, and smart devices.",
     images: ["/og-image.png"],
@@ -106,6 +110,11 @@ export const metadata: Metadata = {
   },
 
   category: "E-Commerce",
+  icons: {
+    icon: [{ url: "/favicon-32x32.png" }, { url: "/favicon.ico" }],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

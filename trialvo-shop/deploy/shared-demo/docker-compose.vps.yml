@@ -1,83 +1,82 @@
 # VPS-specific overrides (public demo URLs + same-origin shop images).
 # Merged with docker-compose.yml on NEW VPS deploy via remote-deploy-demos.sh.
 #
+# Public URLs use https://*-demo.trialvo.com (see DNS_DEMO_SUBDOMAINS.md).
 # Shops use IMAGE_URL="" so the browser loads /uploads via Next.js rewrites.
-# APIs keep STORAGE_URL on the public API port for admin panels.
-
-x-demo-host: &demo_host 217.216.108.119
+# APIs keep STORAGE_URL on the public API hostname for admin panels.
 
 services:
   lifestyle-api:
     environment:
-      STORAGE_URL: http://217.216.108.119:9100
-      SHOP_URL: http://217.216.108.119:5100
-      ADMIN_URL: http://217.216.108.119:5174
+      STORAGE_URL: https://lifestyle-api-demo.trialvo.com
+      SHOP_URL: https://lifestyle-demo.trialvo.com
+      ADMIN_URL: https://lifestyle-admin-demo.trialvo.com
 
   lifestyle-admin:
     environment:
-      API_ORIGIN: http://217.216.108.119:9100
-      IMAGE_URL: http://217.216.108.119:9100
+      API_ORIGIN: https://lifestyle-api-demo.trialvo.com
+      IMAGE_URL: https://lifestyle-api-demo.trialvo.com
 
   lifestyle-shop:
     environment:
       IMAGE_URL: ""
-      SITE_URL: http://217.216.108.119:5100
-      SHOP_URL: http://217.216.108.119:5100
-      APP_URL: http://217.216.108.119:5100
-      ADMIN_URL: http://217.216.108.119:5174
+      SITE_URL: https://lifestyle-demo.trialvo.com
+      SHOP_URL: https://lifestyle-demo.trialvo.com
+      APP_URL: https://lifestyle-demo.trialvo.com
+      ADMIN_URL: https://lifestyle-admin-demo.trialvo.com
 
   fashion-api:
     environment:
-      STORAGE_URL: http://217.216.108.119:9101
-      SHOP_URL: http://217.216.108.119:5101
-      ADMIN_URL: http://217.216.108.119:5175
+      STORAGE_URL: https://fashion-api-demo.trialvo.com
+      SHOP_URL: https://fashion-demo.trialvo.com
+      ADMIN_URL: https://fashion-admin-demo.trialvo.com
       BRAND_NAME: Vellora
 
   fashion-admin:
     environment:
-      API_ORIGIN: http://217.216.108.119:9101
-      IMAGE_URL: http://217.216.108.119:9101
+      API_ORIGIN: https://fashion-api-demo.trialvo.com
+      IMAGE_URL: https://fashion-api-demo.trialvo.com
 
   fashion-shop:
     environment:
       IMAGE_URL: ""
-      SITE_URL: http://217.216.108.119:5101
-      SHOP_URL: http://217.216.108.119:5101
-      APP_URL: http://217.216.108.119:5101
-      ADMIN_URL: http://217.216.108.119:5175
+      SITE_URL: https://fashion-demo.trialvo.com
+      SHOP_URL: https://fashion-demo.trialvo.com
+      APP_URL: https://fashion-demo.trialvo.com
+      ADMIN_URL: https://fashion-admin-demo.trialvo.com
 
   techshop-api:
     environment:
-      STORAGE_URL: http://217.216.108.119:9102
-      SHOP_URL: http://217.216.108.119:5102
-      ADMIN_URL: http://217.216.108.119:5176
+      STORAGE_URL: https://techshop-api-demo.trialvo.com
+      SHOP_URL: https://techshop-demo.trialvo.com
+      ADMIN_URL: https://techshop-admin-demo.trialvo.com
 
   techshop-admin:
     environment:
-      API_ORIGIN: http://217.216.108.119:9102
-      IMAGE_URL: http://217.216.108.119:9102
+      API_ORIGIN: https://techshop-api-demo.trialvo.com
+      IMAGE_URL: https://techshop-api-demo.trialvo.com
 
   techshop-shop:
     environment:
       IMAGE_URL: ""
-      SITE_URL: http://217.216.108.119:5102
-      SHOP_URL: http://217.216.108.119:5102
-      APP_URL: http://217.216.108.119:5102
-      ADMIN_URL: http://217.216.108.119:5176
+      SITE_URL: https://techshop-demo.trialvo.com
+      SHOP_URL: https://techshop-demo.trialvo.com
+      APP_URL: https://techshop-demo.trialvo.com
+      ADMIN_URL: https://techshop-admin-demo.trialvo.com
 
   combobasket-api:
     environment:
-      SHOP_URL: http://217.216.108.119:5103
-      ADMIN_URL: http://217.216.108.119:5177
+      SHOP_URL: https://combo-demo.trialvo.com
+      ADMIN_URL: https://combo-admin-demo.trialvo.com
 
   combobasket-admin:
     environment:
-      API_URL: http://217.216.108.119:9103/api
-      IMAGE_BASE_URL: http://217.216.108.119:9103
+      API_URL: https://combo-api-demo.trialvo.com/api
+      IMAGE_BASE_URL: https://combo-api-demo.trialvo.com
 
   combobasket-shop:
     environment:
-      PUBLIC_ORIGIN: http://217.216.108.119:5103
-      SITE_URL: http://217.216.108.119:5103
-      SHOP_URL: http://217.216.108.119:5103
-      ADMIN_URL: http://217.216.108.119:5177
+      PUBLIC_ORIGIN: https://combo-demo.trialvo.com
+      SITE_URL: https://combo-demo.trialvo.com
+      SHOP_URL: https://combo-demo.trialvo.com
+      ADMIN_URL: https://combo-admin-demo.trialvo.com

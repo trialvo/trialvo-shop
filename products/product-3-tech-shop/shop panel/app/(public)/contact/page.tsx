@@ -7,9 +7,9 @@ import { ContactInfoAside } from "@/components/contact/ContactInfoCard";
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
-    "Get in touch with ShopLinkBD — call, email, or WhatsApp us. We're here to help with orders, returns, and product inquiries. Located in Banani, Dhaka.",
+    "Get in touch with Techshop — call, email, or WhatsApp us. We're here to help with orders, returns, and product inquiries. Located in Banani, Dhaka.",
   openGraph: {
-    title: "Contact ShopLinkBD",
+    title: "Contact Techshop",
     description:
       "Reach us anytime — phone, email, WhatsApp, or visit us in Banani, Dhaka.",
   },

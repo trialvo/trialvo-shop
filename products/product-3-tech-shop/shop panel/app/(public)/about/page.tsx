@@ -5,9 +5,9 @@ import { AboutPageView } from "@/components/about/AboutPageView";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Learn about ShopLinkBD — Bangladesh's trusted destination for premium tech accessories and smart gadgets since 2020. 50K+ happy customers across 64 districts.",
+    "Learn about Techshop — Bangladesh's trusted destination for premium tech accessories and smart gadgets since 2020. 50K+ happy customers across 64 districts.",
   openGraph: {
-    title: "About ShopLinkBD",
+    title: "About Techshop",
     description:
       "Bangladesh's trusted destination for premium tech accessories and smart gadgets since 2020.",
   },

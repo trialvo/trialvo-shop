@@ -5,7 +5,7 @@ import CheckoutSuccessClient from "@/components/checkout/result/CheckoutSuccessC
 import { CheckoutResultSkeleton } from "@/components/checkout/result/CheckoutResultSummary";
 
 export const metadata: Metadata = {
-  title: "Order Confirmed | ShopLinkBD",
+  title: "Order Confirmed | Techshop",
   description: "Thank you for your purchase. View your order summary and delivery details.",
   robots: { index: false, follow: false },
 };

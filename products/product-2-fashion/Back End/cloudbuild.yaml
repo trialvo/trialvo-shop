@@ -54,7 +54,7 @@ substitutions:
   _GCS_BUCKET: "graduate-ecom-mumbai-641431966702"
   _GCS_PROJECT_ID: "graduatefashion"
   _STORAGE_URL: "https://storage.googleapis.com/graduate-ecom-mumbai-641431966702"
-  _GAUTH_CLIENT_ID: "641431966702-5vs5seanqb0cm8kq1bihlpumat58fn5r.apps.googleusercontent.com"
+  _GAUTH_CLIENT_ID: "637133097087-7rmoop30gjlunpdok5bi4dv5cvb4891d.apps.googleusercontent.com"
   _JWTEXPIRY: "48"
   _JWTSECRET: "7061svcfishforjwt"
   _UNSUBSCRIBE_SECRET: "7061svcunsubscribefishforunsubscribe"
