@@ -34,8 +34,8 @@ module.exports = {
         const payload = {
             slug,
             category: 'ecommerce',
-            price_bdt: 60000,
-            price_usd: 600,
+            price_bdt: 75000,
+            price_usd: 750,
             thumbnail: catalogImages.lifestyle.thumbnail,
             images: JSON.stringify({
                 admin: catalogImages.lifestyle.admin,

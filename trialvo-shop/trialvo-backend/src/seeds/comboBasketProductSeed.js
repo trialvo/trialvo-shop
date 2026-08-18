@@ -43,8 +43,8 @@ module.exports = {
     const payload = {
       slug,
       category: 'gift',
-      price_bdt: 20000,
-      price_usd: 200,
+      price_bdt: 25000,
+      price_usd: 250,
       thumbnail: catalogImages.combobasket.thumbnail,
       images: JSON.stringify({
         admin: catalogImages.combobasket.admin,
