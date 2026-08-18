@@ -1,6 +1,6 @@
-﻿{
-    "database":  "techshop_demo",
-    "file":  "techshop_demo_20260817_220450.sql",
-    "sha256":  "d1a3eed6e29711aca6e3cd7e6d4b1d28159514248c3bd535f2dba2a8d32daae5",
-    "createdAt":  "2026-08-17T16:04:50.717Z"
+{
+  "database": "techshop_demo",
+  "file": "techshop_demo_20260819_024803.sql",
+  "sha256": "56602b83735b76122df2c4e74fb847c5779750972ce7b75172cdd5539f456400",
+  "createdAt": "2026-08-18T20:48:03.965Z"
 }

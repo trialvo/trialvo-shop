@@ -1,6 +1,6 @@
-﻿{
-    "database":  "fashion_demo",
-    "file":  "fashion_demo_20260817_220449.sql",
-    "sha256":  "5787a56bd840301a6325b0715fb7aa4e432e6b89eb2523e8a4d825f85e7d9866",
-    "createdAt":  "2026-08-17T16:04:50.099Z"
+{
+  "database": "fashion_demo",
+  "file": "fashion_demo_20260819_024802.sql",
+  "sha256": "0f68894dba77fbe3177aa14aec9a01de3e63064c26d6816bf1ec24e63185872e",
+  "createdAt": "2026-08-18T20:48:03.233Z"
 }

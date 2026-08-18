@@ -1,6 +1,6 @@
-﻿{
-    "database":  "lifestyle_demo",
-    "file":  "lifestyle_demo_20260817_220447.sql",
-    "sha256":  "99302bc8d874fdb1010b81902c886bc96c5964b76a791051837172af035aacfb",
-    "createdAt":  "2026-08-17T16:04:49.112Z"
+{
+  "database": "lifestyle_demo",
+  "file": "lifestyle_demo_20260819_024800.sql",
+  "sha256": "308de03222a981aefa1cf48ce4a97d81d72134ac93ecc905d31602bdcda18201",
+  "createdAt": "2026-08-18T20:48:02.137Z"
 }
