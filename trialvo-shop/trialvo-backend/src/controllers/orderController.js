@@ -2,6 +2,7 @@ const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
 const { createTrialvoPayBill } = require('../config/trialvo_pay');
 const { getTrialSettings } = require('../services/trialSettings');
+const { quoteProduct } = require('../lib/productPricing');
 
 // POST /api/orders — public, create order + initiate Trialvo Pay payment
 async function createOrder(req, res, next) {
@@ -11,7 +12,7 @@ async function createOrder(req, res, next) {
     const {
       productId, customerName, customerEmail, customerPhone,
       company, needsHosting, notes, paymentMethod,
-      discountAmount, shippingAddress, productName,
+      shippingAddress, productName,
       trialInstanceId,
       orderKind: rawKind,
     } = req.body;
@@ -23,6 +24,8 @@ async function createOrder(req, res, next) {
     let resolvedProductId = productId || null;
     let extendDays = null;
     let totalBdt = 0;
+    let listBdt = 0;
+    let computedDiscount = 0;
     let billProductName = productName || 'Digital Product';
 
     if (!customerName || !customerEmail || !customerPhone) {
@@ -31,7 +34,7 @@ async function createOrder(req, res, next) {
 
     if (trialInstanceId) {
       const inst = await pool.query(
-        `SELECT ti.id, ti.product_id, tr.email, p.name AS product_name
+        `SELECT ti.id, ti.product_id, ti.status AS instance_status, tr.email, p.name AS product_name
          FROM trial_instances ti
          LEFT JOIN trial_requests tr ON tr.id = ti.request_id
          LEFT JOIN products p ON p.id = ti.product_id
@@ -42,6 +45,9 @@ async function createOrder(req, res, next) {
         return res.status(400).json({ error: 'Invalid trialInstanceId' });
       }
       const row = inst.rows[0];
+      if (['destroyed', 'destroying'].includes(String(row.instance_status || ''))) {
+        return res.status(400).json({ error: 'This trial is no longer available' });
+      }
       if (
         customerEmail && row.email
         && String(row.email).toLowerCase() !== String(customerEmail).toLowerCase()
@@ -62,16 +68,24 @@ async function createOrder(req, res, next) {
       if (!linkedInstanceId) {
         return res.status(400).json({ error: 'trialInstanceId required for trial extend' });
       }
-      // Server-authoritative price & days
+      // Server-authoritative price & days (not product discount)
       extendDays = settings.extendDays;
       totalBdt = settings.extendPriceBdt;
+      listBdt = totalBdt;
+      computedDiscount = 0;
       billProductName = `Trial extend (+${extendDays} days) — ${billProductName}`;
     } else if (resolvedProductId) {
-      const prod = await pool.query('SELECT price_bdt, name FROM products WHERE id = $1', [resolvedProductId]);
+      const prod = await pool.query(
+        'SELECT price_bdt, price_usd, discount_percent, name FROM products WHERE id = $1',
+        [resolvedProductId]
+      );
       if (!prod.rows.length) {
         return res.status(400).json({ error: 'Product not found' });
       }
-      totalBdt = Number(prod.rows[0].price_bdt) || 0;
+      const quote = quoteProduct(prod.rows[0]);
+      listBdt = quote.listBdt;
+      totalBdt = quote.saleBdt;
+      computedDiscount = quote.discountBdt;
       const n = prod.rows[0].name;
       if (n && typeof n === 'object') billProductName = n.en || n.bn || billProductName;
     } else {
@@ -92,7 +106,7 @@ async function createOrder(req, res, next) {
         id, orderId, resolvedProductId, customerName, customerEmail,
         customerPhone, company || '', needsHosting ? 1 : 0,
         notes || '', paymentMethod || 'trialvo_pay', totalBdt, 'pending',
-        discountAmount || 0, shippingAddress ? JSON.stringify(shippingAddress) : null,
+        computedDiscount, shippingAddress ? JSON.stringify(shippingAddress) : null,
         linkedInstanceId, orderKind, extendDays,
       ]
     );
@@ -126,7 +140,7 @@ async function createOrder(req, res, next) {
     }
 
     const finalAmount = totalBdt;
-    const subtotalAmount = (discountAmount && discountAmount > 0) ? finalAmount + discountAmount : finalAmount;
+    const subtotalAmount = listBdt > 0 ? listBdt : finalAmount;
 
     try {
       const billResult = await createTrialvoPayBill({
@@ -136,7 +150,7 @@ async function createOrder(req, res, next) {
         productSlug,
         amount: finalAmount,
         subtotal: subtotalAmount,
-        discountAmount: discountAmount || 0,
+        discountAmount: computedDiscount,
         customerName,
         customerEmail,
         customerPhone,
@@ -149,7 +163,7 @@ async function createOrder(req, res, next) {
           category: productCategory,
           quantity: 1,
           price: subtotalAmount,
-          discount: discountAmount || 0,
+          discount: computedDiscount,
           finalPrice: finalAmount,
         }],
       });

@@ -114,9 +114,10 @@
     --muted: 220 10% 16%;
     --muted-foreground: 220 8% 68%;
 
-    --border: 220 10% 22%;
-    --input: 220 10% 22%;
+    --border: 220 10% 28%;
+    --input: 220 10% 28%;
     --ring: 153 72% 43%;
+    color-scheme: dark;
 
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 98%;
@@ -167,6 +168,33 @@
 
   html {
     scroll-behavior: smooth;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: hsl(var(--accent));
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
   }
 
   body {
@@ -247,6 +275,15 @@
   /* Hero Section Styles */
   .hero-gradient {
     background: var(--gradient-hero);
+    color: #fff;
+  }
+
+  .hero-gradient-soft {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--muted) / 0.7) 0%,
+      hsl(var(--card)) 100%
+    );
   }
 
   /* Card Styles */
@@ -477,10 +514,18 @@
 
   /* Admin Filter Pill */
   .admin-filter-pill {
-    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border cursor-pointer transition-all duration-200;
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border cursor-pointer transition-all duration-200 bg-transparent text-muted-foreground border-border;
   }
-  .admin-filter-pill-active {
+  .admin-filter-pill:hover {
+    @apply bg-muted/50 text-foreground;
+  }
+  .admin-filter-pill-active,
+  .admin-filter-pill.active {
     @apply bg-primary text-primary-foreground border-primary shadow-soft-sm;
+  }
+  .admin-filter-pill-active:hover,
+  .admin-filter-pill.active:hover {
+    @apply bg-primary text-primary-foreground;
   }
   .admin-filter-pill-inactive {
     @apply bg-transparent text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground;

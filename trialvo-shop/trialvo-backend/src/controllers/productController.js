@@ -6,6 +6,7 @@ const {
     cleanupAllProductMedia,
     linkMediaToProduct,
 } = require('../services/mediaCleanup');
+const { clampDiscountPercent } = require('../lib/productPricing');
 
 // Helper: build parameterized query with $1, $2, ... placeholders
 function pgParams(startIdx, count) {
@@ -93,16 +94,17 @@ async function createProduct(req, res, next) {
     try {
         const id = uuidv4();
         const {
-            slug, category, price_bdt, price_usd, thumbnail, images,
+            slug, category, price_bdt, price_usd, discount_percent, thumbnail, images,
             video_url, demo, name, short_description, features, facilities,
             faq, seo, is_featured, is_active, deploy_config, is_trialable,
         } = req.body;
 
         await pool.query(
-            `INSERT INTO products (id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active, deploy_config, is_trialable)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+            `INSERT INTO products (id, slug, category, price_bdt, price_usd, discount_percent, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active, deploy_config, is_trialable)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
             [
                 id, slug, category || 'ecommerce', price_bdt || 0, price_usd || 0,
+                clampDiscountPercent(discount_percent),
                 thumbnail || '', JSON.stringify(images || {}), video_url || null,
                 JSON.stringify(demo || []), JSON.stringify(name),
                 JSON.stringify(short_description || {}), JSON.stringify(features || {}),
@@ -138,7 +140,7 @@ async function updateProduct(req, res, next) {
         const jsonFields = ['images', 'demo', 'name', 'short_description', 'features', 'facilities', 'faq', 'seo', 'deploy_config'];
         const boolFields = ['is_featured', 'is_active', 'is_trialable'];
         const allowed = new Set([
-            'slug', 'category', 'price_bdt', 'price_usd', 'thumbnail', 'images', 'video_url',
+            'slug', 'category', 'price_bdt', 'price_usd', 'discount_percent', 'thumbnail', 'images', 'video_url',
             'demo', 'name', 'short_description', 'features', 'facilities', 'faq', 'seo',
             'is_featured', 'is_active', 'is_trialable', 'deploy_config', 'sort_order',
         ]);
@@ -149,6 +151,7 @@ async function updateProduct(req, res, next) {
             let stored = value;
             if (jsonFields.includes(key)) stored = value == null ? null : JSON.stringify(value);
             else if (boolFields.includes(key)) stored = value ? 1 : 0;
+            else if (key === 'discount_percent') stored = clampDiscountPercent(value);
             fields.push(`${key} = $${paramIdx}`);
             values.push(stored);
             paramIdx++;
@@ -200,13 +203,14 @@ async function duplicateProduct(req, res, next) {
 
         await pool.query(
             `INSERT INTO products (
-               id, slug, category, price_bdt, price_usd, thumbnail, images, video_url, demo,
+               id, slug, category, price_bdt, price_usd, discount_percent, thumbnail, images, video_url, demo,
                name, short_description, features, facilities, faq, seo,
                is_featured, is_active, sort_order, deploy_config, is_trialable
              )
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,0,0,$16,$17,$18)`,
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,0,0,$17,$18,$19)`,
             [
                 newId, newSlug, product.category, product.price_bdt, product.price_usd,
+                clampDiscountPercent(product.discount_percent),
                 product.thumbnail, product.images, product.video_url, product.demo,
                 product.name, product.short_description, product.features,
                 product.facilities, product.faq, product.seo,

@@ -148,7 +148,7 @@ const AdminTestimonialsPage: React.FC = () => {
           <h1>Testimonials</h1>
           <p>Manage customer reviews and feedback</p>
         </div>
-        <Button onClick={openCreate} className="bg-primary hover:bg-primary/90 shadow-soft-sm h-9 text-sm">
+        <Button onClick={openCreate} className="hero-gradient text-white hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm">
           <Plus className="w-4 h-4 mr-1.5" />
           Add Testimonial
         </Button>
@@ -196,7 +196,7 @@ const AdminTestimonialsPage: React.FC = () => {
                     ))}
                   </div>
                   <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-border/30">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openEdit(t)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => openEdit(t)}>
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(t.id)}>
@@ -259,7 +259,7 @@ const AdminTestimonialsPage: React.FC = () => {
                       </td>
                       <td>
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openEdit(t)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => openEdit(t)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(t.id)}>

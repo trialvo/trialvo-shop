@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AdminNumberInput } from '@/components/admin/AdminNumberInput';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
@@ -178,12 +179,12 @@ const AdminOrdersPage: React.FC = () => {
       <span className="text-sm font-bold">{stats.total}</span>
      </div>
      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
-      <span className="text-[11px] text-amber-600 font-medium">Pending</span>
-      <span className="text-sm font-bold text-amber-600">{stats.pending}</span>
+      <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Pending</span>
+      <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{stats.pending}</span>
      </div>
      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-      <span className="text-[11px] text-emerald-600 font-medium">Completed</span>
-      <span className="text-sm font-bold text-emerald-600">{stats.completed}</span>
+      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Completed</span>
+      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{stats.completed}</span>
      </div>
      <Button variant="outline" size="sm" onClick={handleExport} disabled={exportOrders.isPending} className="h-8 text-xs border-border text-foreground hover:bg-muted">
       <Download className="w-3.5 h-3.5 mr-1.5" />
@@ -203,7 +204,7 @@ const AdminOrdersPage: React.FC = () => {
       <button
        key={s}
        onClick={() => setStatusFilter(s)}
-       className={`admin-filter-pill ${statusFilter === s ? 'active' : ''}`}
+       className={`admin-filter-pill ${statusFilter === s ? 'admin-filter-pill-active' : ''}`}
       >
        {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
       </button>
@@ -232,10 +233,10 @@ const AdminOrdersPage: React.FC = () => {
     <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary/5 border border-primary/20 animate-fade-in">
      <span className="text-sm font-semibold text-primary">{selected.size} selected</span>
      <div className="flex items-center gap-1.5 ml-auto">
-      <Button size="sm" variant="outline" className="h-7 text-xs border-amber-500/30 text-amber-600 hover:bg-amber-500/10" onClick={() => handleBulkStatus('confirmed')}>
+      <Button size="sm" variant="outline" className="h-7 text-xs border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10" onClick={() => handleBulkStatus('confirmed')}>
        Mark Confirmed
       </Button>
-      <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleBulkStatus('completed')}>
+      <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10" onClick={() => handleBulkStatus('completed')}>
        Mark Completed
       </Button>
       <Button size="sm" variant="outline" className="h-7 text-xs border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => handleBulkStatus('cancelled')}>
@@ -356,19 +357,19 @@ const AdminOrdersPage: React.FC = () => {
              <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <DropdownMenu>
                <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground hover:bg-accent">
+                <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground hover:bg-muted">
                  Status <ChevronDown className="w-3 h-3 ml-1" />
                 </Button>
                </DropdownMenuTrigger>
                <DropdownMenuContent align="end" className="bg-card border-border min-w-[140px]">
                 {statusOptions.map(s => (
-                 <DropdownMenuItem key={s} onClick={() => handleStatusChange(order.id, s)} className="text-foreground hover:bg-accent text-xs capitalize">
+                 <DropdownMenuItem key={s} onClick={() => handleStatusChange(order.id, s)} className="text-foreground hover:bg-muted text-xs capitalize">
                   {s}
                  </DropdownMenuItem>
                 ))}
                </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openOrder(order)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => openOrder(order)}>
                <Eye className="w-3.5 h-3.5" />
               </Button>
              </div>
@@ -459,7 +460,12 @@ const AdminOrdersPage: React.FC = () => {
            </div>
            <div className="space-y-1.5">
             <Label className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Discount (BDT)</Label>
-            <Input type="number" value={editDiscount} onChange={e => setEditDiscount(e.target.value)} className="bg-background border-border text-foreground h-9 text-sm" />
+            <AdminNumberInput
+             min={0}
+             value={Number(editDiscount) || 0}
+             onValueChange={(n) => setEditDiscount(String(Math.max(0, n)))}
+             className="bg-background border-border text-foreground h-9 text-sm"
+            />
            </div>
           </div>
           <Button size="sm" onClick={handleSaveDetails} disabled={updateOrder.isPending} className="mt-3 bg-primary text-primary-foreground hover:bg-primary/90 h-8 text-xs shadow-soft-sm">
@@ -484,7 +490,7 @@ const AdminOrdersPage: React.FC = () => {
             <button
              key={s}
              onClick={() => handleStatusChange(viewOrder.id, s)}
-             className={`admin-filter-pill ${viewOrder.status === s ? 'active' : ''}`}
+             className={`admin-filter-pill ${viewOrder.status === s ? 'admin-filter-pill-active' : ''}`}
             >
              {s.charAt(0).toUpperCase() + s.slice(1)}
             </button>

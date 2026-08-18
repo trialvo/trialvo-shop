@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import { quoteProductPrice } from '@/lib/productPricing';
 
 const CheckoutPage: React.FC = () => {
   const { language, t } = useLanguage();
@@ -32,8 +33,8 @@ const CheckoutPage: React.FC = () => {
   const [showError, setShowError] = useState(!!errorParam);
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: searchParams.get('name') || '',
+    email: searchParams.get('email') || '',
     phone: '',
     company: '',
     needsHosting: false,
@@ -90,8 +91,13 @@ const CheckoutPage: React.FC = () => {
       : `Trial extend (+${extendDays} days)`)
     : (product!.name[language] || product!.name.en);
 
-  const priceBdt = isExtend ? extendPriceBdt : product!.priceBDT;
-  const priceUsd = isExtend ? extendPriceUsd : product!.priceUSD;
+  const productQuote = product
+    ? quoteProductPrice(product)
+    : null;
+  const priceBdt = isExtend ? extendPriceBdt : (productQuote?.saleBdt ?? 0);
+  const priceUsd = isExtend ? extendPriceUsd : (productQuote?.saleUsd ?? 0);
+  const listBdt = isExtend ? extendPriceBdt : (productQuote?.listBdt ?? 0);
+  const showProductDiscount = !isExtend && Boolean(productQuote?.hasDiscount);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -118,7 +124,6 @@ const CheckoutPage: React.FC = () => {
               productId: product!.id,
               productName: product!.name[language],
               trialInstanceId: trialInstanceId || undefined,
-              totalBdt: product!.priceBDT,
             }),
         customerName: formData.name,
         customerEmail: formData.email,
@@ -309,8 +314,21 @@ const CheckoutPage: React.FC = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{language === 'bn' ? 'মূল্য' : 'Price'}</span>
-                <span>৳{Number(priceBdt).toLocaleString()} (~${priceUsd})</span>
+                {showProductDiscount ? (
+                  <span>
+                    <span className="line-through text-muted-foreground mr-2">৳{Number(listBdt).toLocaleString()}</span>
+                    ৳{Number(priceBdt).toLocaleString()}
+                  </span>
+                ) : (
+                  <span>৳{Number(priceBdt).toLocaleString()} (~${priceUsd})</span>
+                )}
               </div>
+              {showProductDiscount && (
+                <div className="flex justify-between text-sm text-destructive">
+                  <span>{language === 'bn' ? `ছাড় (${productQuote!.discountPercent}%)` : `Discount (${productQuote!.discountPercent}%)`}</span>
+                  <span>-৳{Number(productQuote!.discountBdt).toLocaleString()}</span>
+                </div>
+              )}
               {isExtend && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{language === 'bn' ? 'যোগ হবে' : 'Adds'}</span>

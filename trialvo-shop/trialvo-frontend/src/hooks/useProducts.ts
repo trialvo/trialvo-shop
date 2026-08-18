@@ -20,6 +20,7 @@ function rowToProduct(row: ProductApiRow): Product {
     category: row.category,
     priceBDT: Number(row.price_bdt),
     priceUSD: Number(row.price_usd),
+    discountPercent: Number(row.discount_percent) || 0,
     thumbnail: row.thumbnail,
     images: (() => {
       const parsed = parseJsonField(row.images, { admin: [], shop: [] } as {

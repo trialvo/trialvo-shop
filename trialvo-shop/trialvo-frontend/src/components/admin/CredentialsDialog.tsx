@@ -58,7 +58,7 @@ export function CredentialsDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <KeyRound className="w-5 h-5 text-emerald-600" />
+            <KeyRound className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             Login credentials
           </DialogTitle>
           <DialogDescription>

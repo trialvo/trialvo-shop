@@ -35,6 +35,7 @@ function rowToProduct(row: any): Product {
     category: row.category || "",
     priceBDT: Number(row.price_bdt) || 0,
     priceUSD: Number(row.price_usd) || 0,
+    discountPercent: Number(row.discount_percent) || 0,
     thumbnail: row.thumbnail || "",
     images: {
       admin: Array.isArray(imagesRaw?.admin) ? imagesRaw.admin : [],

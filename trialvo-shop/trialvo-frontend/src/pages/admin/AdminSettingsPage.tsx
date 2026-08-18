@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { AdminNumberInput } from '@/components/admin/AdminNumberInput';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
@@ -331,7 +332,7 @@ const AdminSettingsPage: React.FC = () => {
        <div className="flex items-center gap-4 pb-5 border-b border-border/50">
         <div className="relative">
          <div className="w-16 h-16 rounded-2xl hero-gradient shadow-soft-md flex items-center justify-center ring-4 ring-primary/10">
-          <span className="text-2xl font-bold text-primary-foreground">
+          <span className="text-2xl font-bold text-white">
            {(fullName || adminProfile?.full_name || 'A').charAt(0).toUpperCase()}
           </span>
          </div>
@@ -375,7 +376,7 @@ const AdminSettingsPage: React.FC = () => {
         <Button
          onClick={handleUpdateProfile}
          disabled={nameLoading}
-         className="hero-gradient text-primary-foreground hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm"
+         className="hero-gradient text-white hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm"
         >
          {nameLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
          Save Changes
@@ -466,7 +467,7 @@ const AdminSettingsPage: React.FC = () => {
         <Button
          onClick={handleChangePassword}
          disabled={passLoading || !currentPassword || !newPassword || !confirmPassword}
-         className="hero-gradient text-primary-foreground hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm"
+         className="hero-gradient text-white hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm"
         >
          {passLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Lock className="w-4 h-4 mr-1.5" />}
          Change Password
@@ -522,24 +523,26 @@ const AdminSettingsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
        <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground font-medium">Option 1 trial period (days)</Label>
-        <Input
-         type="number"
+        <AdminNumberInput
+         integer
          min={1}
          max={365}
+         emptyAs={1}
          value={trialForm.hostedDays}
-         onChange={(e) => setTrialForm({ ...trialForm, hostedDays: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+         onValueChange={(n) => setTrialForm({ ...trialForm, hostedDays: Math.min(365, Math.max(1, Math.trunc(n) || 1)) })}
          className={inputClass}
         />
         <p className="text-[10px] text-muted-foreground">Used for auto-approve and as default when approving hosted trials</p>
        </div>
        <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground font-medium">Option 2 trial period (days)</Label>
-        <Input
-         type="number"
+        <AdminNumberInput
+         integer
          min={1}
          max={365}
+         emptyAs={1}
          value={trialForm.selfHostedDays}
-         onChange={(e) => setTrialForm({ ...trialForm, selfHostedDays: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+         onValueChange={(n) => setTrialForm({ ...trialForm, selfHostedDays: Math.min(365, Math.max(1, Math.trunc(n) || 1)) })}
          className={inputClass}
         />
         <p className="text-[10px] text-muted-foreground">Default when approving self-hosted (your domain) trials</p>
@@ -549,34 +552,34 @@ const AdminSettingsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
          <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground font-medium">Extend days</Label>
-          <Input
-           type="number"
+          <AdminNumberInput
+           integer
            min={1}
            max={365}
+           emptyAs={1}
            value={trialForm.extendDays}
-           onChange={(e) => setTrialForm({ ...trialForm, extendDays: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+           onValueChange={(n) => setTrialForm({ ...trialForm, extendDays: Math.min(365, Math.max(1, Math.trunc(n) || 1)) })}
            className={inputClass}
           />
          </div>
          <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground font-medium">Price (BDT)</Label>
-          <Input
-           type="number"
+          <AdminNumberInput
            min={0}
            step={1}
+           integer
            value={trialForm.extendPriceBdt}
-           onChange={(e) => setTrialForm({ ...trialForm, extendPriceBdt: Math.max(0, parseFloat(e.target.value) || 0) })}
+           onValueChange={(n) => setTrialForm({ ...trialForm, extendPriceBdt: Math.max(0, Math.round(n)) })}
            className={inputClass}
           />
          </div>
          <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground font-medium">Price (USD display)</Label>
-          <Input
-           type="number"
+          <AdminNumberInput
            min={0}
            step={0.01}
            value={trialForm.extendPriceUsd}
-           onChange={(e) => setTrialForm({ ...trialForm, extendPriceUsd: Math.max(0, parseFloat(e.target.value) || 0) })}
+           onValueChange={(n) => setTrialForm({ ...trialForm, extendPriceUsd: Math.max(0, Math.round(n * 100) / 100) })}
            className={inputClass}
           />
          </div>
@@ -587,12 +590,13 @@ const AdminSettingsPage: React.FC = () => {
        </div>
        <div className="space-y-1.5 md:col-span-2">
         <Label className="text-xs text-muted-foreground font-medium">Product purchase convert (days)</Label>
-        <Input
-         type="number"
+        <AdminNumberInput
+         integer
          min={1}
          max={3650}
+         emptyAs={365}
          value={trialForm.paidExtendDays}
-         onChange={(e) => setTrialForm({ ...trialForm, paidExtendDays: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+         onValueChange={(n) => setTrialForm({ ...trialForm, paidExtendDays: Math.min(3650, Math.max(1, Math.trunc(n) || 1)) })}
          className={inputClass}
         />
         <p className="text-[10px] text-muted-foreground">
@@ -648,10 +652,13 @@ const AdminSettingsPage: React.FC = () => {
        </div>
        <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground font-medium">Port</Label>
-        <Input
-         type="number"
+        <AdminNumberInput
+         integer
+         min={1}
+         max={65535}
+         emptyAs={587}
          value={smtpForm.port}
-         onChange={(e) => setSmtpForm({ ...smtpForm, port: parseInt(e.target.value, 10) || 587 })}
+         onValueChange={(n) => setSmtpForm({ ...smtpForm, port: Math.min(65535, Math.max(1, Math.trunc(n) || 587)) })}
          className={inputClass}
         />
        </div>
@@ -728,7 +735,7 @@ const AdminSettingsPage: React.FC = () => {
       {smtpTestResult && (
        <div className={`p-4 rounded-xl border ${smtpTestResult.success ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
         <div className="flex items-center gap-2">
-         {smtpTestResult.success ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <AlertCircle className="w-5 h-5 text-red-600" />}
+         {smtpTestResult.success ? <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> : <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />}
          <p className="text-sm">{smtpTestResult.message}</p>
         </div>
        </div>
@@ -830,7 +837,7 @@ const AdminSettingsPage: React.FC = () => {
             {testResult && (
               <div className={`p-4 rounded-xl border space-y-3 animate-in fade-in slide-in-from-top-2 duration-300 ${testResult.success ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
                 <div className="flex items-center gap-3">
-                  {testResult.success ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <AlertCircle className="w-5 h-5 text-red-600" />}
+                  {testResult.success ? <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> : <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />}
                   <p className={`text-sm font-bold ${testResult.success ? 'text-emerald-700' : 'text-red-700'}`}>
                     {testResult.success ? 'Connection Successful' : 'Connection Failed'}
                   </p>
@@ -849,7 +856,7 @@ const AdminSettingsPage: React.FC = () => {
                       </div>
                       <div className="flex items-center justify-between py-1 border-b border-border/30">
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Status</span>
-                        <Badge variant="outline" className="h-4 text-[9px] border-emerald-500/30 text-emerald-600 bg-emerald-500/5 uppercase font-bold">
+                        <Badge variant="outline" className="h-4 text-[9px] border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 uppercase font-bold">
                           Authorized
                         </Badge>
                       </div>

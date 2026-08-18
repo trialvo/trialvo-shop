@@ -71,6 +71,7 @@ async function runMigrations() {
       require('./022_remote_commands_created_by'),
       require('./023_trial_extend_pack'),
       require('./024_license_deployments'),
+      require('./025_product_discount'),
     ];
 
     let count = 0;

@@ -110,7 +110,7 @@ const AdminLayout: React.FC = () => {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border/50">
         <div className="w-10 h-10 rounded-xl hero-gradient flex items-center justify-center flex-shrink-0 shadow-soft-md">
-          <ShieldCheck className="w-5 h-5 text-primary-foreground" />
+          <ShieldCheck className="w-5 h-5 text-white" />
         </div>
         {(sidebarOpen || isMobile) && (
           <div className="overflow-hidden">
@@ -241,14 +241,12 @@ const AdminLayout: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
         {/* Top Bar */}
-        <header className="h-16 border-b border-border/50 bg-background/95 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20"
-          style={{ borderImage: 'linear-gradient(90deg, transparent, hsl(var(--border)), transparent) 1' }}
-        >
+        <header className="h-16 border-b border-border bg-background/95 backdrop-blur-xl flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden text-muted-foreground hover:text-foreground hover:bg-accent h-9 w-9"
+              className="lg:hidden text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9"
               onClick={() => setMobileOpen(true)}
             >
               <Menu className="w-5 h-5" />
@@ -256,7 +254,7 @@ const AdminLayout: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="hidden lg:flex text-muted-foreground hover:text-foreground hover:bg-accent h-9 w-9"
+              className="hidden lg:flex text-muted-foreground hover:text-foreground hover:bg-muted h-9 w-9"
               onClick={() => setSidebarOpen(!sidebarOpen)}
             >
               {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -281,10 +279,10 @@ const AdminLayout: React.FC = () => {
             </div>
 
             {/* Notifications bell */}
-            <Button variant="ghost" size="icon" className="relative h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-accent"
+            <Button variant="ghost" size="icon" className="relative h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={() => navigate('/admin/messages')}
             >
-              <Bell className="w-4.5 h-4.5" />
+              <Bell className="w-4 h-4" />
               {unreadCount && unreadCount > 0 && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive ring-2 ring-background" />
               )}
@@ -293,7 +291,7 @@ const AdminLayout: React.FC = () => {
             {/* User dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-accent h-9 px-2">
+                <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-muted h-9 px-2">
                   <Avatar className="w-7 h-7 border-2 border-primary/30">
                     <AvatarFallback className="bg-primary text-primary-foreground text-[10px] font-bold">
                       {adminProfile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
@@ -303,7 +301,7 @@ const AdminLayout: React.FC = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-card border-border shadow-xl">
-                <DropdownMenuItem asChild className="text-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer">
+                <DropdownMenuItem asChild className="text-foreground focus:bg-muted focus:text-foreground cursor-pointer">
                   <Link to="/admin/settings">
                     <Settings className="w-4 h-4 mr-2" />
                     Settings

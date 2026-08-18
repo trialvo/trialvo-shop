@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Check, X, Loader2, ClipboardList, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AdminNumberInput } from '@/components/admin/AdminNumberInput';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -139,12 +139,13 @@ const AdminTrialRequestsPage: React.FC = () => {
             </p>
             <div className="space-y-1.5">
               <Label>Trial period (days)</Label>
-              <Input
-                type="number"
+              <AdminNumberInput
+                integer
                 min={1}
                 max={365}
+                emptyAs={1}
                 value={approveDays}
-                onChange={(e) => setApproveDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                onValueChange={(n) => setApproveDays(Math.min(365, Math.max(1, Math.trunc(n) || 1)))}
               />
               <p className="text-[11px] text-muted-foreground">
                 Default for this option: {defaultDaysForType(trialSettings, approveTarget?.trialType || 'hosted')} days

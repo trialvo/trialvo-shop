@@ -210,7 +210,7 @@ const AdminTrialInstancesPage: React.FC = () => {
                       {isShared ? (
                         <span className="text-muted-foreground">n/a</span>
                       ) : outdated ? (
-                        <span className="inline-flex items-center gap-1 text-amber-600">
+                        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
                           <AlertTriangle className="w-3.5 h-3.5" />
                           {i.agent_version || 'unknown'}
                         </span>

@@ -58,7 +58,7 @@ async function activatePaidInstance(instanceId, { orderId, days, source = 'payme
          frozen_at = NULL,
          instance_kind = 'paid',
          entitlement_id = COALESCE($1, entitlement_id),
-         expires_at = DATE_ADD(COALESCE(expires_at, NOW()), INTERVAL $2 DAY),
+         expires_at = DATE_ADD(GREATEST(COALESCE(expires_at, NOW()), NOW()), INTERVAL $2 DAY),
          meta = $3,
          updated_at = NOW()
        WHERE id = $4`,
@@ -69,7 +69,7 @@ async function activatePaidInstance(instanceId, { orderId, days, source = 'payme
       `UPDATE trial_instances SET
          status = 'active',
          frozen_at = NULL,
-         expires_at = DATE_ADD(COALESCE(expires_at, NOW()), INTERVAL $1 DAY),
+         expires_at = DATE_ADD(GREATEST(COALESCE(expires_at, NOW()), NOW()), INTERVAL $1 DAY),
          meta = $2,
          updated_at = NOW()
        WHERE id = $3`,

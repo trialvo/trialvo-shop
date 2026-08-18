@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
+import { AdminNumberInput } from '@/components/admin/AdminNumberInput';
 import { QueryError } from '@/components/admin/QueryError';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +26,7 @@ import { useAdminCategories } from '@/hooks/useCategories';
 import ImageUploadButton from '@/components/admin/ImageUploadButton';
 import { useCleanupMediaUrls } from '@/hooks/useMedia';
 import { isManagedUploadUrl, normalizeProductImages, resolveMediaUrl } from '@/lib/mediaUrl';
+import { clampDiscountPercent, quoteProductPrice } from '@/lib/productPricing';
 
 // ─── Types ─────────────────────────────────────────────────────
 interface FaqItem {
@@ -49,6 +51,7 @@ interface ProductFormData {
   category: string;
   price_bdt: number;
   price_usd: number;
+  discount_percent: number;
   thumbnail: string;
   images: { admin: string[]; shop: string[] };
   video_url: string;
@@ -109,10 +112,25 @@ function normalizeDeployConfig(raw: any): DeployConfigForm {
   };
 }
 
-function parseMoney(raw: string): number {
-  const n = parseFloat(raw);
-  if (!Number.isFinite(n) || n < 0) return 0;
-  return Math.round(n * 100) / 100;
+function AdminPriceCell({ listBdt, listUsd, discountPercent }: { listBdt: number; listUsd: number; discountPercent?: number }) {
+  const q = quoteProductPrice({ priceBDT: listBdt, priceUSD: listUsd, discountPercent });
+  if (!q.hasDiscount) {
+    return (
+      <>
+        <span className="text-sm font-bold text-primary">৳{q.listBdt.toLocaleString()}</span>
+        <span className="text-xs text-muted-foreground ml-1">(${q.listUsd})</span>
+      </>
+    );
+  }
+  return (
+    <div>
+      <div>
+        <span className="text-xs text-muted-foreground line-through mr-1.5">৳{q.listBdt.toLocaleString()}</span>
+        <span className="text-sm font-bold text-primary">৳{q.saleBdt.toLocaleString()}</span>
+      </div>
+      <span className="text-[10px] text-destructive font-semibold">-{q.discountPercent}%</span>
+    </div>
+  );
 }
 
 const emptyForm: ProductFormData = {
@@ -120,6 +138,7 @@ const emptyForm: ProductFormData = {
   category: 'ecommerce',
   price_bdt: 0,
   price_usd: 0,
+  discount_percent: 0,
   thumbnail: '',
   images: { admin: [''], shop: [''] },
   video_url: '',
@@ -416,6 +435,7 @@ const AdminProductsPage: React.FC = () => {
       category: product.category || 'ecommerce',
       price_bdt: Number(product.priceBDT) || 0,
       price_usd: Number(product.priceUSD) || 0,
+      discount_percent: clampDiscountPercent(product.discountPercent),
       thumbnail: product.thumbnail || '',
       images: normalizeProductImages(product.images),
       video_url: product.videoUrl || '',
@@ -469,6 +489,7 @@ const AdminProductsPage: React.FC = () => {
       ...form,
       price_bdt: form.price_bdt,
       price_usd: form.price_usd,
+      discount_percent: clampDiscountPercent(form.discount_percent),
       images: {
         admin: form.images.admin.filter((u) => u.trim()),
         shop: form.images.shop.filter((u) => u.trim()),
@@ -537,14 +558,14 @@ const AdminProductsPage: React.FC = () => {
   // ─── EDITOR VIEW (split: form left, preview right) ─────
   if (editorOpen) {
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4 h-[calc(100dvh-5.5rem)] sm:h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-7rem)] min-h-0 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground hover:bg-accent"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={() => setEditorOpen(false)}
             >
               <X className="w-5 h-5" />
@@ -557,14 +578,14 @@ const AdminProductsPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setEditorOpen(false)}
-              className="border-border text-muted-foreground bg-transparent hover:bg-accent hover:text-foreground"
+              className="border-border text-muted-foreground bg-transparent hover:bg-muted hover:text-foreground"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={createProduct.isPending || updateProduct.isPending}
-              className="hero-gradient hover:opacity-90 text-primary-foreground border-0"
+              className="hero-gradient hover:opacity-90 text-white border-0"
             >
               {(createProduct.isPending || updateProduct.isPending) && (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -575,9 +596,9 @@ const AdminProductsPage: React.FC = () => {
         </div>
 
         {/* Split View */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6 flex-1 min-h-0 overflow-hidden">
           {/* ─── LEFT: Form ─────────────────────────────────── */}
-          <div className="space-y-4 max-h-[calc(100vh-160px)] overflow-y-auto pr-2">
+          <div className="space-y-4 overflow-y-auto min-h-0 pr-1">
             {/* Basic Info */}
             <div className={sectionClass}>
               <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2 pb-2 border-b border-border/50">
@@ -652,8 +673,8 @@ const AdminProductsPage: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <Label className={labelClass}>Status</Label>
-                    <div className="flex items-center gap-4 pt-2">
-                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 min-h-10">
+                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                         <input
                           type="checkbox"
                           checked={form.is_featured}
@@ -662,7 +683,7 @@ const AdminProductsPage: React.FC = () => {
                         />
                         Featured
                       </label>
-                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                         <input
                           type="checkbox"
                           checked={form.is_active}
@@ -671,7 +692,7 @@ const AdminProductsPage: React.FC = () => {
                         />
                         Active
                       </label>
-                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+                      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                         <input
                           type="checkbox"
                           checked={form.is_trialable}
@@ -686,25 +707,63 @@ const AdminProductsPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={labelClass}>Price (BDT) *</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
+                    <AdminNumberInput
                       min={0}
+                      step={0.01}
                       value={form.price_bdt}
-                      onChange={(e) => setForm((prev) => ({ ...prev, price_bdt: parseMoney(e.target.value) }))}
+                      onValueChange={(n) => setForm((prev) => ({ ...prev, price_bdt: Math.max(0, Math.round(n * 100) / 100) }))}
                       className={inputClass}
                     />
                   </div>
                   <div className="space-y-1">
                     <Label className={labelClass}>Price (USD) *</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
+                    <AdminNumberInput
                       min={0}
+                      step={0.01}
                       value={form.price_usd}
-                      onChange={(e) => setForm((prev) => ({ ...prev, price_usd: parseMoney(e.target.value) }))}
+                      onValueChange={(n) => setForm((prev) => ({ ...prev, price_usd: Math.max(0, Math.round(n * 100) / 100) }))}
                       className={inputClass}
                     />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className={labelClass}>Discount (%)</Label>
+                    <AdminNumberInput
+                      min={0}
+                      max={100}
+                      step={0.01}
+                      value={form.discount_percent}
+                      onValueChange={(n) => setForm((prev) => ({ ...prev, discount_percent: clampDiscountPercent(n) }))}
+                      className={inputClass}
+                    />
+                    <p className="text-[11px] text-muted-foreground">0 = no discount. List prices stay unchanged.</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className={labelClass}>Shop / checkout price</Label>
+                    {(() => {
+                      const q = quoteProductPrice({
+                        priceBDT: form.price_bdt,
+                        priceUSD: form.price_usd,
+                        discountPercent: form.discount_percent,
+                      });
+                      if (!q.hasDiscount) {
+                        return (
+                          <p className="text-sm pt-2">
+                            ৳{q.saleBdt.toLocaleString()} <span className="text-xs text-muted-foreground">(${q.saleUsd})</span>
+                          </p>
+                        );
+                      }
+                      return (
+                        <p className="text-sm pt-2">
+                          <span className="line-through text-muted-foreground mr-2">৳{q.listBdt.toLocaleString()}</span>
+                          <span className="font-bold text-primary">৳{q.saleBdt.toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground ml-1">
+                            (${q.listUsd} → ${q.saleUsd}) · -{q.discountPercent}%
+                          </span>
+                        </p>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1053,23 +1112,24 @@ const AdminProductsPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className={labelClass}>Default trial days</Label>
-                    <Input
-                      type="number"
+                    <AdminNumberInput
+                      integer
                       min={1}
                       max={365}
+                      emptyAs={14}
                       value={form.deploy_config.default_trial_days}
-                      onChange={(e) => setForm((prev) => ({
+                      onValueChange={(n) => setForm((prev) => ({
                         ...prev,
                         deploy_config: {
                           ...prev.deploy_config,
-                          default_trial_days: Math.max(1, parseInt(e.target.value, 10) || 1),
+                          default_trial_days: Math.min(365, Math.max(1, Math.trunc(n) || 1)),
                         },
                       }))}
                       className={inputClass}
                     />
                   </div>
-                  <div className="flex flex-wrap items-center gap-4 pt-6">
-                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-6">
+                    <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                       <input
                         type="checkbox"
                         checked={form.deploy_config.supports_option1}
@@ -1081,7 +1141,7 @@ const AdminProductsPage: React.FC = () => {
                       />
                       Option 1
                     </label>
-                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                    <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                       <input
                         type="checkbox"
                         checked={form.deploy_config.supports_option2}
@@ -1093,7 +1153,7 @@ const AdminProductsPage: React.FC = () => {
                       />
                       Option 2
                     </label>
-                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                    <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                       <input
                         type="checkbox"
                         checked={form.deploy_config.shared_demo}
@@ -1138,8 +1198,8 @@ const AdminProductsPage: React.FC = () => {
           </div>
 
           {/* ─── RIGHT: Live Preview ──────────────────────────── */}
-          <div className="hidden xl:block sticky top-0 max-h-[calc(100vh-160px)] overflow-y-auto">
-            <Card className="bg-card border-border overflow-hidden card-shadow">
+          <div className="hidden xl:block overflow-y-auto min-h-0">
+            <Card className="bg-card border-border overflow-hidden">
               <div className="p-3 border-b border-border bg-muted/30">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Live Preview</p>
               </div>
@@ -1149,12 +1209,12 @@ const AdminProductsPage: React.FC = () => {
                   <img
                     src={resolveMediaUrl(form.thumbnail)}
                     alt="Preview"
-                    className="w-full h-48 object-cover rounded-xl border border-white/10"
+                    className="w-full h-48 object-cover rounded-xl border border-border"
                     onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect fill="%231a1d2e" width="400" height="200"/><text x="200" y="100" text-anchor="middle" fill="%23666" font-size="14">No Image</text></svg>'; }}
                   />
                 ) : (
-                  <div className="w-full h-48 rounded-xl bg-[#1a1d2e] flex items-center justify-center border border-white/10">
-                    <ImageIcon className="w-8 h-8 text-gray-600" />
+                  <div className="w-full h-48 rounded-xl bg-muted flex items-center justify-center border border-border">
+                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
                   </div>
                 )}
 
@@ -1167,10 +1227,7 @@ const AdminProductsPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-xl font-bold text-primary">
-                    ৳{form.price_bdt.toLocaleString()}
-                  </span>
-                  <span className="text-sm text-muted-foreground">(${form.price_usd})</span>
+                  <AdminPriceCell listBdt={form.price_bdt} listUsd={form.price_usd} discountPercent={form.discount_percent} />
                 </div>
 
                 <div className="flex gap-2">
@@ -1254,8 +1311,8 @@ const AdminProductsPage: React.FC = () => {
             <span className="text-sm font-bold">{productStats.total}</span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-            <span className="text-[11px] text-emerald-600 font-medium">Active</span>
-            <span className="text-sm font-bold text-emerald-600">{productStats.active}</span>
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Active</span>
+            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{productStats.active}</span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
             <span className="text-[11px] text-amber-500 font-medium">
@@ -1263,7 +1320,7 @@ const AdminProductsPage: React.FC = () => {
             </span>
             <span className="text-sm font-bold text-amber-500">{productStats.featured}</span>
           </div>
-          <Button onClick={openCreate} className="hero-gradient text-primary-foreground hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm">
+          <Button onClick={openCreate} className="hero-gradient text-white hover:opacity-90 border-0 shadow-soft-sm h-9 text-sm">
             <Plus className="w-4 h-4 mr-1.5" />
             Add Product
           </Button>
@@ -1281,9 +1338,9 @@ const AdminProductsPage: React.FC = () => {
           />
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <button onClick={() => setCategoryFilter('all')} className={`admin-filter-pill ${categoryFilter === 'all' ? 'active' : ''}`}>All</button>
+          <button onClick={() => setCategoryFilter('all')} className={`admin-filter-pill ${categoryFilter === 'all' ? 'admin-filter-pill-active' : ''}`}>All</button>
           {uniqueCategories.map(cat => (
-            <button key={cat} onClick={() => setCategoryFilter(cat)} className={`admin-filter-pill ${categoryFilter === cat ? 'active' : ''}`}>
+            <button key={cat} onClick={() => setCategoryFilter(cat)} className={`admin-filter-pill ${categoryFilter === cat ? 'admin-filter-pill-active' : ''}`}>
               {cat.charAt(0).toUpperCase() + cat.slice(1)}
             </button>
           ))}
@@ -1295,7 +1352,7 @@ const AdminProductsPage: React.FC = () => {
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary/5 border border-primary/20 animate-fade-in">
           <span className="text-sm font-semibold text-primary">{selectedProducts.size} selected</span>
           <div className="flex items-center gap-1.5 ml-auto">
-            <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10" onClick={() => handleBulkToggle('is_active', true)}>Activate</Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10" onClick={() => handleBulkToggle('is_active', true)}>Activate</Button>
             <Button size="sm" variant="outline" className="h-7 text-xs border-muted-foreground/30 text-muted-foreground hover:bg-muted" onClick={() => handleBulkToggle('is_active', false)}>Deactivate</Button>
             <Button size="sm" variant="outline" className="h-7 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10" onClick={() => handleBulkToggle('is_featured', true)}>
               <Star className="w-3 h-3 mr-1" />Feature
@@ -1339,7 +1396,7 @@ const AdminProductsPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-[10px] border-border text-muted-foreground capitalize">{product.category}</Badge>
-                        <span className="text-sm font-bold text-primary">৳{product.priceBDT.toLocaleString()}</span>
+                        <AdminPriceCell listBdt={product.priceBDT} listUsd={product.priceUSD} discountPercent={product.discountPercent} />
                       </div>
                       <div className="flex items-center gap-2">
                         <button onClick={() => handleToggle(product.id, 'is_active', !product.isActive)} className="transition-colors hover:scale-110">
@@ -1351,10 +1408,10 @@ const AdminProductsPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex items-center justify-end gap-1 pt-2 border-t border-border/50">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openEdit(product)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => openEdit(product)}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" title="Duplicate" onClick={() => handleDuplicate(product.id)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted" title="Duplicate" onClick={() => handleDuplicate(product.id)}>
                         <Copy className="w-3.5 h-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(product.id)}>
@@ -1404,8 +1461,7 @@ const AdminProductsPage: React.FC = () => {
                           <Badge variant="outline" className="text-[11px] border-border text-muted-foreground bg-muted/50 capitalize">{product.category}</Badge>
                         </td>
                         <td className="py-4 px-5">
-                          <span className="text-sm font-bold text-primary">৳{product.priceBDT.toLocaleString()}</span>
-                          <span className="text-xs text-muted-foreground ml-1">(${product.priceUSD})</span>
+                          <AdminPriceCell listBdt={product.priceBDT} listUsd={product.priceUSD} discountPercent={product.discountPercent} />
                         </td>
                         <td className="py-4 px-5">
                           <div className="flex items-center gap-3">
@@ -1419,10 +1475,10 @@ const AdminProductsPage: React.FC = () => {
                         </td>
                         <td>
                           <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" title="Duplicate" onClick={() => handleDuplicate(product.id)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted" title="Duplicate" onClick={() => handleDuplicate(product.id)}>
                               <Copy className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => openEdit(product)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => openEdit(product)}>
                               <Pencil className="w-4 h-4" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(product.id)}>

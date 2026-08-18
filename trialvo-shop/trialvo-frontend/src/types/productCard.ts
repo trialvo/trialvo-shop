@@ -20,6 +20,7 @@ export type ProductCardViewModel = {
   images: string[];
   priceBDT: number;
   priceUSD: number;
+  discountPercent: number;
   isTrialable: boolean;
   hasVideo: boolean;
   badges: ProductBadge[];
@@ -93,6 +94,7 @@ export function toProductCardViewModel(
     images: pickCardImages(product),
     priceBDT: Number(product.priceBDT) || 0,
     priceUSD: Number(product.priceUSD) || 0,
+    discountPercent: Number(product.discountPercent) || 0,
     isTrialable: Boolean(product.isTrialable),
     hasVideo: Boolean(product.videoUrl?.trim()),
     badges: getProductBadges(product),

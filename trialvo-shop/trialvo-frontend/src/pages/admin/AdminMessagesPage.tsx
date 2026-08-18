@@ -161,7 +161,7 @@ const AdminMessagesPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-border/30" onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => handleToggleRead(msg.id, !msg.is_read)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => handleToggleRead(msg.id, !msg.is_read)}>
                       {msg.is_read ? <Mail className="w-3.5 h-3.5" /> : <MailOpen className="w-3.5 h-3.5 text-primary" />}
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(msg.id)}>
@@ -229,7 +229,7 @@ const AdminMessagesPage: React.FC = () => {
                       </td>
                       <td onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent" onClick={() => handleToggleRead(msg.id, !msg.is_read)} title={msg.is_read ? 'Mark as unread' : 'Mark as read'}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => handleToggleRead(msg.id, !msg.is_read)} title={msg.is_read ? 'Mark as unread' : 'Mark as read'}>
                             {msg.is_read ? <Mail className="w-4 h-4" /> : <MailOpen className="w-4 h-4 text-primary" />}
                           </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(msg.id)}>

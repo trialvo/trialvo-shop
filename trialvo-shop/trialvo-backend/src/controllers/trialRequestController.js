@@ -212,6 +212,8 @@ async function getTrialStatus(req, res, next) {
             trialType: r.trial_type,
             productName: r.product_name,
             productSlug: r.product_slug,
+            email: r.email || null,
+            customerName: r.customer_name || null,
             requestedAt: r.created_at,
             approvedAt: r.approved_at,
             trialDays: r.requested_days,

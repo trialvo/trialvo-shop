@@ -85,6 +85,8 @@ export interface TrialStatusResponse {
   trialType: 'hosted' | 'self_hosted';
   productName?: { bn?: string; en?: string };
   productSlug?: string;
+  email?: string | null;
+  customerName?: string | null;
   requestedAt?: string;
   approvedAt?: string;
   trialDays?: number;

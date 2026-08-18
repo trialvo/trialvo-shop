@@ -77,6 +77,7 @@ export type ProductApiRow = {
   category: string;
   price_bdt: number | string;
   price_usd: number | string;
+  discount_percent?: number | string | null;
   thumbnail: string;
   images: Product["images"] | string;
   video_url?: string | null;

@@ -116,6 +116,7 @@ export function ProductCard({
             <ProductCardPricing
               amountBdt={card.priceBDT}
               amountUsd={card.priceUSD}
+              discountPercent={card.discountPercent}
               currencyLabel={t("common.bdt")}
               language={language}
               priceHint={priceHint}

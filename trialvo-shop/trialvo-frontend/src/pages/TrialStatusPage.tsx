@@ -6,12 +6,13 @@ import { useTrialStatus } from '@/hooks/useTrialRequests';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
 import { api } from '@/lib/api';
 
 const TrialStatusPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const { data, isLoading, error } = useTrialStatus(token);
+  const { data: trialConfig } = usePublicTrialConfig();
   const { toast } = useToast();
   const { language } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
@@ -49,15 +50,24 @@ const TrialStatusPage: React.FC = () => {
   const productLabel = data?.productName?.[language] || data?.productName?.en || data?.productSlug;
   const isGranted = !!data?.credentials;
   const awaitingInstall = data?.trialType === 'self_hosted' && data?.instanceStatus === 'provisioning';
+  const instanceGone = ['destroyed', 'destroying'].includes(String(data?.instanceStatus || ''));
   const canPurchase = Boolean(
-    data?.instanceId && data.productSlug && data.status !== 'pending' && data.status !== 'rejected'
+    data?.instanceId
+    && data.productSlug
+    && data.status !== 'pending'
+    && data.status !== 'rejected'
+    && !instanceGone
   );
+  const emailQs = data?.email ? `&email=${encodeURIComponent(data.email)}` : '';
+  const nameQs = data?.customerName ? `&name=${encodeURIComponent(data.customerName)}` : '';
   const extendHref = canPurchase
-    ? `/checkout?extend=1&trialInstance=${encodeURIComponent(data!.instanceId!)}&product=${encodeURIComponent(data!.productSlug!)}`
+    ? `/checkout?extend=1&trialInstance=${encodeURIComponent(data!.instanceId!)}&product=${encodeURIComponent(data!.productSlug!)}${emailQs}${nameQs}`
     : null;
   const buyHref = canPurchase
-    ? `/checkout?product=${encodeURIComponent(data!.productSlug!)}&trialInstance=${encodeURIComponent(data!.instanceId!)}`
+    ? `/checkout?product=${encodeURIComponent(data!.productSlug!)}&trialInstance=${encodeURIComponent(data!.instanceId!)}${emailQs}${nameQs}`
     : null;
+  const extendDays = trialConfig?.extendDays ?? 30;
+  const extendPriceBdt = trialConfig?.extendPriceBdt ?? 1500;
 
   return (
     <Layout>
@@ -125,6 +135,14 @@ const TrialStatusPage: React.FC = () => {
                   <div><span className="text-muted-foreground">Expires: </span>{new Date(data.expiresAt).toLocaleString()}</div>
                 )}
               </div>
+
+              {instanceGone && (
+                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive">
+                  {language === 'bn'
+                    ? 'এই ট্রায়াল আর চালু নেই — এক্সটেন্ড বা কেনা এই ইনস্ট্যান্সে করা যাবে না।'
+                    : 'This trial is no longer available, so extend and purchase are disabled for this instance.'}
+                </div>
+              )}
 
               {data.status === 'pending' && (
                 <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-700 dark:text-amber-400">
@@ -264,12 +282,14 @@ const TrialStatusPage: React.FC = () => {
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground">
                       {language === 'bn'
-                        ? 'ট্রায়াল মেয়াদ বাড়াতে আলাদা এক্সটেন্ড প্যাক কিনুন (অ্যাডমিন নির্ধারিত দাম ও দিন)।'
-                        : 'Buy a separate extend pack to add more trial days (price & days set by admin).'}
+                        ? `ট্রায়াল মেয়াদ বাড়াতে আলাদা এক্সটেন্ড প্যাক কিনুন — ৳${Number(extendPriceBdt).toLocaleString()} / +${extendDays} দিন। একই ইমেইল ব্যবহার করুন।`
+                        : `Buy a separate extend pack to add more trial days — ৳${Number(extendPriceBdt).toLocaleString()} for +${extendDays} days. Use the same email as this trial.`}
                     </p>
                     <Button asChild className="w-full" variant="default">
                       <Link to={extendHref}>
-                        {language === 'bn' ? 'ট্রায়াল এক্সটেন্ড' : 'Extend trial'}
+                        {language === 'bn'
+                          ? `ট্রায়াল এক্সটেন্ড (৳${Number(extendPriceBdt).toLocaleString()})`
+                          : `Extend trial (৳${Number(extendPriceBdt).toLocaleString()})`}
                       </Link>
                     </Button>
                   </div>

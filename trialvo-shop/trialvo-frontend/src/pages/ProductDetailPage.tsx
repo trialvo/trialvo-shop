@@ -12,6 +12,7 @@ import ScreenshotGallery from '@/components/gallery/ScreenshotGallery';
 import { useProduct, useRelatedProducts } from '@/hooks/useProducts';
 import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
 import { resolveMediaUrl } from '@/lib/mediaUrl';
+import { quoteProductPrice } from '@/lib/productPricing';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +64,7 @@ const ProductDetailPage: React.FC = () => {
     .map((u) => resolveMediaUrl(u))
     .filter(Boolean);
 
+  const quote = quoteProductPrice(product);
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -71,7 +73,7 @@ const ProductDetailPage: React.FC = () => {
     image: resolveMediaUrl(product.thumbnail),
     offers: {
       '@type': 'Offer',
-      price: product.priceBDT,
+      price: quote.saleBdt,
       priceCurrency: 'BDT',
       availability: 'https://schema.org/InStock',
     },
@@ -213,14 +215,30 @@ const ProductDetailPage: React.FC = () => {
 
               {/* Price */}
               <div className="bg-muted/50 rounded-xl p-6 mb-6" itemProp="offers" itemScope itemType="https://schema.org/Offer">
-                <div className="flex items-baseline gap-3 mb-2">
-                  <span className="text-4xl font-bold text-primary" itemProp="price" content={String(product.priceBDT)}>
-                    {t('common.bdt')}{product.priceBDT.toLocaleString()}
-                  </span>
+                <div className="flex flex-wrap items-baseline gap-3 mb-2">
+                  {quote.hasDiscount ? (
+                    <>
+                      <span className="text-2xl font-semibold text-muted-foreground line-through decoration-destructive decoration-2">
+                        {t('common.bdt')}{quote.listBdt.toLocaleString()}
+                      </span>
+                      <span className="text-4xl font-bold text-primary" itemProp="price" content={String(quote.saleBdt)}>
+                        {t('common.bdt')}{quote.saleBdt.toLocaleString()}
+                      </span>
+                      <span className="rounded-md bg-destructive/15 px-2 py-0.5 text-sm font-bold text-destructive">
+                        -{quote.discountPercent}%
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-4xl font-bold text-primary" itemProp="price" content={String(quote.saleBdt)}>
+                      {t('common.bdt')}{quote.saleBdt.toLocaleString()}
+                    </span>
+                  )}
                   <meta itemProp="priceCurrency" content="BDT" />
                   <link itemProp="availability" href="https://schema.org/InStock" />
                   <span className="text-lg text-muted-foreground">
-                    (~${product.priceUSD})
+                    {quote.hasDiscount
+                      ? <><span className="line-through mr-1.5">~${quote.listUsd}</span>~${quote.saleUsd}</>
+                      : `(~$${quote.saleUsd})`}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
