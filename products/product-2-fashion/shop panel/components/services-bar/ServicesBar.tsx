@@ -13,25 +13,27 @@ export type ServicesBarProps = {
   className?: string;
 };
 
+const iconClass = "h-6 w-6";
+
 const ServicesBar: React.FC<ServicesBarProps> = ({ className }) => {
   const { t } = useTranslation();
   const [paused, setPaused] = React.useState(false);
 
   const items = React.useMemo(() => [
     {
-      icon: <FaTruckFast className="h-8 w-8 text-amber-500" />,
+      icon: <FaTruckFast className={iconClass} />,
       label: t("home.services.fastDelivery"),
     },
     {
-      icon: <LuRefreshCcw className="h-8 w-8 text-green-500!" />,
+      icon: <LuRefreshCcw className={iconClass} />,
       label: t("home.services.exchange"),
     },
     {
-      icon: <CiBadgeDollar className="h-8 w-8 text-rose-500" />,
+      icon: <CiBadgeDollar className={iconClass} />,
       label: t("home.services.bestPrice"),
     },
     {
-      icon: <IoShieldCheckmarkOutline className="h-8 w-8 text-orange-500" />,
+      icon: <IoShieldCheckmarkOutline className={iconClass} />,
       label: t("home.services.afterSell"),
     },
   ], [t]);
@@ -39,52 +41,51 @@ const ServicesBar: React.FC<ServicesBarProps> = ({ className }) => {
   const marqueeItems = React.useMemo(() => [...items, ...items], [items]);
 
   return (
-    <section className={cn("container mx-auto w-full bg-white", className)}>
-      <div className="mx-auto w-full">
-        <div className="sm:hidden">
+    <section className={cn("w-full bg-background", className)}>
+      <div className="sm:hidden">
+        <div
+          className="relative overflow-hidden border-y border-black/[0.08] bg-background py-3.5"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
           <div
-            className={cn(
-              "relative overflow-hidden bg-white",
-              "border-y border-black",
-              "py-3"
-            )}
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
+            className={cn("services-marquee flex w-max items-center gap-16 pr-16")}
+            style={{ animationPlayState: paused ? "paused" : "running" }}
           >
-            <div
-              className={cn("services-marquee flex w-max items-center gap-16 pr-16")}
-              style={{ animationPlayState: paused ? "paused" : "running" }}
-            >
-              {marqueeItems.map((item, idx) => (
-                <div
-                  key={`${item.label}-${idx}`}
-                  className={cn("whitespace-nowrap", "**:leading-none")}
-                >
-                  <ServiceItem icon={item.icon} label={item.label} />
-                </div>
-              ))}
-            </div>
-
-            <style jsx>{`
-              .services-marquee {
-                animation: servicesMarquee 16s linear infinite;
-                will-change: transform;
-              }
-              @keyframes servicesMarquee {
-                0% { transform: translateX(0); }
-                100% { transform: translateX(-50%); }
-              }
-            `}</style>
+            {marqueeItems.map((item, idx) => (
+              <div
+                key={`${item.label}-${idx}`}
+                className={cn("whitespace-nowrap", "**:leading-none")}
+              >
+                <ServiceItem icon={item.icon} label={item.label} />
+              </div>
+            ))}
           </div>
-        </div>
 
-        <div className="hidden sm:block">
-          <div className="border border-[#E5E5E5] bg-[#FAFAFA] px-6 py-7">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
-              {items.map((item, idx) => (
-                <ServiceItem key={idx} icon={item.icon} label={item.label} />
-              ))}
-            </div>
+          <style jsx>{`
+            .services-marquee {
+              animation: servicesMarquee 16s linear infinite;
+              will-change: transform;
+            }
+            @keyframes servicesMarquee {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+          `}</style>
+        </div>
+      </div>
+
+      <div className="hidden border-y border-black/[0.08] sm:block">
+        <div className="container mx-auto px-6 py-7 min-[992px]:px-8 min-[992px]:py-8 min-[1200px]:px-10">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-8 lg:grid-cols-4 lg:gap-10">
+            {items.map((item, idx) => (
+              <ServiceItem
+                key={idx}
+                icon={item.icon}
+                label={item.label}
+                layout="stack"
+              />
+            ))}
           </div>
         </div>
       </div>
