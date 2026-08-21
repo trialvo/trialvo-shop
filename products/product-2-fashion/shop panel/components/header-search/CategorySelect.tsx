@@ -21,8 +21,8 @@ const CategorySelect: React.FC<Props> = React.memo(({ categories, value, onChang
   return (
     <div
       className={cn(
-        "h-full w-26 sm:w-full sm:max-w-45 shrink-0",
-        "border-r border-[#D9D9D9] bg-[#F8F8F8]",
+        "h-full w-26 sm:w-full sm:max-w-40 shrink-0",
+        "border-r border-black/10 bg-transparent",
         className,
       )}
     >
@@ -35,11 +35,11 @@ const CategorySelect: React.FC<Props> = React.memo(({ categories, value, onChang
         emptyText="No category found."
         disabled={false}
         triggerClassName={cn(
-          "h-full w-full border-0 bg-transparent px-4",
-          "text-sm font-medium text-black",
+          "h-full w-full border-0 bg-transparent px-3",
+          "text-[12px] font-normal tracking-[0.01em] text-black",
           "hover:bg-transparent",
         )}
-        contentClassName="rounded-none w-50 sm:w-70"
+        contentClassName="rounded-none border border-black/10 shadow-none w-50 sm:w-70"
         side="bottom"
         align="start"
         sideOffset={6}

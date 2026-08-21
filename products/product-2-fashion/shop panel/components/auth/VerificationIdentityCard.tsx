@@ -6,8 +6,8 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { authLinkClass, authPrimaryBtnClass } from "@/components/auth/auth-ui";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -104,16 +104,14 @@ const VerificationIdentityCard: React.FC<VerificationIdentityCardProps> = ({
   }, [onVerify]);
 
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-10">
-      <Card className={`rounded-none border-0 mt-10 shadow-[0px_0px_20px_rgba(0,0,0,0.05)] ${cardClass}`}>
-        <CardContent className="px-4 py-5">
-          <h1 className="mt-5 text-center text-2xl font-extrabold text-black">
+    <div className={`w-full ${cardClass ?? ""}`}>
+          <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground min-[576px]:text-[32px]">
             {t("auth.verifyIdentityTitle")}
           </h1>
 
-          <p className="mt-3 text-center text-sm text-gray-700">
+          <p className="mt-1.5 text-[13px] leading-5 text-muted-foreground">
             {t("auth.verifyDesc1")} {length}-{t("auth.verifyDesc2")}{" "}
-            <span className="font-semibold text-black">{displayTarget}</span>
+            <span className="font-medium text-foreground">{displayTarget}</span>
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-8">
@@ -133,12 +131,12 @@ const VerificationIdentityCard: React.FC<VerificationIdentityCardProps> = ({
                     disabled={isSubmitting}
                     autoComplete="one-time-code"
                   >
-                    <InputOTPGroup className="gap-3">
+                    <InputOTPGroup className="gap-2 min-[576px]:gap-2.5">
                       {Array.from({ length }).map((_, idx) => (
                         <InputOTPSlot
                           key={idx}
                           index={idx}
-                          className={`h-15 w-12 rounded-none! text-center text-4xl font-semibold ${errors.code ? "border-red-500" : "border-gray-300"
+                          className={`h-12 w-10 rounded-[4px]! text-center text-xl font-semibold min-[576px]:h-13 min-[576px]:w-11 min-[576px]:text-2xl ${errors.code ? "border-destructive" : "border-border"
                             }`}
                         />
                       ))}
@@ -149,30 +147,30 @@ const VerificationIdentityCard: React.FC<VerificationIdentityCardProps> = ({
             </div>
 
             {errors.code?.message ? (
-              <p className="mt-3 text-center text-sm text-red-600">
+              <p className="mt-3 text-center text-[12px] text-destructive">
                 {errors.code.message}
               </p>
             ) : null}
 
-            <p className="mt-8 text-center text-sm text-black">
+            <p className="mt-6 text-center text-[13px] text-muted-foreground">
               {t("auth.codeNotReceived")}{" "}
               <button
                 type="button"
                 onClick={async () => {
                   await Promise.resolve(onResend?.());
                 }}
-                className="font-semibold text-[#0088FF] cursor-pointer hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                className={`${authLinkClass} cursor-pointer disabled:cursor-not-allowed disabled:opacity-60`}
                 disabled={isSubmitting}
               >
                 {t("auth.resend")}
               </button>
             </p>
 
-            <div className="mt-8">
+            <div className="mt-5">
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-9 w-full rounded-none bg-black text-sm font-medium text-white hover:bg-black/90 disabled:opacity-60"
+                className={authPrimaryBtnClass}
                 isLoading={isSubmitting}
               >
                 {isSubmitting ? t("auth.verifying") : t("auth.verify")}
@@ -180,15 +178,13 @@ const VerificationIdentityCard: React.FC<VerificationIdentityCardProps> = ({
             </div>
           </form>
           {!isAuthenticated && (
-            <p className="mt-8 text-center text-sm font-normal text-black">
+            <p className="mt-6 text-center text-[13px] text-muted-foreground">
               {t("auth.backTo")}{" "}
-              <Link href={signInHref} className="font-semibold text-[#0088FF] hover:underline">
+              <Link href={signInHref} className={authLinkClass}>
                 {t("common.signIn")}
               </Link>
             </p>
           )}
-        </CardContent>
-      </Card>
     </div>
   );
 };

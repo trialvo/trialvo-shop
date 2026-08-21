@@ -6,8 +6,8 @@ import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { authLabelClass, authLinkClass, authPrimaryBtnClass } from "@/components/auth/auth-ui";
 
 import PasswordInput from "@/components/auth/PasswordInput";
 import { useAuth } from "@/hooks/useAuth";
@@ -69,21 +69,19 @@ const ResetPasswordCard: React.FC<ResetPasswordCardProps> = ({
   };
 
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-10">
-      <Card className="rounded-none border-0 mt-10 shadow-[0px_0px_20px_rgba(0,0,0,0.05)]">
-        <CardContent className="px-4 py-5">
-          <h1 className="mt-5 text-center text-2xl font-extrabold text-black">
+    <div className="w-full">
+          <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground min-[576px]:text-[32px]">
             {t("auth.resetPasswordTitle")}
           </h1>
 
-          <p className="mt-2 text-center text-sm text-gray-700">
-            For <span className="font-medium text-black">{email}</span>
+          <p className="mt-1.5 text-[13px] text-muted-foreground">
+            For <span className="font-medium text-foreground">{email}</span>
           </p>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-10 space-y-7">
-            <div className="space-y-2">
-              <Label htmlFor="newPassword" className="text-base font-medium text-black">
-                {t("auth.newPassword")} <span className="text-red-600">*</span>
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="newPassword" className={authLabelClass}>
+                {t("auth.newPassword")}
               </Label>
 
               <Controller
@@ -104,9 +102,9 @@ const ResetPasswordCard: React.FC<ResetPasswordCardProps> = ({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-base font-medium text-black">
-                {t("auth.confirmPassword")} <span className="text-red-600">*</span>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword" className={authLabelClass}>
+                {t("auth.confirmPassword")}
               </Label>
 
               <Controller
@@ -130,20 +128,18 @@ const ResetPasswordCard: React.FC<ResetPasswordCardProps> = ({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="mt-2 h-9 w-full rounded-none bg-black text-sm font-medium text-white hover:bg-black/90 disabled:opacity-60"
+              className={authPrimaryBtnClass}
             >
               {isSubmitting ? t("auth.saving") : t("auth.setNewPassword")}
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-sm font-normal text-black">
+          <p className="mt-6 text-center text-[13px] text-muted-foreground">
             {t("auth.backTo")}{" "}
-            <Link href={signInHref} className="font-semibold text-[#0088FF] hover:underline">
+            <Link href={signInHref} className={authLinkClass}>
               {t("common.signIn")}
             </Link>
           </p>
-        </CardContent>
-      </Card>
     </div>
   );
 };

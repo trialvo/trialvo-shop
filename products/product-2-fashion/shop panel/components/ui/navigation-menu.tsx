@@ -18,7 +18,7 @@ function NavigationMenu({
       data-slot="navigation-menu"
       data-viewport={viewport}
       className={cn(
-        "group/navigation-menu relative flex max-w-max flex-1 items-center justify-center",
+        "group/navigation-menu relative flex max-w-full flex-1 items-center justify-center",
         className
       )}
       {...props}
@@ -59,16 +59,14 @@ function NavigationMenuItem({
 }
 
 const navigationMenuTriggerStyle = cva(cn(
-    "group inline-flex h-9 w-max items-center justify-center rounded-none bg-background px-4 py-2",
-    "text-sm font-normal! cursor-pointer",
-    "border-b! border-transparent!",
-    "hover:bg-transparent! hover:border-black! hover:text-accent-foreground",
-    "data-[state=open]:border-black! data-[state=open]:text-black",
-    "data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground",
-    "data-[state=open]:focus:bg-transparent! data-[state=open]:bg-transparent!",
-    "focus:bg-accent focus:text-accent-foreground",
+    "group inline-flex h-9 w-max items-center justify-center rounded-none bg-transparent px-2.5 py-2",
+    "text-[12px] font-normal leading-none tracking-[0.01em] cursor-pointer text-black",
+    "hover:bg-transparent! hover:underline hover:underline-offset-[6px] hover:decoration-1",
+    "data-[state=open]:bg-transparent! data-[state=open]:text-black data-[state=open]:underline data-[state=open]:underline-offset-[6px] data-[state=open]:decoration-1",
+    "data-[state=open]:hover:bg-transparent data-[state=open]:focus:bg-transparent!",
+    "focus:bg-transparent focus:text-black",
     "disabled:pointer-events-none disabled:opacity-50",
-    "focus-visible:ring-0! outline-none transition-[color,box-shadow] focus-visible:ring-0! focus-visible:outline-none!"
+    "focus-visible:ring-0! outline-none transition-[text-decoration] duration-150 focus-visible:ring-0! focus-visible:outline-none!"
   )
 )
 
@@ -85,7 +83,7 @@ function NavigationMenuTrigger({
     >
       {children}{" "}
       <ChevronDownIcon
-        className="relative top-px ml-1 size-3 transition duration-300 group-data-[state=open]:rotate-180"
+        className="hidden"
         aria-hidden="true"
       />
     </NavigationMenuPrimitive.Trigger>
@@ -100,8 +98,8 @@ function NavigationMenuContent({
     <NavigationMenuPrimitive.Content
       data-slot="navigation-menu-content"
       className={cn(
-        "min-w-250! data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 top-0 left-0 w-full p-3 md:absolute md:w-auto",
-        "group-data-[viewport=false]/navigation-menu:bg-popover group-data-[viewport=false]/navigation-menu:text-popover-foreground group-data-[viewport=false]/navigation-menu:data-[state=open]:animate-in group-data-[viewport=false]/navigation-menu:data-[state=closed]:animate-out group-data-[viewport=false]/navigation-menu:data-[state=closed]:zoom-out-95 group-data-[viewport=false]/navigation-menu:data-[state=open]:zoom-in-95 group-data-[viewport=false]/navigation-menu:data-[state=open]:fade-in-0 group-data-[viewport=false]/navigation-menu:data-[state=closed]:fade-out-0 group-data-[viewport=false]/navigation-menu:top-full group-data-[viewport=false]/navigation-menu:mt-1.5 group-data-[viewport=false]/navigation-menu:overflow-hidden group-data-[viewport=false]/navigation-menu:rounded-md group-data-[viewport=false]/navigation-menu:border group-data-[viewport=false]/navigation-menu:shadow group-data-[viewport=false]/navigation-menu:duration-200 **:data-[slot=navigation-menu-link]:focus:ring-0 **:data-[slot=navigation-menu-link]:focus:outline-none",
+        "w-full top-0 left-0 p-0 md:absolute data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out duration-200",
+        "group-data-[viewport=false]/navigation-menu:bg-white group-data-[viewport=false]/navigation-menu:text-black group-data-[viewport=false]/navigation-menu:data-[state=open]:animate-in group-data-[viewport=false]/navigation-menu:data-[state=closed]:animate-out group-data-[viewport=false]/navigation-menu:data-[state=closed]:fade-out-0 group-data-[viewport=false]/navigation-menu:data-[state=open]:fade-in-0 group-data-[viewport=false]/navigation-menu:top-full group-data-[viewport=false]/navigation-menu:mt-0 group-data-[viewport=false]/navigation-menu:overflow-hidden group-data-[viewport=false]/navigation-menu:rounded-none group-data-[viewport=false]/navigation-menu:border-b group-data-[viewport=false]/navigation-menu:border-black/10 group-data-[viewport=false]/navigation-menu:shadow-none group-data-[viewport=false]/navigation-menu:duration-200 **:data-[slot=navigation-menu-link]:focus:ring-0 **:data-[slot=navigation-menu-link]:focus:outline-none",
         className
       )}
       {...props}
@@ -116,13 +114,13 @@ function NavigationMenuViewport({
   return (
     <div
       className={cn(
-        "absolute top-full left-0 isolate z-50 flex justify-center"
+        "fixed inset-x-0 top-[var(--shop-header-offset,9.25rem)] isolate z-50 flex max-w-full justify-center overflow-hidden"
       )}
     >
       <NavigationMenuPrimitive.Viewport
         data-slot="navigation-menu-viewport"
         className={cn(
-          "origin-top-center bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded border border-[#F1F1F1] shadow-[0px_0px_12px_rgba(0,0,0,0.12)] md:w-[var(--radix-navigation-menu-viewport-width)]",
+          "origin-top bg-white text-black relative mt-0 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-none border-x-0 border-t-0 border-b border-black/10 shadow-[0_16px_40px_rgba(0,0,0,0.08)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out",
           className
         )}
         {...props}

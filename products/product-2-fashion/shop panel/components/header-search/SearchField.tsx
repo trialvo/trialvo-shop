@@ -8,7 +8,6 @@ import ImageWithFallback from "@/components/common/ImageWithFallback";
 import * as React from "react";
 import { CiImageOff } from "react-icons/ci";
 import { FiSearch, FiX } from "react-icons/fi";
-import { LuSearchX } from "react-icons/lu";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 
 export type ProductSearchSuggestion = {
@@ -19,6 +18,7 @@ export type ProductSearchSuggestion = {
   oldPrice?: number | null;
   offerText?: string | null;
   href: string;
+  isFavourite?: boolean;
 };
 
 type Props = {
@@ -180,14 +180,15 @@ const SearchField: React.FC<Props> = React.memo(
     return (
       <div ref={wrapperRef} className={cn("relative flex-1", className)}>
         <div className="flex h-full items-center px-3">
-          <FiSearch className="mr-2 h-5 w-5 text-black/45" />
+          <FiSearch className="mr-2 h-4 w-4 text-black/35" />
           <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             className={cn(
               "h-full border-transparent! bg-transparent! rounded-none px-0",
-              "placeholder:text-sm placeholder:text-black/45",
+              "text-[13px] tracking-[0.01em]",
+              "placeholder:text-[13px] placeholder:text-black/35",
               "focus:border-transparent! focus:outline-none! focus:ring-0! focus:ring-offset-0! focus:shadow-none!",
               "focus-visible:border-transparent! focus-visible:outline-none! focus-visible:ring-0! focus-visible:ring-offset-0!",
               "active:border-transparent! active:outline-none!",
@@ -206,23 +207,23 @@ const SearchField: React.FC<Props> = React.memo(
             aria-label="Clear search"
             className={cn(
               "ml-2 h-7 w-7 rounded-none p-0",
-              "hover:bg-black/5",
+              "hover:bg-black/[0.04]",
               hasQuery ? "opacity-100" : "pointer-events-none opacity-0",
               "transition-opacity duration-200",
             )}
           >
-            <FiX className="h-5 w-5 text-black/60" />
+            <FiX className="h-4 w-4 text-black/50" />
           </Button>
         </div>
 
         <div
           className={cn(
-            "absolute -left-26 sm:left-0 right-0 top-full z-30 mt-1",
+            "absolute -left-26 sm:left-0 right-0 top-full z-30 mt-0",
             "transition-all duration-200 ease-out",
             showDropdown ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1 opacity-0",
           )}
         >
-          <div className="rounded-none border-0 bg-white shadow-[6px_0_18px_rgba(0,0,0,0.06)]">
+          <div className="rounded-none border border-black/10 border-t-0 bg-white shadow-[0_16px_40px_rgba(0,0,0,0.08)]">
             {isLoading ? (
               <div className="py-1" style={{ maxHeight: maxHeightPx, overflow: "hidden" }}>
                 {Array.from({ length: skeletonCount }).map((_, idx) => (
@@ -252,33 +253,33 @@ const SearchField: React.FC<Props> = React.memo(
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => pick(item)}
                         className={cn(
-                          "flex w-full items-center gap-3 px-3 py-2 text-left",
+                          "flex w-full items-center gap-3 px-3 py-2.5 text-left",
                           "transition-colors cursor-pointer",
-                          isActive ? "bg-black/5" : "bg-white",
+                          isActive ? "bg-[#fafafa]" : "bg-white",
                         )}
                       >
-                        <div className="relative h-11 w-11 shrink-0 overflow-hidden  border border-[#EDEDED] bg-[#F6F6F6] group-hover:border-[#636363] transition-all">
+                        <div className="relative h-12 w-10 shrink-0 overflow-hidden bg-[#f4f4f4]">
                           {img ? (
-                            <ImageWithFallback src={img} alt={item.name} fill sizes="44px" className="object-cover" />
+                            <ImageWithFallback src={img} alt={item.name} fill sizes="40px" className="object-cover" />
                           ) : (
                             <div className="grid h-full w-full place-items-center text-xs text-black/50">
-                              <CiImageOff className="h-6 w-6 text-foreground/50" />
+                              <CiImageOff className="h-5 w-5 text-foreground/40" />
                             </div>
                           )}
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-medium text-black">{item.name}</p>
+                          <p className="truncate text-[12px] font-normal tracking-[0.01em] text-black">{item.name}</p>
 
                           <div className="mt-1 flex items-center gap-2">
                             {item.offerText ? (
-                              <span className="inline-flex items-center rounded-none bg-black px-2 py-0.5 text-[11px] font-semibold text-white">
+                              <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-black/55">
                                 {item.offerText}
                               </span>
                             ) : null}
 
                             {hasDiscount ? (
-                              <span className="text-[11px] font-medium text-black/60 line-through">
+                              <span className="text-[11px] font-normal text-black/35 line-through">
                                 {money(item.oldPrice as number)}
                               </span>
                             ) : null}
@@ -286,7 +287,7 @@ const SearchField: React.FC<Props> = React.memo(
                         </div>
 
                         <div className="shrink-0 text-right">
-                          <p className="text-sm font-semibold text-black">{money(item.price)}</p>
+                          <p className="text-[12px] font-medium text-black">{money(item.price)}</p>
                         </div>
                       </button>
                     </li>
@@ -294,12 +295,9 @@ const SearchField: React.FC<Props> = React.memo(
                 })}
               </ul>
             ) : (
-              <div className="flex items-start gap-2 px-3 py-3">
-                <LuSearchX className="mt-0.5 h-4 w-4 text-black/50" />
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium text-black">No match found</p>
-                  <p className="text-xs text-black/60">Try a different keyword or check spelling.</p>
-                </div>
+              <div className="px-4 py-5">
+                <p className="text-[12px] font-bold tracking-[0.01em] text-black">No match found</p>
+                <p className="mt-1 text-[12px] text-black/40">Try a different keyword or check spelling.</p>
               </div>
             )}
           </div>

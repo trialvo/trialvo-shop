@@ -1,5 +1,6 @@
 "use client";
 
+import AuthShell from "@/components/auth/AuthShell";
 import VerificationIdentityCard from "@/components/auth/VerificationIdentityCard";
 import { useAuth } from "@/hooks/useAuth";
 import { maskEmail, maskPhoneNumber } from "@/lib/utils";
@@ -102,17 +103,17 @@ const VerifyIdentityPage: React.FC = () => {
 
   if (!identity) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4" />
-          <p className="text-gray-600">Loading verification...</p>
+      <AuthShell>
+        <div className="py-8 text-center">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-foreground/15 border-t-foreground" />
+          <p className="text-[13px] text-[#888]">Loading verification...</p>
         </div>
-      </main>
+      </AuthShell>
     );
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <AuthShell>
       <VerificationIdentityCard
         maskedTarget={maskEmail(email) || maskEmail(forgotEmail) || maskPhoneNumber(phoneNumber)}
         length={6}
@@ -121,7 +122,7 @@ const VerifyIdentityPage: React.FC = () => {
         signInHref="/sign-in"
         initialOtp={urlOtp || ""}
       />
-    </main>
+    </AuthShell>
   );
 };
 

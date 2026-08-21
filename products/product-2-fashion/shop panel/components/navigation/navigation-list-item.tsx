@@ -19,45 +19,20 @@ export function NavigationListItem({
   href = "#",
   imageSrc,
   className,
-  total_stock,
   onNavigate,
   ...props
 }: NavigationListItemProps): React.JSX.Element {
-  const stockOut = total_stock === 0;
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (stockOut) {
-      e.preventDefault();
-      return;
-    }
-    onNavigate(href);
-  };
-
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (stockOut && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }, [stockOut]);
-
   return (
     <li {...props} className={cn("list-none", className)}>
       <button
         type="button"
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
+        onClick={() => onNavigate(href)}
         className={cn(
-          "group block p-0! text-left",
+          "group block cursor-pointer p-0! text-left",
           "outline-none focus-visible:ring-2 focus-visible:ring-black/30",
-          stockOut ? "cursor-not-allowed opacity-40" : "cursor-pointer"
         )}
-        aria-disabled={stockOut}
-        tabIndex={stockOut ? -1 : 0}
       >
-        <div className={cn(
-          "relative h-25.5 w-25.5 overflow-hidden border border-[#EDEDED] bg-[#F6F6F6]",
-          !stockOut && "hover:border-[#636363] transition-colors"
-        )}>
+        <div className="relative h-25.5 w-25.5 overflow-hidden border border-black/10 bg-[#F8F8F8] transition-colors group-hover:border-black/40">
           {!imageSrc ? (
             <div className="flex h-full w-full items-center justify-center">
               <CiImageOff className="h-6 w-6 text-foreground/50" />
@@ -68,19 +43,13 @@ export function NavigationListItem({
               alt={title}
               fill
               sizes="110px"
-              className={cn(
-                "object-contain object-center",
-                "transition-transform duration-200",
-                !stockOut && "group-hover:scale-[1.03]"
-              )}
+              className="object-contain object-center transition-transform duration-200 group-hover:scale-[1.03]"
               preload={false}
             />
           )}
         </div>
 
-        <div className={cn(
-          "text-left text-xs font-medium text-black line-clamp-1 leading-4"
-        )}>
+        <div className="mt-1.5 text-left text-[11px] font-medium leading-4 text-black line-clamp-1">
           {title}
         </div>
       </button>

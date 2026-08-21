@@ -3,7 +3,6 @@
 import AccountMenu from "@/components/header/account-menu/AccountMenu";
 import LangToggleButton from "@/components/header/LangToggleButton";
 import NotificationBell from "@/components/header/NotificationBell";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -12,9 +11,12 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/providers/LanguageProvider";
 import Link from "next/link";
 import React from "react";
-import { CiHeart, CiSearch, CiUser } from "react-icons/ci";
-import { FiX } from "react-icons/fi";
-import { PiShoppingCartLight } from "react-icons/pi";
+import { CiSearch } from "react-icons/ci";
+import { FiHeart, FiShoppingBag, FiX } from "react-icons/fi";
+
+/** Alibaba.com header typeface: Open Sans + their fallback stack */
+const alibabaFont =
+  "var(--font-open-sans), 'Helvetica Neue', Helvetica, Tahoma, Arial, sans-serif";
 
 type HeaderActionProps = {
   cartCount?: number;
@@ -24,6 +26,7 @@ type HeaderActionProps = {
   onSearchClick?: () => void;
   onCartClick?: () => void;
   searchOpen?: boolean;
+  showSearch?: boolean;
 
   avatarSrc?: string;
   onLogout?: () => void | Promise<void>;
@@ -59,6 +62,7 @@ const HeaderAction: React.FC<HeaderActionProps> = ({
   onSearchClick,
   onCartClick,
   searchOpen = false,
+  showSearch = true,
   onLogout,
   userName = null,
   firstName,
@@ -85,10 +89,7 @@ const HeaderAction: React.FC<HeaderActionProps> = ({
   const accountSlot = (() => {
     if (shouldShowAccountSkeleton) {
       return (
-        <div className="flex w-41.5 items-center gap-2">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <Skeleton className="h-4 w-33.5 rounded-full" />
-        </div>
+        <Skeleton className="h-4 w-32 rounded" />
       );
     }
 
@@ -96,10 +97,10 @@ const HeaderAction: React.FC<HeaderActionProps> = ({
       return (
         <Link
           href="/sign-in"
-          className={cn("flex items-center gap-2 text-sm font-medium text-[#6A6678] transition")}
+          className={cn("whitespace-nowrap text-[13px] font-normal text-foreground transition hover:opacity-70 min-[992px]:text-sm")}
+          style={{ fontFamily: alibabaFont }}
         >
-          <CiUser className="h-6 w-6 transition hover:text-foreground" />
-          <span className="hidden text-sm font-normal sm:inline">{t("header.signIn")}</span>
+          {t("header.signIn")}
         </Link>
       );
     }
@@ -117,57 +118,56 @@ const HeaderAction: React.FC<HeaderActionProps> = ({
   })();
 
   return (
-    <div className="flex items-center gap-6 pr-2 sm:pr-0">
-      <button
-        aria-label={searchOpen ? "Close search" : "Search"}
-        onClick={onSearchClick}
-        className="cursor-pointer"
-        type="button"
-        data-search-toggle
+    <div className="flex items-center gap-3 pr-2 min-[576px]:gap-4 min-[768px]:gap-5 min-[768px]:pr-0 min-[992px]:gap-5 min-[1200px]:gap-6">
+      {showSearch ? (
+        <button
+          aria-label={searchOpen ? "Close search" : "Search"}
+          onClick={onSearchClick}
+          className="grid h-9 w-9 cursor-pointer place-items-center rounded-full text-[#6A6678] transition-colors duration-200 hover:bg-black/[0.06] hover:text-foreground min-[992px]:h-10 min-[992px]:w-10"
+          type="button"
+          data-search-toggle
+        >
+          {searchOpen ? (
+            <FiX className="h-5 w-5 min-[992px]:h-6 min-[992px]:w-6" />
+          ) : (
+            <CiSearch className="h-5 w-5 min-[992px]:h-6 min-[992px]:w-6" />
+          )}
+        </button>
+      ) : null}
+
+      {showSearch ? (
+        <div className="hidden min-[768px]:flex min-[768px]:items-center min-[768px]:gap-4 min-[992px]:gap-5 min-[1200px]:gap-6">
+          <LangToggleButton />
+          {isAuthed ? <NotificationBell /> : null}
+        </div>
+      ) : null}
+
+      <div
+        className="flex items-center gap-4 min-[992px]:gap-5 min-[1200px]:gap-6"
+        style={{ fontFamily: alibabaFont }}
       >
-        {searchOpen ? (
-          <FiX className="h-6 w-6 text-[#6A6678] transition hover:text-foreground" />
-        ) : (
-          <CiSearch className="h-6 w-6 text-[#6A6678] transition hover:text-foreground" />
-        )}
-      </button>
+        <div className="hidden min-[768px]:flex min-[768px]:items-center">
+          {accountSlot}
+        </div>
 
-      {/* Desktop: full pill toggle + wishlist + account */}
-      <div className="hidden min-[500px]:flex min-[500px]:items-center min-[500px]:gap-6">
-        <LangToggleButton />
-        {
-          isAuthed && (
-            <NotificationBell />
-          )
-        }
-        {
-          isAuthed && (
-            <Link href="/account/favorites/" aria-label="Wishlist" type="button" className="cursor-pointer">
-              <CiHeart className="h-6 w-6 text-[#6A6678] transition hover:text-foreground" />
-            </Link>
-          )
-        }
+        <Link
+          href="/account/favorites/"
+          aria-label="Wishlist"
+          className="hidden min-[768px]:grid min-[768px]:h-8 min-[768px]:w-8 min-[768px]:place-items-center min-[768px]:text-[#E8A090] min-[768px]:transition-opacity min-[768px]:hover:opacity-70"
+        >
+          <FiHeart className="h-5 w-5 fill-current min-[992px]:h-[22px] min-[992px]:w-[22px]" />
+        </Link>
 
-        {accountSlot}
+        <button
+          type="button"
+          onClick={onCartClick}
+          aria-label="Open cart"
+          className="inline-flex cursor-pointer items-center gap-1.5 text-foreground transition-opacity hover:opacity-70"
+        >
+          <FiShoppingBag className="h-5 w-5 min-[992px]:h-[22px] min-[992px]:w-[22px]" />
+          <span className="text-[13px] font-normal min-[992px]:text-sm">{cartCount}</span>
+        </button>
       </div>
-
-      <button
-        type="button"
-        onClick={onCartClick}
-        aria-label="Open cart"
-        className="relative cursor-pointer"
-      >
-        <PiShoppingCartLight className="h-6 w-6 text-[#6A6678] transition hover:text-foreground" />
-
-        {cartCount > 0 ? (
-          <Badge
-            variant="destructive"
-            className="absolute -right-3.5 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs"
-          >
-            {cartCount}
-          </Badge>
-        ) : null}
-      </button>
     </div>
   );
 };

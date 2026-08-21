@@ -96,7 +96,7 @@ const VerifyIdentityModal: React.FC<Props> = ({
                     onResend={onResend}
                     onVerify={onVerify}
                     signInHref={signInHref}
-                    cardClass="rounded-none shadow-none mt-0"
+                    cardClass="px-5 py-6"
                 />
             </div>
         </ModalShell>

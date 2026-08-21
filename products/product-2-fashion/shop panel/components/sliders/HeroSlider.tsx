@@ -65,7 +65,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
 
 
     return (
-        <section className="relative w-full">
+        <section className="relative w-full overflow-x-clip">
             <div className={[
                 "relative w-full",
                 "h-[24dvh] min-h-38 max-h-[560px]",

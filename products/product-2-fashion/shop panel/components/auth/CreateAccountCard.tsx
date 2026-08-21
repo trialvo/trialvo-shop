@@ -6,9 +6,9 @@ import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { authErrorBannerClass, authInputClass, authLabelClass, authLinkClass, authPrimaryBtnClass, authSuccessBannerClass } from './auth-ui'
 
 import AuthDivider from './AuthDivider'
 import GoogleAuthButton from './GoogleAuthButton'
@@ -99,111 +99,68 @@ const CreateAccountCard: React.FC<CreateAccountCardProps> = ({
   });
 
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-10">
-      <Card className="rounded-none border-0 mt-10 shadow-[0px_0px_20px_rgba(0,0,0,0.05)]">
-        <CardContent className="px-4 py-5">
-          <h1 className="mt-5 text-center text-2xl font-extrabold text-black">
+    <div className="w-full">
+          <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground min-[576px]:text-[32px]">
             {t("auth.createAccountTitle")}
           </h1>
 
-          <div className="mt-7">
-            <GoogleAuthButton
-              onClick={() => requestCode()}
-              disabled={!ready || isRequesting || isSigningUp || isGoogleSigningIn}
-              label={isGoogleSigningIn || isRequesting ? t("auth.signingIn") : t("auth.continueWithGoogle")}
-            />
-          </div>
-
-          <AuthDivider />
-
-          {/* Generic error (only shown when not a 409 already-verified conflict) */}
-          {error && !alreadyVerified && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200" onMouseEnter={clearError}>
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200" onMouseEnter={clearSuccess}>
-              <p className="text-green-700 text-sm">{success}</p>
-            </div>
-          )}
-
-          {/* 409 — email already registered and verified: show a "sign in" CTA */}
-          {alreadyVerified && (
-            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-              <p className="text-sm font-semibold text-blue-800">
-                An account with this email already exists.
-              </p>
-              <p className="mt-1 text-xs text-blue-700">
-                This email is already registered and verified. You can sign in directly.
-              </p>
-              <Link
-                href={signInHref}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-800"
-              >
-                Sign in instead →
-              </Link>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-base font-medium text-black">
-                  {t("auth.firstName")} <span className="text-red-600">*</span>
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+            <div className="grid grid-cols-1 gap-4 min-[576px]:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="firstName" className={authLabelClass}>
+                  {t("auth.firstName")}
                 </Label>
                 <Input
                   id="firstName"
                   placeholder={t("auth.firstNamePlaceholder")}
-                  className={`h-12 rounded-none text-base ${errors.first_name ? 'border-red-500' : 'border-gray-300'}`}
+                  className={authInputClass(!!errors.first_name)}
                   aria-invalid={!!errors.first_name}
                   disabled={isSigningUp}
                   {...register('first_name')}
                 />
                 {errors.first_name?.message && (
-                  <p className="text-sm text-red-600">{errors.first_name.message}</p>
+                  <p className="text-[12px] text-destructive">{errors.first_name.message}</p>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-base font-medium text-black">
-                  {t("auth.lastName")} <span className="text-red-600">*</span>
+              <div className="space-y-1.5">
+                <Label htmlFor="lastName" className={authLabelClass}>
+                  {t("auth.lastName")}
                 </Label>
                 <Input
                   id="lastName"
                   placeholder={t("auth.lastNamePlaceholder")}
-                  className={`h-12 rounded-none text-base ${errors.last_name ? 'border-red-500' : 'border-gray-300'}`}
+                  className={authInputClass(!!errors.last_name)}
                   aria-invalid={!!errors.last_name}
                   disabled={isSigningUp}
                   {...register('last_name')}
                 />
                 {errors.last_name?.message && (
-                  <p className="text-sm text-red-600">{errors.last_name.message}</p>
+                  <p className="text-[12px] text-destructive">{errors.last_name.message}</p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-base font-medium text-black">
-                {t("auth.email")} <span className="text-red-600">*</span>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className={authLabelClass}>
+                {t("auth.email")}
               </Label>
               <Input
                 id="email"
                 placeholder={t("auth.emailPlaceholder")}
-                className={`h-12 rounded-none text-base ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                className={authInputClass(!!errors.email)}
                 aria-invalid={!!errors.email}
                 disabled={isSigningUp}
                 {...register('email', { onChange: () => setAlreadyVerified(false) })}
               />
               {errors.email?.message && (
-                <p className="text-sm text-red-600">{errors.email.message}</p>
+                <p className="text-[12px] text-destructive">{errors.email.message}</p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-base font-medium text-black">
-                {t("auth.createPassword")} <span className="text-red-600">*</span>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className={authLabelClass}>
+                {t("auth.createPassword")}
               </Label>
 
               <Controller
@@ -224,23 +181,58 @@ const CreateAccountCard: React.FC<CreateAccountCardProps> = ({
               />
             </div>
 
+            {error && !alreadyVerified && (
+              <div className={authErrorBannerClass} onMouseEnter={clearError}>
+                <p className="text-[13px] text-destructive">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className={authSuccessBannerClass} onMouseEnter={clearSuccess}>
+                <p className="text-[13px] text-foreground">{success}</p>
+              </div>
+            )}
+
+            {alreadyVerified && (
+              <div className="rounded-[4px] border border-border bg-muted p-3.5">
+                <p className="text-[13px] font-medium text-foreground">
+                  An account with this email already exists.
+                </p>
+                <p className="mt-1 text-[12px] text-muted-foreground">
+                  This email is already registered and verified. You can sign in directly.
+                </p>
+                <Link
+                  href={signInHref}
+                  className={`mt-2 inline-flex text-[12px] ${authLinkClass}`}
+                >
+                  Sign in instead →
+                </Link>
+              </div>
+            )}
+
             <Button
               type="submit"
               disabled={isSigningUp}
-              className="h-9 w-full rounded-none bg-black text-sm font-medium text-white hover:bg-black/90 disabled:opacity-60"
+              className={authPrimaryBtnClass}
             >
               {isSigningUp ? t("auth.creating") : t("auth.createAccountTitle")}
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-black">
+          <AuthDivider />
+
+          <GoogleAuthButton
+            onClick={() => requestCode()}
+            disabled={!ready || isRequesting || isSigningUp || isGoogleSigningIn}
+            label={isGoogleSigningIn || isRequesting ? t("auth.signingIn") : t("auth.continueWithGoogle")}
+          />
+
+          <p className="mt-6 text-center text-[13px] text-muted-foreground">
             {t("auth.alreadyHaveAccount")}{' '}
-            <Link href={signInHref} className="font-semibold text-[#0088FF] hover:underline">
+            <Link href={signInHref} className={authLinkClass}>
               {t("common.signIn")}
             </Link>
           </p>
-        </CardContent>
-      </Card>
     </div>
   )
 }

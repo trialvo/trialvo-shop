@@ -1,5 +1,6 @@
 "use client"
 
+import AuthShell from "@/components/auth/AuthShell";
 import SignInCard from "@/components/auth/SignInCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -16,9 +17,9 @@ const SignInPage: React.FC = () => {
   }, [isAuthenticated, router])
 
   return (
-    <main className="min-h-screen bg-white">
+    <AuthShell>
       <SignInCard />
-    </main>
+    </AuthShell>
   );
 };
 

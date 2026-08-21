@@ -1,5 +1,6 @@
 "use client"
 
+import AuthShell from "@/components/auth/AuthShell";
 import CreateAccountCard from "@/components/auth/CreateAccountCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
@@ -17,11 +18,11 @@ const SignUpPage: React.FC = () => {
 
 
   return (
-    <main className="min-h-screen bg-white">
+    <AuthShell>
       <CreateAccountCard
         signInHref="/sign-in"
       />
-    </main>
+    </AuthShell>
   );
 };
 

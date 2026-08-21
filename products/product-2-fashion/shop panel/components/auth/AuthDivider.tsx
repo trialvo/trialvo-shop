@@ -6,13 +6,13 @@ type AuthDividerProps = {
 };
 
 const AuthDivider: React.FC<AuthDividerProps> = ({
-  text = "Or continue with",
+  text = "or",
 }) => {
   return (
-    <div className="my-6 flex items-center gap-4">
-      <Separator className="flex-1 bg-gray-300" />
-      <span className="text-sm text-gray-500">{text}</span>
-      <Separator className="flex-1 bg-gray-300" />
+    <div className="my-5 flex items-center gap-3">
+      <Separator className="flex-1 bg-border" />
+      <span className="text-[12px] uppercase tracking-[0.08em] text-muted-foreground">{text}</span>
+      <Separator className="flex-1 bg-border" />
     </div>
   );
 };

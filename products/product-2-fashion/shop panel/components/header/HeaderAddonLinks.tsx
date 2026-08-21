@@ -67,7 +67,7 @@ export default function HeaderAddonLinks() {
   if (!hasCategories) return null;
 
   return (
-    <div className="fixed right-0 top-1/2 z-50 -translate-y-1/2 hidden sm:block">
+    <div className="fixed right-0 top-1/2 z-50 hidden -translate-y-1/2 min-[768px]:block">
       <nav className="flex flex-col gap-[1px]" aria-label="Quick links">
         {visibleLinks.map((link, idx) => {
           const isFirst = idx === 0;
@@ -78,7 +78,7 @@ export default function HeaderAddonLinks() {
               key={link.key}
               href={link.href}
               className={cn(
-                "group relative flex h-10 w-10 items-center justify-center transition-all duration-200 sm:h-11 sm:w-11",
+                "group relative flex h-10 w-10 items-center justify-center transition-all duration-200 min-[992px]:h-11 min-[992px]:w-11",
                 isFirst && "rounded-tl-lg",
                 isLast && "rounded-bl-lg",
                 link.isActive
@@ -96,21 +96,21 @@ export default function HeaderAddonLinks() {
 
               <span
                 className={cn(
-                  "pointer-events-none absolute right-full mr-2.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px] font-semibold tracking-wide shadow-lg sm:text-xs",
+                  "pointer-events-none absolute right-full mr-2.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px] font-semibold tracking-wide shadow-lg min-[992px]:text-xs",
                   "bg-black text-white",
-                  "opacity-0 translate-x-1 transition-all duration-200 ease-out",
-                  "group-hover:opacity-100 group-hover:translate-x-0",
+                  "translate-x-1 opacity-0 transition-all duration-200 ease-out",
+                  "group-hover:translate-x-0 group-hover:opacity-100",
                 )}
               >
                 {link.label}
-                <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[3px] rotate-45 h-2 w-2 bg-black" />
+                <span className="absolute right-0 top-1/2 h-2 w-2 translate-x-[3px] -translate-y-1/2 rotate-45 bg-black" />
               </span>
             </Link>
           );
         })}
 
         {hasCategories && visibilityLoading && (
-          <div className="flex h-10 w-10 items-center justify-center bg-white shadow-[-2px_0px_8px_rgba(0,0,0,0.08)] sm:h-11 sm:w-11">
+          <div className="flex h-10 w-10 items-center justify-center bg-white shadow-[-2px_0px_8px_rgba(0,0,0,0.08)] min-[992px]:h-11 min-[992px]:w-11">
             <Skeleton className="h-5 w-5 rounded-full" />
           </div>
         )}

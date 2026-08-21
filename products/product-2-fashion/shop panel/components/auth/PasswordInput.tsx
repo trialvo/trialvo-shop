@@ -40,22 +40,24 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
           onBlur={onBlur}
           disabled={disabled}
           aria-invalid={!!error}
-          className={`h-12 rounded-none pr-12 text-base ${
-            error ? "border-red-500" : "border-gray-300"
+          className={`h-11 rounded-[4px] pr-12 text-[14px] shadow-none ${
+            error
+              ? "border-destructive focus-visible:border-destructive focus-visible:ring-1 focus-visible:ring-destructive/25"
+              : "border-border focus-visible:border-foreground focus-visible:ring-1 focus-visible:ring-foreground/20"
           }`}
         />
         <button
           type="button"
           aria-label={show ? "Hide password" : "Show password"}
           onClick={() => setShow((s) => !s)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           disabled={disabled}
         >
           {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
       </div>
 
-      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="mt-1 text-sm text-destructive">{error}</p> : null}
     </div>
   );
 };

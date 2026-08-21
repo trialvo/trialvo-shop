@@ -7,11 +7,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { authInputClass, authLabelClass, authLinkClass, authPrimaryBtnClass } from "./auth-ui";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -86,7 +86,7 @@ function ChannelTab({
       onClick={onClick}
       className={cn(
         "relative flex flex-1 cursor-pointer items-center justify-center gap-2 py-3 text-sm font-medium transition-colors duration-200",
-        active ? "text-black" : "text-gray-400 hover:text-gray-600",
+        active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
       )}
     >
       {icon}
@@ -94,7 +94,7 @@ function ChannelTab({
       <span
         className={cn(
           "absolute bottom-0 left-0 h-[2px] w-full transition-all duration-300 ease-out",
-          active ? "scale-x-100 bg-black" : "scale-x-0 bg-transparent",
+          active ? "scale-x-100 bg-foreground" : "scale-x-0 bg-transparent",
         )}
       />
     </button>
@@ -217,26 +217,21 @@ const ForgotPasswordCard: React.FC<ForgotPasswordCardProps> = ({
       : t("auth.forgotPasswordDesc");
 
   return (
-    <div className="mx-auto w-full max-w-xl px-4 py-10">
-      <Card className="mt-10 rounded-none border-0 shadow-[0px_0px_20px_rgba(0,0,0,0.05)]">
-        <CardContent className="px-4 py-5">
-          {/* Lock icon header */}
-          <div className="mt-3 flex justify-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/[0.03]">
-              <FiLock className="h-6 w-6 text-black/60" />
-            </div>
+    <div className="w-full">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">
+            <FiLock className="h-5 w-5 text-foreground" />
           </div>
 
-          <h1 className="mt-5 text-center text-2xl font-extrabold text-black">
-            {isLangReady ? t("auth.forgotPasswordTitle") : <Skeleton className="mx-auto h-7 w-56 rounded" />}
+          <h1 className="mt-4 text-[28px] font-bold tracking-[-0.03em] text-foreground min-[576px]:text-[32px]">
+            {isLangReady ? t("auth.forgotPasswordTitle") : <Skeleton className="h-7 w-56 rounded" />}
           </h1>
 
           {methodsReady ? (
-            <p className="mt-3 text-center text-sm leading-relaxed text-gray-500">
+            <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
               {descriptionText}
             </p>
           ) : (
-            <div className="mt-4 flex flex-col items-center gap-2">
+            <div className="mt-3 flex flex-col gap-2">
               <Skeleton className="h-3.5 w-64 rounded" />
               <Skeleton className="h-3.5 w-48 rounded" />
             </div>
@@ -270,13 +265,13 @@ const ForgotPasswordCard: React.FC<ForgotPasswordCardProps> = ({
 
           {/* Form */}
           {methodsReady && (methods.email || methods.sms) && (
-            <form onSubmit={handleSubmit(submitHandler)} className="mt-8 space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="forgotValue" className="text-base font-medium text-black">
+            <form onSubmit={handleSubmit(submitHandler)} className="mt-6 space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="forgotValue" className={authLabelClass}>
                   {channel === "sms" ? (
-                    <>Phone Number <span className="text-red-600">*</span></>
+                    <>Phone Number</>
                   ) : (
-                    <>Email Address <span className="text-red-600">*</span></>
+                    <>Email Address</>
                   )}
                 </Label>
 
@@ -288,23 +283,18 @@ const ForgotPasswordCard: React.FC<ForgotPasswordCardProps> = ({
                       ? "01XXXXXXXXX"
                       : "name@example.com"
                   }
-                  className={cn(
-                    "h-12 rounded-none text-base transition-colors",
-                    errors.value
-                      ? "border-red-500 focus-visible:ring-red-200"
-                      : "border-gray-300",
-                  )}
+                  className={authInputClass(!!errors.value)}
                   aria-invalid={!!errors.value}
                   disabled={disabled}
                   {...register("value")}
                 />
 
                 {errors.value?.message && (
-                  <p className="text-sm text-red-600">{errors.value.message}</p>
+                  <p className="text-[12px] text-destructive">{errors.value.message}</p>
                 )}
 
                 {!errors.value && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-[12px] text-[#999]">
                     {channel === "sms"
                       ? "Use the phone number registered with your account."
                       : "Use the email address registered with your account."}
@@ -315,7 +305,7 @@ const ForgotPasswordCard: React.FC<ForgotPasswordCardProps> = ({
               <Button
                 type="submit"
                 disabled={disabled}
-                className="h-9 w-full rounded-none bg-black text-sm font-medium text-white hover:bg-black/90 disabled:opacity-60"
+                className={authPrimaryBtnClass}
               >
                 {disabled ? (
                   <span className="flex items-center gap-2">
@@ -333,11 +323,11 @@ const ForgotPasswordCard: React.FC<ForgotPasswordCardProps> = ({
             </form>
           )}
 
-          <p className="mt-8 text-center text-sm font-normal text-black">
+          <p className="mt-6 text-center text-[13px] text-muted-foreground">
             {isLangReady ? (
               <>
                 {t("auth.backTo")}{" "}
-                <Link href={signInHref} className="font-semibold text-[#0088FF] hover:underline">
+                <Link href={signInHref} className={authLinkClass}>
                   {t("common.signIn")}
                 </Link>
               </>
@@ -345,8 +335,6 @@ const ForgotPasswordCard: React.FC<ForgotPasswordCardProps> = ({
               <Skeleton className="mx-auto h-4 w-40 rounded" />
             )}
           </p>
-        </CardContent>
-      </Card>
     </div>
   );
 };

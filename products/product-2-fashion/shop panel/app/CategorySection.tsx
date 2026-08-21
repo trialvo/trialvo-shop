@@ -11,12 +11,16 @@ export type CategorySectionProps = {
 const CategorySection: React.FC<CategorySectionProps> = ({
     className = "",
 }) => {
-    const { childCategories, childCategoriesLoading } = useCategory();
+    const { childCategories, childCategoriesLoading, childTotal } = useCategory();
 
     return (
-        <section className={`w-full ${className}`}>
+        <section className={`w-full bg-[#f4efe8] py-10 sm:py-14 ${className}`}>
             <div className="container mx-auto">
-                <CategoryGrid items={childCategories} isLoading={childCategoriesLoading}/>
+                <CategoryGrid
+                    items={childCategories}
+                    isLoading={childCategoriesLoading}
+                    total={childTotal}
+                />
             </div>
         </section>
     );

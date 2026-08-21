@@ -101,37 +101,20 @@ function ChildCategoryTile({
       : null;
 
   const href = toChildHref(child);
-  const stockOut = typeof child.total_stock === "number" && child.total_stock === 0;
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (stockOut) { e.preventDefault(); return; }
-    onNavigate(href);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (stockOut && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault();
-    }
-  };
 
   return (
     <button
       type="button"
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
+      onClick={() => onNavigate(href)}
       className={cn(
-        "group w-full text-left",
+        "group w-full cursor-pointer text-left",
         "outline-none focus-visible:ring-2 focus-visible:ring-black/30",
-        stockOut ? "cursor-not-allowed opacity-40" : "cursor-pointer"
       )}
-      aria-disabled={stockOut}
-      tabIndex={stockOut ? -1 : 0}
     >
       <div
         className={cn(
-          "relative overflow-hidden border border-[#EDEDED] bg-[#F6F6F6]",
-          !stockOut && "hover:border-[#636363] transition-colors",
-          "h-20 w-20"
+          "relative h-20 w-20 overflow-hidden border border-black/10 bg-[#F8F8F8]",
+          "transition-colors hover:border-black/40",
         )}
       >
         {!src ? (
@@ -144,16 +127,12 @@ function ChildCategoryTile({
             alt={child.name}
             fill
             sizes="80px"
-            className={cn(
-              "object-contain object-center",
-              "transition-transform duration-200",
-              !stockOut && "group-hover:scale-[1.03]"
-            )}
+            className="object-contain object-center transition-transform duration-200 group-hover:scale-[1.03]"
           />
         )}
       </div>
 
-      <div className={cn("mt-1 text-xs font-medium text-black line-clamp-1 leading-4")}>
+      <div className="mt-1 text-xs font-medium leading-4 text-black line-clamp-1">
         {getLocalName(child.name, child.name_bd, language)}
       </div>
     </button>

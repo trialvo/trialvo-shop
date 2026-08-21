@@ -49,6 +49,7 @@
 
 html {
   scrollbar-gutter: auto;
+  overflow-x: clip;
 }
 
 * {
