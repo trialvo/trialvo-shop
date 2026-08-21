@@ -20,7 +20,6 @@ export type CategoryGridProps = {
 
 const MAX_ITEMS = 12;
 const SHOP_ALL_HREF = "/category/all";
-const ACCENT = "#E85D04";
 
 const CARD_WIDTH =
   "w-[46%] min-w-[46%] shrink-0 min-[576px]:w-[32%] min-[576px]:min-w-[32%] min-[768px]:w-[24%] min-[768px]:min-w-[24%] min-[992px]:w-[19%] min-[992px]:min-w-[19%] min-[1200px]:w-[16.5%] min-[1200px]:min-w-[16.5%]";
@@ -97,8 +96,7 @@ export default function CategoryGrid({
         </div>
         <Link
           href={SHOP_ALL_HREF}
-          className="shrink-0 pb-0.5 text-[13px] font-medium underline underline-offset-[3px] transition-opacity hover:opacity-70"
-          style={{ color: ACCENT }}
+          className="shrink-0 pb-0.5 text-[13px] font-medium text-primary underline underline-offset-[3px] transition-opacity hover:opacity-70"
         >
           {t("home.topCategories.shopAll")}
         </Link>
@@ -110,8 +108,7 @@ export default function CategoryGrid({
             type="button"
             aria-label="Previous categories"
             onClick={() => scrollByCard(-1)}
-            className="absolute left-0 top-[36%] z-10 grid h-10 w-10 -translate-x-1/2 cursor-pointer place-items-center rounded-full text-white shadow-[0_4px_16px_rgba(0,0,0,0.16)] min-[992px]:h-11 min-[992px]:w-11"
-            style={{ backgroundColor: ACCENT }}
+            className="absolute left-0 top-[36%] z-10 grid h-10 w-10 -translate-x-1/2 cursor-pointer place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(0,0,0,0.16)] min-[992px]:h-11 min-[992px]:w-11"
           >
             <FiChevronLeft className="h-5 w-5" strokeWidth={2} />
           </button>
@@ -121,8 +118,7 @@ export default function CategoryGrid({
             type="button"
             aria-label="Next categories"
             onClick={() => scrollByCard(1)}
-            className="absolute right-0 top-[36%] z-10 grid h-10 w-10 translate-x-1/2 cursor-pointer place-items-center rounded-full text-white shadow-[0_4px_16px_rgba(0,0,0,0.16)] min-[992px]:h-11 min-[992px]:w-11"
-            style={{ backgroundColor: ACCENT }}
+            className="absolute right-0 top-[36%] z-10 grid h-10 w-10 translate-x-1/2 cursor-pointer place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(0,0,0,0.16)] min-[992px]:h-11 min-[992px]:w-11"
           >
             <FiChevronRight className="h-5 w-5" strokeWidth={2} />
           </button>

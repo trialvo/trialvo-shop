@@ -1,130 +1,95 @@
 "use client";
 
-import * as React from "react";
-
-import FeatureProductHeader from "@/components/product-view-header/FeatureProductHeader";
-import ProductCard from "@/components/product/ProductCard";
-import ProductCardMobile from "@/components/product/ProductCardMobile";
-
-import { Button } from "@/components/ui/button";
-import { useHandleFavoriteClick } from "@/hooks/useHandleFavoriteClick";
+import HomeProductCarousel from "@/components/home/HomeProductCarousel";
+import MensOutfitIdeas from "@/components/home/MensOutfitIdeas";
+import { useCategory } from "@/hooks/useCategory";
 import { useProduct } from "@/hooks/useProduct";
 import { useTranslation } from "@/hooks/useTranslation";
-import { ProductDetail } from "@/lib/api/product/service";
-import { getLocalName } from "@/lib/utils";
-import { useLanguage } from "@/providers/LanguageProvider";
-import { useAppDispatch } from "@/redux/hooks";
-import { openModal } from "@/redux/slices/modalManagerSlice";
-import { useRouter } from "next/navigation";
-import FeatureProductsSkeleton from "./FeatureProductsSkeleton";
+import type { SubCategory } from "@/lib/api/category/service";
+import * as React from "react";
+
+function matchSubCategory(
+  subs: SubCategory[],
+  kind: "men" | "kids",
+): SubCategory | undefined {
+  const list = Array.isArray(subs) ? subs : [];
+  return list.find((sub) => {
+    const name = `${sub.name ?? ""} ${sub.name_bd ?? ""}`.toLowerCase();
+    if (kind === "men") {
+      return (/\bmen\b/.test(name) || name.includes("পুরুষ")) && !/\bwom[ae]n/.test(name);
+    }
+    return /\bkids?\b/.test(name) || name.includes("children") || name.includes("শিশু");
+  });
+}
 
 const FeatureProducts: React.FC = () => {
-  const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { products, productsLoading, productsError, productsRefetch } = useProduct({ limit: 40, offset: 0 });
-  const handleFavoriteClick = useHandleFavoriteClick();
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
+  const { subCategories } = useCategory();
 
-  const handleOpenQuickAdd = (id: number) => {
-    dispatch(
-      openModal({
-        key: "quickAdd",
-        payload: { id },
-      }),
-    );
-  };
+  const menSub = React.useMemo(
+    () => matchSubCategory(subCategories, "men"),
+    [subCategories],
+  );
+  const kidsSub = React.useMemo(
+    () => matchSubCategory(subCategories, "kids"),
+    [subCategories],
+  );
 
-  if (productsLoading) {
-    return <FeatureProductsSkeleton />;
-  }
+  const bestSellers = useProduct({
+    limit: 12,
+    offset: 0,
+    sort_by: "sell_count",
+    sort_order: "DESC",
+  });
+  const mens = useProduct(
+    { limit: 12, offset: 0, sub_category_id: menSub?.id },
+    { enabled: Boolean(menSub?.id) },
+  );
+  const kids = useProduct(
+    { limit: 12, offset: 0, sub_category_id: kidsSub?.id },
+    { enabled: Boolean(kidsSub?.id) },
+  );
+  const featured = useProduct({ limit: 12, offset: 0, featured: true });
 
-  if (productsError && products.length === 0) {
-    return (
-      <section className="container mx-auto mb-15.5">
-        <FeatureProductHeader
-          title={t("home.featureProducts.title")}
-          viewAllLabel={t("home.featureProducts.viewAll")}
-          viewAllHref="/category/feature-products"
-        />
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-black/10 bg-white py-16 gap-3">
-          <p className="text-sm text-black/50">{t("home.featureProducts.loadError") ?? "Failed to load products. Please try again."}</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => productsRefetch()}
-            className="h-8 px-5 rounded-none border-black text-black text-xs hover:bg-black hover:text-white transition-colors"
-          >
-            {t("home.featureProducts.retry") ?? "Retry"}
-          </Button>
-        </div>
-      </section>
-    );
-  }
+  const menHref = menSub
+    ? `/category/${encodeURIComponent(menSub.name)}?subId=${menSub.id}`
+    : "/category/all";
+  const kidsHref = kidsSub
+    ? `/category/${encodeURIComponent(kidsSub.name)}?subId=${kidsSub.id}`
+    : "/category/all";
 
   return (
-    <section className="container mx-auto mb-15.5">
-      <FeatureProductHeader
-        title={t("home.featureProducts.title")}
-        viewAllLabel={t("home.featureProducts.viewAll")}
-        viewAllHref="/category/feature-products"
+    <div className="mb-15.5 space-y-14 pt-14 min-[768px]:space-y-20 min-[768px]:pt-20">
+      <HomeProductCarousel
+        eyebrow={t("home.productRails.bestSellers.eyebrow")}
+        title={t("home.productRails.bestSellers.title")}
+        shopAllHref="/category/all-products"
+        products={bestSellers.products}
+        isLoading={bestSellers.productsLoading}
       />
-
-      <div className="grid grid-cols-2 gap-3 sm:gap-y-15 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
-        {products?.map((product, idx) => {
-          const firstImage = product?.thumbnail ?? product?.images?.[0]?.path;
-
-          const discountArray = product?.variations?.filter(p => p?.has_discount);
-          const defaultVariations = product?.variations[0];
-          const hasDiscount = discountArray?.length > 0;
-
-          const finalPrice = hasDiscount ? discountArray[0]?.final_price : defaultVariations?.final_price;
-          const sellingPrice = hasDiscount ? discountArray[0]?.selling_price : defaultVariations?.selling_price;
-
-          return (
-            <div key={product.id}>
-              <div className="block min-[501px]:hidden">
-                <ProductCardMobile
-                  href={`/products/${product?.slug}/${product?.id}/`}
-                  title={getLocalName(product?.name ?? "", product?.name_bd, language)}
-                  isFavorite={product?.is_favourite}
-                  price={finalPrice ?? 0}
-                  oldPrice={sellingPrice ?? 0}
-                  imageSrc={firstImage}
-                  priority={idx < 4}
-                  onQuickAdd={() => handleOpenQuickAdd(product?.id)}
-                  onWishlist={() => { handleFavoriteClick(product as unknown as ProductDetail); }}
-                />
-              </div>
-
-              <div className="hidden min-[501px]:block">
-                <ProductCard
-                  href={`/products/${product?.slug}/${product?.id}/`}
-                  title={getLocalName(product?.name ?? "", product?.name_bd, language)}
-                  isFavorite={product?.is_favourite}
-                  price={finalPrice ?? 0}
-                  oldPrice={sellingPrice ?? 0}
-                  imageSrc={firstImage}
-                  priority={idx < 4}
-                  onQuickAdd={() => handleOpenQuickAdd(product?.id)}
-                  onWishlist={() => { handleFavoriteClick(product as unknown as ProductDetail); }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex items-center justify-center mt-10 sm:mt-20">
-        <Button
-          type="button"
-          onClick={() => router?.push("/category/all-products")}
-          className="h-8 w-40 rounded-none bg-black border border-transparent text-white transition-colors duration-300 hover:bg-white/80 hover:text-black hover:border-black"
-        >
-          {t("home.featureProducts.viewAllProducts")}
-        </Button>
-      </div>
-    </section>
+      <MensOutfitIdeas />
+      <HomeProductCarousel
+        eyebrow={t("home.productRails.mens.eyebrow")}
+        title={t("home.productRails.mens.title")}
+        shopAllHref={menHref}
+        products={mens.products}
+        isLoading={Boolean(menSub?.id) && mens.productsLoading}
+      />
+      <HomeProductCarousel
+        eyebrow={t("home.productRails.kids.eyebrow")}
+        title={t("home.productRails.kids.title")}
+        shopAllHref={kidsHref}
+        products={kids.products}
+        isLoading={Boolean(kidsSub?.id) && kids.productsLoading}
+      />
+      <HomeProductCarousel
+        eyebrow={t("home.productRails.featured.eyebrow")}
+        title={t("home.productRails.featured.title")}
+        shopAllHref="/category/feature-products"
+        products={featured.products}
+        isLoading={featured.productsLoading}
+      />
+    </div>
   );
 };
 

@@ -94,6 +94,38 @@
     "title": "Shop By Category",
     "shopAll": "Shop All",
     "moreItems": "More Items"
+  },
+  "productRails": {
+    "shopAll": "Shop All",
+    "editorsPick": "Editors' Pick",
+    "bestDeal": "Best Deal",
+    "bestSellers": {
+      "eyebrow": "Fan Favorites",
+      "title": "Top Sellers"
+    },
+    "mens": {
+      "eyebrow": "The Menswear Edit",
+      "title": "Men's Items"
+    },
+    "kids": {
+      "eyebrow": "Little Looks",
+      "title": "Kids' Items"
+    },
+    "featured": {
+      "eyebrow": "From The Editors",
+      "title": "Featured Products"
+    }
+  },
+  "mensOutfit": {
+    "title": "Outfit Ideas for Men",
+    "ideas": {
+      "shirts": "Office-Ready Shirts",
+      "trousers": "Everyday Trousers",
+      "shoes": "Step-Out Shoes",
+      "layers": "Layered Jackets",
+      "finishing": "Finishing Pieces",
+      "formal": "Sharp Formal Looks"
+    }
   }
  },
  "auth": {
