@@ -69,7 +69,7 @@ const SignInModal: React.FC<Props> = ({
         </Button>
 
         <div className="flex-1 overflow-y-auto">
-          <SignInCard forgotHref={forgotHref} createHref={createHref} onNavigate={onOpenChange} className="py-0!" shadowClass="shadow-none" redirectToCheckout={true} />
+          <SignInCard forgotHref={forgotHref} createHref={createHref} onNavigate={onOpenChange} className="px-5 py-6 min-[576px]:px-7 min-[576px]:py-7" shadowClass="shadow-none" redirectToCheckout={true} />
         </div>
       </div>
     </ModalShell>

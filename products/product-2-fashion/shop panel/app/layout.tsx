@@ -16,7 +16,7 @@ import CompareFloatingBar from "@/components/compare/CompareFloatingBar";
 import PushNotificationManagerLoader from "@/components/notifications/PushNotificationManagerLoader";
 import type { Metadata, Viewport } from "next";
 import nextDynamic from "next/dynamic";
-import { Inter, Hind_Siliguri } from "next/font/google";
+import { Inter, Hind_Siliguri, Open_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
@@ -67,6 +67,13 @@ const hindSiliguri = Hind_Siliguri({
   subsets: ["bengali", "latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-hind-siliguri",
+  display: "swap",
+});
+
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-open-sans",
   display: "swap",
 });
 
@@ -128,7 +135,7 @@ export default function RootLayout({
 }>): React.ReactElement {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${inter.variable} ${hindSiliguri.variable} font-sans antialiased`}>
+      <body suppressHydrationWarning className={`${inter.variable} ${hindSiliguri.variable} ${openSans.variable} font-sans antialiased`}>
         <ShopRuntimeConfigScript />
         {/* ── GTM noscript fallback (for JS-disabled browsers) ── */}
         {GTM_ID && (

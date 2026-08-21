@@ -1,6 +1,7 @@
 export type HeaderSearchCategory = {
   value: string;
   label: string;
+  image?: string | null;
 };
 
 export type HeaderSearchSubmitPayload = {

@@ -90,6 +90,9 @@ services:
     environment:
       PORT: "5000"
       NODE_ENV: production
+      # Shared Opt1 demo is not a leased trial instance — disable license lock.
+      TRIAL_MODE: "0"
+      LICENSE_ENFORCE: "0"
       DB_HOST: host.docker.internal
       DB_PORT: "3430"
       DB_USER: root
@@ -100,7 +103,8 @@ services:
       SHOP_URL: http://localhost:5101
       BRAND_NAME: Vellora
       STORAGE_DRIVER: local
-      STORAGE_URL: http://localhost:9101
+      # Local uploads volume is empty — serve media from production CDN.
+      STORAGE_URL: https://api.graduatefashionbd.com
       GAUTH_CLIENT_ID: ${GAUTH_CLIENT_ID}
     ports:
       - "9101:5000"
@@ -117,7 +121,7 @@ services:
     container_name: fashion-demo-admin
     environment:
       API_ORIGIN: "http://localhost:9101"
-      IMAGE_URL: "http://localhost:9101"
+      IMAGE_URL: "https://api.graduatefashionbd.com"
       API_PREFIX: "/api/v1"
       APP_VERTICAL: "fashion"
       APP_NAME: "Fashion Admin"
@@ -137,7 +141,7 @@ services:
       NODE_ENV: production
       PORT: "5000"
       API_URL: "http://fashion-api:5000"
-      IMAGE_URL: "http://localhost:9101"
+      IMAGE_URL: "https://api.graduatefashionbd.com"
       ADMIN_URL: "http://localhost:5175"
       SITE_URL: "http://localhost:5101"
       SHOP_URL: "http://localhost:5101"

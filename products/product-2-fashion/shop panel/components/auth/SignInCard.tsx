@@ -6,9 +6,9 @@ import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authErrorBannerClass, authInputClass, authLabelClass, authLinkClass, authPrimaryBtnClass } from "./auth-ui";
 
 import AuthDivider from "./AuthDivider";
 import GoogleAuthButton from "./GoogleAuthButton";
@@ -115,73 +115,32 @@ const SignInCard: React.FC<SignInCardProps> = ({
   });
 
   return (
-    <div className={`mx-auto w-full max-w-xl px-4 py-10 ${className}`}>
-      <Card className={`mt-10 rounded-none border-0 shadow-[0px_0px_20px_rgba(0,0,0,0.05)] ${shadowClass}`}>
-        <CardContent className="px-4 py-5">
-          <h1 className="mt-5 text-center text-2xl font-extrabold text-black">{t("auth.signInTitle")}</h1>
+    <div className={`w-full ${className ?? ""} ${shadowClass ?? ""}`}>
+          <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground min-[576px]:text-[32px]">
+            {t("auth.signInTitle")}
+          </h1>
 
-          <div className="mt-7">
-            <GoogleAuthButton
-              onClick={() => requestCode()}
-              disabled={!ready || isRequesting || isSigningIn || isGoogleSigningIn}
-              label={isGoogleSigningIn || isRequesting ? t("auth.signingIn") : t("auth.continueWithGoogle")}
-            />
-          </div>
-
-          <AuthDivider />
-
-          {/* Generic error banner (wrong password, account inactive, etc.) */}
-          {error && !unverifiedEmail && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200" onMouseEnter={clearError}>
-              <p className="text-red-600 text-sm">{error}</p>
-            </div>
-          )}
-
-          {/* Email-not-verified banner — shows only on 403 */}
-          {unverifiedEmail && (
-            <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
-              <p className="text-sm font-semibold text-amber-800">
-                Your email address is not verified yet.
-              </p>
-              <p className="mt-1 text-xs text-amber-700">
-                We sent a 6-digit code to <span className="font-medium">{unverifiedEmail}</span>.
-                Enter that code to activate your account, or request a new one.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  localStorage.setItem("registrationEmail", unverifiedEmail);
-                  localStorage.removeItem("submit_type");
-                  router.push("/verify-identify");
-                }}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber-800"
-              >
-                Verify my email now →
-              </button>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="emailOrMobile" className="text-base font-medium text-black">
-                {t("auth.emailOrMobile")} <span className="text-red-600">*</span>
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="emailOrMobile" className={authLabelClass}>
+                {t("auth.emailOrMobile")}
               </Label>
 
               <Input
                 id="emailOrMobile"
                 placeholder={t("auth.emailOrMobilePlaceholder")}
-                className={`h-12 rounded-none text-base ${errors.email ? "border-red-500" : "border-gray-300"}`}
+                className={authInputClass(!!errors.email)}
                 aria-invalid={!!errors.email}
                 disabled={isSigningIn || isGoogleSigningIn}
                 {...register("email", { onChange: dismissUnverified })}
               />
 
-              {errors.email?.message ? <p className="text-sm text-red-600">{errors.email.message}</p> : null}
+              {errors.email?.message ? <p className="text-[12px] text-destructive">{errors.email.message}</p> : null}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-base font-medium text-black">
-                {t("auth.password")} <span className="text-red-600">*</span>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className={authLabelClass}>
+                {t("auth.password")}
               </Label>
 
               <Controller
@@ -205,34 +164,69 @@ const SignInCard: React.FC<SignInCardProps> = ({
                 <Link
                   href={forgotHref}
                   onClick={() => onNavigate?.(false)}
-                  className="text-xs font-semibold text-[#0088FF] hover:underline"
+                  className={`text-[12px] ${authLinkClass}`}
                 >
                   {t("auth.forgotPassword")}
                 </Link>
               </div>
             </div>
 
+            {error && !unverifiedEmail && (
+              <div className={authErrorBannerClass} onMouseEnter={clearError}>
+                <p className="text-[13px] text-destructive">{error}</p>
+              </div>
+            )}
+
+            {unverifiedEmail && (
+              <div className="rounded-[4px] border border-border bg-muted p-3.5">
+                <p className="text-[13px] font-medium text-foreground">
+                  Your email address is not verified yet.
+                </p>
+                <p className="mt-1 text-[12px] text-muted-foreground">
+                  We sent a 6-digit code to <span className="font-medium text-foreground">{unverifiedEmail}</span>.
+                  Enter that code to activate your account, or request a new one.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem("registrationEmail", unverifiedEmail);
+                    localStorage.removeItem("submit_type");
+                    router.push("/verify-identify");
+                  }}
+                  className={`mt-3 inline-flex items-center text-[12px] ${authLinkClass}`}
+                >
+                  Verify my email now →
+                </button>
+              </div>
+            )}
+
             <Button
               type="submit"
               disabled={isSigningIn || isGoogleSigningIn}
-              className="h-9 w-full rounded-none bg-black text-sm font-medium text-white hover:bg-black/90 disabled:opacity-60"
+              className={authPrimaryBtnClass}
             >
               {isSigningIn ? t("auth.signingIn") : t("common.signIn")}
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-sm font-normal text-black">
+          <AuthDivider />
+
+          <GoogleAuthButton
+            onClick={() => requestCode()}
+            disabled={!ready || isRequesting || isSigningIn || isGoogleSigningIn}
+            label={isGoogleSigningIn || isRequesting ? t("auth.signingIn") : t("auth.continueWithGoogle")}
+          />
+
+          <p className="mt-6 text-center text-[13px] text-muted-foreground">
             {t("auth.dontHaveAccount")}{" "}
             <Link
               href={createHref}
               onClick={() => onNavigate?.(false)}
-              className="font-semibold text-[#0088FF] hover:underline"
+              className={authLinkClass}
             >
               {t("auth.createAccountTitle")}
             </Link>
           </p>
-        </CardContent>
-      </Card>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 "use client"
 
+import AuthShell from "@/components/auth/AuthShell";
 import ResetPasswordCard from "@/components/auth/ResetPasswordCard";
 import { maskEmail, maskPhoneNumber } from "@/lib/utils";
 import React, { useState } from "react";
@@ -16,12 +17,12 @@ const ResetPasswordPage: React.FC = () => {
   });
 
   return (
-    <main className="min-h-screen bg-white">
+    <AuthShell>
       <ResetPasswordCard
         email={maskEmail(forgotEmail) || maskPhoneNumber(phoneNumber)}
         signInHref="/sign-in"
       />
-    </main>
+    </AuthShell>
   );
 };
 

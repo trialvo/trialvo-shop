@@ -16,7 +16,7 @@
  },
  "header": {
   "chooseCategories": "Choose Categories",
-  "signIn": "Sign In",
+  "signIn": "Sign In / Register",
   "searchPlaceholder": "Search products...",
   "myAccount": "My Account",
   "allCategories": "All Categories"
@@ -85,21 +85,27 @@
    "afterSell": "After Sell Service"
   },
   "featureProducts": {
-   "title": "Feature Products",
-   "viewAll": "View All",
-   "viewAllProducts": "View All"
+    "title": "Feature Products",
+    "viewAll": "View All",
+    "viewAllProducts": "View All"
+  },
+  "topCategories": {
+    "eyebrow": "Top Categories",
+    "title": "Shop By Category",
+    "shopAll": "Shop All",
+    "moreItems": "More Items"
   }
  },
  "auth": {
-  "signInTitle": "Sign-In",
+    "signInTitle": "Sign-In",
   "createAccountTitle": "Create An Account",
   "forgotPasswordTitle": "Forgot Password?",
   "resetPasswordTitle": "Reset Password",
   "verifyIdentityTitle": "Verification Identity",
   "emailOrMobile": "Email or Mobile Number",
-  "emailOrMobilePlaceholder": "Enter email or mobile number",
+    "emailOrMobilePlaceholder": "Enter email or mobile number",
   "password": "Password",
-  "passwordPlaceholder": "Enter password",
+    "passwordPlaceholder": "Enter password",
   "createPassword": "Create A Password",
   "newPassword": "New Password",
   "newPasswordPlaceholder": "Enter new password",

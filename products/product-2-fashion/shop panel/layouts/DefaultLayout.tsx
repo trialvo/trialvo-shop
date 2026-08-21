@@ -1,29 +1,24 @@
 import Footer from "@/components/footer/Footer";
-import Header from "@/components/header/Header";
 import HeaderAddonLinks from "@/components/header/HeaderAddonLinks";
-import MobileHeader from "@/components/header/MobileHeader";
 import BottomNav from "@/components/navigation/bottom-nav/BottomNav";
-import { Suspense } from "react";
+import ScrollToTopButton from "@/components/common/ScrollToTopButton";
+import HeaderScrollChrome from "@/layouts/HeaderScrollChrome";
+import { Suspense, type ReactNode } from "react";
 
-const DefaultLayout = ({ children }: { children: React.ReactNode }) => {
+const DefaultLayout = ({ children }: { children: ReactNode }) => {
     return (
         <Suspense>
-            <div suppressHydrationWarning>
-                <div className="hidden min-[500px]:block min-[500px]:sticky min-[500px]:top-0 min-[500px]:z-50">
-                    <Header />
-                </div>
-
-                <div className="block min-[500px]:hidden">
-                    <MobileHeader />
-                </div>
+            <div suppressHydrationWarning className="w-full min-w-0">
+                <HeaderScrollChrome />
                 <main
                 >{children}
                 </main>
                 <HeaderAddonLinks />
                 <Footer />
-                <div className="block min-[500px]:hidden">
+                <div className="block min-[768px]:hidden">
                     <BottomNav />
                 </div>
+                <ScrollToTopButton />
             </div>
         </Suspense >
     );

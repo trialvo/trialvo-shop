@@ -40,7 +40,7 @@ const HeaderSearchBar: React.FC<Props> = ({
   onDebouncedQueryChange,
   onSubmit,
 
-  placeholder,
+  placeholder = "Search",
   debounceMs = 250,
   className,
 
@@ -66,7 +66,11 @@ const HeaderSearchBar: React.FC<Props> = ({
 
   return (
     <div
-      className={cn("flex h-10 w-full items-stretch", "border border-[#3C3C434A] bg-white", className)}
+      className={cn(
+        "flex h-11 w-full items-stretch",
+        "border-b border-black/20 bg-transparent",
+        className,
+      )}
       role="search"
       aria-label="Header search"
     >
@@ -81,7 +85,7 @@ const HeaderSearchBar: React.FC<Props> = ({
         className=""
         isLoading={isSuggestionsLoading}
         suggestions={suggestions}
-        onPickSuggestion={(item) => {
+        onPickSuggestion={() => {
         }}
       />
     </div>

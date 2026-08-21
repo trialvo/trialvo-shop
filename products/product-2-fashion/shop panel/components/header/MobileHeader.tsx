@@ -1,6 +1,5 @@
 "use client";
 
-import HeaderSearchBar from "@/components/header-search/HeaderSearchBar";
 import HeaderAction from "@/components/header/HeaderAction";
 import { useAuth } from "@/hooks/useAuth";
 import { useCategory } from "@/hooks/useCategory";
@@ -17,6 +16,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { HiOutlineMenu } from "react-icons/hi";
 import HeaderLogo from "./HeaderLogo";
+import SearchPopup from "./SearchPopup";
 
 import type { ProductSearchSuggestion } from "@/components/header-search/SearchField";
 import { setIsCartOpen } from "@/redux/slices/cartSlice";
@@ -29,6 +29,7 @@ type Props = {
 type SubCategory = {
   id: number;
   name: string;
+  img_path?: string | null;
 };
 
 function isFiniteNumber(n: unknown): n is number {
@@ -93,7 +94,11 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
 
     const list = Array.isArray(subCategories)
       ? subCategories
-        .map((c) => ({ value: String(c.id), label: c.name }))
+        .map((c) => ({
+          value: String(c.id),
+          label: c.name,
+          image: c.img_path ? toPublicUrl(c.img_path) : null,
+        }))
         .filter((c) => c.value && c.label)
       : [];
 
@@ -146,6 +151,7 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
           image: img,
           price: isFiniteNumber(price) ? price : 0,
           href,
+          isFavourite: p.is_favourite === true,
         };
 
         return mapped;
@@ -153,20 +159,6 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
       .filter((x): x is ProductSearchSuggestion => x !== null);
   }, [products]);
 
-  React.useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
-      if (!searchOpen) return;
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-      if (target.closest("[data-search-panel]") || target.closest("[data-search-toggle]")) return;
-      dispatch(setSearchOpen(false));
-    };
-
-    document.addEventListener("click", handleDocumentClick);
-    return () => {
-      document.removeEventListener("click", handleDocumentClick);
-    };
-  }, [dispatch, searchOpen]);
 
   const logout = () => {
     AuthCookies.clearAll();
@@ -187,11 +179,12 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
     <>
       <header
         className={cn(
-          "fixed top-0 z-50 h-11.5 w-full bg-background shadow-[0px_0px_20px_rgba(0,0,0,0.06)]",
+          "fixed top-0 z-50 w-full bg-background shadow-[0px_0px_20px_rgba(0,0,0,0.06)]",
+          "h-11 min-[576px]:h-12",
           className,
         )}
       >
-        <div className="relative mx-auto flex h-11.5 items-center justify-between px-4">
+        <div className="relative mx-auto flex h-full items-center justify-between px-3 min-[576px]:px-4">
           <button
             type="button"
             aria-label="Open menu"
@@ -199,9 +192,9 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
               dispatch(setSearchOpen(false));
               dispatch(openDrawer({ key: "menu" }));
             }}
-            className="grid h-10 w-10 cursor-pointer place-items-center rounded transition-colors hover:bg-black/5"
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-full transition-colors duration-200 hover:bg-black/[0.06] min-[576px]:h-10 min-[576px]:w-10"
           >
-            <HiOutlineMenu className="h-7 w-7 text-black" />
+            <HiOutlineMenu className="h-6 w-6 text-black min-[576px]:h-7 min-[576px]:w-7" />
           </button>
 
           {/* Logo — absolutely centered so it's always in the middle
@@ -212,7 +205,7 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
               alt="Guide Ease"
               width={110}
               height={30}
-              className="h-7.5 w-27.5"
+              className="h-6 w-auto min-[576px]:h-7.5 min-[576px]:w-27.5"
             />
           </div>
 
@@ -243,35 +236,20 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
         </div>
       </header>
 
-      <div
-        className={cn(
-          "fixed left-0 right-0 z-40 bg-background",
-          "top-11.5",
-          "shadow-[0px_10px_20px_rgba(0,0,0,0.06)]",
-          "transition-all duration-200 ease-out",
-          searchOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0",
-        )}
-        data-search-panel
-      >
-        <div className="p-1">
-          <HeaderSearchBar
-            categories={subCategoriesLoading ? [{ value: "all", label: "Choose Categories" }] : apiCategories}
-            category={category}
-            onCategoryChange={setCategory}
-            query={query}
-            onQueryChange={setQuery}
-            onDebouncedQueryChange={() => {
-              // debounced handled internally; keeping prop for compatibility
-            }}
-            onSubmit={({ query: q, category: c }) => {
-              // console.log("submit:", { q, c });
-            }}
-            className="h-10"
-            isSuggestionsLoading={productsLoading}
-            suggestions={suggestions}
-          />
-        </div>
-      </div>
+      {/* Spacer so content clears the fixed mobile header */}
+      <div className="h-11 min-[576px]:h-12" aria-hidden />
+
+      <SearchPopup
+        open={searchOpen}
+        onClose={() => dispatch(setSearchOpen(false))}
+        categories={subCategoriesLoading ? [{ value: "all", label: "Choose Categories" }] : apiCategories}
+        suggestions={suggestions}
+        isLoading={productsLoading}
+        query={query}
+        onQueryChange={setQuery}
+        category={category}
+        onCategoryChange={setCategory}
+      />
     </>
   );
 };

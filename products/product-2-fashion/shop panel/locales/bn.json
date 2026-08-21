@@ -85,9 +85,15 @@
    "afterSell": "বিক্রয়োত্তর সেবা"
   },
   "featureProducts": {
-   "title": "বিশেষ পণ্যসমূহ",
-   "viewAll": "সব দেখুন",
-   "viewAllProducts": "সব পণ্য দেখুন"
+    "title": "বিশেষ পণ্যসমূহ",
+    "viewAll": "সব দেখুন",
+    "viewAllProducts": "সব পণ্য দেখুন"
+  },
+  "topCategories": {
+    "eyebrow": "শীর্ষ ক্যাটাগরি",
+    "title": "ক্যাটাগরি অনুযায়ী কিনুন",
+    "shopAll": "সব দেখুন",
+    "moreItems": "আরও আইটেম"
   }
  },
  "auth": {
