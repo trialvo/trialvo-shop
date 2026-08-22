@@ -3,11 +3,17 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategory } from "@/hooks/useCategory";
 import { useStorefrontVisibility } from "@/hooks/useStorefrontVisibility";
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { FiGitCommit, FiLayers, FiTag } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
+import { FiGitCommit, FiHelpCircle, FiLayers, FiMessageSquare, FiTag } from "react-icons/fi";
+
+const WHATSAPP_HREF = "https://wa.me/+8801970680283";
+const ICON = "h-5 w-5";
+const MOTION = "duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]";
 
 type AddonLink = {
   key: string;
@@ -16,10 +22,73 @@ type AddonLink = {
   icon: React.ReactNode;
   isActive: boolean;
   show: boolean;
+  external?: boolean;
 };
+
+function AddonItem({
+  href,
+  label,
+  icon,
+  isActive,
+  external,
+}: Omit<AddonLink, "key" | "show">) {
+  const className = cn(
+    "group relative z-0 flex h-14 w-14 items-center justify-center",
+    "border-b border-black/6 last:border-b-0",
+    "transition-colors",
+    MOTION,
+    "focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
+    isActive
+      ? "bg-primary text-primary-foreground"
+      : "bg-transparent text-[#191919] hover:bg-[#FAF8F5] hover:text-black",
+  );
+
+  const inner = (
+    <>
+      <span
+        className={cn(
+          "pointer-events-none absolute top-0 right-full flex h-14 items-center whitespace-nowrap rounded-l-lg pl-3.5 pr-3",
+          "text-[13px] font-semibold tracking-tight",
+          "translate-x-2 opacity-0",
+          "transition-[transform,opacity]",
+          MOTION,
+          "group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100",
+          "group-focus-visible:pointer-events-auto group-focus-visible:translate-x-0 group-focus-visible:opacity-100",
+          isActive
+            ? "bg-primary text-primary-foreground"
+            : "bg-white text-[#191919] shadow-[-8px_4px_20px_rgba(20,16,12,0.08)] group-hover:bg-[#FAF8F5]",
+        )}
+      >
+        {label}
+      </span>
+      <span className="relative z-10 grid h-5 w-5 place-items-center">{icon}</span>
+    </>
+  );
+
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        className={className}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} aria-label={label} className={className}>
+      {inner}
+    </Link>
+  );
+}
 
 export default function HeaderAddonLinks() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const { subCategories } = useCategory();
   const { showMegaSale, visibilityLoading } = useStorefrontVisibility();
 
@@ -31,89 +100,106 @@ export default function HeaderAddonLinks() {
     pathname === "/offers" || pathname?.startsWith("/offers/");
   const isMegaSaleActive =
     pathname === "/megasale" || pathname?.startsWith("/megasale/");
+  const isContactActive =
+    pathname === "/contact-us" || pathname?.startsWith("/contact-us/");
+  const isFaqsActive =
+    pathname === "/faqs" || pathname?.startsWith("/faqs/");
 
   const links: AddonLink[] = React.useMemo(
     () => [
       {
+        key: "whatsapp",
+        href: WHATSAPP_HREF,
+        label: t("header.addon.whatsapp"),
+        icon: <FaWhatsapp className={cn(ICON, "text-[#25D366]")} />,
+        isActive: false,
+        show: true,
+        external: true,
+      },
+      {
+        key: "contact",
+        href: "/contact-us",
+        label: t("header.addon.contact"),
+        icon: <FiMessageSquare className={ICON} strokeWidth={2} />,
+        isActive: isContactActive,
+        show: true,
+      },
+      {
         key: "compare",
         href: "/compare",
-        label: "Compare",
-        icon: <FiGitCommit className="h-[18px] w-[18px]" />,
+        label: t("header.addon.compare"),
+        icon: <FiGitCommit className={ICON} strokeWidth={2} />,
         isActive: isCompareActive,
         show: hasCategories,
       },
       {
         key: "offers",
         href: "/offers",
-        label: "Offers",
-        icon: <FiLayers className="h-[18px] w-[18px]" />,
+        label: t("header.addon.offers"),
+        icon: <FiLayers className={ICON} strokeWidth={2} />,
         isActive: isOffersActive,
         show: hasCategories,
       },
       {
         key: "megasale",
         href: "/megasale",
-        label: "Mega Sale",
-        icon: <FiTag className="h-[18px] w-[18px]" />,
+        label: t("header.addon.megaSale"),
+        icon: <FiTag className={ICON} strokeWidth={2} />,
         isActive: isMegaSaleActive,
         show: hasCategories && showMegaSale,
       },
+      {
+        key: "faqs",
+        href: "/faqs",
+        label: t("header.addon.help"),
+        icon: <FiHelpCircle className={ICON} strokeWidth={2} />,
+        isActive: isFaqsActive,
+        show: true,
+      },
     ],
-    [hasCategories, showMegaSale, isCompareActive, isOffersActive, isMegaSaleActive],
+    [
+      t,
+      hasCategories,
+      showMegaSale,
+      isCompareActive,
+      isOffersActive,
+      isMegaSaleActive,
+      isContactActive,
+      isFaqsActive,
+    ],
   );
 
   const visibleLinks = links.filter((l) => l.show);
 
-  if (!hasCategories) return null;
+  if (visibleLinks.length === 0 && !visibilityLoading) return null;
 
   return (
     <div className="fixed right-0 top-1/2 z-50 hidden -translate-y-1/2 min-[768px]:block">
-      <nav className="flex flex-col gap-[1px]" aria-label="Quick links">
-        {visibleLinks.map((link, idx) => {
-          const isFirst = idx === 0;
-          const isLast = idx === visibleLinks.length - 1;
+      <nav
+        aria-label="Quick links"
+        className="relative flex flex-col items-end rounded-l-2xl"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-14 rounded-l-2xl border border-r-0 border-black/8 bg-white shadow-[-8px_12px_28px_rgba(20,16,12,0.12)]"
+        />
 
-          return (
-            <Link
-              key={link.key}
-              href={link.href}
-              className={cn(
-                "group relative flex h-10 w-10 items-center justify-center transition-all duration-200 min-[992px]:h-11 min-[992px]:w-11",
-                isFirst && "rounded-tl-lg",
-                isLast && "rounded-bl-lg",
-                link.isActive
-                  ? "bg-black text-white shadow-[-4px_0px_12px_rgba(0,0,0,0.15)]"
-                  : "bg-white text-black/70 shadow-[-2px_0px_8px_rgba(0,0,0,0.08)] hover:bg-black hover:text-white hover:shadow-[-4px_0px_12px_rgba(0,0,0,0.15)]",
-              )}
-            >
-              <span className="transition-transform duration-200 group-hover:scale-110">
-                {link.icon}
-              </span>
+        {visibleLinks.map((link) => (
+          <AddonItem
+            key={link.key}
+            href={link.href}
+            label={link.label}
+            icon={link.icon}
+            isActive={link.isActive}
+            external={link.external}
+          />
+        ))}
 
-              {link.isActive && (
-                <span className="absolute left-0 top-0 h-full w-[3px] bg-white/30" />
-              )}
-
-              <span
-                className={cn(
-                  "pointer-events-none absolute right-full mr-2.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px] font-semibold tracking-wide shadow-lg min-[992px]:text-xs",
-                  "bg-black text-white",
-                  "translate-x-1 opacity-0 transition-all duration-200 ease-out",
-                  "group-hover:translate-x-0 group-hover:opacity-100",
-                )}
-              >
-                {link.label}
-                <span className="absolute right-0 top-1/2 h-2 w-2 translate-x-[3px] -translate-y-1/2 rotate-45 bg-black" />
-              </span>
-            </Link>
-          );
-        })}
-
-        {hasCategories && visibilityLoading && (
-          <div className="flex h-10 w-10 items-center justify-center bg-white shadow-[-2px_0px_8px_rgba(0,0,0,0.08)] min-[992px]:h-11 min-[992px]:w-11">
+        {visibilityLoading ? (
+          <div className="relative z-10 flex h-14 w-14 items-center justify-center border-t border-black/6 bg-white">
             <Skeleton className="h-5 w-5 rounded-full" />
           </div>
-        )}
+        ) : null}
       </nav>
     </div>
   );

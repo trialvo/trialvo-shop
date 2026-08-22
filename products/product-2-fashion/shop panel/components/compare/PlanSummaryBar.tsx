@@ -21,7 +21,7 @@ export default function PlanSummaryBar({
   const pct = budget > 0 ? Math.min(100, (totalSpend / budget) * 100) : 0;
 
   return (
-    <div className="sticky bottom-0 z-20 border-t border-black/10 bg-white px-5 py-3 shadow-[0px_-4px_20px_rgba(0,0,0,0.08)]">
+    <div className="sticky bottom-0 z-20 rounded-t-xl border-t border-black/8 bg-white px-5 py-3 shadow-[0_-8px_24px_rgba(20,16,12,0.08)]">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         {/* Left: stats */}
         <div className="flex items-center gap-4 text-xs">
@@ -56,10 +56,10 @@ export default function PlanSummaryBar({
 
         {/* Right: progress bar */}
         <div className="flex items-center gap-2">
-          <div className="h-1.5 w-32 overflow-hidden bg-gray-100 sm:w-48">
+          <div className="h-1.5 w-32 overflow-hidden rounded-full bg-[#F3F1ED] sm:w-48">
             <div
-              className={`h-full transition-all duration-500 ease-out ${
-                overBudget ? "bg-red-500" : pct > 80 ? "bg-amber-500" : "bg-black"
+              className={`h-full rounded-full transition-all duration-500 ease-out ${
+                overBudget ? "bg-red-500" : pct > 80 ? "bg-amber-500" : "bg-primary"
               }`}
               style={{ width: `${pct}%` }}
             />

@@ -1,14 +1,14 @@
 "use client";
 
 import Breadcrumbs from "@/components/breadcrumb/Breadcrumbs";
-import { toPublicUrl } from "@/lib/utils";
+import ImageWithFallback from "@/components/common/ImageWithFallback";
+import { cn, toPublicUrl } from "@/lib/utils";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { addItem } from "@/redux/slices/cartSlice";
 import type { BulkRule, ComboRule } from "@/redux/slices/discountSlice";
-import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
-import { FiLayers, FiPackage } from "react-icons/fi";
+import { FiLayers, FiPackage, FiShoppingBag } from "react-icons/fi";
 import { toast } from "sonner";
 
 function discountLabel(type: 0 | 1, value: number): string {
@@ -24,100 +24,149 @@ function productImg(path: string | null | undefined): string {
   return toPublicUrl(path) ?? "/placeholder-product.jpg";
 }
 
+function formatMoney(n: number): string {
+  return `BDT ${n.toLocaleString()}`;
+}
+
+function Badge({
+  available,
+  children,
+}: {
+  available: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-6 items-center rounded-full px-2.5 text-[10px] font-bold uppercase tracking-[0.06em]",
+        available ? "bg-primary text-primary-foreground" : "bg-neutral-500 text-white",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function AddButton({
+  available,
+  disabledLabel,
+  children,
+  onClick,
+}: {
+  available: boolean;
+  disabledLabel: string;
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => available && onClick()}
+      disabled={!available}
+      className={cn(
+        "mt-auto inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors",
+        available
+          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+          : "cursor-not-allowed bg-[#EFEFEF] text-[#A1A1A1]",
+      )}
+    >
+      {available ? <FiShoppingBag className="h-4 w-4" /> : null}
+      {available ? children : disabledLabel}
+    </button>
+  );
+}
+
 const BulkCard: React.FC<{ rule: BulkRule; onAdd: (rule: BulkRule) => void }> = ({ rule, onAdd }) => {
   const salePrice = calcSalePrice(rule.selling_price, rule.discount_type, rule.discount_value);
   const imageSrc = productImg(rule.product_image);
   const inStock = (rule.stock ?? 0) > 0;
   const hasEnoughStock = rule.stock >= rule.min_qty;
   const available = inStock && hasEnoughStock;
+  const href = `/products/${rule.product_slug}/${rule.product_id}/`;
+  const variant = [rule.color_name, rule.variant_name].filter(Boolean).join(" · ");
+  const offerTotal = salePrice * rule.min_qty;
+  const saved = (rule.selling_price - salePrice) * rule.min_qty;
 
   return (
-    <div className="group overflow-hidden border border-[#EDEDED] bg-white transition-all duration-200 hover:border-[#BDBDBD]">
+    <article className="group flex overflow-hidden rounded-xl border border-black/8 bg-white shadow-[0_8px_24px_rgba(20,16,12,0.05)] transition-shadow duration-200 hover:shadow-[0_14px_36px_rgba(20,16,12,0.10)]">
       <Link
-        href={`/products/${rule.product_slug}/${rule.product_id}/`}
-        className="relative block aspect-square overflow-hidden border-b border-[#F1F1F1] bg-[#FAFAFA]"
+        href={href}
+        className="relative w-[36%] min-w-[120px] max-w-[220px] shrink-0 self-stretch bg-[#f4efe8] min-[768px]:w-[210px]"
       >
-        <Image
+        <ImageWithFallback
           src={imageSrc}
           alt={rule.product_name}
           fill
-          className={`object-cover transition-transform duration-300 group-hover:scale-[1.03] ${
-            !available ? "opacity-60 grayscale" : ""
-          }`}
-          unoptimized
+          sizes="220px"
+          className={cn(
+            "object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]",
+            !available && "opacity-55 grayscale",
+          )}
         />
+        <div className="absolute left-2.5 top-2.5">
+          <Badge available={available}>
+            {available ? discountLabel(rule.discount_type, rule.discount_value) : "Stock Issue"}
+          </Badge>
+        </div>
+        {rule.free_delivery ? (
+          <span className="absolute bottom-2.5 left-2.5 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold text-[#1A8A43] shadow-sm">
+            Free delivery
+          </span>
+        ) : null}
       </Link>
 
-      <div className="space-y-3 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span
-            className={`inline-flex items-center px-2.5 py-1 text-[11px] font-semibold ${
-              available ? "bg-black text-white" : "bg-[#999999] text-white"
-            }`}
-          >
-            {available ? discountLabel(rule.discount_type, rule.discount_value) : "Stock Issue"}
-          </span>
-          <span
-            className={`inline-flex items-center px-2.5 py-1 text-[11px] font-semibold ${
-              rule.free_delivery ? "bg-[#EAF6EE] text-[#1A8A43]" : "bg-[#FFF1F1] text-[#D93030]"
-            }`}
-          >
-            {rule.free_delivery ? "Free Delivery" : "Paid Delivery"}
-          </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-3.5 min-[768px]:p-4">
+        <div>
+          <Link href={href} className="block">
+            <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-[#191919]">
+              {rule.product_name}
+            </h3>
+          </Link>
+          {variant ? <p className="mt-1 truncate text-xs text-[#767676]">{variant}</p> : null}
         </div>
 
-        <Link href={`/products/${rule.product_slug}/${rule.product_id}/`} className="block">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-[#111111] transition-colors group-hover:text-[#333333]">
-            {rule.product_name}
-          </h3>
-          {(rule.color_name || rule.variant_name) && (
-            <p className="mt-0.5 text-xs text-[#767676]">
-              {[rule.color_name, rule.variant_name].filter(Boolean).join(" / ")}
-            </p>
-          )}
-        </Link>
-
-        <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
-          <span className="text-lg font-bold text-[#111111]">BDT {salePrice.toLocaleString()}</span>
-          {salePrice < rule.selling_price && (
-            <span className="text-xs text-[#999999] line-through">BDT {rule.selling_price.toLocaleString()}</span>
-          )}
-          <span className="text-xs text-[#767676]">/ unit</span>
-        </div>
-
-        <div className="flex items-start justify-between gap-2 border border-[#EDEDED] bg-[#FAFAFA] px-3 py-2 sm:items-center">
-          <p className="text-xs text-[#6B6B6B]">
-            For <span className="font-semibold text-[#111111]">{rule.min_qty}</span> units
-          </p>
-          <div className="text-right">
-            <p className="text-sm font-semibold text-[#111111]">BDT {(salePrice * rule.min_qty).toLocaleString()}</p>
-            {salePrice < rule.selling_price && (
-              <p className="text-xs font-medium text-[#1A8A43]">
-                Save BDT {((rule.selling_price - salePrice) * rule.min_qty).toLocaleString()}
-              </p>
-            )}
+        <div>
+          <p className="text-[11px] font-medium text-[#8A8A8A]">Unit price</p>
+          <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+            <span className="text-xl font-bold tracking-tight text-[#191919]">{formatMoney(salePrice)}</span>
+            {salePrice < rule.selling_price ? (
+              <span className="text-xs text-[#999] line-through">{formatMoney(rule.selling_price)}</span>
+            ) : null}
           </div>
         </div>
 
-        {!hasEnoughStock && inStock && (
+        <div className="grid grid-cols-3 overflow-hidden rounded-lg bg-[#F6F4F0] text-center">
+          <div className="px-1.5 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">Qty</p>
+            <p className="mt-0.5 text-sm font-bold text-[#191919]">{rule.min_qty}</p>
+          </div>
+          <div className="border-x border-black/6 px-1.5 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">You pay</p>
+            <p className="mt-0.5 truncate text-sm font-bold text-[#191919]">{formatMoney(offerTotal)}</p>
+          </div>
+          <div className="px-1.5 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">Save</p>
+            <p className="mt-0.5 truncate text-sm font-bold text-[#1A8A43]">
+              {saved > 0 ? formatMoney(saved) : "—"}
+            </p>
+          </div>
+        </div>
+
+        {!hasEnoughStock && inStock ? (
           <p className="text-xs font-medium text-[#CC8A00]">
             Only {rule.stock} in stock, need {rule.min_qty} for this offer.
           </p>
-        )}
+        ) : null}
 
-        <button
-          onClick={() => available && onAdd(rule)}
-          disabled={!available}
-          className={`h-10 w-full border text-sm font-semibold transition-colors ${
-            available
-              ? "border-[#111111] bg-[#111111] text-white hover:bg-[#2B2B2B]"
-              : "cursor-not-allowed border-[#E2E2E2] bg-[#F5F5F5] text-[#A1A1A1]"
-          }`}
+        <AddButton
+          available={available}
+          disabledLabel={!inStock ? "Out of stock" : "Not enough stock"}
+          onClick={() => onAdd(rule)}
         >
-          {available ? `Add ${rule.min_qty} Items` : !inStock ? "Out of Stock" : "Insufficient Stock"}
-        </button>
+          Add {rule.min_qty} to cart
+        </AddButton>
       </div>
-    </div>
+    </article>
   );
 };
 
@@ -136,114 +185,145 @@ const ComboCard: React.FC<{ rule: ComboRule; onAddCombo: (rule: ComboRule) => vo
       : (rawTotal * topTier.discount_value) / 100;
   const finalTotal = Math.max(0, rawTotal - discAmt);
   const tiersCount = rule.tiers.length;
+  const shownItems = topTier.items.slice(0, 4);
+  const extraItems = topTier.items.length - shownItems.length;
 
   const insufficientItems = topTier.items.filter((i) => i.stock < i.required_qty);
   const available = insufficientItems.length === 0;
+  const cover = topTier.items[0];
+  const previewThumbs = topTier.items.slice(0, 3);
 
   return (
-    <div
-      className={`overflow-hidden border bg-white transition-colors duration-200 ${
-        available ? "border-[#EDEDED] hover:border-[#BDBDBD]" : "border-[#F1D5D5]"
-      }`}
-    >
-      <div className={`flex flex-col gap-2 border-b px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between ${available ? "bg-[#FAFAFA] border-[#EDEDED]" : "bg-[#FFF7F7] border-[#F1D5D5]"}`}>
-        <span className="text-sm font-semibold text-[#111111]">Combo Deal</span>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`px-2 py-0.5 text-[11px] font-semibold ${rule.free_delivery ? "bg-[#EAF6EE] text-[#1A8A43]" : "bg-[#FFF1F1] text-[#D93030]"}`}>
-            {rule.free_delivery ? "Free Delivery" : "Paid Delivery"}
-          </span>
-          <span className={`px-2 py-0.5 text-[11px] font-semibold ${available ? "bg-black text-white" : "bg-[#999999] text-white"}`}>
-            {available ? discountLabel(topTier.discount_type, topTier.discount_value) : "Stock Issue"}
-          </span>
+    <article className="group flex flex-col overflow-hidden rounded-xl border border-black/8 bg-white shadow-[0_8px_24px_rgba(20,16,12,0.05)] transition-shadow duration-200 hover:shadow-[0_14px_36px_rgba(20,16,12,0.10)] min-[768px]:flex-row">
+      {cover ? (
+        <Link
+          href={`/products/${cover.product_slug}/${cover.product_id}/`}
+          className="relative aspect-[16/10] w-full shrink-0 bg-[#f4efe8] min-[768px]:aspect-auto min-[768px]:w-[210px] min-[768px]:self-stretch"
+        >
+          <ImageWithFallback
+            src={productImg(cover.product_image)}
+            alt={cover.product_name}
+            fill
+            sizes="(max-width: 768px) 100vw, 210px"
+            className={cn(
+              "object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]",
+              !available && "opacity-55 grayscale",
+            )}
+          />
+          <div className="absolute left-2.5 top-2.5">
+            <Badge available={available}>
+              {available ? discountLabel(topTier.discount_type, topTier.discount_value) : "Stock Issue"}
+            </Badge>
+          </div>
+          {previewThumbs.length > 1 ? (
+            <div className="absolute bottom-2.5 left-2.5 flex -space-x-2">
+              {previewThumbs.map((item) => (
+                <span
+                  key={item.product_sku_id}
+                  className="relative h-8 w-8 overflow-hidden rounded-full border-2 border-white bg-[#f4efe8]"
+                >
+                  <ImageWithFallback
+                    src={productImg(item.product_image)}
+                    alt=""
+                    fill
+                    sizes="32px"
+                    className="object-cover"
+                  />
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </Link>
+      ) : null}
+
+      <div className="flex min-w-0 flex-1 flex-col gap-2.5 p-3.5 min-[768px]:p-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8A8A8A]">
+            Combo · {totalQty} items
+            {rule.free_delivery ? " · Free delivery" : ""}
+          </p>
+          <h3 className="mt-1 text-[15px] font-semibold leading-snug text-[#191919]">{rule.name}</h3>
+          {rule.description ? (
+            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#767676]">{rule.description}</p>
+          ) : null}
         </div>
-      </div>
 
-      <div className="space-y-3 p-4">
-        <h3 className="text-base font-semibold leading-snug text-[#111111]">{rule.name}</h3>
-        {rule.description && <p className="line-clamp-2 text-xs text-[#767676]">{rule.description}</p>}
-
-        <div className="space-y-2.5">
-          {topTier.items.slice(0, 3).map((item) => {
-            const img = productImg(item.product_image);
-            const itemInsufficient = item.stock < item.required_qty;
+        <ul className="space-y-2">
+          {shownItems.map((item) => {
+            const low = item.stock < item.required_qty;
+            const variant = [item.color_name, item.variant_name].filter(Boolean).join(" · ");
             return (
-              <div key={item.product_sku_id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <li key={item.product_sku_id} className="flex items-center gap-2.5">
                 <Link
                   href={`/products/${item.product_slug}/${item.product_id}/`}
-                  className="relative block h-10 w-10 shrink-0 overflow-hidden border border-[#EFEFEF] bg-[#FAFAFA]"
+                  className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-[#f4efe8]"
                 >
-                  <Image
-                    src={img}
+                  <ImageWithFallback
+                    src={productImg(item.product_image)}
                     alt={item.product_name}
                     fill
-                    className={`object-cover ${itemInsufficient ? "grayscale opacity-50" : ""}`}
-                    unoptimized
+                    sizes="44px"
+                    className={cn("object-cover", low && "opacity-50 grayscale")}
                   />
                 </Link>
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/products/${item.product_slug}/${item.product_id}/`}
-                    className="block truncate text-xs font-medium text-[#222222] hover:text-[#111111]"
+                    className="block truncate text-xs font-medium text-[#191919] hover:underline"
                   >
                     {item.product_name}
                   </Link>
-                  <p className="text-xs text-[#767676]">
-                    {[item.color_name, item.variant_name].filter(Boolean).join(" / ") || "Standard"} ×
-                    {item.required_qty}
-                    {itemInsufficient && (
-                      <span className="ml-1 font-medium text-[#D93030]">(only {item.stock} left)</span>
-                    )}
+                  <p className="truncate text-[11px] text-[#767676]">
+                    {variant ? `${variant} · ` : ""}
+                    {low ? <span className="font-medium text-[#D93030]">only {item.stock} left</span> : "In stock"}
                   </p>
                 </div>
-                <p className="shrink-0 text-xs font-semibold text-[#333333] sm:text-right">
-                  BDT {(item.selling_price * item.required_qty).toLocaleString()}
-                </p>
-              </div>
+                <span className="shrink-0 rounded-full bg-[#F6F4F0] px-2 py-0.5 text-[11px] font-semibold text-[#191919]">
+                  ×{item.required_qty}
+                </span>
+              </li>
             );
           })}
-          {topTier.items.length > 3 && (
-            <p className="text-xs text-[#767676]">+{topTier.items.length - 3} more items</p>
-          )}
+        </ul>
+        {extraItems > 0 ? (
+          <p className="text-[11px] text-[#767676]">+{extraItems} more in this combo</p>
+        ) : null}
+
+        <div className="grid grid-cols-2 overflow-hidden rounded-lg bg-[#F6F4F0] text-center">
+          <div className="px-2 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">You pay</p>
+            <p className="mt-0.5 text-sm font-bold text-[#191919]">{formatMoney(finalTotal)}</p>
+            {discAmt > 0 ? (
+              <p className="text-[11px] text-[#999] line-through">{formatMoney(rawTotal)}</p>
+            ) : null}
+          </div>
+          <div className="border-l border-black/6 px-2 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">You save</p>
+            <p className="mt-0.5 text-sm font-bold text-[#1A8A43]">
+              {discAmt > 0 ? formatMoney(discAmt) : "—"}
+            </p>
+          </div>
         </div>
 
-        <div className="space-y-1 border-t border-dashed border-[#E2E2E2] pt-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-[#6B6B6B]">Total ({totalQty} items)</span>
-            <span className="text-[#999999] line-through">BDT {rawTotal.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="font-medium text-[#1A8A43]">You save</span>
-            <span className="font-semibold text-[#1A8A43]">BDT {discAmt.toLocaleString()}</span>
-          </div>
-          <div className="mt-1 flex justify-between text-base font-semibold">
-            <span className="text-[#111111]">Deal Price</span>
-            <span className="text-[#111111]">BDT {finalTotal.toLocaleString()}</span>
-          </div>
-        </div>
+        {tiersCount > 1 ? (
+          <p className="text-[11px] text-[#6B6B6B]">{tiersCount} deal tiers available</p>
+        ) : null}
 
-        {tiersCount > 1 && (
-          <p className="text-xs text-[#0088FF]">{tiersCount} deal tiers available</p>
-        )}
-
-        {!available && (
+        {!available ? (
           <p className="text-xs font-medium text-[#D93030]">
             This combo is currently unavailable due to stock limits.
           </p>
-        )}
+        ) : null}
 
-        <button
-          onClick={() => available && onAddCombo(rule)}
-          disabled={!available}
-          className={`h-10 w-full border text-sm font-semibold transition-colors ${
-            available
-              ? "border-[#111111] bg-[#111111] text-white hover:bg-[#2B2B2B]"
-              : "cursor-not-allowed border-[#E2E2E2] bg-[#F5F5F5] text-[#A1A1A1]"
-          }`}
+        <AddButton
+          available={available}
+          disabledLabel="Unavailable"
+          onClick={() => onAddCombo(rule)}
         >
-          {available ? `Add All ${totalQty} Items` : "Unavailable"}
-        </button>
+          Add all {totalQty} to cart
+        </AddButton>
       </div>
-    </div>
+    </article>
   );
 };
 
@@ -271,7 +351,7 @@ const OffersPageClient: React.FC = () => {
         quantity: rule.min_qty,
         stock: rule.stock,
         overrideQuantity: true,
-      })
+      }),
     );
     toast.success(`Added ${rule.min_qty}× ${rule.product_name} to cart`);
   };
@@ -296,7 +376,7 @@ const OffersPageClient: React.FC = () => {
           quantity: item.required_qty,
           stock: item.stock,
           overrideQuantity: true,
-        })
+        }),
       );
     }
 
@@ -304,90 +384,95 @@ const OffersPageClient: React.FC = () => {
   };
 
   return (
-    <section className="container mx-auto pt-11 px-1.5 pb-6 sm:pt-0 sm:px-0">
+    <section className="container mx-auto px-3 pb-16 pt-11 min-[768px]:px-0 min-[768px]:pb-20 min-[768px]:pt-0">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Offers" }]} />
 
-      <div className="mt-0 border border-[#EDEDED] bg-linear-to-r from-[#FAFAFA] to-white p-5 sm:p-7">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6B6B6B]">Offers</p>
-        <h1 className="mt-2 text-2xl font-semibold text-[#111111] sm:text-3xl">Bulk & Combo Deals</h1>
-        <p className="mt-2 max-w-2xl text-sm text-[#6B6B6B]">
-          Shop structured offers with transparent pricing, quantity breaks, and bundle savings.
+      <div className="mt-1 flex flex-col gap-1 min-[768px]:mt-2">
+        <h1 className="text-[26px] font-bold leading-none tracking-[-0.02em] text-[#191919] min-[768px]:text-[32px]">
+          Offers
+        </h1>
+        <p className="max-w-lg text-sm leading-relaxed text-[#5F5F5F]">
+          See the quantity, total price, and savings on each deal before you add it to cart.
         </p>
       </div>
 
-      <div className="mt-6 border border-[#E5E5E5] bg-white p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold tracking-[0.01em] text-[#111111]">
-              {tab === "bulk" ? "Bulk Offers" : "Combo Deals"}
-            </h2>
-            <p className="mt-1 text-xs font-medium text-[#787878]">
-              {tab === "bulk"
-                ? `${bulkRules.length} curated bulk offer${bulkRules.length === 1 ? "" : "s"}`
-                : `${comboRules.length} curated combo deal${comboRules.length === 1 ? "" : "s"}`}
-            </p>
-          </div>
-
-          <div className="grid w-full grid-cols-2 gap-1 border border-[#E5E5E5] bg-[#FAFAFA] p-1 sm:w-auto sm:min-w-[360px] sm:gap-1.5 sm:p-1.5">
-            <button
-              onClick={() => setTab("bulk")}
-              className={`inline-flex h-10 items-center justify-center gap-2 px-3 text-[13px] font-semibold tracking-[0.01em] transition-colors sm:px-5 sm:text-sm ${
-                tab === "bulk" ? "bg-black text-white" : "bg-transparent text-[#333333] hover:bg-[#EEEEEE]"
-              }`}
-            >
-              <FiPackage className="h-4 w-4" />
-              Bulk Offers{bulkRules.length > 0 ? ` (${bulkRules.length})` : ""}
-            </button>
-            <button
-              onClick={() => setTab("combo")}
-              className={`inline-flex h-10 items-center justify-center gap-2 px-3 text-[13px] font-semibold tracking-[0.01em] transition-colors sm:px-5 sm:text-sm ${
-                tab === "combo" ? "bg-black text-white" : "bg-transparent text-[#333333] hover:bg-[#EEEEEE]"
-              }`}
-            >
-              <FiLayers className="h-4 w-4" />
-              Combo Deals{comboRules.length > 0 ? ` (${comboRules.length})` : ""}
-            </button>
-          </div>
+      <div className="sticky top-[var(--shop-header-offset,72px)] z-20 mt-5 bg-white/95 py-2 backdrop-blur-sm transition-[top] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]">
+        <div className="grid grid-cols-2 rounded-xl bg-[#F3F1ED] p-1">
+          <button
+            type="button"
+            onClick={() => setTab("bulk")}
+            className={cn(
+              "inline-flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors",
+              tab === "bulk"
+                ? "bg-white text-[#191919] shadow-[0_2px_10px_rgba(20,16,12,0.08)]"
+                : "text-[#666] hover:text-[#191919]",
+            )}
+          >
+            <FiPackage className="h-4 w-4" />
+            Bulk Offers
+            <span className="rounded-full bg-[#EAE6DF] px-1.5 text-[11px] font-bold text-[#555]">
+              {bulkRules.length}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("combo")}
+            className={cn(
+              "inline-flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors",
+              tab === "combo"
+                ? "bg-white text-[#191919] shadow-[0_2px_10px_rgba(20,16,12,0.08)]"
+                : "text-[#666] hover:text-[#191919]",
+            )}
+          >
+            <FiLayers className="h-4 w-4" />
+            Combo Deals
+            <span className="rounded-full bg-[#EAE6DF] px-1.5 text-[11px] font-bold text-[#555]">
+              {comboRules.length}
+            </span>
+          </button>
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4 min-[768px]:mt-5">
         {loading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="aspect-[3/4] animate-pulse border border-[#F1F1F1] bg-[#F7F7F7]" />
+          <div className="grid grid-cols-1 gap-4 min-[992px]:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex h-52 overflow-hidden rounded-xl border border-black/8">
+                <div className="w-[36%] animate-pulse bg-[#f4efe8]" />
+                <div className="flex-1 space-y-3 p-4">
+                  <div className="h-4 w-20 animate-pulse rounded bg-[#eeeae4]" />
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-[#eeeae4]" />
+                  <div className="h-12 w-full animate-pulse rounded-lg bg-[#eeeae4]" />
+                </div>
+              </div>
             ))}
           </div>
+        ) : tab === "bulk" ? (
+          bulkRules.length === 0 ? (
+            <div className="rounded-xl bg-[#F6F4F0] px-6 py-16 text-center">
+              <FiPackage className="mx-auto h-6 w-6 text-[#B5B0A8]" />
+              <p className="mt-3 text-base font-semibold text-[#191919]">No bulk offers right now</p>
+              <p className="mt-1 text-sm text-[#7A7A7A]">Please check again shortly.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 min-[992px]:grid-cols-2">
+              {bulkRules.map((rule) => (
+                <BulkCard key={rule.id} rule={rule} onAdd={handleAddBulk} />
+              ))}
+            </div>
+          )
+        ) : comboRules.length === 0 ? (
+          <div className="rounded-xl bg-[#F6F4F0] px-6 py-16 text-center">
+            <FiLayers className="mx-auto h-6 w-6 text-[#B5B0A8]" />
+            <p className="mt-3 text-base font-semibold text-[#191919]">No combo deals right now</p>
+            <p className="mt-1 text-sm text-[#7A7A7A]">Please check again shortly.</p>
+          </div>
         ) : (
-          <>
-            {tab === "bulk" &&
-              (bulkRules.length === 0 ? (
-                <div className="border-2 border-dashed border-[#E5E5E5] bg-[#FAFAFA] py-16 text-center">
-                  <p className="text-base font-semibold text-[#232323]">No bulk offers available right now</p>
-                  <p className="mt-1 text-sm text-[#7A7A7A]">Please check again shortly.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {bulkRules.map((rule) => (
-                    <BulkCard key={rule.id} rule={rule} onAdd={handleAddBulk} />
-                  ))}
-                </div>
-              ))}
-
-            {tab === "combo" &&
-              (comboRules.length === 0 ? (
-                <div className="border-2 border-dashed border-[#E5E5E5] bg-[#FAFAFA] py-16 text-center">
-                  <p className="text-base font-semibold text-[#232323]">No combo deals available right now</p>
-                  <p className="mt-1 text-sm text-[#7A7A7A]">Please check again shortly.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                  {comboRules.map((rule) => (
-                    <ComboCard key={rule.id} rule={rule} onAddCombo={handleAddCombo} />
-                  ))}
-                </div>
-              ))}
-          </>
+          <div className="grid grid-cols-1 gap-4 min-[992px]:grid-cols-2">
+            {comboRules.map((rule) => (
+              <ComboCard key={rule.id} rule={rule} onAddCombo={handleAddCombo} />
+            ))}
+          </div>
         )}
       </div>
     </section>

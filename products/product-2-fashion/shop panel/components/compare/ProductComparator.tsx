@@ -1,9 +1,13 @@
 "use client";
 
+import "swiper/css";
+
 import * as React from "react";
-import Image from "next/image";
+import ImageWithFallback from "@/components/common/ImageWithFallback";
 import Link from "next/link";
 import { cn, toPublicUrl } from "@/lib/utils";
+import type { Swiper as SwiperType } from "swiper";
+import { Swiper, SwiperSlide } from "swiper/react";
 import type {
   CompareProductDetail,
   CompareVariation,
@@ -17,10 +21,11 @@ import {
   FiBox,
   FiCheckCircle,
   FiChevronDown,
+  FiChevronLeft,
+  FiChevronRight,
   FiChevronUp,
   FiEye,
   FiGitCommit,
-  FiImage,
   FiInfo,
   FiLayers,
   FiPackage,
@@ -76,16 +81,16 @@ function Chip({
   size?: "xs" | "sm";
 }) {
   const colorMap: Record<ChipColor, string> = {
-    emerald: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    blue: "bg-blue-50 text-blue-700 border-blue-200",
-    amber: "bg-amber-100 text-amber-700 border-amber-200",
-    red: "bg-red-100 text-red-600 border-red-200",
-    gray: "bg-gray-100 text-gray-500 border-gray-200",
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
+    blue: "bg-[#F6F4F0] text-[#191919] border-black/8",
+    amber: "bg-amber-50 text-amber-800 border-amber-200/80",
+    red: "bg-red-50 text-red-600 border-red-200/80",
+    gray: "bg-[#F3F1ED] text-[#6B6B6B] border-black/8",
   };
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 border px-2 py-0.5 font-semibold leading-none",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold leading-none",
         size === "xs" ? "text-[10px]" : "text-[11px]",
         colorMap[color],
       )}
@@ -113,8 +118,8 @@ function DataRow({
   return (
     <div
       className={cn(
-        "grid grid-cols-[96px_1fr_1fr] border-b border-black/[0.04] last:border-0 sm:grid-cols-[128px_1fr_1fr]",
-        stripe && "bg-black/[0.01]",
+        "grid grid-cols-[96px_1fr_1fr] border-b border-black/6 last:border-0 sm:grid-cols-[128px_1fr_1fr]",
+        stripe && "bg-[#FAF8F5]",
       )}
     >
       <div className="flex items-center px-3 py-2.5 text-[10px] font-semibold uppercase leading-tight tracking-wider text-gray-400">
@@ -122,8 +127,8 @@ function DataRow({
       </div>
       <div
         className={cn(
-          "flex min-w-0 items-center gap-1.5 border-l border-black/[0.04] px-3 py-2.5",
-          leftBetter && "bg-emerald-50/70",
+          "flex min-w-0 items-center gap-1.5 border-l border-black/6 px-3 py-2.5",
+          leftBetter && "bg-emerald-50/80",
         )}
       >
         {leftBetter && (
@@ -137,8 +142,8 @@ function DataRow({
       </div>
       <div
         className={cn(
-          "flex min-w-0 items-center gap-1.5 border-l border-black/[0.04] px-3 py-2.5",
-          rightBetter && "bg-emerald-50/70",
+          "flex min-w-0 items-center gap-1.5 border-l border-black/6 px-3 py-2.5",
+          rightBetter && "bg-emerald-50/80",
         )}
       >
         {rightBetter && (
@@ -157,111 +162,103 @@ function DataRow({
 function VariantCard({ v, accent }: { v: CompareVariation; accent: string }) {
   const [open, setOpen] = React.useState(false);
   const label = discountLabel(v);
+  const title =
+    [v.color?.name, v.variant?.name].filter(Boolean).join(" · ") || v.sku;
 
   return (
     <div
       className={cn(
-        "overflow-hidden border text-xs transition-all",
-        v.in_stock ? "border-black/[0.08]" : "border-black/[0.04] opacity-60",
+        "overflow-hidden rounded-xl border bg-white text-xs shadow-[0_4px_16px_rgba(20,16,12,0.04)]",
+        v.in_stock ? "border-black/8" : "border-black/6 opacity-60",
       )}
     >
-      <div className="grid grid-cols-[1fr_auto] border-b border-black/[0.04] bg-gray-50/50 px-3 py-2">
-        <div className="flex min-w-0 items-center gap-1.5">
-          {v.color?.hex && (
+      <div className="flex items-center justify-between gap-2 bg-[#FAF8F5] px-3 py-2.5">
+        <div className="flex min-w-0 items-center gap-2">
+          {v.color?.hex ? (
             <span
-              className="h-3 w-3 shrink-0 border border-gray-300"
+              className="h-4 w-4 shrink-0 rounded-full border border-black/10"
               style={{ background: v.color.hex }}
             />
-          )}
-          <span className="truncate text-[11px] font-semibold text-black">
-            {[v.color?.name, v.variant?.name].filter(Boolean).join(" · ") ||
-              v.sku}
-          </span>
+          ) : null}
+          <span className="truncate text-[12px] font-semibold text-[#191919]">{title}</span>
         </div>
-        <div className="flex items-center justify-end gap-1">
-          {v.in_stock ? (
-            <Chip color="emerald" size="xs">
-              <FiBox size={9} />
-              {v.stock}
-            </Chip>
-          ) : (
-            <Chip color="red" size="xs">
-              <FiXCircle size={9} />
-              Out
-            </Chip>
-          )}
+        {v.in_stock ? (
+          <Chip color="emerald" size="xs">
+            <FiBox size={9} />
+            {v.stock} in stock
+          </Chip>
+        ) : (
+          <Chip color="red" size="xs">
+            <FiXCircle size={9} />
+            Out
+          </Chip>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 text-center">
+        <div className="px-2 py-2.5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">
+            Original
+          </p>
+          <p className="mt-0.5 text-[12px] font-medium text-[#6B6B6B]">{fmtBDT(v.selling_price)}</p>
+        </div>
+        <div className="border-x border-black/6 px-2 py-2.5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">
+            Discount
+          </p>
+          <div className="mt-0.5 flex justify-center">
+            {label ? (
+              <Chip color="red" size="xs">
+                {v.discount_type === 1 ? <FiPercent size={8} /> : <FiTag size={8} />}
+                {label}
+              </Chip>
+            ) : (
+              <span className="text-[12px] text-[#C4C4C4]">—</span>
+            )}
+          </div>
+        </div>
+        <div className="px-2 py-2.5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">
+            You pay
+          </p>
+          <p className={cn("mt-0.5 text-[13px] font-bold", accent)}>{fmtBDT(v.final_price)}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 divide-x divide-black/[0.04]">
-        <div className="px-3 py-2">
-          <p className="mb-0.5 text-[9px] text-gray-400">Original</p>
-          <p className="text-[11px] font-medium text-gray-600">
-            {fmtBDT(v.selling_price)}
-          </p>
-        </div>
-        <div className="px-3 py-2">
-          <p className="mb-0.5 text-[9px] text-gray-400">Discount</p>
-          {label ? (
-            <Chip color="red" size="xs">
-              {v.discount_type === 1 ? (
-                <FiPercent size={8} />
-              ) : (
-                <FiTag size={8} />
-              )}
-              {label}
-            </Chip>
-          ) : (
-            <span className="text-[11px] text-gray-300">—</span>
-          )}
-        </div>
-        <div className="px-3 py-2">
-          <p className="mb-0.5 text-[9px] text-gray-400">You Pay</p>
-          <p className={cn("text-[12px] font-bold", accent)}>
-            {fmtBDT(v.final_price)}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-black/[0.04] px-3 py-1.5">
-        <span className="text-[9px] text-gray-400">
-          SKU: <span className="text-gray-600">{v.sku || "—"}</span>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-black/6 px-3 py-2">
+        <span className="text-[10px] text-[#8A8A8A]">
+          SKU <span className="font-medium text-[#191919]">{v.sku || "—"}</span>
         </span>
-        {v.weight_kg != null && (
-          <span className="flex items-center gap-0.5 text-[9px] text-gray-400">
-            <FiPackage size={9} />
-            <span className="text-gray-600">{v.weight_kg} kg</span>
+        {v.weight_kg != null ? (
+          <span className="inline-flex items-center gap-0.5 text-[10px] text-[#8A8A8A]">
+            <FiPackage size={10} />
+            <span className="font-medium text-[#191919]">{v.weight_kg} kg</span>
           </span>
-        )}
-        {v.bulk_rules.length > 0 && (
+        ) : null}
+        {v.bulk_rules.length > 0 ? (
           <button
+            type="button"
             onClick={() => setOpen((x) => !x)}
-            className="ml-auto flex items-center gap-0.5 text-[9px] font-semibold text-black hover:opacity-60"
+            className="ml-auto inline-flex items-center gap-0.5 text-[10px] font-semibold text-[#191919] hover:opacity-60"
           >
-            <FiZap size={9} />
-            {v.bulk_rules.length} bulk tier
-            {v.bulk_rules.length > 1 ? "s" : ""}
-            {open ? <FiChevronUp size={9} /> : <FiChevronDown size={9} />}
+            <FiZap size={10} />
+            {v.bulk_rules.length} bulk tier{v.bulk_rules.length > 1 ? "s" : ""}
+            {open ? <FiChevronUp size={11} /> : <FiChevronDown size={11} />}
           </button>
-        )}
+        ) : null}
       </div>
 
-      {open && v.bulk_rules.length > 0 && (
-        <div className="space-y-1 border-t border-black/[0.04] bg-gray-50/50 px-3 py-2">
+      {open && v.bulk_rules.length > 0 ? (
+        <div className="space-y-1.5 border-t border-black/6 bg-[#FAF8F5] px-3 py-2.5">
           {v.bulk_rules.map((r, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between text-[10px]"
-            >
-              <span className="font-medium text-black">Buy {r.min_qty}+</span>
-              <span className="text-gray-600">{r.discount_label}</span>
-              <span className="font-bold text-black">
-                {fmtBDT(r.effective_price)}/item
-              </span>
+            <div key={i} className="flex items-center justify-between text-[11px]">
+              <span className="font-medium text-[#191919]">Buy {r.min_qty}+</span>
+              <span className="text-[#6B6B6B]">{r.discount_label}</span>
+              <span className="font-bold text-[#191919]">{fmtBDT(r.effective_price)}/item</span>
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -288,59 +285,121 @@ function VariantColumn({
   );
 }
 
-function ImageGallery({
+type GalleryImage = { id: number; path: string; serial?: number; position?: number };
+
+function CompareImageSlider({
   images,
   name,
 }: {
-  images: { id: number; path: string; serial?: number; position?: number }[];
+  images: GalleryImage[];
   name: string;
 }) {
   const [active, setActive] = React.useState(0);
-  const src = images[active] ? toPublicUrl(images[active].path) : null;
+  const swiperRef = React.useRef<SwiperType | null>(null);
+  const list = Array.isArray(images) ? images : [];
+  const hasMultiple = list.length > 1;
+
+  const goTo = (index: number) => {
+    swiperRef.current?.slideTo(index);
+    setActive(index);
+  };
+
   return (
     <div>
-      <div className="relative aspect-square w-full overflow-hidden border border-black/[0.04] bg-gray-50">
-        {src ? (
-          <Image
-            src={src}
-            alt={name}
-            fill
-            className="object-contain p-3"
-            sizes="200px"
-          />
-        ) : (
+      <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-[#f4efe8]">
+        {list.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <FiShoppingBag className="h-8 w-8 text-gray-300" />
+            <FiShoppingBag className="h-8 w-8 text-[#C8C2BA]" />
           </div>
+        ) : (
+          <Swiper
+            className="h-full w-full [&>.swiper-wrapper]:h-full [&_.swiper-slide]:h-full"
+            onSwiper={(swiper) => {
+              swiperRef.current = swiper;
+            }}
+            onSlideChange={(swiper) => setActive(swiper.activeIndex)}
+            grabCursor={hasMultiple}
+          >
+            {list.map((img, i) => {
+              const src = toPublicUrl(img.path);
+              return (
+                <SwiperSlide key={`${img.id}-${i}`} className="relative h-full">
+                  {src ? (
+                    <ImageWithFallback
+                      src={src}
+                      alt={`${name} ${i + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 40vw"
+                      className="object-contain p-4"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <FiShoppingBag className="h-8 w-8 text-[#C8C2BA]" />
+                    </div>
+                  )}
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
         )}
+
+        {hasMultiple ? (
+          <>
+            <button
+              type="button"
+              aria-label="Previous image"
+              onClick={() => swiperRef.current?.slidePrev()}
+              className="absolute left-2 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-black/8 bg-white text-[#191919] shadow-sm transition hover:bg-[#F6F4F0]"
+            >
+              <FiChevronLeft className="h-4 w-4" strokeWidth={1.8} />
+            </button>
+            <button
+              type="button"
+              aria-label="Next image"
+              onClick={() => swiperRef.current?.slideNext()}
+              className="absolute right-2 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-black/8 bg-white text-[#191919] shadow-sm transition hover:bg-[#F6F4F0]"
+            >
+              <FiChevronRight className="h-4 w-4" strokeWidth={1.8} />
+            </button>
+          </>
+        ) : null}
       </div>
-      {images.length > 1 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {images.slice(0, 8).map((img, i) => {
-            const s = toPublicUrl(img.path);
-            return (
-              <button
-                key={img.id}
-                onClick={() => setActive(i)}
-                className={cn(
-                  "relative h-9 w-9 overflow-hidden border-2 transition",
-                  active === i ? "border-black" : "border-gray-200",
-                )}
-              >
-                {s && (
-                  <Image
-                    src={s}
-                    alt=""
-                    fill
-                    className="object-contain"
-                    sizes="36px"
-                  />
-                )}
-              </button>
-            );
-          })}
+
+      {hasMultiple ? (
+        <div className="mt-2 flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pb-0.5">
+            {list.map((img, i) => {
+              const src = toPublicUrl(img.path);
+              return (
+                <button
+                  key={`${img.id}-${i}`}
+                  type="button"
+                  onClick={() => goTo(i)}
+                  className={cn(
+                    "relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-[#f4efe8] transition",
+                    active === i
+                      ? "border border-[#191919]"
+                      : "border border-transparent opacity-70 hover:opacity-100",
+                  )}
+                >
+                  {src ? (
+                    <ImageWithFallback
+                      src={src}
+                      alt=""
+                      fill
+                      sizes="44px"
+                      className="object-cover object-center"
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <span className="shrink-0 text-[11px] font-medium tabular-nums text-[#8A8A8A]">
+            {active + 1}/{list.length}
+          </span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -355,19 +414,21 @@ function ProductHeaderCard({
   side: "A" | "B";
 }) {
   const d = slot?.detail;
-  const img = d?.images?.[0]?.path
-    ? toPublicUrl(d.images[0].path)
-    : toPublicUrl(
-        slot?.product?.images?.[0]?.path ?? slot?.product?.thumbnail,
-      );
+  const headerImages: GalleryImage[] = d?.images?.length
+    ? d.images
+    : Array.isArray(slot?.product?.images) && slot.product.images.length > 0
+      ? slot.product.images
+      : slot?.product?.thumbnail
+        ? [{ id: 0, path: slot.product.thumbnail }]
+        : [];
 
   if (!slot || slot.loading) {
     return (
-      <div className="flex flex-col items-center justify-center border border-black/[0.04] bg-gray-50/50 py-10 shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-black/10 bg-[#FAF8F5] py-12">
         {slot?.loading ? (
-          <div className="h-8 w-8 animate-spin border-2 border-black border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#191919] border-t-transparent" />
         ) : (
-          <span className="text-sm text-gray-400">Select Product {side}</span>
+          <span className="text-sm text-[#8A8A8A]">Select Product {side}</span>
         )}
       </div>
     );
@@ -377,27 +438,13 @@ function ProductHeaderCard({
   const maxP = d?.summary?.max_price;
 
   return (
-    <div className="overflow-hidden border border-black/[0.04] bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
-      <div className="p-4">
-        <div className="relative aspect-[4/3] w-full overflow-hidden border border-black/[0.04] bg-gray-50">
-          {img ? (
-            <Image
-              src={img}
-              alt={slot.product.name}
-              fill
-              className="object-contain p-3"
-              sizes="250px"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <FiShoppingBag className="h-9 w-9 text-gray-300" />
-            </div>
-          )}
-        </div>
+    <div className="overflow-hidden rounded-xl border border-black/8 bg-white shadow-[0_8px_24px_rgba(20,16,12,0.05)]">
+      <div className="p-3 min-[768px]:p-4">
+        <CompareImageSlider images={headerImages} name={slot.product.name} />
         <div
           className={cn(
-            "mt-2 h-0.5 w-full",
-            accent === "text-black" ? "bg-black" : "bg-gray-500",
+            "mt-3 h-0.5 w-full rounded-full",
+            accent === "text-black" ? "bg-primary" : "bg-[#8A8A8A]",
           )}
         />
         <Link
@@ -458,7 +505,7 @@ function ProductHeaderCard({
 
 function BetterBadge() {
   return (
-    <span className="inline-flex items-center gap-0.5 bg-emerald-500 px-2 py-0.5 text-[9px] font-black text-white">
+    <span className="mt-1 inline-flex items-center gap-0.5 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-bold text-white">
       ✓ Better
     </span>
   );
@@ -472,9 +519,9 @@ function SectionHeader({
   label: string;
 }) {
   return (
-    <div className="mb-3 flex items-center gap-2 border border-black/[0.04] bg-gray-50/50 px-4 py-3 shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
+    <div className="mb-3 flex items-center gap-2 rounded-xl bg-[#F6F4F0] px-4 py-3">
       {icon}
-      <span className="text-[11px] font-bold uppercase tracking-widest text-black">
+      <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#191919]">
         {label}
       </span>
     </div>
@@ -515,13 +562,13 @@ function ProductInfoPanel({
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden border border-black/[0.04]">
-        <div className="flex items-center gap-1.5 border-b border-black/[0.04] bg-gray-50/50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-black">
+      <div className="overflow-hidden rounded-xl border border-black/8">
+        <div className="flex items-center gap-1.5 border-b border-black/6 bg-[#FAF8F5] px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#191919]">
           <FiTag size={11} /> Pricing
         </div>
-        <div className="divide-y divide-black/[0.04]">
-          <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-[10px] text-gray-400">Price Range</span>
+        <div className="divide-y divide-black/6">
+          <div className="flex items-center justify-between px-3.5 py-2.5">
+            <span className="text-[11px] text-[#8A8A8A]">Price Range</span>
             <span className={cn("text-sm font-bold", accent)}>
               {minP === maxP
                 ? fmtBDT(minP)
@@ -529,8 +576,8 @@ function ProductInfoPanel({
             </span>
           </div>
           {maxDisc > 0 && (
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-[10px] text-gray-400">Max Discount</span>
+            <div className="flex items-center justify-between px-3.5 py-2.5">
+              <span className="text-[11px] text-[#8A8A8A]">Max Discount</span>
               <Chip color="red">
                 <FiPercent size={9} />
                 {maxDisc.toFixed(0)}%
@@ -538,9 +585,9 @@ function ProductInfoPanel({
             </div>
           )}
           {bestBulk != null && bestBulk < (minP ?? Infinity) && (
-            <div className="flex items-center justify-between bg-gray-50/30 px-3 py-2">
-              <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                <FiZap size={10} className="text-black" />
+            <div className="flex items-center justify-between bg-[#FAF8F5] px-3.5 py-2.5">
+              <span className="flex items-center gap-1 text-[11px] text-[#8A8A8A]">
+                <FiZap size={10} className="text-[#191919]" />
                 Best Bulk Price
               </span>
               <span className="text-sm font-bold text-black">
@@ -552,8 +599,8 @@ function ProductInfoPanel({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <div className="border border-black/[0.04] bg-gray-50/50 px-3 py-2.5 text-center">
-          <p className="text-[9px] uppercase tracking-wider text-gray-400">
+        <div className="rounded-xl border border-black/8 bg-[#FAF8F5] px-3 py-2.5 text-center">
+          <p className="text-[9px] uppercase tracking-wider text-[#8A8A8A]">
             Variations
           </p>
           <p className="text-lg font-black text-black">
@@ -563,7 +610,7 @@ function ProductInfoPanel({
         </div>
         <div
           className={cn(
-            "border px-3 py-2.5 text-center",
+            "rounded-xl border px-3 py-2.5 text-center",
             d.summary.total_in_stock > 0
               ? "border-emerald-200 bg-emerald-50"
               : "border-red-200 bg-red-50",
@@ -584,8 +631,8 @@ function ProductInfoPanel({
           </p>
           {isBetter.stock && <BetterBadge />}
         </div>
-        <div className="border border-black/[0.04] bg-gray-50/50 px-3 py-2.5 text-center">
-          <p className="text-[9px] uppercase tracking-wider text-gray-400">
+        <div className="rounded-xl border border-black/8 bg-[#FAF8F5] px-3 py-2.5 text-center">
+          <p className="text-[9px] uppercase tracking-wider text-[#8A8A8A]">
             Total Inventory
           </p>
           <p className="text-lg font-black text-black">
@@ -595,10 +642,10 @@ function ProductInfoPanel({
         </div>
         <div
           className={cn(
-            "border px-3 py-2.5 text-center",
+            "rounded-xl border px-3 py-2.5 text-center",
             d.free_delivery
               ? "border-emerald-200 bg-emerald-50"
-              : "border-black/[0.04] bg-gray-50/50",
+              : "border-black/8 bg-[#FAF8F5]",
           )}
         >
           <p className="text-[9px] uppercase tracking-wider text-gray-400">
@@ -616,14 +663,14 @@ function ProductInfoPanel({
         </div>
       </div>
 
-      <div className="overflow-hidden border border-black/[0.04]">
-        <div className="flex items-center gap-1.5 border-b border-black/[0.04] bg-gray-50/50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-black">
+      <div className="overflow-hidden rounded-xl border border-black/8">
+        <div className="flex items-center gap-1.5 border-b border-black/6 bg-[#FAF8F5] px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#191919]">
           <FiInfo size={11} /> Product Details
         </div>
-        <div className="divide-y divide-black/[0.04]">
+        <div className="divide-y divide-black/6">
           {d.brand && (
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-[10px] text-gray-400">Brand</span>
+            <div className="flex items-center justify-between px-3.5 py-2.5">
+              <span className="text-[11px] text-[#8A8A8A]">Brand</span>
               <span className="text-xs font-medium text-black">
                 {d.brand.name}
               </span>
@@ -689,8 +736,8 @@ function ProductInfoPanel({
         </div>
       </div>
 
-      <div className="overflow-hidden border border-black/[0.04]">
-        <div className="flex items-center gap-1.5 border-b border-black/[0.04] bg-gray-50/50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-black">
+      <div className="overflow-hidden rounded-xl border border-black/8">
+        <div className="flex items-center gap-1.5 border-b border-black/6 bg-[#FAF8F5] px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#191919]">
           <FiPercent size={11} /> Discount Eligibility
         </div>
         <div className="divide-y divide-black/[0.04]">
@@ -900,33 +947,33 @@ export default function ProductComparator() {
           selected={selectedA}
           onSelect={handleSelectA}
           onClear={handleClearA}
-          accentColor="bg-black"
+          accentColor="bg-primary"
         />
         <ProductPickerSearch
           slotLabel="Product B — Right"
           selected={selectedB}
           onSelect={handleSelectB}
           onClear={handleClearB}
-          accentColor="bg-gray-600"
+          accentColor="bg-[#8A8A8A]"
         />
       </div>
 
       {error && (
-        <div className="flex items-start gap-2.5 border border-red-200 bg-red-50 px-4 py-3">
+        <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
           <FiInfo size={14} className="mt-0.5 shrink-0 text-red-500" />
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
 
       {!slotA && !slotB && !comparing && (
-        <div className="flex flex-col items-center justify-center bg-white py-20 text-center shadow-[0px_0px_10px_rgba(0,0,0,0.06)] sm:py-24">
-          <div className="flex h-14 w-14 items-center justify-center bg-black/[0.03]">
-            <FiGitCommit className="h-7 w-7 text-gray-300" />
+        <div className="flex flex-col items-center justify-center rounded-xl bg-[#F6F4F0] px-6 py-20 text-center min-[768px]:py-24">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white">
+            <FiGitCommit className="h-7 w-7 text-[#B5B0A8]" />
           </div>
-          <p className="mt-4 text-sm font-bold text-black">
+          <p className="mt-4 text-sm font-bold text-[#191919]">
             Select two products to compare
           </p>
-          <p className="mt-1 max-w-sm text-xs text-gray-400">
+          <p className="mt-1 max-w-sm text-xs text-[#8A8A8A]">
             Use the search boxes above, or browse products and click the Compare
             button.
           </p>
@@ -945,8 +992,8 @@ export default function ProductComparator() {
           </div>
 
           {comparing && (
-            <div className="flex items-center justify-center gap-3 py-16 text-gray-500">
-              <div className="h-6 w-6 animate-spin border-2 border-black border-t-transparent" />
+            <div className="flex items-center justify-center gap-3 py-16 text-[#767676]">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#191919] border-t-transparent" />
               <span className="text-sm font-medium">
                 Fetching detailed comparison…
               </span>
@@ -954,7 +1001,7 @@ export default function ProductComparator() {
           )}
 
           {!comparing && (slotA || slotB) && !bothLoaded && (
-            <div className="bg-white py-10 text-center text-sm text-gray-400 shadow-[0px_0px_10px_rgba(0,0,0,0.06)] sm:py-12">
+            <div className="rounded-xl bg-[#F6F4F0] py-10 text-center text-sm text-[#8A8A8A] min-[768px]:py-12">
               {slotA && !slotB
                 ? "Now pick Product B above to see the full comparison"
                 : slotB && !slotA
@@ -1011,21 +1058,10 @@ export default function ProductComparator() {
 
               <div>
                 <SectionHeader
-                  icon={<FiImage size={14} className="text-black" />}
-                  label="Product Gallery"
-                />
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                  <ImageGallery images={dA.images} name={dA.name} />
-                  <ImageGallery images={dB.images} name={dB.name} />
-                </div>
-              </div>
-
-              <div>
-                <SectionHeader
                   icon={<FiTrendingUp size={14} className="text-black" />}
                   label="Popularity & Badges"
                 />
-                <div className="overflow-x-auto border border-black/[0.04] bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
+                <div className="overflow-x-auto rounded-xl border border-black/8 bg-white shadow-[0_8px_24px_rgba(20,16,12,0.05)]">
                   <div className="min-w-[360px] overflow-hidden">
                     <DataRow
                       label="Views"

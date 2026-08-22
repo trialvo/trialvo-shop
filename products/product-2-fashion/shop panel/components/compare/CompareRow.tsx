@@ -23,8 +23,8 @@ export default function CompareRow({
   return (
     <div
       className={cn(
-        "grid grid-cols-[1fr_2fr_2fr] border-b border-black/[0.04] last:border-0",
-        highlight && "bg-black/[0.01]",
+        "grid grid-cols-[1fr_2fr_2fr] border-b border-black/6 last:border-0",
+        highlight && "bg-[#FAF8F5]",
       )}
     >
       <div className="flex items-center px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">

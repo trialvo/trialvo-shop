@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
+import ImageWithFallback from "@/components/common/ImageWithFallback";
 import Link from "next/link";
 import {
   FiAlertCircle,
@@ -94,8 +94,9 @@ function BulkTiersBadge({ item }: { item: BudgetPlanItem }) {
   return (
     <div className="mt-2">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 text-[11px] font-semibold text-black transition-colors hover:opacity-60"
+        className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#191919] transition-colors hover:opacity-60"
       >
         {item.bulk_rules.length} bulk{" "}
         {item.bulk_rules.length === 1 ? "tier" : "tiers"}
@@ -108,10 +109,10 @@ function BulkTiersBadge({ item }: { item: BudgetPlanItem }) {
             <span
               key={i}
               className={cn(
-                "px-2 py-0.5 text-[10px] font-semibold",
+                "rounded-full px-2 py-0.5 text-[10px] font-semibold",
                 item.pricing.bulk_discount_applied?.min_qty === r.min_qty
-                  ? "bg-black text-white"
-                  : "bg-gray-100 text-gray-700",
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-[#F3F1ED] text-[#555]",
               )}
             >
               {r.min_qty}+ pcs: {r.discount_label} → ৳
@@ -158,34 +159,29 @@ function ResultCard({
   const a = item.affordability;
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden border border-black/[0.06] bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.06)] transition-colors hover:border-black/10">
-      <div
-        className={`absolute right-3 top-3 flex h-7 w-7 items-center justify-center text-xs font-black text-white ${
-          rank === 1
-            ? "bg-black"
-            : rank === 2
-              ? "bg-gray-600"
-              : rank === 3
-                ? "bg-gray-400"
-                : "bg-gray-300"
-        }`}
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-black/8 bg-white shadow-[0_8px_24px_rgba(20,16,12,0.05)] transition-shadow duration-200 hover:shadow-[0_14px_36px_rgba(20,16,12,0.10)]">
+      <span
+        className={cn(
+          "absolute right-3 top-3 z-10 inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white",
+          rank === 1 ? "bg-primary" : rank <= 3 ? "bg-[#5A5A5A]" : "bg-[#A8A8A8]",
+        )}
       >
         #{rank}
-      </div>
+      </span>
 
-      <div className="flex gap-3 p-4">
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden border border-black/[0.04] bg-gray-50">
+      <div className="flex gap-3 p-3.5 min-[768px]:p-4">
+        <div className="relative h-[88px] w-[72px] shrink-0 overflow-hidden rounded-lg bg-[#f4efe8]">
           {img ? (
-            <Image
+            <ImageWithFallback
               src={img}
               alt={item.product_name}
               fill
-              className="object-contain p-2"
-              sizes="80px"
+              sizes="72px"
+              className="object-cover object-center"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <FiShoppingBag className="h-7 w-7 text-gray-300" />
+              <FiShoppingBag className="h-6 w-6 text-[#C8C2BA]" />
             </div>
           )}
         </div>
@@ -194,122 +190,97 @@ function ResultCard({
           <Link
             href={`/products/${encodeURIComponent(item.product_slug)}/${item.product_id}`}
             target="_blank"
-            className="line-clamp-2 block text-sm font-semibold leading-snug text-black transition-colors hover:opacity-60"
+            className="line-clamp-2 block text-[13px] font-semibold leading-snug text-[#191919] hover:opacity-70"
           >
             {item.product_name}
           </Link>
-          {/* Show variant info or merged badge */}
           {item.merged_variants ? (
             <VariantBadge merged={item.merged_variants} />
           ) : (
             (item.color_name || item.variant_name) && (
-              <p className="mt-0.5 text-xs text-gray-400">
+              <p className="mt-0.5 text-xs text-[#8A8A8A]">
                 {[item.color_name, item.variant_name].filter(Boolean).join(" · ")}
               </p>
             )
           )}
-          {item.category_name && (
-            <p className="text-[10px] text-gray-400">{item.category_name}</p>
-          )}
+          {item.category_name ? (
+            <p className="mt-0.5 text-[11px] text-[#8A8A8A]">{item.category_name}</p>
+          ) : null}
+          {item.free_delivery ? (
+            <p className="mt-1 text-[11px] font-semibold text-[#1A8A43]">Free delivery</p>
+          ) : null}
         </div>
       </div>
 
-      <div className="border-t border-black/[0.04] bg-gray-50/50 text-xs">
-        <div className="flex items-center justify-between border-b border-black/[0.04] px-3 py-2">
-          <span className="text-gray-500">Original price</span>
-          <span className="font-medium text-black">
-            ৳{p.original_price.toLocaleString()}
-          </span>
+      <div className="space-y-1.5 border-t border-black/6 px-3.5 py-3 text-xs min-[768px]:px-4">
+        <div className="flex items-center justify-between">
+          <span className="text-[#8A8A8A]">Original</span>
+          <span className="font-medium text-[#191919]">৳{p.original_price.toLocaleString()}</span>
         </div>
-
-        {p.item_discount > 0 && (
-          <div className="flex items-center justify-between border-b border-black/[0.04] px-3 py-2">
-            <span className="text-red-500">Item discount</span>
-            <span className="font-semibold text-red-500">
-              -৳{p.item_discount.toLocaleString()}
-            </span>
+        {p.item_discount > 0 ? (
+          <div className="flex items-center justify-between">
+            <span className="text-[#8A8A8A]">Item discount</span>
+            <span className="font-semibold text-[#D93030]">-৳{p.item_discount.toLocaleString()}</span>
           </div>
-        )}
-
-        {p.bulk_discount_applied && (
-          <div className="flex items-center justify-between border-b border-black/[0.04] px-3 py-2">
-            <span className="text-black">
-              Bulk ({p.bulk_discount_applied.min_qty}+ pcs)
-            </span>
-            <span className="font-semibold text-black">
-              {p.bulk_discount_applied.discount_label}
-            </span>
+        ) : null}
+        {p.bulk_discount_applied ? (
+          <div className="flex items-center justify-between">
+            <span className="text-[#8A8A8A]">Bulk ({p.bulk_discount_applied.min_qty}+ pcs)</span>
+            <span className="font-semibold text-[#191919]">{p.bulk_discount_applied.discount_label}</span>
           </div>
-        )}
-
-        {p.coupon_discount_per_unit > 0 && (
-          <div className="flex items-center justify-between border-b border-black/[0.04] px-3 py-2">
-            <span className="text-emerald-600">Coupon (per unit)</span>
-            <span className="font-semibold text-emerald-600">
+        ) : null}
+        {p.coupon_discount_per_unit > 0 ? (
+          <div className="flex items-center justify-between">
+            <span className="text-[#8A8A8A]">Coupon / unit</span>
+            <span className="font-semibold text-[#1A8A43]">
               -৳{p.coupon_discount_per_unit.toLocaleString()}
             </span>
           </div>
-        )}
-
-        <div className="flex items-center justify-between bg-white px-3 py-2">
-          <span className="font-semibold text-black">Final per unit</span>
-          <span className="font-bold text-black">
+        ) : null}
+        <div className="flex items-center justify-between pt-0.5">
+          <span className="font-semibold text-[#191919]">Final per unit</span>
+          <span className="text-sm font-bold text-[#191919]">
             ৳{p.effective_price_per_unit.toLocaleString()}
           </span>
         </div>
         <PriceRange merged={item.merged_variants} />
-      </div>
-
-      <div className="px-4">
         <BulkTiersBadge item={item} />
       </div>
 
-      <div className="mt-auto border-t border-black/[0.04] bg-black px-4 py-3 text-white">
-        <div className="flex items-baseline justify-between gap-2">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
-              You can buy
-            </p>
-            <p className="text-3xl font-black leading-none">
-              {a.qty_affordable}{" "}
-              <span className="text-base font-semibold opacity-80">pcs</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] opacity-80">Total spend</p>
-            <p className="text-sm font-bold">
-              ৳{a.total_spend.toLocaleString()}
-            </p>
-            {a.total_saved > 0 && (
-              <p className="text-[10px] font-semibold text-emerald-300">
-                Save ৳{a.total_saved.toLocaleString()}
-              </p>
-            )}
-            {a.change > 0 && (
-              <p className="text-[10px] opacity-80">
-                Change: ৳{a.change.toLocaleString()}
-              </p>
-            )}
-          </div>
+      <div className="mt-auto grid grid-cols-3 border-t border-black/6 bg-[#F6F4F0] text-center">
+        <div className="px-1.5 py-2.5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">Qty</p>
+          <p className="mt-0.5 text-sm font-bold text-[#191919]">{a.qty_affordable}</p>
         </div>
-        {item.free_delivery && (
-          <p className="mt-1 text-[10px] font-semibold text-emerald-300">
-            Free Delivery
+        <div className="border-x border-black/6 px-1.5 py-2.5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">You pay</p>
+          <p className="mt-0.5 truncate text-sm font-bold text-[#191919]">
+            ৳{a.total_spend.toLocaleString()}
           </p>
-        )}
+        </div>
+        <div className="px-1.5 py-2.5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[#8A8A8A]">Save</p>
+          <p className="mt-0.5 truncate text-sm font-bold text-[#1A8A43]">
+            {a.total_saved > 0 ? `৳${a.total_saved.toLocaleString()}` : "—"}
+          </p>
+        </div>
       </div>
+      {a.change > 0 ? (
+        <p className="bg-[#F6F4F0] px-3.5 pb-2 text-center text-[11px] text-[#8A8A8A]">
+          Change ৳{a.change.toLocaleString()}
+        </p>
+      ) : null}
 
-      {/* Add to Cart button */}
-      {onQuickAdd && (
+      {onQuickAdd ? (
         <button
           type="button"
           onClick={() => onQuickAdd(item.product_id, item.affordability.qty_affordable)}
-          className="flex items-center justify-center gap-2 border-t border-white/20 bg-black py-2.5 text-xs font-semibold text-white transition-colors hover:bg-gray-800"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          <FiShoppingCart size={13} />
-          Select Variation & Add to Cart
+          <FiShoppingCart size={14} />
+          Select variation & add
         </button>
-      )}
+      ) : null}
     </article>
   );
 }
@@ -337,106 +308,91 @@ function SuggestionCard({
   return (
     <div
       className={cn(
-        "group relative flex h-full w-full flex-col overflow-hidden border text-left transition-all",
+        "group relative flex h-full w-full flex-col overflow-hidden rounded-xl border bg-white text-left transition-shadow",
         selected
-          ? "border-black shadow-[0px_0px_10px_rgba(0,0,0,0.12)]"
-          : "border-black/[0.06] bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.04)] hover:border-black/10",
+          ? "border-[#191919] shadow-[0_10px_28px_rgba(20,16,12,0.12)]"
+          : "border-black/8 shadow-[0_8px_24px_rgba(20,16,12,0.04)] hover:shadow-[0_12px_28px_rgba(20,16,12,0.08)]",
       )}
     >
-      {/* Rank badge */}
-      <div
-        className={`absolute right-2 top-2 flex h-5 w-5 items-center justify-center text-[9px] font-black text-white ${
-          rank === 1 ? "bg-black" : "bg-gray-400"
-        }`}
+      <span
+        className={cn(
+          "absolute right-2 top-2 z-10 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white",
+          rank === 1 ? "bg-primary" : "bg-[#A8A8A8]",
+        )}
       >
         {rank}
-      </div>
-
-      {/* Selected checkmark */}
-      {selected && (
-        <div className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center bg-black">
-          <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
+      </span>
+      {selected ? (
+        <span className="absolute left-2 top-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none">
             <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </div>
-      )}
+        </span>
+      ) : null}
 
-      {/* Clickable content area for selection */}
-      <button
-        type="button"
-        onClick={onSelect}
-        className="flex flex-1 flex-col text-left"
-      >
+      <button type="button" onClick={onSelect} className="flex flex-1 flex-col text-left">
         <div className="flex gap-2 p-3">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden border border-black/[0.04] bg-gray-50">
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-[#f4efe8]">
             {img ? (
-              <Image
+              <ImageWithFallback
                 src={img}
                 alt={item.product_name}
                 fill
-                className="object-contain p-1"
                 sizes="56px"
+                className="object-cover object-center"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
-                <FiShoppingBag className="h-5 w-5 text-gray-300" />
+                <FiShoppingBag className="h-5 w-5 text-[#C8C2BA]" />
               </div>
             )}
           </div>
           <div className="min-w-0 flex-1 pr-5">
-            <p className="line-clamp-2 text-xs font-semibold leading-snug text-black">
+            <p className="line-clamp-2 text-xs font-semibold leading-snug text-[#191919]">
               {item.product_name}
             </p>
-            {item.merged_variants && item.merged_variants.total_variants > 1 && (
+            {item.merged_variants && item.merged_variants.total_variants > 1 ? (
               <VariantBadge merged={item.merged_variants} />
-            )}
+            ) : null}
           </div>
         </div>
 
-        <div className="mt-auto border-t border-black/[0.04] bg-gray-50/50 px-3 py-1.5 text-[11px]">
+        <div className="mt-auto border-t border-black/6 bg-[#FAF8F5] px-3 py-2 text-[11px]">
           <div className="flex items-center justify-between">
-            <span className="text-gray-500">Per unit</span>
-            <span className="font-bold text-black">
-              ৳{p.effective_price_per_unit.toLocaleString()}
-            </span>
+            <span className="text-[#8A8A8A]">Per unit</span>
+            <span className="font-bold text-[#191919]">৳{p.effective_price_per_unit.toLocaleString()}</span>
           </div>
-          {p.item_discount > 0 && (
-            <div className="flex items-center justify-between">
-              <span className="text-red-400">Discount</span>
-              <span className="font-medium text-red-500">-৳{p.item_discount.toLocaleString()}</span>
+          {p.item_discount > 0 ? (
+            <div className="mt-0.5 flex items-center justify-between">
+              <span className="text-[#8A8A8A]">Discount</span>
+              <span className="font-medium text-[#D93030]">-৳{p.item_discount.toLocaleString()}</span>
             </div>
-          )}
+          ) : null}
         </div>
 
-        <div className={cn(
-          "px-3 py-2 text-xs transition-colors",
-          selected ? "bg-black text-white" : "bg-gray-100 text-black",
-        )}>
-          <div className="flex items-baseline justify-between">
-            <span className="font-semibold">
-              {requestedQty} pcs × ৳{p.effective_price_per_unit.toLocaleString()}
+        <div className="border-t border-black/6 px-3 py-2 text-xs">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[#6B6B6B]">
+              {requestedQty} pcs
             </span>
-            <span className="font-black">
-              ৳{item.total_for_qty.toLocaleString()}
-            </span>
+            <span className="font-bold text-[#191919]">৳{item.total_for_qty.toLocaleString()}</span>
           </div>
         </div>
       </button>
 
-      {/* Add to Cart button */}
-      {onQuickAdd && (
+      {onQuickAdd ? (
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onQuickAdd(item.product_id, requestedQty);
           }}
-          className="flex items-center justify-center gap-1.5 border-t border-black/[0.06] bg-white py-2 text-[10px] font-semibold text-black transition-colors hover:bg-black hover:text-white"
+          className="inline-flex items-center justify-center gap-1.5 border-t border-black/6 py-2 text-[11px] font-semibold text-[#191919] transition-colors hover:bg-primary hover:text-primary-foreground"
         >
-          <FiShoppingCart size={11} />
-          Add to Cart
+          <FiShoppingCart size={12} />
+          Add to cart
         </button>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -649,7 +605,7 @@ export default function BudgetPlanner() {
   return (
     <div className="space-y-3">
       {/* ─── Input panel ─────────────────────────────────────── */}
-      <div className="space-y-4 bg-white p-5 shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
+      <div className="space-y-4 rounded-xl border border-black/8 bg-white p-5 shadow-[0_8px_24px_rgba(20,16,12,0.05)]">
         <div>
           <h3 className="text-sm font-bold text-black">
             Set Budget & Filters
@@ -673,7 +629,7 @@ export default function BudgetPlanner() {
                 onChange={(e) => setBudget(e.target.value)}
                 placeholder="e.g. 5000"
                 min={0}
-                className="rounded-none pl-8 font-semibold"
+                className="rounded-lg pl-8 font-semibold"
               />
             </div>
           </div>
@@ -693,7 +649,7 @@ export default function BudgetPlanner() {
                     setCouponCode(e.target.value.toUpperCase())
                   }
                   placeholder="SAVE20"
-                  className="rounded-none pl-9 font-mono font-semibold"
+                  className="rounded-lg pl-9 font-mono font-semibold"
                 />
               </div>
 
@@ -701,7 +657,7 @@ export default function BudgetPlanner() {
                 <Button
                   variant="outline"
                   onClick={handleClearCoupon}
-                  className="h-9 rounded-none border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 sm:min-w-[96px]"
+                  className="h-9 rounded-lg border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 sm:min-w-[96px]"
                 >
                   Remove
                 </Button>
@@ -709,7 +665,7 @@ export default function BudgetPlanner() {
                 <Button
                   onClick={handleApplyCoupon}
                   disabled={loading || !couponCode.trim() || !budgetNum}
-                  className="h-9 rounded-none sm:min-w-[96px]"
+                  className="h-9 rounded-lg sm:min-w-[96px]"
                 >
                   {loading ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -744,7 +700,7 @@ export default function BudgetPlanner() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="shirt, pant, dress..."
-                className="rounded-none pl-9"
+                className="rounded-lg pl-9"
               />
               {loading && (
                 <Loader2
@@ -804,7 +760,7 @@ export default function BudgetPlanner() {
                   size="sm"
                   onClick={addAllocation}
                   disabled={allocations.length >= 10}
-                  className="h-8 gap-1.5 rounded-none text-xs"
+                  className="h-8 gap-1.5 rounded-lg text-xs"
                 >
                   <FiPlus size={12} />
                   Add Category
@@ -815,7 +771,7 @@ export default function BudgetPlanner() {
                     size="sm"
                     onClick={handleSearchPlan}
                     disabled={loading || !budgetNum}
-                    className="h-8 gap-1.5 rounded-none text-xs"
+                    className="h-8 gap-1.5 rounded-lg text-xs"
                   >
                     {loading ? (
                       <Loader2 size={12} className="animate-spin" />
@@ -868,7 +824,7 @@ export default function BudgetPlanner() {
           {/* ═══ Simple flat results ═══ */}
           {!allocationData && (
             <>
-              <div className="bg-white px-5 py-3 shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
+              <div className="rounded-xl border border-black/8 bg-white px-5 py-3 shadow-[0_8px_24px_rgba(20,16,12,0.05)]">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h4 className="text-sm font-bold text-black">
@@ -898,9 +854,9 @@ export default function BudgetPlanner() {
               </div>
 
               {!loading && flatItems.length === 0 && (
-                <div className="flex flex-col items-center justify-center bg-white py-16 text-center shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
-                  <div className="flex h-14 w-14 items-center justify-center bg-black/[0.03]">
-                    <FiShoppingBag className="h-7 w-7 text-gray-300" />
+                <div className="flex flex-col items-center justify-center rounded-xl bg-[#F6F4F0] py-16 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white">
+                    <FiShoppingBag className="h-7 w-7 text-[#B5B0A8]" />
                   </div>
                   <p className="mt-4 text-sm font-bold text-black">
                     Nothing in this budget yet
@@ -950,9 +906,9 @@ export default function BudgetPlanner() {
       )}
 
       {!budgetNum && (
-        <div className="flex flex-col items-center justify-center bg-white py-20 text-center shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
-          <div className="flex h-14 w-14 items-center justify-center bg-black/[0.03]">
-            <FiShoppingBag className="h-7 w-7 text-gray-300" />
+        <div className="flex flex-col items-center justify-center rounded-xl bg-[#F6F4F0] py-20 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white">
+            <FiShoppingBag className="h-7 w-7 text-[#B5B0A8]" />
           </div>
           <p className="mt-4 text-sm font-bold text-black">
             Enter your budget to start planning
@@ -998,7 +954,7 @@ function AllocationCategorySection({
   return (
     <div className="space-y-2">
       {/* Section header */}
-      <div className="flex items-center justify-between bg-white px-5 py-3 shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
+      <div className="flex items-center justify-between rounded-xl border border-black/8 bg-white px-5 py-3 shadow-[0_8px_24px_rgba(20,16,12,0.05)]">
         <div className="flex items-center gap-3">
           <span className="flex h-8 w-8 items-center justify-center bg-black text-xs font-black text-white">
             {group.requested_qty}

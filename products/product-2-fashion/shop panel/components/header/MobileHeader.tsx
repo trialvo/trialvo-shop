@@ -240,6 +240,7 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
       <div className="h-11 min-[576px]:h-12" aria-hidden />
 
       <SearchPopup
+        viewport="mobile"
         open={searchOpen}
         onClose={() => dispatch(setSearchOpen(false))}
         categories={subCategoriesLoading ? [{ value: "all", label: "Choose Categories" }] : apiCategories}

@@ -9,6 +9,7 @@ import { cn, toPublicUrl } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { FiChevronDown, FiChevronLeft, FiChevronRight, FiHeart, FiSearch, FiShoppingBag, FiX } from "react-icons/fi";
 
 type SearchPopupProps = {
@@ -21,7 +22,28 @@ type SearchPopupProps = {
   onQueryChange: (value: string) => void;
   category: string;
   onCategoryChange: (value: string) => void;
+  viewport?: "desktop" | "mobile";
 };
+
+function useViewportActive(viewport?: "desktop" | "mobile"): boolean {
+  const [active, setActive] = React.useState(false);
+
+  React.useLayoutEffect(() => {
+    if (!viewport) {
+      setActive(true);
+      return;
+    }
+    const query = window.matchMedia(
+      viewport === "desktop" ? "(min-width: 768px)" : "(max-width: 767px)",
+    );
+    const sync = () => setActive(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, [viewport]);
+
+  return active;
+}
 
 const ACCENT = "#E31C3D";
 
@@ -171,8 +193,13 @@ export default function SearchPopup({
   onQueryChange,
   category,
   onCategoryChange,
+  viewport,
 }: SearchPopupProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const bodyScrollRef = React.useRef<HTMLDivElement>(null);
+  const viewportActive = useViewportActive(viewport);
+  const [portalTarget, setPortalTarget] = React.useState<HTMLElement | null>(null);
+  const [bodyScrolling, setBodyScrolling] = React.useState(false);
   const scrollerRef = React.useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = React.useState(-1);
   const [canPrev, setCanPrev] = React.useState(false);
@@ -200,22 +227,58 @@ export default function SearchPopup({
     setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
   }, []);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
+
+  React.useLayoutEffect(() => {
+    if (!viewportActive) return;
+
     if (open) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => inputRef.current?.focus());
-      });
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      const scrollbar = window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbar > 0) {
+        document.body.style.paddingRight = `${scrollbar}px`;
+      }
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
-      setActiveIndex(-1);
+      return;
     }
+
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  }, [open, viewportActive]);
+
+  React.useEffect(() => {
     return () => {
       document.body.style.overflow = "";
       document.body.style.paddingRight = "";
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!viewportActive || !open) {
+      setActiveIndex(-1);
+      return;
+    }
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 320);
+    return () => window.clearTimeout(timer);
+  }, [open, viewportActive]);
+
+  React.useEffect(() => {
+    const el = bodyScrollRef.current;
+    if (!el || !open) {
+      setBodyScrolling(false);
+      return;
+    }
+    let timer = 0;
+    const onScroll = () => {
+      setBodyScrolling(true);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setBodyScrolling(false), 800);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.clearTimeout(timer);
     };
   }, [open]);
 
@@ -268,38 +331,41 @@ export default function SearchPopup({
       ? `Search ${selectedLabel}'s`
       : "Search";
 
-  return (
+  if (!viewportActive || !portalTarget) return null;
+
+  return createPortal(
     <div
       className={cn(
-        "fixed inset-0 z-[200] overflow-hidden",
-        "transition-opacity duration-300 ease-out",
-        open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+        "fixed inset-0 z-[1100] overflow-hidden",
+        open ? "pointer-events-auto" : "pointer-events-none",
       )}
       role="dialog"
       aria-modal="true"
       aria-label="Search"
     >
       <div
-        className={cn(
-          "absolute inset-0 bg-black/30 backdrop-blur-[3px]",
-          "transition-opacity duration-300",
-          open ? "opacity-100" : "opacity-0",
-        )}
+        className="absolute inset-0 bg-black/30 backdrop-blur-[3px]"
+        style={{
+          opacity: open ? 1 : 0,
+          transition: "opacity 320ms ease-out",
+        }}
         onClick={onClose}
         aria-hidden
       />
 
       <div
         data-search-panel
+        dir="ltr"
         className={cn(
-          "absolute inset-y-0 right-0 flex h-full w-full flex-col bg-white",
-          "min-[576px]:w-[min(100%,520px)]",
-          "min-[768px]:w-[min(100%,560px)]",
-          "min-[992px]:w-[min(100%,620px)]",
-          "min-[1200px]:w-[min(48vw,680px)]",
-          "min-[1400px]:w-[min(46vw,720px)]",
+          "fixed top-0 right-0 bottom-0 flex h-full w-full flex-col bg-white",
+          "min-[576px]:w-[520px] min-[576px]:max-w-full",
+          "min-[768px]:w-[560px]",
+          "min-[992px]:w-[620px]",
+          "min-[1200px]:w-[680px]",
+          "min-[1400px]:w-[720px]",
           "shadow-[-8px_0_40px_rgba(0,0,0,0.08)]",
-          "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          "motion-reduce:transition-none",
           open ? "translate-x-0" : "translate-x-full",
         )}
       >
@@ -321,7 +387,13 @@ export default function SearchPopup({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-8 min-[576px]:px-4 min-[576px]:pb-10 min-[768px]:px-5 min-[992px]:px-6 min-[1200px]:px-7">
+        <div
+          ref={bodyScrollRef}
+          className={cn(
+            "search-drawer-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-8 min-[576px]:px-4 min-[576px]:pb-10 min-[768px]:px-5 min-[992px]:px-6 min-[1200px]:px-7",
+            bodyScrolling && "is-scrolling",
+          )}
+        >
           {/* Search bar — category + input + icon */}
           <div className="flex h-11 items-stretch overflow-hidden rounded-md border border-[#d9d9d9] bg-white min-[576px]:h-12 min-[1200px]:h-[52px]">
             <div className="relative flex shrink-0 items-center border-r border-[#e5e5e5] bg-[#f3eee8]">
@@ -522,6 +594,7 @@ export default function SearchPopup({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    portalTarget,
   );
 }

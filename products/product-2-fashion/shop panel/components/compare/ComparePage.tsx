@@ -52,77 +52,61 @@ export default function ComparePage() {
   );
 
   return (
-    <section className="container mx-auto pt-11 px-1.5 pb-6 sm:pt-0 sm:px-0">
-      <Breadcrumbs
-        items={[{ label: "Home", href: "/" }, { label: "Compare" }]}
-      />
+    <section className="container mx-auto px-3 pb-16 pt-11 min-[768px]:px-0 min-[768px]:pb-20 min-[768px]:pt-0">
+      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Compare" }]} />
 
-      <div className="sm:mb-17.5 space-y-3">
-        <div className="border-0 bg-white px-4 py-2.5 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-          <div className="flex items-center gap-3">
-            <FiGitCommit className="h-5 w-5 text-black" />
-            <div>
-              <h1 className="text-xl font-bold text-black">
-                Compare & Plan Purchase
-              </h1>
-              <p className="hidden text-xs text-gray-400 sm:block">
-                Compare products across variations, stock, pricing, and
-                discounts
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="mt-1 min-[768px]:mt-2">
+        <h1 className="text-[26px] font-bold leading-none tracking-[-0.02em] text-[#191919] min-[768px]:text-[32px]">
+          Compare
+        </h1>
+        <p className="mt-2 max-w-lg text-sm leading-relaxed text-[#5F5F5F]">
+          Put two products side by side, or plan how many pieces your budget can buy.
+        </p>
+      </div>
 
-        <div className="relative bg-white p-1.5 shadow-[0px_0px_10px_rgba(0,0,0,0.06)] sm:p-2">
-          <div className="grid grid-cols-2 gap-1.5">
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleTabChange(tab.id)}
+      <div className="sticky top-[var(--shop-header-offset,72px)] z-20 mt-5 bg-white/95 py-2 backdrop-blur-sm transition-[top] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]">
+        <div className="grid grid-cols-2 rounded-xl bg-[#F3F1ED] p-1">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={cn(
+                  "flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 text-center transition-colors min-[768px]:flex-row min-[768px]:gap-2.5 min-[768px]:px-4",
+                  isActive
+                    ? "bg-white text-[#191919] shadow-[0_2px_10px_rgba(20,16,12,0.08)]"
+                    : "text-[#666] hover:text-[#191919]",
+                )}
+                aria-pressed={isActive}
+              >
+                <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold min-[768px]:text-sm">
+                  {tab.icon}
+                  {tab.label}
+                </span>
+                <span
                   className={cn(
-                    "group relative flex min-h-[52px] w-full items-center gap-3 border px-3.5 py-2.5 text-left transition-all duration-200 sm:px-4",
-                    isActive
-                      ? "border-black bg-black text-white"
-                      : "border-black/[0.06] bg-gray-50/50 text-black hover:bg-black/[0.02]",
+                    "hidden text-[11px] font-medium min-[768px]:inline",
+                    isActive ? "text-[#8A8A8A]" : "text-[#A0A0A0]",
                   )}
-                  aria-pressed={isActive}
                 >
-                  <span className="flex min-w-0 flex-col gap-1">
-                    <span className="inline-flex items-center gap-2 leading-none">
-                      {tab.icon}
-                      <span className="text-[13px] font-semibold sm:text-sm">
-                        {tab.label}
-                      </span>
-                    </span>
-                    <span
-                      className={cn(
-                        "text-[11px] font-medium leading-none transition-colors duration-200",
-                        isActive ? "text-white/80" : "text-gray-400",
-                      )}
-                    >
-                      {tab.desc}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                  {tab.desc}
+                </span>
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        <div
-          className={cn(
-            "transition-all duration-200 ease-out",
-            animating
-              ? "translate-y-1 opacity-0"
-              : "translate-y-0 opacity-100",
-          )}
-        >
-          {renderedTab === "compare" && <ProductComparator />}
-          {renderedTab === "budget" && <BudgetPlanner />}
-        </div>
+      <div
+        className={cn(
+          "mt-4 transition-all duration-200 ease-out min-[768px]:mt-5",
+          animating ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100",
+        )}
+      >
+        {renderedTab === "compare" && <ProductComparator />}
+        {renderedTab === "budget" && <BudgetPlanner />}
       </div>
     </section>
   );
