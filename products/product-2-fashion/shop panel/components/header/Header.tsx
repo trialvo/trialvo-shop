@@ -175,6 +175,9 @@ const Header: React.FC = () => {
     "var(--font-open-sans), 'Helvetica Neue', Helvetica, Tahoma, Arial, sans-serif";
 
   const headerRef = React.useRef<HTMLElement>(null);
+  const promoInnerRef = React.useRef<HTMLDivElement>(null);
+  const utilityRef = React.useRef<HTMLDivElement>(null);
+  const navInnerRef = React.useRef<HTMLDivElement>(null);
   const lastScrollY = React.useRef(0);
   const [promoDismissed, setPromoDismissed] = React.useState(false);
   const [atTop, setAtTop] = React.useState(true);
@@ -218,14 +221,31 @@ const Header: React.FC = () => {
     const el = headerRef.current;
     if (!el) return;
 
+    const desktopQuery = window.matchMedia("(min-width: 768px)");
+
     const syncOffset = () => {
-      el.style.setProperty("--shop-header-offset", `${el.offsetHeight}px`);
+      if (!desktopQuery.matches) {
+        document.documentElement.style.removeProperty("--shop-header-offset");
+        return;
+      }
+      const promo = showPromo ? (promoInnerRef.current?.offsetHeight ?? 0) : 0;
+      const utility = utilityRef.current?.offsetHeight ?? 0;
+      const nav = navCollapsed ? 0 : (navInnerRef.current?.offsetHeight ?? 0);
+      const value = `${promo + utility + nav}px`;
+      el.style.setProperty("--shop-header-offset", value);
+      document.documentElement.style.setProperty("--shop-header-offset", value);
     };
 
     syncOffset();
     const observer = new ResizeObserver(syncOffset);
-    observer.observe(el);
-    return () => observer.disconnect();
+    if (promoInnerRef.current) observer.observe(promoInnerRef.current);
+    if (utilityRef.current) observer.observe(utilityRef.current);
+    if (navInnerRef.current) observer.observe(navInnerRef.current);
+    desktopQuery.addEventListener("change", syncOffset);
+    return () => {
+      observer.disconnect();
+      desktopQuery.removeEventListener("change", syncOffset);
+    };
   }, [showPromo, navCollapsed]);
 
   const dismissPromo = () => {
@@ -253,6 +273,7 @@ const Header: React.FC = () => {
         >
           <div className="min-h-0 overflow-hidden">
             <div
+              ref={promoInnerRef}
               className="relative flex h-8 items-center justify-center bg-[#f6f6f6] px-10 text-center text-[11px] tracking-[0.04em] text-[#191919]"
               style={{ fontFamily: headerFont }}
             >
@@ -269,7 +290,10 @@ const Header: React.FC = () => {
           </div>
         </div>
 
-        <div className="relative mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between px-5 min-[992px]:h-[72px] min-[992px]:px-8 min-[1200px]:h-20 min-[1200px]:px-10">
+        <div
+          ref={utilityRef}
+          className="relative mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between px-5 min-[992px]:h-[72px] min-[992px]:px-8 min-[1200px]:h-20 min-[1200px]:px-10"
+        >
           <div className="flex min-w-0 flex-1 items-center gap-4 min-[992px]:gap-5">
             <button
               type="button"
@@ -339,7 +363,10 @@ const Header: React.FC = () => {
           )}
         >
           <div className="min-h-0 overflow-hidden">
-            <div className="flex w-full max-w-full justify-center overflow-x-auto border-t border-black/[0.06]">
+            <div
+              ref={navInnerRef}
+              className="flex w-full max-w-full justify-center overflow-x-auto border-t border-black/[0.06]"
+            >
               <NavigationMenuMain />
             </div>
           </div>
@@ -347,6 +374,7 @@ const Header: React.FC = () => {
       </header>
 
       <SearchPopup
+        viewport="desktop"
         open={searchOpen}
         onClose={() => dispatch(setSearchOpen(false))}
         categories={subCategoriesLoading ? [{ value: "all", label: "Choose Categories" }] : apiCategories}

@@ -52,55 +52,112 @@ html {
   overflow-x: clip;
 }
 
+/* Thin scrollbar — hidden until the page or a panel is scrolling */
 * {
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+  width: 5px;
+  height: 5px;
 }
 
-.overlay-scrollbar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  /* Wide invisible hit zone on the right edge only */
-  width: 24px;
-  height: 100vh;
-  z-index: 9999;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 160ms ease;
+*::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
 }
 
-/* Reveal only when cursor is on the right edge (or while dragging) */
-.overlay-scrollbar[data-visible="true"],
-.overlay-scrollbar[data-dragging="true"] {
-  opacity: 1;
-  pointer-events: auto;
+*::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
 }
 
-.overlay-scrollbar-thumb {
-  position: absolute;
-  top: 0;
-  right: 3px;
-  width: 10px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.45);
-  cursor: grab;
-  pointer-events: auto;
-  touch-action: none;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
-  transition: background 120ms ease, width 120ms ease;
+html.is-scrolling,
+html.is-scrolling *,
+.search-drawer-scroll.is-scrolling {
+  scrollbar-color: #d0d5dd #f2f4f7;
 }
 
-.overlay-scrollbar[data-visible="true"] .overlay-scrollbar-thumb:hover,
-.overlay-scrollbar[data-dragging="true"] .overlay-scrollbar-thumb {
-  width: 12px;
-  right: 2px;
-  background: rgba(0, 0, 0, 0.7);
-  cursor: grabbing;
+html.is-scrolling *::-webkit-scrollbar-track,
+.search-drawer-scroll.is-scrolling::-webkit-scrollbar-track {
+  background: #f2f4f7;
+}
+
+html.is-scrolling *::-webkit-scrollbar-thumb,
+.search-drawer-scroll.is-scrolling::-webkit-scrollbar-thumb {
+  background: #d0d5dd;
+}
+
+html.is-scrolling *::-webkit-scrollbar-thumb:hover,
+.search-drawer-scroll.is-scrolling::-webkit-scrollbar-thumb:hover {
+  background: #98a2b3;
+}
+
+.dark html.is-scrolling,
+.dark html.is-scrolling *,
+.dark .search-drawer-scroll.is-scrolling {
+  scrollbar-color: #475467 #1d2939;
+}
+
+.dark html.is-scrolling *::-webkit-scrollbar-track,
+.dark .search-drawer-scroll.is-scrolling::-webkit-scrollbar-track {
+  background: #1d2939;
+}
+
+.dark html.is-scrolling *::-webkit-scrollbar-thumb,
+.dark .search-drawer-scroll.is-scrolling::-webkit-scrollbar-thumb {
+  background: #475467;
+}
+
+.dark html.is-scrolling *::-webkit-scrollbar-thumb:hover,
+.dark .search-drawer-scroll.is-scrolling::-webkit-scrollbar-thumb:hover {
+  background: #667085;
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d0d5dd #f2f4f7;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f2f4f7;
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d0d5dd;
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #98a2b3;
+  }
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: #475467 #1d2939;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: #1d2939;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #475467;
 }
 
 :root {
@@ -294,26 +351,6 @@ html {
 
   body {
     @apply bg-background text-foreground;
-  }
-
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
-    border: 2px solid #f1f1f1;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #555;
   }
 }
 

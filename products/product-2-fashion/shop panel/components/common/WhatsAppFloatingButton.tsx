@@ -15,7 +15,7 @@ const WhatsAppFloatingButton: React.FC<WhatsAppFloatingButtonProps> = ({
     const href = `https://wa.me/+8801970680283`;
 
     return (
-        <div className="fixed bottom-18 right-2 sm:bottom-10 sm:right-5 z-10 group">
+        <div className="group fixed right-2 bottom-18 z-10 min-[768px]:hidden sm:right-5 sm:bottom-10">
             <div
                 className={cn(
                     "pointer-events-none absolute right-11.5 sm:right-16 top-1/2 -translate-y-1/2",

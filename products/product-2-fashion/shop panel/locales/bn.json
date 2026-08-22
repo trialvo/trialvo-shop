@@ -19,7 +19,15 @@
   "signIn": "সাইন ইন",
   "searchPlaceholder": "পণ্য খুঁজুন...",
   "myAccount": "আমার অ্যাকাউন্ট",
-  "allCategories": "সকল ক্যাটাগরি"
+  "allCategories": "সকল ক্যাটাগরি",
+  "addon": {
+    "whatsapp": "হোয়াটসঅ্যাপ",
+    "contact": "যোগাযোগ",
+    "compare": "তুলনা",
+    "offers": "অফার",
+    "megaSale": "মেগা সেল",
+    "help": "সাহায্য"
+  }
  },
  "accountMenu": {
   "myAccount": "আমার অ্যাকাউন্ট",

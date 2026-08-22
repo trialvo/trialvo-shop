@@ -24,7 +24,7 @@ function Select({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="h-9 w-full appearance-none border border-black/[0.08] bg-white pl-3 pr-8 text-xs font-medium text-black outline-none transition-colors focus:border-black disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-300"
+        className="h-9 w-full appearance-none rounded-lg border border-black/8 bg-white pl-3 pr-8 text-xs font-medium text-black outline-none transition-colors focus:border-[#191919] disabled:cursor-not-allowed disabled:bg-[#FAF8F5] disabled:text-gray-300"
       >
         <option value="">{placeholder}</option>
         {options.map((o) => (
@@ -124,9 +124,9 @@ export default function CategoryAllocationRow({
   };
 
   return (
-    <div className="group flex items-center gap-2 border border-black/[0.06] bg-white px-3 py-2 transition-colors hover:bg-gray-50/50">
+    <div className="group flex items-center gap-2 rounded-xl border border-black/8 bg-white px-3 py-2 transition-colors hover:bg-[#FAF8F5]">
       {/* Row number */}
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-black text-[10px] font-bold text-white">
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
         {index + 1}
       </span>
 
@@ -167,7 +167,7 @@ export default function CategoryAllocationRow({
             min={1}
             max={100}
             placeholder="Qty"
-            className="h-9 w-full border border-black/[0.08] bg-white text-center text-xs font-bold text-black outline-none transition-colors focus:border-black [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="h-9 w-full rounded-lg border border-black/8 bg-white text-center text-xs font-bold text-black outline-none transition-colors focus:border-[#191919] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-medium text-gray-300">
             pcs

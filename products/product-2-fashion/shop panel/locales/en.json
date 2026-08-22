@@ -14,12 +14,20 @@
   "backTo": "Back to",
   "or": "or"
  },
- "header": {
+  "header": {
   "chooseCategories": "Choose Categories",
   "signIn": "Sign In / Register",
   "searchPlaceholder": "Search products...",
   "myAccount": "My Account",
-  "allCategories": "All Categories"
+  "allCategories": "All Categories",
+  "addon": {
+    "whatsapp": "WhatsApp",
+    "contact": "Contact",
+    "compare": "Compare",
+    "offers": "Offers",
+    "megaSale": "Mega Sale",
+    "help": "Help"
+  }
  },
  "accountMenu": {
   "myAccount": "My Account",
