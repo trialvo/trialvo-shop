@@ -5,6 +5,8 @@ import { useHandleFavoriteClick } from "@/hooks/useHandleFavoriteClick";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { ProductListItem } from "@/lib/api/product/service";
 import { cn, getLocalName, toPublicUrl } from "@/lib/utils";
+import { useAppDispatch } from "@/redux/hooks";
+import { openModal } from "@/redux/slices/modalManagerSlice";
 import Link from "next/link";
 import React from "react";
 import { FiChevronLeft, FiChevronRight, FiHeart } from "react-icons/fi";
@@ -63,6 +65,7 @@ export default function HomeProductCarousel({
   isLoading = false,
 }: HomeProductCarouselProps) {
   const { t, language } = useTranslation();
+  const dispatch = useAppDispatch();
   const handleFavoriteClick = useHandleFavoriteClick();
   const scrollerRef = React.useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = React.useState(false);
@@ -98,6 +101,10 @@ export default function HomeProductCarousel({
     const card = el.querySelector<HTMLElement>("[data-product-rail-card]");
     const step = card ? card.offsetWidth + 8 : el.clientWidth * 0.7;
     el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
+  const openQuickAdd = (id: number) => {
+    dispatch(openModal({ key: "quickAdd", payload: { id } }));
   };
 
   if (!isLoading && list.length === 0) return null;
@@ -167,11 +174,6 @@ export default function HomeProductCarousel({
                   const img = productImage(product);
                   const { price, oldPrice } = productPrices(product);
                   const href = `/products/${encodeURIComponent(product.slug || "product")}/${product.id}/`;
-                  const badge = product.featured
-                    ? t("home.productRails.editorsPick")
-                    : product.best_deal
-                      ? t("home.productRails.bestDeal")
-                      : null;
 
                   return (
                     <Link
@@ -187,19 +189,14 @@ export default function HomeProductCarousel({
                             alt={displayName}
                             fill
                             sizes="(max-width: 768px) 46vw, (max-width: 1200px) 24vw, 17vw"
-                            className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+                            className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
                             preload={false}
                           />
                         ) : (
                           <div className="h-full w-full bg-muted" />
                         )}
-                        {badge ? (
-                          <div className="absolute inset-x-0 bottom-0 bg-black/30 px-2 py-1.5">
-                            <span className="block truncate text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-white">
-                              {badge}
-                            </span>
-                          </div>
-                        ) : null}
+
+                        {/* Wishlist — previous style */}
                         <button
                           type="button"
                           aria-label={t("productCard.addToWishlist")}
@@ -211,14 +208,45 @@ export default function HomeProductCarousel({
                               is_favourite: product.is_favourite,
                             });
                           }}
-                          className="absolute bottom-2 right-2 z-10 grid h-8 w-8 place-items-center text-white drop-shadow transition-transform hover:scale-110"
+                          className={cn(
+                            "absolute right-2 z-20 grid h-8 w-8 place-items-center text-white drop-shadow transition-all duration-300 hover:scale-110",
+                            "bottom-12 min-[768px]:bottom-2 min-[768px]:group-hover:bottom-12",
+                          )}
                         >
                           <FiHeart
-                            className={cn("h-4 w-4", product.is_favourite && "fill-white")}
+                            className={cn(
+                              "h-4 w-4",
+                              product.is_favourite && "fill-white",
+                            )}
                             strokeWidth={1.5}
                           />
                         </button>
+
+                        {/* Quick Add */}
+                        <div
+                          className={cn(
+                            "absolute inset-x-0 bottom-0 z-10",
+                            "translate-y-0 opacity-100",
+                            "min-[768px]:translate-y-full min-[768px]:opacity-0",
+                            "min-[768px]:transition-all min-[768px]:duration-250 min-[768px]:ease-out",
+                            "min-[768px]:group-hover:translate-y-0 min-[768px]:group-hover:opacity-100",
+                          )}
+                        >
+                          <button
+                            type="button"
+                            aria-label={t("productCard.quickAdd")}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openQuickAdd(product.id);
+                            }}
+                            className="flex h-10 w-full items-center justify-center bg-white text-[12px] font-medium text-black hover:bg-[#F7F7F7]"
+                          >
+                            {t("productCard.quickAdd")}
+                          </button>
+                        </div>
                       </div>
+
                       <div className="mt-2.5 px-1 text-center">
                         <p className="truncate text-[12px] font-bold uppercase tracking-[0.04em] text-[#191919]">
                           {lead}

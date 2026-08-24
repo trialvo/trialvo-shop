@@ -249,7 +249,8 @@
   "shippingPolicy": "ডেলিভারি নীতি",
   "viewImage": "ছবি দেখুন",
   "thumbnail": "থাম্বনেইল",
-  "galleryImage": "গ্যালারি ছবি"
+  "galleryImage": "গ্যালারি ছবি",
+  "relatedProducts": "সম্পর্কিত পণ্যসমূহ"
  },
  "featureHeader": {
   "title": "বিশেষ পণ্যসমূহ",

@@ -23,6 +23,9 @@ type Props = {
   sizes?: string;
 };
 
+const arrowBtn =
+  "h-8 w-8 rounded-full border border-black/8 bg-white text-[#191919] shadow-[0_2px_10px_rgba(20,16,12,0.1)] hover:bg-[#FAFAFA]";
+
 const QuickAddGalleryCarousel: React.FC<Props> = ({
   images,
   title,
@@ -32,7 +35,8 @@ const QuickAddGalleryCarousel: React.FC<Props> = ({
   imageClassName,
   sizes = "(max-width: 1024px) 90vw, 320px",
 }) => {
-  const showArrows = images.length > 1;
+  const list = Array.isArray(images) ? images : [];
+  const showArrows = list.length > 1;
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi | null>(null);
   const [canScrollPrev, setCanScrollPrev] = React.useState(false);
   const [canScrollNext, setCanScrollNext] = React.useState(false);
@@ -56,7 +60,7 @@ const QuickAddGalleryCarousel: React.FC<Props> = ({
     <div className={cn("relative w-full", className)}>
       <Carousel className="w-full" setApi={setCarouselApi}>
         <CarouselContent>
-          {images.map((img, idx) => {
+          {list.map((img, idx) => {
             const url = img?.path ? toPublicUrl(img.path) : null;
             const safeUrl = typeof url === "string" && url.trim().length > 0 ? url : null;
 
@@ -64,7 +68,7 @@ const QuickAddGalleryCarousel: React.FC<Props> = ({
               <CarouselItem key={`${img?.id ?? "img"}-${idx}`}>
                 <div
                   className={cn(
-                    "relative w-full overflow-hidden bg-transparent",
+                    "relative w-full overflow-hidden rounded-md bg-[#F1F1F1]",
                     heightClassName ?? aspectClassName,
                   )}
                 >
@@ -89,20 +93,10 @@ const QuickAddGalleryCarousel: React.FC<Props> = ({
         {showArrows ? (
           <>
             {canScrollPrev ? (
-              <CarouselPrevious
-                className={cn(
-                  "left-3",
-                  "transition-all duration-200 ease-out",
-                )}
-              />
+              <CarouselPrevious className={cn("left-2", arrowBtn)} />
             ) : null}
             {canScrollNext ? (
-              <CarouselNext
-                className={cn(
-                  "right-3",
-                  "transition-all duration-200 ease-out",
-                )}
-              />
+              <CarouselNext className={cn("right-2", arrowBtn)} />
             ) : null}
           </>
         ) : null}

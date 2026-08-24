@@ -179,6 +179,7 @@ const Header: React.FC = () => {
   const utilityRef = React.useRef<HTMLDivElement>(null);
   const navInnerRef = React.useRef<HTMLDivElement>(null);
   const lastScrollY = React.useRef(0);
+  const scrollLockUntil = React.useRef(0);
   const [promoDismissed, setPromoDismissed] = React.useState(false);
   const [atTop, setAtTop] = React.useState(true);
   const [navCollapsed, setNavCollapsed] = React.useState(false);
@@ -198,16 +199,32 @@ const Header: React.FC = () => {
 
     const onScroll = () => {
       const y = window.scrollY;
+      const now = Date.now();
       const delta = y - lastScrollY.current;
+      lastScrollY.current = y;
       setAtTop(y <= 2);
+
       if (y <= 8) {
         setNavCollapsed(false);
-      } else if (delta > 6) {
-        setNavCollapsed(true);
-      } else if (delta < -6) {
-        setNavCollapsed(false);
+        scrollLockUntil.current = 0;
+        return;
       }
-      lastScrollY.current = y;
+
+      // Ignore tiny jitter and lock briefly after a toggle so header
+      // height changes (--shop-header-offset) don't re-trigger scroll.
+      if (Math.abs(delta) < 14 || now < scrollLockUntil.current) return;
+
+      if (delta > 28) {
+        setNavCollapsed((prev) => {
+          if (!prev) scrollLockUntil.current = now + 400;
+          return true;
+        });
+      } else if (delta < -28) {
+        setNavCollapsed((prev) => {
+          if (prev) scrollLockUntil.current = now + 400;
+          return false;
+        });
+      }
     };
 
     onScroll();

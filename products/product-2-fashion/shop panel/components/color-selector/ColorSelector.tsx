@@ -10,7 +10,6 @@ type Props = {
   selectedColor: ColorValue;
   selectedColorCode: string;
   onChange: (color: ColorValue) => void;
-  /** Color names that exist but are unavailable for the current size selection */
   unavailableColors?: ReadonlySet<ColorValue>;
   wrap?: boolean;
   className?: string;
@@ -30,7 +29,6 @@ export function isValidCssColor(value: string): boolean {
   return s.color !== "";
 }
 
-
 const ColorSelector: React.FC<Props> = ({
   colors,
   selectedColor,
@@ -48,18 +46,15 @@ const ColorSelector: React.FC<Props> = ({
     return raw;
   }, [selectedColorCode]);
 
-
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <div className="text-sm font-medium flex items-center gap-1">
-        <span>
-          Color:
-        </span>
-        <span className="font-semibold">{selectedColor}</span>
+      <div className="flex items-center gap-1.5 text-sm text-[#191919]">
+        <span className="font-medium">Color:</span>
+        <span className="font-semibold">{selectedColor || "—"}</span>
         <span
           aria-label={`Selected color code: ${swatch}`}
           title={swatch}
-          className="h-4 w-4 rounded-[2px] border border-black/10 ml-0.5"
+          className="ml-0.5 h-3.5 w-3.5 rounded-[2px] border border-black/10"
           style={{ backgroundColor: swatch }}
         />
       </div>
@@ -71,7 +66,7 @@ const ColorSelector: React.FC<Props> = ({
           !wrap && "whitespace-nowrap [-webkit-overflow-scrolling:touch]",
           !wrap && "pr-1",
           !wrap && "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-          optionsClassName
+          optionsClassName,
         )}
       >
         {colors.map((color) => (
@@ -80,7 +75,8 @@ const ColorSelector: React.FC<Props> = ({
             value={color}
             isSelected={color === selectedColor}
             isUnavailable={unavailableColors?.has(color) ?? false}
-            onClick={() => onChange(color)} />
+            onClick={() => onChange(color)}
+          />
         ))}
       </div>
     </div>

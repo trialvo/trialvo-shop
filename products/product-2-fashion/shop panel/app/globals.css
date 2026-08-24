@@ -124,6 +124,32 @@ html.is-scrolling *::-webkit-scrollbar-thumb:hover,
   }
 }
 
+/* Hide scrollbars on horizontal sliders — scrolling / drag / swipe still work */
+.overflow-x-auto,
+.overflow-x-scroll,
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-x-scroll::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+html.is-scrolling .overflow-x-auto,
+html.is-scrolling .overflow-x-scroll,
+html.is-scrolling .scrollbar-none,
+.dark html.is-scrolling .overflow-x-auto,
+.dark html.is-scrolling .overflow-x-scroll,
+.dark html.is-scrolling .scrollbar-none {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+
 @utility custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #d0d5dd #f2f4f7;

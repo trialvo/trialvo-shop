@@ -48,6 +48,11 @@ const ProductDetails: React.FC<Props> = ({
           images={product?.images ?? []}
           selectedColorId={selectedColorId}
           selectedVariantId={selectedVariantId}
+          product={
+            product?.id
+              ? { id: product.id, is_favourite: product.is_favourite }
+              : undefined
+          }
         />
         <ProductInfoPanel
           product={product}

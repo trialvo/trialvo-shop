@@ -342,11 +342,19 @@ const QuickAddModalMobile: React.FC<Props> = ({
     if (!open) return null;
 
     if (isLoading) {
-        return <div className="p-6">{t("common.loading")}</div>;
+        return (
+            <div className="flex min-h-[240px] items-center justify-center p-8 text-sm text-black/50">
+                {t("common.loading")}
+            </div>
+        );
     }
 
     if (isError || !productDetail) {
-        return <div className="p-6 text-sm text-black/70">{t("quickAdd.failedToLoad")}</div>;
+        return (
+            <div className="flex min-h-[180px] items-center justify-center p-8 text-sm text-black/60">
+                {t("quickAdd.failedToLoad")}
+            </div>
+        );
     }
 
     return (
@@ -356,96 +364,112 @@ const QuickAddModalMobile: React.FC<Props> = ({
             isTop={isTop}
             zIndex={zIndex}
             contentClassName={cn(
-                "w-[calc(100vw-24px)] max-w-[520px]",
-                "border border-[#EDEDED] p-0",
-                className
+                "w-[calc(100vw-24px)] max-w-[480px]",
+                "overflow-hidden rounded-md border border-[#E8E8E8] p-0",
+                className,
             )}
         >
             <Button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                className="absolute -right-3 -top-3 z-10 h-8 w-8 rounded-none bg-black p-0 text-white hover:bg-black/90"
+                className="absolute right-2.5 top-2.5 z-20 h-8 w-8 rounded-md border border-[#D0D0D0] bg-white p-0 text-[#191919] shadow-none hover:border-[#191919] hover:bg-white"
                 aria-label="Close"
             >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" strokeWidth={1.75} />
             </Button>
 
-            <ScrollArea className="p-2">
-                <QuickAddGalleryCarousel images={productDetail?.images} title={productDetail?.name} heightClassName="h-[280px] sm:h-[340px] md:h-[420px]" />
+            <ScrollArea className="max-h-[min(88vh,720px)]">
+                <div className="bg-[#F7F7F7]">
+                    <QuickAddGalleryCarousel
+                        images={productDetail?.images}
+                        title={productDetail?.name}
+                        className="p-3"
+                        heightClassName="h-[260px] sm:h-[320px]"
+                        imageClassName="object-contain object-center"
+                    />
+                </div>
 
-                <div className="mt-2">
-                    <h3 className="text-base font-semibold text-black">{productDetail?.name}</h3>
+                <div className="space-y-4 p-4 pt-3">
+                    <div>
+                        <h3 className="pr-8 text-base font-medium leading-snug text-[#191919]">
+                            {productDetail?.name}
+                        </h3>
 
-                    <div className="mt-2 flex items-baseline gap-2">
-                        <p className="text-base font-semibold text-black">
-                            {money(price)}
+                        <div className="mt-2 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                            <p className="text-lg font-semibold text-[#191919]">{money(price)}</p>
+                            {typeof oldPrice === "number" && oldPrice > price ? (
+                                <p className="text-sm text-black/40 line-through">{money(oldPrice)}</p>
+                            ) : null}
+                        </div>
+
+                        <p
+                            className={cn(
+                                "mt-1.5 text-xs font-medium",
+                                stock === 0 ? "text-black/40" : "text-[#191919]",
+                            )}
+                        >
+                            {stock === 0 ? t("product.outOfStock") : t("product.inStock")}
                         </p>
+                    </div>
 
-                        {typeof oldPrice === "number" &&
-                            oldPrice > price ? (
-                            <p className="text-sm text-[#9A9A9A] line-through">
-                                {money(oldPrice)}
-                            </p>
-                        ) : null}
-                    </div>
-                    <div className="mt-0.5 flex items-baseline gap-1 text-xs">
-                        <p className="font-semibold text-black">{stock === 0 ? t("product.outOfStock") : t("product.inStock")}</p>
-                    </div>
-                    <div className="mt-2 space-y-2">
-                        <SizeSelector
-                            sizes={sizes}
-                            selectedSize={selectedSizeName as SizeValue}
-                            onChange={handleSizeChange}
-                            wrap={false}
-                            optionsClassName="pr-3"
+                    <SizeSelector
+                        sizes={sizes}
+                        selectedSize={selectedSizeName as SizeValue}
+                        onChange={handleSizeChange}
+                        wrap={false}
+                        optionsClassName="pr-3"
+                    />
+
+                    <ColorSelector
+                        colors={colors}
+                        selectedColor={selectedColorName as ColorValue}
+                        selectedColorCode={selectedColorCode}
+                        onChange={handleColorChange}
+                        wrap={false}
+                        optionsClassName="pr-3"
+                    />
+
+                    <div className="space-y-3">
+                        <ItemQuantity
+                            quantity={qty}
+                            onDecrease={() => setQty((p) => Math.max(1, p - 1))}
+                            onIncrease={() => setQty((p) => Math.min(maxQty, p + 1))}
+                            max={maxQty}
+                            className="rounded-md border-[#D0D0D0]"
                         />
 
-                        <ColorSelector
-                            colors={colors}
-                            selectedColor={selectedColorName as ColorValue}
-                            selectedColorCode={selectedColorCode}
-                            onChange={handleColorChange}
-                            wrap={false}
-                            optionsClassName="pr-3"
-                        />
+                        <Button
+                            type="button"
+                            onClick={handleAddToCart}
+                            className="h-10 w-full rounded-md bg-[#191919] text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed"
+                            disabled={stock === 0 || isInCart}
+                        >
+                            {stock === 0
+                                ? t("product.outOfStock")
+                                : isInCart
+                                    ? t("product.addedToCart")
+                                    : t("product.addToCart")}
+                        </Button>
+                    </div>
 
-                        <div className="flex flex-col gap-3">
-                            <ItemQuantity
-                                quantity={qty}
-                                onDecrease={() => setQty((p) => Math.max(1, p - 1))}
-                                onIncrease={() => setQty((p) => Math.min(maxQty, p + 1))}
-                                max={maxQty}
-                            />
+                    <div className="grid grid-cols-2 gap-2.5 pb-1">
+                        <Button
+                            asChild
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                            className="h-10 rounded-md border-[#D0D0D0] text-sm font-medium text-[#191919] hover:border-[#191919]"
+                        >
+                            <Link href={viewDetailsHref}>{t("quickAdd.viewFullDetails")}</Link>
+                        </Button>
 
-                            <Button
-                                type="button"
-                                onClick={handleAddToCart}
-                                className="h-11 w-full rounded-none bg-black text-sm font-medium text-white hover:bg-black/90"
-                                disabled={stock === 0 || isInCart}
-                            >
-                                {stock === 0 ? t("product.outOfStock") : isInCart ? t("product.addedToCart") : t("product.addToCart")}
-                            </Button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 pt-1">
-                            <Button
-                                asChild
-                                variant="outline"
-                                onClick={() => onOpenChange(false)}
-                                className="h-11 rounded-none border-[#BDBDBD] text-sm font-medium"
-                            >
-                                <Link href={viewDetailsHref}>{t("quickAdd.viewFullDetails")}</Link>
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                onClick={handleBuyNow}
-                                disabled={buyDisabled}
-                                className="h-11 rounded-none border-[#BDBDBD] text-sm font-medium"
-                            >
-                                {isInCart ? t("product.openCart") : t("product.buyNow")}
-                            </Button>
-                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={handleBuyNow}
+                            disabled={buyDisabled}
+                            className="h-10 rounded-md border-[#D0D0D0] text-sm font-medium text-[#191919] hover:border-[#191919] disabled:cursor-not-allowed"
+                        >
+                            {isInCart ? t("product.openCart") : t("product.buyNow")}
+                        </Button>
                     </div>
                 </div>
             </ScrollArea>

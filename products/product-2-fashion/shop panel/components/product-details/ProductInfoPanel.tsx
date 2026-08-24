@@ -359,20 +359,18 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
   const addDisabled = stock === 0 || isInCart;
   const buyDisabled = stock === 0 || guestIdLoading || isCreatingGuestOrder;
 
-  const mobileBottomBarPadding = "";
+  const iconBtn =
+    "h-9 w-9 shrink-0 rounded-md border border-[#D0D0D0] bg-white p-0 text-[#191919] hover:border-[#191919]";
 
   return (
-    <div
-      className={cn(
-        "relative col-span-12 sm:col-span-6",
-        mobileBottomBarPadding,
-        "sm:pb-0",
-      )}
-    >
-      <div className="space-y-5">
-        <div className="space-y-1">
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="w-full text-base font-medium text-black sm:w-130">{getLocalName(product?.name ?? "", product?.name_bd, language)}</h1>
+    <div className="relative col-span-12 sm:col-span-6 sm:pb-0">
+      <div className="space-y-4 min-[768px]:sticky min-[768px]:top-[calc(var(--shop-header-offset,72px)+12px)]">
+        {/* Title + share */}
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="min-w-0 flex-1 text-base font-medium leading-snug text-[#191919] min-[768px]:text-lg">
+              {getLocalName(product?.name ?? "", product?.name_bd, language)}
+            </h1>
 
             <ShareButton
               onClick={() => {
@@ -382,54 +380,53 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
                       title: product?.name ?? "",
                       url: window.location.href,
                     })
-                    .catch(() => { });
+                    .catch(() => {});
                 }
               }}
             />
           </div>
 
           {brandName ? (
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-2">
               {brandImg ? (
-                <div className="relative h-6 w-6 overflow-hidden rounded-sm border border-black/10 bg-white">
-                  <ImageWithFallback src={brandImg} alt={brandName} fill className="object-contain p-0.5" sizes="24px" />
+                <div className="relative h-5 w-5 overflow-hidden rounded-sm border border-black/10 bg-white">
+                  <ImageWithFallback
+                    src={brandImg}
+                    alt={brandName}
+                    fill
+                    className="object-contain p-0.5"
+                    sizes="20px"
+                  />
                 </div>
               ) : null}
-
-              <span className="text-xs font-medium text-black/70">{brandName}</span>
+              <span className="text-xs font-medium text-black/60">{brandName}</span>
             </div>
           ) : null}
 
-          <div className="flex items-baseline gap-3">
-            <div className="text-base font-semibold">
+          <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 pt-0.5">
+            <div className="text-lg font-semibold text-[#191919]">
               BDT {price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
 
             {typeof oldPrice === "number" && oldPrice > price ? (
-              <div className="text-xs text-[#888888] line-through">
-                {oldPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              <div className="text-sm text-black/40 line-through">
+                BDT {oldPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             ) : null}
           </div>
-        </div>
 
-        {isFreeDelivery && (
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-            <span>🚚</span>
-            <span>Free Delivery</span>
-          </div>
-        )}
-
-        <div className="space-y-1 text-sm font-medium">
-          <div>
-            <span className="font-medium">{t("product.sku")}:</span> {sku || "—"}
-          </div>
-          <div>
-            <span className="font-medium">{stock === 0 ? t("product.outOfStock") : t("product.inStock")}</span>
-          </div>
-
-          <div className="text-xs text-black/60">
-            {t("product.selected")}: {selectedSizeName || "—"} / {selectedColorName || "—"}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-black/55">
+            <span className={cn("font-medium", stock === 0 ? "text-black/40" : "text-[#191919]")}>
+              {stock === 0 ? t("product.outOfStock") : t("product.inStock")}
+            </span>
+            {isFreeDelivery ? (
+              <span className="font-medium text-emerald-700">Free Delivery</span>
+            ) : null}
+            {sku ? (
+              <span>
+                {t("product.sku")}: <span className="text-black/70">{sku}</span>
+              </span>
+            ) : null}
           </div>
         </div>
 
@@ -449,9 +446,9 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
         />
 
         <div className="hidden space-y-1.5 sm:block">
-          <div className="text-sm">
+          <div className="text-sm text-[#191919]">
             <span className="font-medium">{t("product.quantity")}:</span>{" "}
-            <span className="font-semibold">{String(qty).padStart(2, "0")}</span>
+            <span className="font-semibold tabular-nums">{String(qty).padStart(2, "0")}</span>
           </div>
 
           <ItemQuantity
@@ -459,14 +456,15 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
             onDecrease={() => setQty((p) => Math.max(1, p - 1))}
             onIncrease={() => setQty((p) => Math.min(maxQty, p + 1))}
             max={maxQty}
+            className="rounded-md border-[#D0D0D0]"
           />
         </div>
 
         <div className="flex items-end justify-between sm:hidden">
           <div className="space-y-1.5">
-            <div className="text-sm">
+            <div className="text-sm text-[#191919]">
               <span className="font-medium">{t("product.quantity")}:</span>{" "}
-              <span className="font-semibold">{String(qty).padStart(2, "0")}</span>
+              <span className="font-semibold tabular-nums">{String(qty).padStart(2, "0")}</span>
             </div>
 
             <ItemQuantity
@@ -474,6 +472,7 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
               onDecrease={() => setQty((p) => Math.max(1, p - 1))}
               onIncrease={() => setQty((p) => Math.min(maxQty, p + 1))}
               max={maxQty}
+              className="rounded-md border-[#D0D0D0]"
             />
           </div>
 
@@ -481,62 +480,72 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
             type="button"
             variant="outline"
             onClick={() => handleFavoriteClick(product)}
-            className="h-9 w-9 rounded-none border-[#999999] p-0"
+            className={iconBtn}
             aria-label={t("product.addToWishlist")}
           >
             <FiHeart
               className={cn(
-                "h-5 w-5",
-                product?.is_favourite ? "fill-[#E52D2D] text-[#E52D2D]" : "text-black",
+                "h-4.5 w-4.5",
+                product?.is_favourite ? "fill-[#E52D2D] text-[#E52D2D]" : "text-[#191919]",
               )}
+              strokeWidth={1.75}
             />
           </Button>
         </div>
 
-        {/* ── Desktop action row ── */}
-        <div className="hidden items-center gap-4 pt-2 sm:flex">
+        {/* Desktop actions */}
+        <div className="hidden items-center gap-3 pt-1 sm:flex">
           <Button
             type="button"
             variant="outline"
             onClick={() => handleFavoriteClick(product)}
-            className="h-9 w-9 rounded-none border-[#999999] p-0"
+            className={iconBtn}
             aria-label={t("product.addToWishlist")}
           >
             <FiHeart
               className={cn(
-                "h-5 w-5",
-                product?.is_favourite ? "fill-[#E52D2D] text-[#E52D2D]" : "text-black",
+                "h-4.5 w-4.5",
+                product?.is_favourite ? "fill-[#E52D2D] text-[#E52D2D]" : "text-[#191919]",
               )}
+              strokeWidth={1.75}
             />
           </Button>
 
           <Button
             type="button"
-            className="h-9 flex-1 rounded-none bg-black text-white hover:bg-black/90 disabled:cursor-not-allowed"
+            className="h-10 flex-1 rounded-md bg-[#191919] text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed"
             disabled={addDisabled}
             onClick={handleAddToCart}
           >
-            {stock === 0 ? t("product.outOfStock") : isInCart ? t("product.addedToCart") : t("product.addToCart")}
+            {stock === 0
+              ? t("product.outOfStock")
+              : isInCart
+                ? t("product.addedToCart")
+                : t("product.addToCart")}
           </Button>
 
           <Button
             type="button"
             variant="outline"
-            className="h-9 flex-1 rounded-none border-[#BDBDBD]"
+            className="h-10 flex-1 rounded-md border-[#D0D0D0] bg-white text-sm font-medium text-[#191919] hover:border-[#191919] disabled:cursor-not-allowed"
             onClick={handleBuyNow}
             disabled={buyDisabled}
           >
-            {
-              isInCart ? t("product.openCart") : t("product.buyNow")
-            }
+            {isInCart ? t("product.openCart") : t("product.buyNow")}
           </Button>
         </div>
 
-        {/* ─── Add to Compare (desktop, under action row) ─── */}
-        <div className="hidden sm:block pt-1">
+        <div className="hidden sm:block">
           <AddToCompareButton
-            product={{ id: product.id, name: product.name, slug: product.slug, thumbnail: undefined, images: (product as any).images }}
+            product={{
+              id: product.id,
+              name: product.name,
+              slug: product.slug,
+              thumbnail: undefined,
+              images: (product as any).images,
+            }}
             variant="full"
+            className="w-full justify-center rounded-md border-[#D0D0D0] py-2 text-sm font-medium"
           />
         </div>
       </div>
@@ -548,26 +557,28 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
           "pb-[env(safe-area-inset-bottom)]",
         )}
       >
-        <div className="mx-auto flex w-full max-w-[1120px] items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex w-full max-w-[1120px] items-center gap-2.5 px-4 py-3">
           <Button
             type="button"
-            className="h-11 flex-1 rounded-none bg-black text-white hover:bg-black/90 disabled:cursor-not-allowed"
+            className="h-11 flex-1 rounded-md bg-[#191919] text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed"
             disabled={addDisabled}
             onClick={handleAddToCart}
           >
-            {stock === 0 ? t("product.outOfStock") : isInCart ? t("product.addedToCart") : t("product.addToCart")}
+            {stock === 0
+              ? t("product.outOfStock")
+              : isInCart
+                ? t("product.addedToCart")
+                : t("product.addToCart")}
           </Button>
 
           <Button
             type="button"
             variant="outline"
-            className="h-11 flex-1 rounded-none border-[#BDBDBD]"
+            className="h-11 flex-1 rounded-md border-[#D0D0D0] text-sm font-medium text-[#191919] disabled:cursor-not-allowed"
             onClick={handleBuyNow}
             disabled={buyDisabled}
           >
-            {
-              isInCart ? t("product.openCart") : t("product.buyNow")
-            }
+            {isInCart ? t("product.openCart") : t("product.buyNow")}
           </Button>
         </div>
       </div>

@@ -190,7 +190,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                       handleFavoriteClick(product as unknown as ProductDetail);
                     }}
                   />
-                  <div className="absolute bottom-[68px] left-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{opacity: compareStore.isInCompare(product.id) ? 1 : undefined}}>
+                  <div
+                    className="absolute bottom-12 left-1.5 z-20 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                    style={{ opacity: compareStore.isInCompare(product.id) ? 1 : undefined }}
+                  >
                     <AddToCompareButton
                       product={{ id: product.id, name: product.name, slug: product.slug, thumbnail: product.thumbnail, images: product.images }}
                       variant="icon"
@@ -215,7 +218,10 @@ const ProductGrid: React.FC<ProductGridProps> = ({
                       handleFavoriteClick(product as unknown as ProductDetail);
                     }}
                   />
-                  <div className="absolute bottom-[68px] left-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{opacity: compareStore.isInCompare(product.id) ? 1 : undefined}}>
+                  <div
+                    className="absolute bottom-12 left-1.5 z-20 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                    style={{ opacity: compareStore.isInCompare(product.id) ? 1 : undefined }}
+                  >
                     <AddToCompareButton
                       product={{ id: product.id, name: product.name, slug: product.slug, thumbnail: product.thumbnail, images: product.images }}
                       variant="icon"
