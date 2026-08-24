@@ -19,13 +19,13 @@ const QuickAddButton: React.FC<QuickAddButtonProps> = ({ onClick }) => {
       onClick={onClick}
       aria-label={t("productCard.quickAdd")}
       className="
-        h-12 w-full
+        h-10 w-full
         rounded-none
-        border border-[#999999]
+        border-0
         bg-white
-        text-black
+        text-[12px] font-medium text-black
         shadow-none
-        hover:bg-white
+        hover:bg-[#F7F7F7]
         focus-visible:ring-0 focus-visible:ring-offset-0
       "
     >

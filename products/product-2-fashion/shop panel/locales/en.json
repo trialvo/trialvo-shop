@@ -249,7 +249,8 @@
   "shippingPolicy": "Shipping Policy",
   "viewImage": "View image",
   "thumbnail": "Thumbnail",
-  "galleryImage": "Gallery Image"
+  "galleryImage": "Gallery Image",
+  "relatedProducts": "Related Products"
  },
  "featureHeader": {
   "title": "Feature Products",

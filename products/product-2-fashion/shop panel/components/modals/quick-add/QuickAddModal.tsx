@@ -423,11 +423,19 @@ const QuickAddModal: React.FC<Props> = ({
   if (!open) return null;
 
   if (isLoading) {
-    return <div className="p-6">{t("common.loading")}</div>;
+    return (
+      <div className="flex min-h-[280px] items-center justify-center p-8 text-sm text-black/50">
+        {t("common.loading")}
+      </div>
+    );
   }
 
   if (isError || !productDetail) {
-    return <div className="p-6 text-sm text-black/70">{t("quickAdd.failedToLoad")}</div>;
+    return (
+      <div className="flex min-h-[200px] items-center justify-center p-8 text-sm text-black/60">
+        {t("quickAdd.failedToLoad")}
+      </div>
+    );
   }
 
   return (
@@ -436,42 +444,53 @@ const QuickAddModal: React.FC<Props> = ({
       onOpenChange={onOpenChange}
       isTop={isTop}
       zIndex={zIndex}
-      contentClassName={cn("min-w-[800px]", className)}
+      contentClassName={cn(
+        "w-[min(920px,calc(100vw-48px))] max-w-[920px] overflow-hidden rounded-md border border-[#E8E8E8]",
+        className,
+      )}
     >
       <Button
         type="button"
         onClick={() => onOpenChange(false)}
-        className="absolute -right-5 -top-5 h-10 w-10 rounded-none bg-black p-0 text-white"
+        className="absolute right-3 top-3 z-20 h-9 w-9 rounded-md border border-[#D0D0D0] bg-white p-0 text-[#191919] shadow-none hover:border-[#191919] hover:bg-white"
         aria-label="Close"
       >
-        <FiX className="h-5 w-5" />
+        <FiX className="h-4 w-4" strokeWidth={1.75} />
       </Button>
 
-      <div className="grid gap-0 p-6 md:grid-cols-[320px_1fr]">
-        <QuickAddGalleryCarousel
-          images={productDetail?.images ?? []}
-          title={productDetail?.name ?? ""}
-          className="md:pr-6"
-          heightClassName="h-[320px]"
-          imageClassName="object-contain object-top"
-        />
+      <div className="grid gap-0 md:grid-cols-[340px_1fr]">
+        <div className="border-b border-[#F1F1F1] bg-[#F7F7F7] md:border-b-0 md:border-r">
+          <QuickAddGalleryCarousel
+            images={productDetail?.images ?? []}
+            title={productDetail?.name ?? ""}
+            className="p-4"
+            heightClassName="h-[300px] md:h-[380px]"
+            imageClassName="object-contain object-center"
+          />
+        </div>
 
-        <div className="pt-2 md:pt-0">
-          <h3 className="text-base font-semibold text-black">{productDetail?.name ?? ""}</h3>
+        <div className="flex flex-col justify-center p-5 pr-12 md:p-6 md:pr-14">
+          <h3 className="text-base font-medium leading-snug text-[#191919] md:text-lg">
+            {productDetail?.name ?? ""}
+          </h3>
 
-          <div className="mt-2 flex items-baseline gap-2">
-            <p className="text-base font-semibold text-black">{money(price)}</p>
-
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+            <p className="text-lg font-semibold text-[#191919]">{money(price)}</p>
             {typeof oldPrice === "number" && oldPrice > price ? (
-              <p className="text-sm text-[#9A9A9A] line-through">{money(oldPrice)}</p>
+              <p className="text-sm text-black/40 line-through">{money(oldPrice)}</p>
             ) : null}
           </div>
 
-          <div className="mt-0.5 flex items-baseline gap-1 text-xs">
-            <p className="font-normal text-black">{stock === 0 ? t("product.outOfStock") : t("product.inStock")}</p>
-          </div>
+          <p
+            className={cn(
+              "mt-1.5 text-xs font-medium",
+              stock === 0 ? "text-black/40" : "text-[#191919]",
+            )}
+          >
+            {stock === 0 ? t("product.outOfStock") : t("product.inStock")}
+          </p>
 
-          <div className="mt-3 space-y-3">
+          <div className="mt-4 space-y-4">
             <SizeSelector
               sizes={sizes}
               selectedSize={selectedSizeName as SizeValue}
@@ -491,24 +510,29 @@ const QuickAddModal: React.FC<Props> = ({
                 onDecrease={() => setQty((p) => Math.max(1, p - 1))}
                 onIncrease={() => setQty((p) => Math.min(maxQty, p + 1))}
                 max={maxQty}
+                className="rounded-md border-[#D0D0D0]"
               />
 
               <Button
                 type="button"
                 onClick={handleAddToCart}
-                className="h-11 flex-1 rounded-none bg-black text-sm font-medium text-white hover:bg-black/90"
+                className="h-10 flex-1 rounded-md bg-[#191919] text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed"
                 disabled={stock === 0 || isInCart}
               >
-                {stock === 0 ? t("product.outOfStock") : isInCart ? t("product.addedToCart") : t("product.addToCart")}
+                {stock === 0
+                  ? t("product.outOfStock")
+                  : isInCart
+                    ? t("product.addedToCart")
+                    : t("product.addToCart")}
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 pt-1">
+            <div className="grid grid-cols-2 gap-3">
               <Button
                 asChild
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="h-11 rounded-none border-[#BDBDBD] text-sm font-medium"
+                className="h-10 rounded-md border-[#D0D0D0] text-sm font-medium text-[#191919] hover:border-[#191919]"
               >
                 <Link href={viewDetailsHref}>{t("quickAdd.viewFullDetails")}</Link>
               </Button>
@@ -517,7 +541,7 @@ const QuickAddModal: React.FC<Props> = ({
                 variant="outline"
                 onClick={handleBuyNow}
                 disabled={buyDisabled}
-                className="h-11 rounded-none border-[#BDBDBD] text-sm font-medium text-black"
+                className="h-10 rounded-md border-[#D0D0D0] text-sm font-medium text-[#191919] hover:border-[#191919] disabled:cursor-not-allowed"
               >
                 {isInCart ? t("product.openCart") : t("product.buyNow")}
               </Button>

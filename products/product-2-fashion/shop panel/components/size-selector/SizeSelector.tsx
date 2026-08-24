@@ -9,7 +9,6 @@ type Props = {
   sizes: readonly SizeValue[];
   selectedSize: SizeValue;
   onChange: (size: SizeValue) => void;
-  /** Size names that exist but are unavailable for the current color selection */
   unavailableSizes?: ReadonlySet<SizeValue>;
   wrap?: boolean;
   className?: string;
@@ -27,8 +26,9 @@ const SizeSelector: React.FC<Props> = ({
 }) => {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <div className="text-sm font-medium">
-        Size: <span className="font-semibold">{selectedSize}</span>
+      <div className="text-sm text-[#191919]">
+        <span className="font-medium">Size:</span>{" "}
+        <span className="font-semibold">{selectedSize || "—"}</span>
       </div>
 
       <div
@@ -38,7 +38,7 @@ const SizeSelector: React.FC<Props> = ({
           !wrap && "whitespace-nowrap [-webkit-overflow-scrolling:touch]",
           !wrap && "pr-1",
           !wrap && "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-          optionsClassName
+          optionsClassName,
         )}
       >
         {sizes.map((size) => (
