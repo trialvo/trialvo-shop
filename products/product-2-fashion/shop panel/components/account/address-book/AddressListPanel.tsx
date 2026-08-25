@@ -2,7 +2,7 @@
 
 import { RadioGroup } from "@/components/ui/radio-group";
 import React from "react";
-import { FiMapPin } from "react-icons/fi"; // Import map pin icon
+import { FiMapPin } from "react-icons/fi";
 import AddressSelectableCard from "./AddressSelectableCard";
 import AddressSelectableCardSkeleton from "./AddressSelectableCardSkeleton";
 import type { AddressItem } from "./types";
@@ -32,11 +32,11 @@ const AddressListPanel: React.FC<Props> = ({
   onVerifyPhone,
   isLoading = false,
   skeletonCount = 3,
-  emptyMessage = "No addresses found"
+  emptyMessage = "No addresses found",
 }) => {
   if (isLoading) {
     return (
-      <RadioGroup value={value} onValueChange={onChange} className="space-y-4">
+      <RadioGroup value={value} onValueChange={onChange} className="gap-3">
         {Array.from({ length: skeletonCount }).map((_, idx) => (
           <AddressSelectableCardSkeleton key={`address-skel-${idx}`} />
         ))}
@@ -46,22 +46,20 @@ const AddressListPanel: React.FC<Props> = ({
 
   if (items?.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="mb-4 rounded-full bg-gray-100 p-6">
-          <FiMapPin className="h-10 w-10 text-gray-400" />
+      <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-black/[0.03]">
+          <FiMapPin className="h-6 w-6 text-black/25" />
         </div>
-        <h3 className="mb-2 text-lg font-semibold text-gray-700">
-          {emptyMessage}
-        </h3>
-        <p className="max-w-sm text-sm text-gray-500">
-          Add an address to get started with your deliveries
+        <h3 className="text-sm font-semibold text-black">{emptyMessage}</h3>
+        <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-black/50">
+          Add an address below to get started with your deliveries.
         </p>
       </div>
     );
   }
 
   return (
-    <RadioGroup value={value} onValueChange={onChange} className="space-y-4">
+    <RadioGroup value={value} onValueChange={onChange} className="gap-3">
       {items.map((item) => {
         const idStr = String(item.id);
 

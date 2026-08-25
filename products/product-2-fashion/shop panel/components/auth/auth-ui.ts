@@ -1,11 +1,7 @@
 /** Auth form chrome — project theme tokens only */
+/** @deprecated Prefer `<Input aria-invalid={…} />` — base styles live on the shared Input. */
 export const authInputClass = (invalid?: boolean): string =>
-  [
-    "h-11 rounded-[4px] border bg-background px-3 text-[14px] text-foreground shadow-none",
-    "placeholder:text-muted-foreground",
-    "focus-visible:ring-1 focus-visible:ring-foreground/20 focus-visible:border-foreground",
-    invalid ? "border-destructive" : "border-border",
-  ].join(" ");
+  invalid ? "border-destructive" : "";
 
 export const authLabelClass = "text-[13px] font-normal text-foreground";
 

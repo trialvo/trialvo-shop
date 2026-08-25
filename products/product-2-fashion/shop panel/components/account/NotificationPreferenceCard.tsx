@@ -317,32 +317,28 @@ export default function NotificationPreferenceCard() {
   const showToggle = permState !== "denied";
 
   return (
-    <div className="bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.08)] px-4 py-4">
-
-      {/* Header row */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-        {/* Bell icon */}
-        <div style={{
-          width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-          background: isOn ? "#dcfce7" : "#f3f4f6",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          {isOn
-            ? <Bell    size={17} style={{ color: "#16a34a" }} />
-            : <BellOff size={17} style={{ color: "#6b7280" }} />}
+    <div className="rounded-md border border-[#E5E5E5] bg-white px-4 py-4 transition-shadow duration-200 ease-out hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center gap-3">
+        <div
+          className={[
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors duration-200 ease-out",
+            isOn ? "bg-[#E8FFF0]" : "bg-[#F3F3F3]",
+          ].join(" ")}
+        >
+          {isOn ? (
+            <Bell size={16} className="text-[#008A2E] transition-colors duration-200" />
+          ) : (
+            <BellOff size={16} className="text-black/45 transition-colors duration-200" />
+          )}
         </div>
 
-        {/* Label */}
-        <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#111827" }}>
-            Order Push Notifications
-          </p>
-          <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6b7280" }}>
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-semibold text-black">Order Push Notifications</p>
+          <p className="mt-0.5 text-xs text-black/50">
             Instant browser alerts when your order status changes.
           </p>
         </div>
 
-        {/* Toggle */}
         {showToggle && (
           <button
             type="button"
@@ -351,68 +347,52 @@ export default function NotificationPreferenceCard() {
             onClick={isOn ? handleDisable : handleEnable}
             aria-label={isOn ? "Disable push notifications" : "Enable push notifications"}
             aria-pressed={isOn}
-            style={{
-              flexShrink: 0,
-              width: 44, height: 24, borderRadius: 12, border: "none",
-              background: isOn ? "#16a34a" : "#d1d5db",
-              cursor: (working || permState === "asking") ? "default" : "pointer",
-              position: "relative",
-              opacity: (working || permState === "asking") ? 0.7 : 1,
-              transition: "background .2s",
-            }}
+            className={[
+              "relative h-6 w-11 shrink-0 rounded-full border-0 transition-[background-color,opacity] duration-200 ease-out",
+              isOn ? "bg-black" : "bg-[#D1D5DB]",
+              working || permState === "asking" ? "cursor-default opacity-70" : "cursor-pointer",
+            ].join(" ")}
           >
-            {working
-              ? <Loader2
-                  size={12}
-                  style={{ color: "white", position: "absolute", top: 6, left: 16,
-                    animation: "spin 1s linear infinite" }}
-                />
-              : <span style={{
-                  position: "absolute", top: 3,
-                  left: isOn ? 23 : 3,
-                  width: 18, height: 18, borderRadius: "50%",
-                  background: "white", transition: "left .2s",
-                  boxShadow: "0 1px 3px rgba(0,0,0,.2)",
-                }} />
-            }
+            {working ? (
+              <Loader2 size={12} className="absolute top-1.5 left-4 animate-spin text-white" />
+            ) : (
+              <span
+                className={[
+                  "absolute top-0.5 h-[20px] w-[20px] rounded-full bg-white shadow-sm",
+                  "transition-[left] duration-200 ease-out",
+                  isOn ? "left-[22px]" : "left-0.5",
+                ].join(" ")}
+              />
+            )}
           </button>
         )}
       </div>
 
-      {/* "asking" info — shown while browser popup is pending */}
       {permState === "asking" && (
-        <div style={{
-          background: "#eff6ff", borderRadius: 8, padding: "8px 12px",
-          display: "flex", gap: 8, alignItems: "flex-start",
-          border: "1px solid #bfdbfe", marginTop: 4,
-        }}>
-          <Info size={14} style={{ color: "#1d4ed8", flexShrink: 0, marginTop: 1 }} />
-          <p style={{ margin: 0, fontSize: 12, color: "#1e40af" }}>
+        <div className="mt-3 flex items-start gap-2 rounded-md border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2">
+          <Info size={14} className="mt-0.5 shrink-0 text-[#1D4ED8]" />
+          <p className="text-xs text-[#1E40AF]">
             A browser popup should appear — click <strong>Allow</strong> to enable notifications.
           </p>
         </div>
       )}
 
-      {/* Denied state */}
       {permState === "denied" && (
-        <div style={{
-          background: "#fef9c3", borderRadius: 8, padding: "10px 12px",
-          display: "flex", gap: 8, alignItems: "flex-start",
-          border: "1px solid #fde047", marginTop: 4,
-        }}>
-          <Info size={15} style={{ color: "#854d0e", flexShrink: 0, marginTop: 1 }} />
+        <div className="mt-3 flex items-start gap-2 rounded-md border border-[#FDE047] bg-[#FEF9C3] px-3 py-2.5">
+          <Info size={15} className="mt-0.5 shrink-0 text-[#854D0E]" />
           <div>
-            <p style={{ margin: 0, fontSize: 12, color: "#854d0e", fontWeight: 600 }}>
+            <p className="text-xs font-semibold text-[#854D0E]">
               Notifications are blocked in your browser
             </p>
-            <p style={{ margin: "4px 0 6px", fontSize: 12, color: "#78350f" }}>
-              Click the 🔒 lock icon in the browser address bar →{" "}
+            <p className="mt-1 text-xs text-[#78350F]">
+              Click the lock icon in the browser address bar →{" "}
               <strong>Notifications</strong> → <strong>Allow</strong>, then reload this page.
             </p>
             <a
               href="https://support.google.com/chrome/answer/3220216"
-              target="_blank" rel="noopener noreferrer"
-              style={{ fontSize: 12, color: "#1d4ed8", display: "inline-flex", alignItems: "center", gap: 4 }}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1.5 inline-flex items-center gap-1 text-xs text-[#1D4ED8] transition-opacity duration-200 hover:opacity-70"
             >
               Step-by-step guide <ExternalLink size={11} />
             </a>
@@ -420,21 +400,25 @@ export default function NotificationPreferenceCard() {
         </div>
       )}
 
-      {/* Contextual hints */}
       {!isOn && permState === "default" && !error && !info && (
-        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>
+        <p className="mt-2 text-xs text-black/50">
           Toggle on — your browser will ask to allow notifications.
         </p>
       )}
       {!subscribed && permState === "granted" && !error && !success && (
-        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6b7280" }}>
+        <p className="mt-2 text-xs text-black/50">
           Notifications allowed but not active. Toggle on to subscribe.
         </p>
       )}
 
-      {/* Feedback */}
-      {success && <p style={{ margin: "6px 0 0", fontSize: 12, color: "#16a34a", fontWeight: 500 }}>{success}</p>}
-      {error   && <p style={{ margin: "6px 0 0", fontSize: 12, color: "#dc2626"               }}>{error}</p>}
+      {success && (
+        <p className="mt-2 text-xs font-medium text-[#008A2E] transition-opacity duration-200">
+          {success}
+        </p>
+      )}
+      {error && (
+        <p className="mt-2 text-xs text-[#DC2626] transition-opacity duration-200">{error}</p>
+      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authErrorBannerClass, authInputClass, authLabelClass, authLinkClass, authPrimaryBtnClass } from "./auth-ui";
+import { authErrorBannerClass, authLabelClass, authLinkClass, authPrimaryBtnClass } from "./auth-ui";
 
 import AuthDivider from "./AuthDivider";
 import GoogleAuthButton from "./GoogleAuthButton";
@@ -129,7 +129,6 @@ const SignInCard: React.FC<SignInCardProps> = ({
               <Input
                 id="emailOrMobile"
                 placeholder={t("auth.emailOrMobilePlaceholder")}
-                className={authInputClass(!!errors.email)}
                 aria-invalid={!!errors.email}
                 disabled={isSigningIn || isGoogleSigningIn}
                 {...register("email", { onChange: dismissUnverified })}

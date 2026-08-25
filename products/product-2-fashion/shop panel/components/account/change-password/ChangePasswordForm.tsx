@@ -91,11 +91,10 @@ const ChangePasswordForm: React.FC<Props> = ({
     }
   };
 
-  const inputClass =
-    "h-11 rounded-none border-[#CBCBCB] pr-12 text-sm placeholder:text-[#A0A0A0] focus-visible:ring-0 focus-visible:ring-offset-0";
+  const inputClass = "pr-12";
 
   const iconBtnClass =
-    "absolute inset-y-0 right-3 flex items-center text-[#8A8A8A] hover:text-black";
+    "absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground";
 
   return (
     <Form {...form}>
@@ -104,7 +103,7 @@ const ChangePasswordForm: React.FC<Props> = ({
           e.stopPropagation();
           form.handleSubmit(handleSubmit)(e);
         }}
-        className={cn("max-w-none space-y-3", className)}
+        className={cn("max-w-xl space-y-4", className)}
       >
         {hasPassword && (
           <FormField
@@ -112,8 +111,9 @@ const ChangePasswordForm: React.FC<Props> = ({
             name="oldPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-medium text-black">
-                  {t("account.changePassword.oldPassword")} <span className="text-[#FF383C]">*</span>
+                <FormLabel className="text-[13px] font-medium text-black">
+                  {t("account.changePassword.oldPassword")}{" "}
+                  <span className="text-[#FF383C]">*</span>
                 </FormLabel>
                 <FormControl>
                   <div className="relative">
@@ -122,6 +122,7 @@ const ChangePasswordForm: React.FC<Props> = ({
                       type={showOld ? "text" : "password"}
                       placeholder={t("account.changePassword.oldPasswordPlaceholder")}
                       className={inputClass}
+                      aria-invalid={!!form.formState.errors.oldPassword}
                     />
                     <button
                       type="button"
@@ -148,8 +149,9 @@ const ChangePasswordForm: React.FC<Props> = ({
           name="newPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium text-black">
-                {t("account.changePassword.newPassword")} <span className="text-[#FF383C]">*</span>
+              <FormLabel className="text-[13px] font-medium text-black">
+                {t("account.changePassword.newPassword")}{" "}
+                <span className="text-[#FF383C]">*</span>
               </FormLabel>
               <FormControl>
                 <div className="relative">
@@ -158,6 +160,7 @@ const ChangePasswordForm: React.FC<Props> = ({
                     type={showNew ? "text" : "password"}
                     placeholder={t("account.changePassword.newPasswordPlaceholder")}
                     className={inputClass}
+                    aria-invalid={!!form.formState.errors.newPassword}
                   />
                   <button
                     type="button"
@@ -183,8 +186,9 @@ const ChangePasswordForm: React.FC<Props> = ({
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium text-black">
-                {t("account.changePassword.confirmPassword")} <span className="text-[#FF383C]">*</span>
+              <FormLabel className="text-[13px] font-medium text-black">
+                {t("account.changePassword.confirmPassword")}{" "}
+                <span className="text-[#FF383C]">*</span>
               </FormLabel>
               <FormControl>
                 <div className="relative">
@@ -193,6 +197,7 @@ const ChangePasswordForm: React.FC<Props> = ({
                     type={showConfirm ? "text" : "password"}
                     placeholder={t("account.changePassword.confirmPasswordPlaceholder")}
                     className={inputClass}
+                    aria-invalid={!!form.formState.errors.confirmPassword}
                   />
                   <button
                     type="button"
@@ -213,11 +218,11 @@ const ChangePasswordForm: React.FC<Props> = ({
           )}
         />
 
-        <div className="flex items-center gap-4 pt-2">
+        <div className="flex flex-wrap items-center gap-3 pt-1">
           <Button
             type="button"
             variant="outline"
-            className="h-10 rounded-none border-[#999999] px-8 text-sm font-medium"
+            className="h-11 rounded-[4px] border-border px-8 text-sm font-medium transition-colors duration-200 ease-out"
             onClick={() => {
               form.reset();
               if (onNavigate) {
@@ -231,7 +236,7 @@ const ChangePasswordForm: React.FC<Props> = ({
           <Button
             type="submit"
             disabled={isPasswordChanging || isSettingInitialPassword}
-            className="h-10 rounded-none bg-black px-8 text-sm font-medium text-white hover:bg-black/90"
+            className="h-11 rounded-[4px] bg-black px-8 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-black/85"
           >
             {isPasswordChanging || isSettingInitialPassword
               ? t("account.changePassword.changingPassword")

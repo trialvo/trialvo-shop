@@ -14,6 +14,8 @@ import type { ProductDetail, ProductListParams } from "@/lib/api/product/service
 import { getLocalName } from "@/lib/utils";
 import { useAppDispatch } from "@/redux/hooks";
 import { openModal } from "@/redux/slices/modalManagerSlice";
+import { Heart } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 import AccountLayout from "../AccountLayout";
@@ -57,21 +59,35 @@ const FavoritesClient: React.FC = () => {
       sizes: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const,
       colors: ["Red", "White", "Blue", "Yellow", "Green", "Black"] as const,
     };
-    dispatch(openModal({ key: "quickAdd", payload: { product: productPayload, viewDetailsHref: `/products/${p?.slug}/${p?.id}`, shopNowHref: "/checkout" } }));
+    dispatch(
+      openModal({
+        key: "quickAdd",
+        payload: {
+          product: productPayload,
+          viewDetailsHref: `/products/${p?.slug}/${p?.id}`,
+          shopNowHref: "/checkout",
+        },
+      }),
+    );
   };
 
   const handleFavoriteClick = React.useCallback(
     (p: ProductDetail) => {
-      if (!isAuthenticated) { router.push("/sign-in/"); return; }
+      if (!isAuthenticated) {
+        router.push("/sign-in/");
+        return;
+      }
       const productId = Number(p.id);
       if (!Number.isFinite(productId) || productId <= 0) return;
-      if (p?.is_favourite === true) { toggleFavorite.mutate(productId); }
+      if (p?.is_favourite === true) {
+        toggleFavorite.mutate(productId);
+      }
     },
     [isAuthenticated, router, toggleFavorite],
   );
 
   return (
-    <section className="container mx-auto pt-11 px-1.5 pb-6 sm:pt-0 sm:px-0">
+    <section className="container mx-auto px-3 pb-10 pt-11 min-[768px]:px-0 min-[768px]:pb-14 min-[768px]:pt-0">
       <Breadcrumbs
         items={[
           { label: t("breadcrumb.home"), href: "/" },
@@ -80,55 +96,104 @@ const FavoritesClient: React.FC = () => {
         ]}
       />
 
-      <div className="sm:mb-6">
+      <div className="mt-2 min-[768px]:mb-14">
         <AccountLayout sidebar={<AccountSidebar activeKey="favorite-list" />}>
           {productsLoading ? (
             <FavoritesClientSkeleton />
           ) : (
-            <div>
-              <FavoritesHeader value={sort} onChange={setSort} />
+            <div className="space-y-4">
+              <FavoritesHeader
+                value={sort}
+                onChange={setSort}
+                count={favoriteProducts.length}
+              />
 
-              <div className="pt-3 px-3 pb-4 sm:px-0 sm:pb-8">
-                {favoriteProducts.length === 0 ? (
-                  <div className="py-12 text-center text-sm text-black/60">
-                    {t("account.favorites.noFavorites")}
+              {favoriteProducts.length === 0 ? (
+                <div className="overflow-hidden rounded-md border border-[#E5E5E5] bg-white">
+                  <div className="flex flex-col items-center px-6 py-14 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-black/[0.03]">
+                      <Heart className="h-6 w-6 text-black/25" />
+                    </div>
+                    <p className="mt-4 text-sm font-semibold text-black">
+                      {t("account.favorites.noFavorites")}
+                    </p>
+                    <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-black/50">
+                      Save items you love and find them here later.
+                    </p>
+                    <Link
+                      href="/"
+                      className="mt-5 inline-flex items-center rounded-md bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-black/85"
+                    >
+                      Start Shopping
+                    </Link>
                   </div>
-                ) : (
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-md border border-[#E5E5E5] bg-white p-3 min-[768px]:p-4">
                   <div className="grid grid-cols-2 gap-3 gap-y-4 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4">
                     {favoriteProducts.map((product) => {
-                      const firstImage = product?.thumbnail ?? product?.images?.[0]?.path;
-                      const discountArray = product?.variations?.filter(p => p?.has_discount);
+                      const firstImage =
+                        product?.thumbnail ?? product?.images?.[0]?.path;
+                      const discountArray = product?.variations?.filter(
+                        (p) => p?.has_discount,
+                      );
                       const defaultVariations = product?.variations[0];
                       const hasDiscount = discountArray?.length > 0;
-                      const finalPrice = hasDiscount ? discountArray[0]?.final_price : defaultVariations?.final_price;
-                      const sellingPrice = hasDiscount ? discountArray[0]?.selling_price : defaultVariations?.selling_price;
+                      const finalPrice = hasDiscount
+                        ? discountArray[0]?.final_price
+                        : defaultVariations?.final_price;
+                      const sellingPrice = hasDiscount
+                        ? discountArray[0]?.selling_price
+                        : defaultVariations?.selling_price;
 
                       return (
                         <div key={product?.id}>
                           <div className="block min-[501px]:hidden">
                             <ProductCardMobile
                               href={`/products/${product?.slug}/${product?.id}/`}
-                              title={getLocalName(product?.name ?? "", product?.name_bd, language)} isFavorite={product?.is_favourite}
-                              price={finalPrice ?? 0} oldPrice={sellingPrice ?? 0} imageSrc={firstImage}
+                              title={getLocalName(
+                                product?.name ?? "",
+                                product?.name_bd,
+                                language,
+                              )}
+                              isFavorite={product?.is_favourite}
+                              price={finalPrice ?? 0}
+                              oldPrice={sellingPrice ?? 0}
+                              imageSrc={firstImage}
                               onQuickAdd={() => handleOpenQuickAdd(product)}
-                              onWishlist={() => handleFavoriteClick(product as unknown as ProductDetail)}
+                              onWishlist={() =>
+                                handleFavoriteClick(
+                                  product as unknown as ProductDetail,
+                                )
+                              }
                             />
                           </div>
                           <div className="hidden min-[501px]:block">
                             <ProductCard
                               href={`/products/${product?.slug}/${product?.id}/`}
-                              title={getLocalName(product?.name ?? "", product?.name_bd, language)} isFavorite={product?.is_favourite}
-                              price={finalPrice ?? 0} oldPrice={sellingPrice ?? 0} imageSrc={firstImage}
+                              title={getLocalName(
+                                product?.name ?? "",
+                                product?.name_bd,
+                                language,
+                              )}
+                              isFavorite={product?.is_favourite}
+                              price={finalPrice ?? 0}
+                              oldPrice={sellingPrice ?? 0}
+                              imageSrc={firstImage}
                               onQuickAdd={() => handleOpenQuickAdd(product)}
-                              onWishlist={() => handleFavoriteClick(product as unknown as ProductDetail)}
+                              onWishlist={() =>
+                                handleFavoriteClick(
+                                  product as unknown as ProductDetail,
+                                )
+                              }
                             />
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )}
         </AccountLayout>

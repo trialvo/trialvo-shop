@@ -74,13 +74,15 @@ const PersonalProfileCard: React.FC<Props> = ({ profile, onEdit }) => {
 
 
   return (
-    <Card className="rounded-none border-0 bg-white p-4! shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold">{t("account.personalProfile.title")}</h3>
+    <Card className="gap-4 rounded-md border border-[#E5E5E5] bg-white p-4! shadow-none transition-shadow duration-200 ease-out hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[#F0F0F0] pb-3">
+        <h3 className="text-[15px] font-semibold text-black">
+          {t("account.personalProfile.title")}
+        </h3>
         <Button
           type="button"
           variant="outline"
-          className="h-7 rounded-none border-[#999999] px-4 py-2 text-sm font-medium text-[#272727]"
+          className="h-8 rounded-md border-[#D6D6D6] px-3 text-sm font-medium text-black transition-[border-color,background-color,color] duration-200 ease-out hover:border-black hover:bg-black hover:text-white"
           onClick={onEdit}
         >
           {t("account.personalProfile.edit")}
@@ -88,78 +90,79 @@ const PersonalProfileCard: React.FC<Props> = ({ profile, onEdit }) => {
       </div>
 
       <div>
-        <div className="grid grid-cols-[130px_1fr] gap-y-4 text-sm">
-          <div className="font-semibold">{t("account.personalProfile.fullName")}</div>
-          <div>
+        <div className="grid grid-cols-[112px_1fr] gap-y-2.5 text-sm min-[576px]:grid-cols-[128px_1fr]">
+          <div className="text-black/55">{t("account.personalProfile.fullName")}</div>
+          <div className="font-medium text-black">
             {profile?.first_name} {profile?.last_name}
           </div>
 
-          <div className="font-semibold">{t("account.personalProfile.email")}</div>
-          <div>{profile?.email}</div>
+          <div className="text-black/55">{t("account.personalProfile.email")}</div>
+          <div className="break-all text-black/85">{profile?.email}</div>
 
-          <div className="font-semibold">{t("account.personalProfile.mobileNumber")}</div>
+          <div className="text-black/55">{t("account.personalProfile.mobileNumber")}</div>
 
-          {
-            defaultPhone?.phone_number ? (
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-black">{defaultPhone?.phone_number ?? ""}</p>
+          {defaultPhone?.phone_number ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm text-black/80">{defaultPhone?.phone_number ?? ""}</p>
 
-                <span
-                  className={cn(
-                    "rounded-none px-2 py-0.5 text-xs font-medium",
-                    isVerified ? "bg-[#E8FFF0] text-[#008A2E]" : "bg-[#FFF0F0] text-[#C40000]",
-                  )}
-                >
-                  {isVerified ? t("account.personalProfile.verified") : t("account.personalProfile.unverified")}
-                </span>
-                {
-                  !isVerified && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleVerify?.(String(defaultPhone?.id), defaultPhone?.phone_number);
-                      }}
-                      className={cn(
-                        "rounded-none bg-[#EDEDED] px-2 py-0.75 text-xs font-medium text-black",
-                        "cursor-pointer transition-all duration-300 hover:bg-black/10",
-                      )}
-                    >
-                      {t("account.personalProfile.verify")}
-                    </button>
-                  )
-                }
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  dispatch(
-                    openModal({
-                      key: "insertPhone",
-                      payload: {
-                        title: defaultPhone?.phone_number
-                          ? t("account.personalProfile.updateMobileTitle")
-                          : t("account.personalProfile.addMobileTitle"),
-                        description: t("account.personalProfile.useBDNumber"),
-                        cancelText: t("account.personalProfile.cancel"),
-                        confirmText: t("account.personalProfile.save"),
-                        defaultPhone: defaultPhone?.phone_number,
-                      },
-                    }),
-                  );
-                }}
-                className="w-fit text-left font-medium text-[#0088FF] hover:underline cursor-pointer"
+              <span
+                className={cn(
+                  "rounded-sm px-2 py-0.5 text-xs font-medium transition-colors duration-200",
+                  isVerified
+                    ? "bg-[#E8FFF0] text-[#008A2E]"
+                    : "bg-[#FFF0F0] text-[#C40000]",
+                )}
               >
-                {t("account.personalProfile.addMobileNumber")}
-              </button>
-            )
-          }
+                {isVerified
+                  ? t("account.personalProfile.verified")
+                  : t("account.personalProfile.unverified")}
+              </span>
+              {!isVerified ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleVerify?.(String(defaultPhone?.id), defaultPhone?.phone_number);
+                  }}
+                  className="cursor-pointer rounded-sm bg-[#EDEDED] px-2 py-0.5 text-xs font-medium text-black transition-colors duration-200 ease-out hover:bg-black/10"
+                >
+                  {t("account.personalProfile.verify")}
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                dispatch(
+                  openModal({
+                    key: "insertPhone",
+                    payload: {
+                      title: defaultPhone?.phone_number
+                        ? t("account.personalProfile.updateMobileTitle")
+                        : t("account.personalProfile.addMobileTitle"),
+                      description: t("account.personalProfile.useBDNumber"),
+                      cancelText: t("account.personalProfile.cancel"),
+                      confirmText: t("account.personalProfile.save"),
+                      defaultPhone: defaultPhone?.phone_number,
+                    },
+                  }),
+                );
+              }}
+              className="w-fit cursor-pointer text-left font-medium text-[#0088FF] transition-opacity duration-200 hover:opacity-70"
+            >
+              {t("account.personalProfile.addMobileNumber")}
+            </button>
+          )}
 
-          <div className="font-semibold">{t("account.personalProfile.birthday")}</div>
-          <div>{profile?.dob ? formatPrettyDate(profile.dob) : t("account.personalProfile.none")}</div>
+          <div className="text-black/55">{t("account.personalProfile.birthday")}</div>
+          <div className="text-black/85">
+            {profile?.dob ? formatPrettyDate(profile.dob) : t("account.personalProfile.none")}
+          </div>
 
-          <div className="font-semibold">{t("account.personalProfile.gender")}</div>
-          <div>{profile?.gender ? profile.gender : t("account.personalProfile.notSelected")}</div>
+          <div className="text-black/55">{t("account.personalProfile.gender")}</div>
+          <div className="capitalize text-black/85">
+            {profile?.gender ? profile.gender : t("account.personalProfile.notSelected")}
+          </div>
         </div>
       </div>
     </Card>

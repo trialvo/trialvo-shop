@@ -287,7 +287,7 @@ export default function TrackReportWidget({ initialToken = "" }: Props) {
                 }}
                 placeholder="e.g. a3f2b8c1d9e0f7a4b1c2d3e4f5a6b7c8"
                 aria-invalid={!!error}
-                className="flex-1 rounded-none font-mono"
+                className="flex-1 font-mono"
               />
               <Button
                 type="submit"

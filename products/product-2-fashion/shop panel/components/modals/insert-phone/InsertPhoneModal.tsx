@@ -97,7 +97,6 @@ const InsertPhoneModal: React.FC<Props> = ({
                     }}
                     placeholder="01XXXXXXXXX"
                     inputMode="numeric"
-                    className="h-10 rounded-none border-[#CBCBCB]"
                 />
 
                 {error ? <p className="text-xs text-[#E52D2D]">{error}</p> : null}

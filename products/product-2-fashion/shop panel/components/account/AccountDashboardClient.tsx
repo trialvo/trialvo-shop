@@ -44,13 +44,13 @@ const AccountDashboardClient: React.FC = () => {
     return orders.map((order) => ({
       id: String(order.id) || `ORD${order.id}`,
       placedOn: order.created_at
-        ? new Date(order.created_at).toLocaleDateString('en-GB')
-        : 'N/A',
+        ? new Date(order.created_at).toLocaleDateString("en-GB")
+        : "N/A",
       QTY: order?.items?.length ?? 0,
       paymentStatus: order?.payment_status || "",
       order_status: order?.order_status || "",
       itemThumbSrc: order.items?.[0]?.product_image || "/placeholder-item.png",
-      total: order?.paid_amount || order.grand_total || 0
+      total: order?.paid_amount || order.grand_total || 0,
     }));
   }, [orders]);
 
@@ -68,38 +68,45 @@ const AccountDashboardClient: React.FC = () => {
   const isLoading = isAuthLoading || ordersLoading;
 
   return (
-    <section className="container mx-auto pt-11 px-1.5 pb-6 sm:pt-0 sm:px-0">
-      <Breadcrumbs items={[{ label: t("breadcrumb.home"), href: "/" }, { label: t("account.accountDetails") }]} />
+    <section className="container mx-auto px-3 pb-10 pt-11 min-[768px]:px-0 min-[768px]:pb-14 min-[768px]:pt-0">
+      <Breadcrumbs
+        items={[
+          { label: t("breadcrumb.home"), href: "/" },
+          { label: t("account.accountDetails") },
+        ]}
+      />
 
-      <div className="sm:mb-17.5">
+      <div className="mt-2 min-[768px]:mb-14">
         <AccountLayout sidebar={<AccountSidebar activeKey="account-details" />}>
-          <div className="space-y-3">
-            <div className="border-0 bg-white px-4 py-2.5 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-              <h1 className="text-2xl font-bold">{t("account.myAccount")}</h1>
-            </div>
+          <div className="space-y-4">
+            <h1 className="border-b border-[#E5E5E5] pb-3 text-xl font-semibold tracking-tight text-black min-[768px]:text-[22px]">
+              {t("account.myAccount")}
+            </h1>
 
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <PersonalProfileCard profile={user} onEdit={handleProfileEdit} />
-              <AddressBookCard isLoading={isAuthLoading} addressBook={address} onEdit={handleAddressEdit} />
+              <AddressBookCard
+                isLoading={isAuthLoading}
+                addressBook={address}
+                onEdit={handleAddressEdit}
+              />
             </div>
 
             <NotificationPreferenceCard />
 
-            {/* My Reports */}
             <MyReportsCard />
 
-            <div className="border-0">
+            <div>
               {ordersError ? (
-                <div className="text-center py-8 text-red-500">
+                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-8 text-center text-sm text-red-600">
                   {t("account.errorLoadingOrders")}
                 </div>
               ) : recentOrders.length === 0 && !isLoading ? (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-black/10 bg-white py-14 text-center">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/5">
-                    <FiSearch className="h-7 w-7 text-black/60" />
+                <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-black/15 bg-white py-12 text-center">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-black/5">
+                    <FiSearch className="h-5 w-5 text-black/50" />
                   </div>
-
-                  <h3 className="mt-4 text-base font-semibold text-black">
+                  <h3 className="mt-3 text-sm font-medium text-black">
                     {t("account.noOrdersLast7Days")}
                   </h3>
                 </div>

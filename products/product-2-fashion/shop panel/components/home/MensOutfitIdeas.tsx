@@ -80,9 +80,9 @@ export default function MensOutfitIdeas() {
   if (!isLoading && tiles.length < 2) return null;
 
   return (
-    <section className="w-full bg-[#d18a7f] px-4 py-12 min-[768px]:px-8 min-[768px]:py-16 min-[1200px]:px-10 min-[1200px]:py-20">
+    <section className="w-full bg-[#1c2838] px-4 py-12 min-[768px]:px-8 min-[768px]:py-16 min-[1200px]:px-10 min-[1200px]:py-20">
       <div className="container mx-auto">
-        <h2 className="text-center text-[28px] font-bold tracking-[-0.02em] text-[#fdf7c3] min-[576px]:text-[34px] min-[768px]:text-[40px]">
+        <h2 className="text-center text-[28px] font-bold tracking-[-0.02em] text-[#f3efe4] min-[576px]:text-[34px] min-[768px]:text-[40px]">
           {t("home.mensOutfit.title")}
         </h2>
 
@@ -90,8 +90,8 @@ export default function MensOutfitIdeas() {
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <div key={`sk-${i}`}>
-                  <div className="aspect-[4/5] w-full animate-pulse bg-[#c47b71]" />
-                  <div className="mx-auto mt-3 h-3 w-28 animate-pulse bg-[#c47b71]" />
+                  <div className="aspect-[4/5] w-full animate-pulse bg-[#2a384c]" />
+                  <div className="mx-auto mt-3 h-3 w-28 animate-pulse bg-[#2a384c]" />
                 </div>
               ))
             : tiles.map((item) => {
@@ -105,7 +105,7 @@ export default function MensOutfitIdeas() {
 
                 return (
                   <Link key={item.id} href={href} className="group block">
-                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#c47b71]">
+                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#2a384c]">
                       {src ? (
                         <ImageWithFallback
                           src={src}
@@ -117,7 +117,7 @@ export default function MensOutfitIdeas() {
                         />
                       ) : null}
                     </div>
-                    <p className="mt-3 text-center text-[13px] font-semibold tracking-[0.02em] text-[#fdf7c3] min-[768px]:text-[15px]">
+                    <p className="mt-3 text-center text-[13px] font-semibold tracking-[0.02em] text-[#f3efe4] min-[768px]:text-[15px]">
                       {label}
                     </p>
                   </Link>

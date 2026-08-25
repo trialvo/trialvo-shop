@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/hooks/useTranslation";
-import clsx from "clsx";
 import { CouponFormValues, couponSchema } from "./coupon.schema";
 
 type Props = {
@@ -45,12 +44,12 @@ const CouponInput: React.FC<Props> = ({ onApply, disabled, apiError }) => {
         <Input
           placeholder={t("orderSummary.couponPlaceholder")}
           {...register("coupon")}
-          className={clsx("rounded-none! border-[#999999]!", errors.coupon ? "border-red-500" : "")}
+          aria-invalid={!!errors.coupon}
         />
 
         <Button
           type="submit"
-          className="bg-black rounded-none! text-white transition-colors hover:bg-black/75 disabled:cursor-not-allowed"
+          className="h-11 rounded-[4px] bg-black text-white transition-colors hover:bg-black/75 disabled:cursor-not-allowed"
           disabled={isSubmitting || disabled}
         >
           {t("orderSummary.apply")}

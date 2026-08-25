@@ -23,9 +23,9 @@ const RecentOrdersTable: React.FC<Props> = ({
   onLoadMore,
 }) => {
   return (
-    <div className="bg-white p-4 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-      <div className="mb-3">
-        <h3 className="text-lg font-bold text-black">Recent Orders</h3>
+    <div className="rounded-md border border-[#E5E5E5] bg-white p-4 transition-shadow duration-200 ease-out hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="mb-3 border-b border-[#F0F0F0] pb-3">
+        <h3 className="text-[15px] font-semibold text-black">Recent Orders</h3>
       </div>
 
       <div className="sm:hidden">
