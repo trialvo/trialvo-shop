@@ -51,9 +51,6 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
     },
   });
 
-  const inputClass =
-    "h-11 rounded-none border-[#CBCBCB] text-sm placeholder:text-[#A0A0A0] focus-visible:ring-0 focus-visible:ring-offset-0";
-
   const handleSubmit = async (values: ContactFormValues) => {
     const user = AuthCookies.getUser<User>();
     const payload: ContactPayload = {
@@ -109,7 +106,7 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
                       First Name <span className="text-[#FF383C]">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input {...field} className={inputClass} placeholder="Enter your full name" />
+                      <Input {...field} placeholder="Enter your full name" />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -123,7 +120,7 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
                   <FormItem>
                     <FormLabel className="text-xs font-medium text-black">Last Name</FormLabel>
                     <FormControl>
-                      <Input {...field} className={inputClass} placeholder="Enter your full name" />
+                      <Input {...field} placeholder="Enter your full name" />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -139,7 +136,7 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
                   <FormItem>
                     <FormLabel className="text-xs font-medium text-black">Mobile Number</FormLabel>
                     <FormControl>
-                      <Input {...field} className={inputClass} placeholder="01XXXXXXXXXX" inputMode="numeric" />
+                      <Input {...field} placeholder="01XXXXXXXXXX" inputMode="numeric" />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -155,7 +152,7 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
                       Email <span className="text-[#FF383C]">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input {...field} className={inputClass} placeholder="Enter Email" />
+                      <Input {...field} placeholder="Enter Email" />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -172,7 +169,7 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
                     Subject <span className="text-[#FF383C]">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} className={inputClass} placeholder="Write message subject" />
+                    <Input {...field} placeholder="Write message subject" />
                   </FormControl>
                   <FormMessage className="text-xs" />
                 </FormItem>
@@ -191,7 +188,6 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
                     <Textarea
                       {...field}
                       rows={6}
-                      className="rounded-none border-[#CBCBCB] text-sm placeholder:text-[#A0A0A0] focus-visible:ring-0 focus-visible:ring-offset-0"
                       placeholder="Tell us how we can help you...."
                     />
                   </FormControl>

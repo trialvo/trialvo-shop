@@ -106,16 +106,16 @@ export const DeliveryAreaSelector: React.FC<Props> = ({
           setTimeout(() => inputRef.current?.focus(), 50);
         }}
         className={[
-          "flex w-full items-center gap-2 rounded-none border px-3 py-2.5 text-sm transition-colors",
-          "bg-white dark:bg-gray-950",
+          "flex h-11 w-full items-center gap-2 rounded-[4px] border px-3 text-[14px] transition-[border-color,box-shadow]",
+          "bg-background shadow-none",
           error
-            ? "border-red-400 dark:border-red-500"
-            : "border-[#CBCBCB] dark:border-gray-800 hover:border-gray-400",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
+            ? "border-destructive"
+            : "border-border hover:border-foreground/40",
+          "focus-visible:border-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/20",
         ].join(" ")}
       >
-        <MapPin size={15} className="shrink-0 text-gray-400" />
-        <span className={["flex-1 truncate text-left", displayText ? "text-gray-900 dark:text-white" : "text-gray-400"].join(" ")}>
+        <MapPin size={15} className="shrink-0 text-muted-foreground" />
+        <span className={["flex-1 truncate text-left", displayText ? "text-foreground" : "text-muted-foreground"].join(" ")}>
           {displayText ?? placeholder}
         </span>
         {value ? (
@@ -127,17 +127,17 @@ export const DeliveryAreaSelector: React.FC<Props> = ({
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-none border border-[#CBCBCB] bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
+        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-[4px] border border-border bg-background shadow-lg">
           {/* Search */}
-          <div className="border-b border-gray-100 p-2 dark:border-gray-800">
-            <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-900">
-              <Search size={13} className="text-gray-400" />
+          <div className="border-b border-border p-2">
+            <div className="flex items-center gap-2 rounded-[4px] bg-muted px-3 py-2">
+              <Search size={13} className="text-muted-foreground" />
               <input
                 ref={inputRef}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search city or area…"
-                className="flex-1 bg-transparent text-sm text-gray-700 outline-none placeholder:text-gray-400 dark:text-gray-200"
+                className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
               />
             </div>
           </div>

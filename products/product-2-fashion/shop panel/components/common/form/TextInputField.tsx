@@ -61,11 +61,7 @@ export default function TextInputField<T extends FieldValues>({
                                 {...field}
                                 type={type}
                                 placeholder={placeholder}
-                                className={cn(
-                                    "rounded-none",
-                                    leftIcon ? "pl-8" : "",
-                                    inputClassName
-                                )}
+                                className={cn(leftIcon ? "pl-9" : "", inputClassName)}
                             />
                         </div>
                     </FormControl>

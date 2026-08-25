@@ -69,14 +69,14 @@ const MobileOrderCard: React.FC<{
     return (
         <div
             className={cn(
-                "bg-white",
-                "py-3",
-                "border-b border-black/10 last:border-b-0",
+                "bg-white px-1 py-3.5",
+                "border-b border-[#E5E5E5] last:border-b-0",
+                "transition-colors duration-200 ease-out",
             )}
         >
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                    <div className="flex items-baseline gap-4">
+                    <div className="flex items-baseline gap-3">
                         <div className="text-sm font-semibold leading-none text-black">
                             Order #
                         </div>
@@ -85,24 +85,24 @@ const MobileOrderCard: React.FC<{
                         </div>
                     </div>
 
-                    <div className="mt-2 flex items-baseline gap-1">
-                        <div className="text-xs font-normal leading-none text-[#999999]">
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                        <div className="text-xs font-normal leading-none text-black/45">
                             Placed On
                         </div>
-                        <div className="text-xs font-normal leading-none text-black">
+                        <div className="text-xs font-normal leading-none text-black/75">
                             {order.placedOn}
                         </div>
                     </div>
 
-                    <div className="mt-4 text-sm font-normal leading-none text-black">
+                    <div className="mt-3.5 text-sm font-medium leading-none text-black">
                         {money(order.total)}
                     </div>
 
-                    <div className="mt-2 flex items-baseline gap-1">
-                        <div className="text-sm font-normal leading-none text-[#999999]">
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                        <div className="text-xs font-normal leading-none text-black/45">
                             Qty
                         </div>
-                        <div className="text-sm font-normal leading-none text-black">
+                        <div className="text-xs font-medium leading-none text-black/80">
                             {getQtyText(order.QTY)}
                         </div>
                     </div>
@@ -111,9 +111,9 @@ const MobileOrderCard: React.FC<{
                             <Button
                                 type="button"
                                 className={cn(
-                                    " rounded-none bg-black px-3 py-1 h-7 mt-1.5",
+                                    "mt-2 h-7 rounded-md bg-black px-3",
                                     "text-xs font-medium text-white",
-                                    "hover:bg-black/90",
+                                    "transition-colors duration-200 ease-out hover:bg-black/85",
                                 )}
                                 onClick={() => onSubmit(Number(order.id))}
                             >

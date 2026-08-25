@@ -49,9 +49,10 @@ const buildForwardHeaders = (request: NextRequest) => {
   request.headers.forEach((value, key) => {
     if (!shouldSkipRequestHeader(key)) headers.set(key, value);
   });
-  // Prefer Authorization already on the request; else token cookie if present
+  // Prefer Authorization already on the request; else auth cookie if present
   if (!headers.has("Authorization")) {
     const token =
+      request.cookies.get("ecom_access_token")?.value?.trim() ||
       request.cookies.get("access_token")?.value?.trim() ||
       request.cookies.get("token")?.value?.trim();
     if (token) headers.set("Authorization", `Bearer ${token}`);

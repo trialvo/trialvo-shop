@@ -7,7 +7,16 @@ type Props = {
 };
 
 const isValidOrderStatus = (status: string): status is OrderStatus => {
-  return ['new', 'approved', 'processing', 'shipped', 'delivered', 'cancelled', 'canceled', 'trash'].includes(status);
+  return [
+    "new",
+    "approved",
+    "processing",
+    "shipped",
+    "delivered",
+    "cancelled",
+    "canceled",
+    "trash",
+  ].includes(status);
 };
 
 const normalizeStatus = (status: string): OrderStatus => {
@@ -15,33 +24,33 @@ const normalizeStatus = (status: string): OrderStatus => {
   if (isValidOrderStatus(normalized)) {
     return normalized;
   }
-  return 'new';
+  return "new";
 };
 
 function getStatusBadge(orderStatus: OrderStatus): { label: string; className: string } {
   const s = String(orderStatus ?? "").toLowerCase();
 
   if (s === "new") {
-    return { label: "Pending", className: "bg-[#FF8D2814] text-[#FF8D28]" };
+    return { label: "Pending", className: "bg-[#FFF4EB] text-[#D97706]" };
   }
   if (s === "approved") {
-    return { label: "Confirmed", className: "bg-[#0088FF14] text-[#0088FF]" };
+    return { label: "Confirmed", className: "bg-[#EFF6FF] text-[#2563EB]" };
   }
   if (s === "processing" || s === "shipped") {
-    return { label: "Possessing", className: "bg-[#00C8B314] text-[#00C8B3]" };
+    return { label: "Processing", className: "bg-[#ECFDF5] text-[#0D9488]" };
   }
   if (s === "delivered" || s === "completed") {
-    return { label: "Completed", className: "bg-[#34C75914] text-[#34C759]" };
+    return { label: "Completed", className: "bg-[#ECFDF3] text-[#16A34A]" };
   }
   if (s === "cancelled" || s === "canceled") {
-    return { label: "Canceled", className: "bg-[#FF383C14] text-[#FF383C]" };
+    return { label: "Canceled", className: "bg-[#FEF2F2] text-[#DC2626]" };
   }
   if (s === "trash") {
-    return { label: "Trash", className: "bg-[#F2F2F2] text-[#6B7280]" };
+    return { label: "Trash", className: "bg-[#F3F4F6] text-[#6B7280]" };
   }
 
   const label = s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
-  return { label, className: "bg-[#F2F2F2] text-[#6B7280]" };
+  return { label, className: "bg-[#F3F4F6] text-[#6B7280]" };
 }
 
 const OrderStatusPill: React.FC<Props> = ({ status }) => {
@@ -51,11 +60,9 @@ const OrderStatusPill: React.FC<Props> = ({ status }) => {
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center justify-center",
-        "px-2 py-1.25",
-        "text-xs font-medium",
-        "rounded-none",
-        badge.className
+        "inline-flex w-fit items-center justify-center rounded-sm px-2 py-0.5",
+        "text-xs font-medium transition-colors duration-200",
+        badge.className,
       )}
     >
       {badge.label}

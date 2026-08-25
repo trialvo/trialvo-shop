@@ -308,7 +308,7 @@ export default function SubmitReportForm() {
                 <Input
                   readOnly
                   value={result.tracking_token}
-                  className="flex-1 font-mono rounded-none"
+                  className="flex-1 font-mono"
                 />
                 <Button
                   variant={copied ? "default" : "outline"}
@@ -463,7 +463,6 @@ export default function SubmitReportForm() {
                 value={form.reporter_name}
                 onChange={(e) => set("reporter_name", e.target.value)}
                 placeholder="Full name"
-                className="rounded-none"
               />
             </div>
 
@@ -481,7 +480,6 @@ export default function SubmitReportForm() {
                 onChange={(e) => set("reporter_email", e.target.value)}
                 placeholder="your@email.com"
                 aria-invalid={!!errors.reporter_email}
-                className="rounded-none"
               />
               {errors.reporter_email && (
                 <p className="flex items-center gap-1 text-xs text-red-500">
@@ -504,7 +502,6 @@ export default function SubmitReportForm() {
                 value={form.reporter_phone}
                 onChange={(e) => set("reporter_phone", e.target.value)}
                 placeholder="+8801XXXXXXXXX"
-                className="rounded-none"
               />
             </div>
 
@@ -519,7 +516,6 @@ export default function SubmitReportForm() {
                 onChange={(e) => set("order_id", e.target.value)}
                 placeholder="e.g. 12345"
                 aria-invalid={!!errors.order_id}
-                className="rounded-none"
               />
               {errors.order_id && (
                 <p className="flex items-center gap-1 text-xs text-red-500">
@@ -543,7 +539,6 @@ export default function SubmitReportForm() {
               placeholder="Brief summary of your issue"
               maxLength={SUBJECT_MAX}
               aria-invalid={!!errors.subject}
-              className="rounded-none"
             />
             <div className="flex items-center justify-between">
               {errors.subject ? (
@@ -572,7 +567,7 @@ export default function SubmitReportForm() {
               maxLength={DESC_MAX}
               placeholder="Please provide as much detail as possible — what happened, when, order numbers, product names, etc."
               aria-invalid={!!errors.description}
-              className="resize-y rounded-none border-[#CBCBCB] px-2.5 text-base shadow-xs placeholder:text-[#999999] placeholder:text-xs focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[0.5px]! md:text-sm"
+              className="resize-y"
             />
             <div className="flex items-center justify-between">
               {errors.description ? (
@@ -640,7 +635,6 @@ export default function SubmitReportForm() {
             type="submit"
             isLoading={loading}
             loadingText="Submitting…"
-            className="rounded-none"
           >
             <ArrowRight className="h-4 w-4" />
             Submit Report

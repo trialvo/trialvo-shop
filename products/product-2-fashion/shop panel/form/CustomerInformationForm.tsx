@@ -59,13 +59,33 @@ export type CustomerInformationFormRef = {
 
 type Props = {
   defaultValues?: Partial<CustomerInformationValues>;
-  onSubmit?: (values: CustomerInformationValues) => void;
+  onSubmit?: (values: CustomerInformationValues) => void | Promise<unknown>;
   className?: string;
   isLoading?: boolean;
   /** When true email field becomes required (driven by admin permissions). Default: false (optional) */
   emailRequired?: boolean;
+  /**
+   * When true, only the footer Submit button sends data (no blur/radio auto-save).
+   * Also always shows Cancel + Submit. Use on account address add/edit forms.
+   */
+  deferSubmit?: boolean;
+  /**
+   * When true, Cancel resets the form fields instead of navigating back.
+   * After a successful submit the form is also cleared.
+   */
+  clearOnCancel?: boolean;
 };
 
+const EMPTY_VALUES: CustomerInformationValues = {
+  email: "",
+  addressType: "home",
+  fullName: "",
+  mobile: "",
+  city: "",
+  area_name: "",
+  location_mapping_id: undefined,
+  deliveryAddress: "",
+};
 
 /** Small inline badge shown next to optional field labels */
 function OptionalBadge({ label }: { label: string }) {
@@ -82,7 +102,18 @@ function RequiredStar() {
 }
 
 const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Props>(
-  ({ defaultValues, onSubmit, className, isLoading = false, emailRequired = false }, ref) => {
+  (
+    {
+      defaultValues,
+      onSubmit,
+      className,
+      isLoading = false,
+      emailRequired = false,
+      deferSubmit = false,
+      clearOnCancel = false,
+    },
+    ref,
+  ) => {
     const router = useRouter();
     const { isAuthenticated } = useAuth();
     const { t } = useTranslation();
@@ -95,13 +126,7 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
 
       mode: "onTouched",
       defaultValues: {
-        email: "",
-        addressType: "home",
-        fullName: "",
-        mobile: "",
-        city: "",
-        location_mapping_id: undefined,
-        deliveryAddress: "",
+        ...EMPTY_VALUES,
         ...defaultValues,
       },
     });
@@ -131,36 +156,62 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
     React.useEffect(() => {
       if (!defaultValues) return;
       form.reset({
+        ...EMPTY_VALUES,
         addressType: defaultValues.addressType ?? "home",
         fullName: defaultValues.fullName ?? "",
         mobile: defaultValues.mobile ?? "",
         city: defaultValues.city ?? "",
         area_name: defaultValues.area_name ?? "",
-        location_mapping_id: defaultValues.location_mapping_id ?? undefined,
+        location_mapping_id: defaultValues.location_mapping_id,
         deliveryAddress: defaultValues.deliveryAddress ?? "",
+        email: defaultValues.email ?? "",
       });
     }, [defaultValues, form]);
 
     const commitOnBlur = React.useCallback(
-      async (fieldName: FieldPath<CustomerInformationValues>) => {
+      async (_fieldName: FieldPath<CustomerInformationValues>) => {
+        // Account add/edit: only Submit sends the API request
+        if (deferSubmit) return;
+        // Logged-in checkout guests still auto-save; authenticated users never auto-save
         if (isAuthenticated) return;
         if (!onSubmit) return;
         onSubmit(form.getValues());
       },
-      [form, onSubmit, isAuthenticated],
+      [deferSubmit, form, onSubmit, isAuthenticated],
     );
 
-    const handleSubmit = (values: CustomerInformationValues) => {
-      onSubmit?.(values);
+    const handleSubmit = async (values: CustomerInformationValues) => {
+      try {
+        await onSubmit?.(values);
+        if (clearOnCancel) {
+          form.reset({ ...EMPTY_VALUES });
+        }
+      } catch {
+        // Parent / mutation handles errors
+      }
     };
+
+    const handleCancel = () => {
+      if (clearOnCancel) {
+        form.reset({ ...EMPTY_VALUES });
+        return;
+      }
+      router.back();
+    };
+
+    const showFooter = deferSubmit || isAuthenticated;
 
     return (
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className={cn("space-y-3", "pb-[calc(env(safe-area-inset-bottom)+72px)] sm:pb-0", className)}
+          className={cn(
+            "space-y-3",
+            showFooter ? "pb-[calc(env(safe-area-inset-bottom)+72px)] sm:pb-0" : "",
+            className,
+          )}
         >
-          {/* ── Address Type ── */}
+          {/* ── Address Type (local state only — never auto-submits) ── */}
           <FormField
             control={form.control}
             name="addressType"
@@ -169,10 +220,7 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
                 <FormControl>
                   <RadioGroup
                     value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      commitOnBlur("addressType");
-                    }}
+                    onValueChange={field.onChange}
                     className="flex items-center gap-5"
                   >
                     <label className="flex cursor-pointer items-center gap-1.5">
@@ -211,7 +259,6 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
                     <Input
                       placeholder={t("customerInfo.fullNamePlaceholder")}
                       {...field}
-                      className="rounded-none border-[#CBCBCB]"
                       onBlur={() => commitOnBlur("fullName")}
                     />
                   </FormControl>
@@ -239,7 +286,6 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
                       placeholder="01XXXXXXXXX"
                       inputMode="numeric"
                       {...field}
-                      className="rounded-none border-[#CBCBCB]"
                       onChange={(e) => {
                         const value = e.target.value.replace(/\D/g, "");
                         field.onChange(value);
@@ -268,7 +314,6 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
                       <Input
                         placeholder={t("customerInfo.fullNamePlaceholder")}
                         {...field}
-                        className="rounded-none border-[#CBCBCB]"
                         onBlur={() => commitOnBlur("fullName")}
                       />
                     </FormControl>
@@ -294,7 +339,6 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
                         type="email"
                         placeholder={t("customerInfo.emailPlaceholder")}
                         {...field}
-                        className="rounded-none border-[#CBCBCB]"
                         onBlur={() => commitOnBlur("email")}
                       />
                     </FormControl>
@@ -357,7 +401,6 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
                     rows={4}
                     placeholder={t("customerInfo.deliveryAddressPlaceholder")}
                     {...field}
-                    className="rounded-none border-[#CBCBCB]"
                     onBlur={() => commitOnBlur("deliveryAddress")}
                   />
                 </FormControl>
@@ -366,39 +409,47 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
             )}
           />
 
-          {/* ── Save / Cancel buttons (authenticated address-book edit only) ── */}
-          {isAuthenticated && (
+          {/* ── Submit / Cancel ── */}
+          {showFooter && (
             <>
-              {/* Desktop */}
               <div className="hidden items-center gap-4 pt-2 sm:flex">
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-10 rounded-none border-[#999999]"
-                  onClick={() => router.back()}
+                  className="h-11 rounded-[4px] border-border"
+                  onClick={handleCancel}
+                  disabled={isLoading}
                 >
                   {t("customerInfo.cancel")}
                 </Button>
 
-                <Button type="submit" disabled={isLoading} className="h-10 rounded-none bg-black text-white hover:bg-black/90">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="h-11 rounded-[4px] bg-black text-white hover:bg-black/90"
+                >
                   {isLoading ? t("customerInfo.submitting") : t("customerInfo.saveChanges")}
                 </Button>
               </div>
 
-              {/* Mobile sticky bar */}
               <div className="fixed inset-x-0 bottom-0 z-50 bg-white sm:hidden">
                 <div className="border-t border-black/10 pb-[env(safe-area-inset-bottom)]">
                   <div className="mx-auto flex max-w-[1120px] items-center gap-3 px-4 py-3">
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-11 flex-1 rounded-none border-[#999999]"
-                      onClick={() => router.back()}
+                      className="h-11 flex-1 rounded-[4px] border-border"
+                      onClick={handleCancel}
+                      disabled={isLoading}
                     >
                       {t("customerInfo.cancel")}
                     </Button>
 
-                    <Button type="submit" disabled={isLoading} className="h-11 flex-1 rounded-none bg-black text-white hover:bg-black/90">
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="h-11 flex-1 rounded-[4px] bg-black text-white hover:bg-black/90"
+                    >
                       {isLoading ? t("customerInfo.submitting") : t("customerInfo.saveChanges")}
                     </Button>
                   </div>

@@ -4,7 +4,6 @@ import AccountLayout from "@/components/account/AccountLayout";
 import AccountSidebar from "@/components/account/AccountSidebar";
 import Breadcrumbs from "@/components/breadcrumb/Breadcrumbs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAddress } from "@/hooks/useAddress";
 import { usePhone } from "@/hooks/usePhone";
 import { openConfirmDelete } from "@/lib/modal/confirm-delete";
@@ -32,43 +31,20 @@ function BreadcrumbSkeleton() {
 
 function ContentSkeleton() {
   return (
-    <div className="space-y-3">
-      {/* Title skeleton */}
-      <div className="border-0 bg-white p-4 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-        <Skeleton className="h-7 w-40 rounded" />
+    <div className="space-y-4">
+      <div className="border-b border-[#E5E5E5] pb-3">
+        <Skeleton className="h-7 w-40 rounded-sm" />
       </div>
 
-      {/* Tabs + cards skeleton */}
-      <div className="border-0 bg-white p-4 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-        {/* Tab bar skeleton */}
-        <div className="border-b border-[#D9D9D9] pb-3 pt-2">
-          <Skeleton className="h-4 w-32 rounded" />
+      <div className="overflow-hidden rounded-md border border-[#E5E5E5] bg-white">
+        <div className="border-b border-[#E5E5E5] px-4 pt-3.5 pb-3">
+          <Skeleton className="h-4 w-32 rounded-sm" />
         </div>
 
-        {/* Address cards skeleton */}
-        <div className="space-y-4 pt-5">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="relative">
-              <div className="flex items-center justify-between border border-[#EDEDED] px-4 py-4">
-                <div className="flex items-start gap-3">
-                  <Skeleton className="mt-1 h-5 w-5 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-20 rounded-none" />
-                    <Skeleton className="h-4 w-40 rounded" />
-                    <Skeleton className="h-4 w-28 rounded" />
-                    <Skeleton className="h-3.5 w-64 rounded" />
-                  </div>
-                </div>
-              </div>
-              <div className="absolute right-4 top-4 z-10">
-                <Skeleton className="h-5 w-24 rounded-none" />
-              </div>
-              <div className="absolute bottom-2 right-4 z-10 flex items-center gap-3">
-                <Skeleton className="h-9 w-9 rounded-none" />
-                <Skeleton className="h-9 w-9 rounded-none" />
-              </div>
-            </div>
-          ))}
+        <div className="flex flex-col items-center px-6 py-12">
+          <Skeleton className="h-12 w-12 rounded-md" />
+          <Skeleton className="mt-4 h-4 w-36 rounded-sm" />
+          <Skeleton className="mt-2 h-3 w-56 rounded-sm" />
         </div>
       </div>
     </div>
@@ -161,61 +137,53 @@ const AddressBookPageClient: React.FC = () => {
   const showSkeleton = !isLangReady || addressesLoading;
 
   return (
-    <section className="container mx-auto pt-11 px-1.5 pb-6 sm:pt-0 sm:px-0">
+    <section className="container mx-auto px-3 pb-10 pt-11 min-[768px]:px-0 min-[768px]:pb-14 min-[768px]:pt-0">
       {isLangReady ? (
-        <Breadcrumbs items={[{ label: t("breadcrumb.home"), href: "/" }, { label: t("account.account"), href: "/account" }, { label: t("account.addressBook.addressBookPage") }]} />
+        <Breadcrumbs
+          items={[
+            { label: t("breadcrumb.home"), href: "/" },
+            { label: t("account.account"), href: "/account" },
+            { label: t("account.addressBook.addressBookPage") },
+          ]}
+        />
       ) : (
         <BreadcrumbSkeleton />
       )}
 
-      <div className="sm:mb-17.5">
+      <div className="mt-2 min-[768px]:mb-14">
         <AccountLayout sidebar={<AccountSidebar activeKey="address-book" />}>
           {showSkeleton ? (
             <ContentSkeleton />
           ) : (
-            <div className="space-y-3">
-              <div className="border-0 bg-white p-4 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-                <h1 className="text-2xl font-bold">{t("account.addressBook.addressBookPage")}</h1>
-              </div>
+            <div className="space-y-4">
+              <h1 className="border-b border-[#E5E5E5] pb-3 text-xl font-semibold tracking-tight text-black min-[768px]:text-[22px]">
+                {t("account.addressBook.addressBookPage")}
+              </h1>
 
-              <div className="border-0 bg-white p-4 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-                <Tabs defaultValue="delivery" className="w-full">
-                  <TabsList
-                    className={`
-                      h-auto w-full justify-start gap-0
-                      rounded-none bg-transparent p-0
-                      border-b border-[#D9D9D9]
-                    `}
-                  >
-                    <TabsTrigger
-                      value="delivery"
-                      className={`
-                        rounded-none px-0 pb-3 pt-2 text-sm font-semibold
-                        data-[state=active]:border-b-2 data-[state=active]:border-black
-                        data-[state=active]:text-black
-                        text-black/70
-                      `}
-                    >
-                      {t("account.addressBook.deliveryAddress")}
-                    </TabsTrigger>
-                  </TabsList>
+              <div className="overflow-hidden rounded-md border border-[#E5E5E5] bg-white transition-shadow duration-200 ease-out hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+                <div className="border-b border-[#E5E5E5] px-4 py-3.5">
+                  <h2 className="text-[15px] font-semibold text-black">
+                    {t("account.addressBook.deliveryAddress")}
+                  </h2>
+                </div>
 
-                  <TabsContent value="delivery" className="m-0 space-y-6 pt-5">
-                    <AddressListPanel
-                      isLoading={false}
-                      items={addresses}
-                      value={deliverySelected}
-                      onChange={setDeliverySelected}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onMakeDefault={handleMakeDefault}
-                      onVerifyPhone={handleVerifyPhone}
-                      skeletonCount={3}
-                    />
+                <div className="space-y-0 p-4">
+                  <AddressListPanel
+                    isLoading={false}
+                    items={addresses}
+                    value={deliverySelected}
+                    onChange={setDeliverySelected}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onMakeDefault={handleMakeDefault}
+                    onVerifyPhone={handleVerifyPhone}
+                    skeletonCount={3}
+                  />
 
+                  <div className="mt-5 border-t border-[#E5E5E5] pt-5">
                     <AddNewDeliveryAddressForm />
-                  </TabsContent>
-                </Tabs>
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -659,3 +659,24 @@ html.is-scrolling .scrollbar-none,
     transform: translateX(12%);
   }
 }
+
+@keyframes account-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.account-panel-enter {
+  animation: account-panel-enter 280ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-panel-enter {
+    animation: none;
+  }
+}

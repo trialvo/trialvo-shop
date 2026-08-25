@@ -13,25 +13,33 @@ const OrdersPageClient: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="container mx-auto pt-11 px-1.5 pb-6 sm:pt-0 sm:px-0">
-      <Breadcrumbs items={[
-        { label: t("breadcrumb.home"), href: "/" },
-        { label: t("account.account"), href: "/account" },
-        { label: t("account.orders.myOrder") }
-      ]} />
+    <section className="container mx-auto px-3 pb-10 pt-11 min-[768px]:px-0 min-[768px]:pb-14 min-[768px]:pt-0">
+      <Breadcrumbs
+        items={[
+          { label: t("breadcrumb.home"), href: "/" },
+          { label: t("account.account"), href: "/account" },
+          { label: t("account.orders.myOrder") },
+        ]}
+      />
 
-      <div className="sm:mb-17.5">
+      <div className="mt-2 min-[768px]:mb-14">
         <AccountLayout sidebar={<AccountSidebar activeKey="my-order" />}>
-          <div className="space-y-3">
-            <div className="border-0 shadow-[0px_0px_10px_rgba(0,0,0,0.12)] bg-white px-4 py-2.5">
-              <h1 className="text-2xl font-bold">{t("account.orders.myOrder")}</h1>
-            </div>
+          <div className="space-y-4">
+            <h1 className="border-b border-[#E5E5E5] pb-3 text-xl font-semibold tracking-tight text-black min-[768px]:text-[22px]">
+              {t("account.orders.myOrder")}
+            </h1>
 
-            <div className="border-0 shadow-[0px_0px_10px_rgba(0,0,0,0.12)] bg-white pl-4 pr-0 sm:p-4">
+            <div className="overflow-hidden rounded-md border border-[#E5E5E5] bg-white transition-shadow duration-200 ease-out hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               <OrdersTabs
-                all={all} toPay={toPay} completed={completed} canceled={canceled}
-                hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage}
-                onLoadMore={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
+                all={all}
+                toPay={toPay}
+                completed={completed}
+                canceled={canceled}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                onLoadMore={() => {
+                  if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+                }}
                 isLoading={isLoading}
               />
             </div>

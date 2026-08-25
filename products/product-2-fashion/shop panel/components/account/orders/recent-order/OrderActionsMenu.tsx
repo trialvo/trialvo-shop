@@ -30,14 +30,17 @@ const OrderActionsMenu: React.FC<Props> = ({ order, onView, onCancel, router, on
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-9 w-9 p-0 hover:bg-transparent">
-                    <MoreVertical className="h-6 w-6 text-black/70" />
+                <Button
+                    variant="ghost"
+                    className="h-8 w-8 rounded-md p-0 text-black/45 transition-[color,background-color] duration-200 ease-out hover:bg-black/[0.04] hover:text-black"
+                >
+                    <MoreVertical className="h-4 w-4" />
                 </Button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
                 align="end"
-                className="rounded-none border-0 shadow-[6px_0_18px_rgba(0,0,0,0.06)]"
+                className="w-44 rounded-md border border-[#E5E5E5] bg-white p-1 shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
             >
                 {onSubmit && !isPaid ? (
                     <DropdownMenuItem onClick={() => onSubmit(Number(order.id))}>

@@ -48,10 +48,8 @@ export const OrderRowSkeleton: React.FC = () => {
   return (
     <div
       className={cn(
-        "grid grid-cols-[1fr_0.9fr_0.9fr_0.8fr] items-center",
-        "px-2 py-4",
-        "bg-white",
-        "border-b border-[#E6E6E6]",
+        "grid grid-cols-[1.15fr_0.9fr_1fr_0.95fr] items-center gap-4",
+        "border-b border-[#E5E5E5] bg-white px-4 py-3.5",
       )}
     >
       <div className="space-y-2">
@@ -59,16 +57,16 @@ export const OrderRowSkeleton: React.FC = () => {
         <Skeleton className="h-3 w-32 rounded-sm" />
       </div>
       <div className="space-y-2">
-        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-5 w-20 rounded-sm" />
         <Skeleton className="h-3 w-16 rounded-sm" />
       </div>
       <div className="space-y-2">
         <Skeleton className="h-4 w-24 rounded-sm" />
         <Skeleton className="h-3 w-20 rounded-sm" />
       </div>
-      <div className="flex items-center justify-end gap-3">
-        <Skeleton className="h-9 w-28 rounded-none" />
-        <Skeleton className="h-9 w-9 rounded-full" />
+      <div className="flex items-center justify-end gap-2">
+        <Skeleton className="h-8 w-28 rounded-md" />
+        <Skeleton className="h-8 w-8 rounded-md" />
       </div>
     </div>
   );
@@ -78,8 +76,6 @@ const OrderRow: React.FC<Props> = ({
   item,
   onMakePayment,
   onViewDetails,
-  onTrack,
-  isEvenRow,
   onCancel,
 }) => {
   const totalQty = React.useMemo(() => {
@@ -105,7 +101,11 @@ const OrderRow: React.FC<Props> = ({
 
   const orderStatus = React.useMemo(() => {
     const status = item.order_status?.toLowerCase() || "new";
-    if (['new', 'approved', 'processing', 'shipped', 'delivered', 'cancelled', 'trash'].includes(status)) {
+    if (
+      ["new", "approved", "processing", "shipped", "delivered", "cancelled", "trash"].includes(
+        status,
+      )
+    ) {
       return status as OrderStatus;
     }
     return "new" as OrderStatus;
@@ -114,45 +114,39 @@ const OrderRow: React.FC<Props> = ({
   return (
     <div
       className={cn(
-        "grid grid-cols-[1.15fr_0.9fr_1fr_0.95fr] items-center",
-        "px-2 py-4",
-        "bg-white",
-        "border-b border-[#E6E6E6]",
+        "grid grid-cols-[1.15fr_0.9fr_1fr_0.95fr] items-center gap-4",
+        "border-b border-[#E5E5E5] bg-white px-4 py-3.5 last:border-b-0",
+        "transition-colors duration-200 ease-out hover:bg-black/[0.015]",
       )}
     >
       <div className="space-y-1">
         <div className="text-sm font-medium text-black">{orderIdLabel}</div>
-
-        <div className="flex items-baseline gap-2">
-          <span className="text-xs text-[#9A9A9A]">Placed On</span>
-          <span className="text-xs text-black">{formattedDate}</span>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-xs text-black/45">Placed On</span>
+          <span className="text-xs text-black/75">{formattedDate}</span>
         </div>
       </div>
 
       <div className="space-y-1">
         <OrderStatusPill status={orderStatus} />
-        <div className="text-xs font-normal text-[#999999]">{paymentLine(item)}</div>
+        <div className="text-xs text-black/45">{paymentLine(item)}</div>
       </div>
 
       <div className="space-y-1">
         <div className="text-sm font-medium text-black">{formattedTotal}</div>
-
-        <div className="text-xs text-[#999999]">
+        <div className="text-xs text-black/45">
           Qty{" "}
-          <span className="font-medium text-black">{pad2(totalQty)}
-            Pcs.
-          </span>{" "}
+          <span className="font-medium text-black/80">{pad2(totalQty)} Pcs.</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-2">
         {showMakePayment && (
           <Button
             type="button"
             className={cn(
-              " rounded-none bg-black px-3 py-1.25",
-              "text-xs font-medium text-white",
-              "hover:bg-black/90",
+              "h-8 rounded-md bg-black px-3 text-xs font-medium text-white",
+              "transition-colors duration-200 ease-out hover:bg-black/85",
             )}
             onClick={() => onMakePayment?.(item.id.toString())}
           >
@@ -166,20 +160,23 @@ const OrderRow: React.FC<Props> = ({
               type="button"
               aria-label="Actions"
               className={cn(
-                "grid h-11 w-11 place-items-center cursor-pointer",
-                "text-[#6B6B6B]",
-                "hover:text-black",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
+                "grid h-8 w-8 cursor-pointer place-items-center rounded-md text-black/45",
+                "transition-[color,background-color] duration-200 ease-out",
+                "hover:bg-black/[0.04] hover:text-black",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15",
               )}
             >
-              <MoreVertical className="h-6 w-6" />
+              <MoreVertical className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end" className="w-48 rounded-none border-0 shadow-[6px_0_18px_rgba(0,0,0,0.06)]">
+          <DropdownMenuContent
+            align="end"
+            className="w-44 rounded-md border border-[#E5E5E5] bg-white p-1 shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
+          >
             <DropdownMenuItem
               onClick={() => onViewDetails?.(item.id.toString())}
-              className="cursor-pointer text-sm"
+              className="cursor-pointer rounded-sm text-sm"
             >
               View Details
             </DropdownMenuItem>
@@ -187,7 +184,7 @@ const OrderRow: React.FC<Props> = ({
             {showMakePayment ? (
               <DropdownMenuItem
                 onClick={() => onCancel?.(item.id.toString())}
-                className="cursor-pointer text-sm text-red-600 focus:text-red-600"
+                className="cursor-pointer rounded-sm text-sm text-red-600 focus:text-red-600"
               >
                 Cancel Order
               </DropdownMenuItem>

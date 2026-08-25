@@ -74,7 +74,7 @@ const EditAddressClient: React.FC = () => {
   };
 
   return (
-    <section className="container mx-auto px-1.5 pb-6 pt-11 sm:px-0 sm:pt-0">
+    <section className="container mx-auto px-3 pb-10 pt-11 min-[768px]:px-0 min-[768px]:pb-14 min-[768px]:pt-0">
       <Breadcrumbs
         items={[
           { label: t("breadcrumb.home"), href: "/" },
@@ -84,25 +84,29 @@ const EditAddressClient: React.FC = () => {
         ]}
       />
 
-      <AccountLayout sidebar={<AccountSidebar activeKey="address-book" />}>
-        <div className="space-y-4">
-          <div className="border-0 bg-white px-4 py-2.5 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-            <h1 className="text-2xl font-semibold">{t("account.editAddress.editAddress")}</h1>
-          </div>
+      <div className="mt-2 min-[768px]:mb-14">
+        <AccountLayout sidebar={<AccountSidebar activeKey="address-book" />}>
+          <div className="space-y-4">
+            <h1 className="border-b border-[#E5E5E5] pb-3 text-xl font-semibold tracking-tight text-black min-[768px]:text-[22px]">
+              {t("account.editAddress.editAddress")}
+            </h1>
 
-          <div className={cn("border-0 bg-white px-4 py-2.5 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]")}>
-            <h2 className="text-lg font-semibold">{t("account.editAddress.deliveryAddress")}</h2>
+            <div className={cn("border-0 bg-white px-4 py-4 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]")}>
+              <h2 className="text-lg font-semibold">{t("account.editAddress.deliveryAddress")}</h2>
 
-            <div className="mt-4">
-              <CustomerInformationForm
-                defaultValues={defaultValues}
-                onSubmit={handleSubmit}
-                isLoading={isLoading || isUpdating}
-              />
+              <div className="mt-4">
+                <CustomerInformationForm
+                  defaultValues={defaultValues}
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading || isUpdating}
+                  deferSubmit
+                  clearOnCancel
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </AccountLayout>
+        </AccountLayout>
+      </div>
     </section>
   );
 };

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { authInputClass, authLabelClass, authLinkClass, authPrimaryBtnClass } from "./auth-ui";
+import { authLabelClass, authLinkClass, authPrimaryBtnClass } from "./auth-ui";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -283,7 +283,6 @@ const ForgotPasswordCard: React.FC<ForgotPasswordCardProps> = ({
                       ? "01XXXXXXXXX"
                       : "name@example.com"
                   }
-                  className={authInputClass(!!errors.value)}
                   aria-invalid={!!errors.value}
                   disabled={disabled}
                   {...register("value")}

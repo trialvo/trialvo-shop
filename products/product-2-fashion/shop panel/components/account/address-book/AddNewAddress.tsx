@@ -40,9 +40,16 @@ const AddNewDeliveryAddressForm: React.FC<Props> = ({ onOpenChange }) => {
   };
 
   return (
-    <section className="space-y-4 pt-2">
-      <h3 className="text-base font-semibold">{t("account.addressBook.addNewDeliveryAddress")}</h3>
-      <CustomerInformationForm onSubmit={handleSubmit} isLoading={isCreating} />
+    <section className="space-y-4">
+      <h3 className="text-[15px] font-semibold text-black">
+        {t("account.addressBook.addNewDeliveryAddress")}
+      </h3>
+      <CustomerInformationForm
+        onSubmit={handleSubmit}
+        isLoading={isCreating}
+        deferSubmit
+        clearOnCancel
+      />
     </section>
   );
 };

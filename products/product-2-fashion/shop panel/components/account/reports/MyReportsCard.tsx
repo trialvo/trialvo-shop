@@ -23,6 +23,7 @@ import {
   RefreshCw,
   XCircle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type StatusMeta = { label: string; cls: string; icon: React.ReactNode };
 type PriorityMeta = { label: string; dot: string };
@@ -30,22 +31,22 @@ type PriorityMeta = { label: string; dot: string };
 const STATUS_CONFIG: Record<ReportStatus, StatusMeta> = {
   open: {
     label: "Open",
-    cls: "bg-blue-50 text-blue-700 border-blue-100",
+    cls: "bg-[#EFF6FF] text-[#2563EB] border-[#DBEAFE]",
     icon: <Inbox className="h-3 w-3" />,
   },
   in_progress: {
     label: "In Progress",
-    cls: "bg-amber-50 text-amber-700 border-amber-100",
+    cls: "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]",
     icon: <Clock className="h-3 w-3" />,
   },
   resolved: {
     label: "Resolved",
-    cls: "bg-green-50 text-green-700 border-green-100",
+    cls: "bg-[#ECFDF3] text-[#16A34A] border-[#BBF7D0]",
     icon: <CheckCircle2 className="h-3 w-3" />,
   },
   closed: {
     label: "Closed",
-    cls: "bg-gray-50 text-gray-500 border-gray-200",
+    cls: "bg-[#F3F4F6] text-[#6B7280] border-[#E5E7EB]",
     icon: <XCircle className="h-3 w-3" />,
   },
 };
@@ -90,17 +91,17 @@ function formatDate(iso: string): string {
 
 function SkeletonRow() {
   return (
-    <div className="flex items-start gap-3 border-b border-black/[0.04] px-5 py-4 last:border-0 animate-pulse">
+    <div className="flex animate-pulse items-start gap-3 border-b border-[#E5E5E5] px-4 py-3.5 last:border-0">
       <div className="mt-1.5 h-2 w-2 rounded-full bg-gray-200" />
       <div className="flex-1 space-y-2">
-        <div className="h-3.5 w-3/4 rounded bg-gray-100" />
-        <div className="h-3 w-1/2 rounded bg-gray-100" />
+        <div className="h-3.5 w-3/4 rounded-sm bg-gray-100" />
+        <div className="h-3 w-1/2 rounded-sm bg-gray-100" />
         <div className="flex gap-2">
-          <div className="h-5 w-16 rounded bg-gray-100" />
-          <div className="h-5 w-12 rounded bg-gray-100" />
+          <div className="h-5 w-16 rounded-sm bg-gray-100" />
+          <div className="h-5 w-12 rounded-sm bg-gray-100" />
         </div>
       </div>
-      <div className="mt-1 h-4 w-4 rounded bg-gray-100" />
+      <div className="mt-1 h-4 w-4 rounded-sm bg-gray-100" />
     </div>
   );
 }
@@ -122,67 +123,63 @@ function ReportRow({
     <Link
       ref={highlighted ? highlightRef : null}
       href={`/track-report?token=${report.tracking_token}`}
-      className={[
+      className={cn(
         "group relative flex items-start justify-between gap-3",
-        "border-b border-black/[0.04] px-5 py-4 last:border-0",
-        "transition-all duration-200",
-        highlighted
-          ? "bg-amber-50/80"
-          : "hover:bg-black/[0.015]",
-      ].join(" ")}
+        "border-b border-[#E5E5E5] px-4 py-3.5 last:border-0",
+        "transition-colors duration-200 ease-out",
+        highlighted ? "bg-amber-50/80" : "hover:bg-black/[0.015]",
+      )}
     >
-      <div className="flex items-start gap-3 min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 items-start gap-3">
         <div className="mt-[7px] shrink-0">
           <span
-            className={[
-              "block h-[7px] w-[7px] rounded-full transition-colors",
+            className={cn(
+              "block h-[7px] w-[7px] rounded-full transition-colors duration-200",
               isUnread ? "bg-black" : "bg-transparent",
-            ].join(" ")}
+            )}
           />
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <p
-              className={[
+              className={cn(
                 "truncate text-sm leading-snug",
-                isUnread
-                  ? "font-bold text-black"
-                  : "font-medium text-black/75",
-              ].join(" ")}
+                isUnread ? "font-semibold text-black" : "font-medium text-black/75",
+              )}
             >
               {report.subject}
             </p>
-            <span className="shrink-0 text-[11px] tabular-nums text-gray-400">
+            <span className="shrink-0 text-[11px] tabular-nums text-black/40">
               {timeAgo(report.created_at)}
             </span>
           </div>
 
-          <p className="mt-0.5 text-xs text-gray-400">
+          <p className="mt-0.5 text-xs text-black/45">
             {CATEGORY_LABELS[report.category] ?? report.category}
-            <span className="mx-1.5 text-gray-300">·</span>
+            <span className="mx-1.5 text-black/25">·</span>
             {formatDate(report.created_at)}
           </p>
 
-          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span
-              className={[
-                "inline-flex items-center gap-1 border px-2 py-0.5",
-                "text-[11px] font-semibold leading-none",
+              className={cn(
+                "inline-flex items-center gap-1 rounded-sm border px-2 py-0.5",
+                "text-[11px] font-medium leading-none",
                 sc.cls,
-              ].join(" ")}
+              )}
             >
               {sc.icon}
               {sc.label}
             </span>
 
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium text-gray-500">
-              <span className={`inline-block h-1.5 w-1.5 rounded-full ${pc.dot}`} />
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium text-black/50">
+              <span className={cn("inline-block h-1.5 w-1.5 rounded-full", pc.dot)} />
               {pc.label}
             </span>
 
             {!report.is_replied && (
-              <span className="inline-flex items-center gap-1 border border-rose-100 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-600">
+              <span className="inline-flex items-center gap-1 rounded-sm border border-rose-100 bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-600">
                 <Clock className="h-2.5 w-2.5" />
                 Awaiting Reply
               </span>
@@ -191,7 +188,7 @@ function ReportRow({
         </div>
       </div>
 
-      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-gray-200 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-black" />
+      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-black/25 transition-[color,transform] duration-200 ease-out group-hover:translate-x-0.5 group-hover:text-black" />
     </Link>
   );
 }
@@ -200,9 +197,14 @@ const PAGE_LIMIT = 10;
 
 type Props = {
   highlightReportId?: number | null;
+  /** When true, omit the card title (page already has an h1). */
+  hideTitle?: boolean;
 };
 
-const MyReportsCard: React.FC<Props> = ({ highlightReportId }) => {
+const MyReportsCard: React.FC<Props> = ({
+  highlightReportId,
+  hideTitle = false,
+}) => {
   const { user, isLoading: authLoading } = useAuth();
 
   const [reports, setReports] = useState<MyReport[]>([]);
@@ -225,9 +227,7 @@ const MyReportsCard: React.FC<Props> = ({ highlightReportId }) => {
         setReports((prev) => [...prev, ...rows]);
       }
       setTotal(
-        rows.length < PAGE_LIMIT
-          ? off + rows.length
-          : off + PAGE_LIMIT + 1,
+        rows.length < PAGE_LIMIT ? off + rows.length : off + PAGE_LIMIT + 1,
       );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load reports.");
@@ -277,14 +277,11 @@ const MyReportsCard: React.FC<Props> = ({ highlightReportId }) => {
 
   if (authLoading) {
     return (
-      <div className="bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
-        <div className="flex items-center justify-between border-b border-black/[0.04] px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 animate-pulse bg-gray-100" />
-            <div className="space-y-1.5">
-              <div className="h-3.5 w-24 animate-pulse rounded bg-gray-100" />
-              <div className="h-3 w-40 animate-pulse rounded bg-gray-100" />
-            </div>
+      <div className="overflow-hidden rounded-md border border-[#E5E5E5] bg-white">
+        <div className="flex items-center justify-between border-b border-[#F0F0F0] px-4 py-3.5">
+          <div className="space-y-1.5">
+            <div className="h-3.5 w-24 animate-pulse rounded-sm bg-gray-100" />
+            <div className="h-3 w-40 animate-pulse rounded-sm bg-gray-100" />
           </div>
         </div>
         <SkeletonRow />
@@ -295,33 +292,54 @@ const MyReportsCard: React.FC<Props> = ({ highlightReportId }) => {
   }
 
   return (
-    <div className="bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
-      <div className="flex items-center justify-between border-b border-black/[0.04] px-5 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-black">
-            <FileText className="h-4 w-4 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-black">My Reports</h3>
-              {stats.unread > 0 && (
-                <span className="inline-flex h-4.5 min-w-[18px] items-center justify-center bg-black px-1 text-[10px] font-bold tabular-nums text-white">
-                  {stats.unread}
-                </span>
+    <div className="overflow-hidden rounded-md border border-[#E5E5E5] bg-white transition-shadow duration-200 ease-out hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[#F0F0F0] px-4 py-3.5">
+        <div className="min-w-0">
+          {!hideTitle ? (
+            <>
+              <div className="flex items-center gap-2">
+                <h3 className="text-[15px] font-semibold text-black">My Reports</h3>
+                {stats.unread > 0 && (
+                  <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-sm bg-black px-1 text-[10px] font-semibold tabular-nums text-white">
+                    {stats.unread}
+                  </span>
+                )}
+              </div>
+              <p className="mt-0.5 text-xs text-black/50">
+                Track your support reports and complaint history.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-black/55">
+              {stats.total > 0 ? (
+                <>
+                  <span className="font-semibold tabular-nums text-black">
+                    {stats.total}
+                  </span>{" "}
+                  report{stats.total === 1 ? "" : "s"}
+                  {stats.unread > 0 && (
+                    <>
+                      <span className="mx-1.5 text-black/25">·</span>
+                      <span className="font-semibold tabular-nums text-black">
+                        {stats.unread}
+                      </span>{" "}
+                      unread
+                    </>
+                  )}
+                </>
+              ) : (
+                "Your support report history"
               )}
-            </div>
-            <p className="text-xs text-gray-400">
-              Track your support reports and complaint history.
             </p>
-          </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={handleRefresh}
             disabled={loading}
-            className="inline-flex h-8 w-8 items-center justify-center border border-black/[0.06] bg-white text-gray-500 transition-colors hover:bg-black hover:text-white disabled:opacity-40"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#D6D6D6] bg-white text-black/55 transition-[background-color,border-color,color] duration-200 ease-out hover:border-black hover:bg-black hover:text-white disabled:opacity-40"
             aria-label="Refresh reports"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -329,7 +347,7 @@ const MyReportsCard: React.FC<Props> = ({ highlightReportId }) => {
 
           <Link
             href="/submit-report"
-            className="inline-flex items-center gap-1.5 border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-black transition-colors hover:bg-black hover:text-white"
+            className="inline-flex items-center gap-1.5 rounded-md border border-[#D6D6D6] bg-white px-3 py-1.5 text-xs font-medium text-black transition-[background-color,border-color,color] duration-200 ease-out hover:border-black hover:bg-black hover:text-white"
           >
             <Plus className="h-3.5 w-3.5" />
             New Report
@@ -337,36 +355,50 @@ const MyReportsCard: React.FC<Props> = ({ highlightReportId }) => {
         </div>
       </div>
 
-      {reports.length > 0 && (
-        <div className="flex items-center gap-4 border-b border-black/[0.04] bg-gray-50/50 px-5 py-2">
-          <span className="text-[11px] text-gray-400">
-            <span className="font-semibold tabular-nums text-black">{stats.total}</span> total
+      {!hideTitle && reports.length > 0 && (
+        <div className="flex items-center gap-4 border-b border-[#E5E5E5] bg-[#FAFAFA] px-4 py-2">
+          <span className="text-[11px] text-black/45">
+            <span className="font-semibold tabular-nums text-black">{stats.total}</span>{" "}
+            total
           </span>
           {stats.unread > 0 && (
-            <span className="text-[11px] text-gray-400">
-              <span className="font-semibold tabular-nums text-black">{stats.unread}</span> unread
+            <span className="text-[11px] text-black/45">
+              <span className="font-semibold tabular-nums text-black">{stats.unread}</span>{" "}
+              unread
             </span>
           )}
           {stats.awaitingReply > 0 && (
-            <span className="text-[11px] text-gray-400">
-              <span className="font-semibold tabular-nums text-rose-600">{stats.awaitingReply}</span> awaiting reply
+            <span className="text-[11px] text-black/45">
+              <span className="font-semibold tabular-nums text-rose-600">
+                {stats.awaitingReply}
+              </span>{" "}
+              awaiting reply
             </span>
           )}
         </div>
       )}
 
+      {hideTitle && reports.length > 0 && stats.awaitingReply > 0 && (
+        <div className="border-b border-[#E5E5E5] bg-[#FAFAFA] px-4 py-2">
+          <span className="text-[11px] text-black/45">
+            <span className="font-semibold tabular-nums text-rose-600">
+              {stats.awaitingReply}
+            </span>{" "}
+            awaiting reply
+          </span>
+        </div>
+      )}
+
       {error ? (
-        <div className="flex items-start gap-3 px-5 py-8">
+        <div className="flex items-start gap-3 px-4 py-8">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
           <div>
-            <p className="text-sm font-semibold text-black">
-              Something went wrong
-            </p>
-            <p className="mt-0.5 text-xs text-gray-500">{error}</p>
+            <p className="text-sm font-semibold text-black">Something went wrong</p>
+            <p className="mt-0.5 text-xs text-black/55">{error}</p>
             <button
               type="button"
               onClick={handleRefresh}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-black hover:underline"
+              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-black transition-opacity duration-200 hover:opacity-60"
             >
               <RefreshCw className="h-3 w-3" />
               Try again
@@ -380,20 +412,18 @@ const MyReportsCard: React.FC<Props> = ({ highlightReportId }) => {
           <SkeletonRow />
         </div>
       ) : reports.length === 0 ? (
-        <div className="flex flex-col items-center px-6 py-14 text-center">
-          <div className="flex h-14 w-14 items-center justify-center bg-black/[0.03]">
-            <FileText className="h-7 w-7 text-gray-300" />
+        <div className="flex flex-col items-center px-6 py-12 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-black/[0.03]">
+            <FileText className="h-6 w-6 text-black/25" />
           </div>
-          <p className="mt-4 text-sm font-bold text-black">
-            No reports yet
-          </p>
-          <p className="mt-1 max-w-xs text-xs leading-relaxed text-gray-400">
-            Submit a support report if you have a product issue, order problem,
-            or need assistance.
+          <p className="mt-4 text-sm font-semibold text-black">No reports yet</p>
+          <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-black/50">
+            Submit a support report if you have a product issue, order problem, or
+            need assistance.
           </p>
           <Link
             href="/submit-report"
-            className="mt-5 inline-flex items-center gap-2 bg-black px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-black/80"
+            className="mt-5 inline-flex items-center gap-2 rounded-md bg-black px-5 py-2.5 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-black/85"
           >
             <Plus className="h-4 w-4" />
             Submit Your First Report
@@ -413,32 +443,30 @@ const MyReportsCard: React.FC<Props> = ({ highlightReportId }) => {
           </div>
 
           {hasMore && (
-            <div className="border-t border-black/[0.04] px-5 py-3 text-center">
+            <div className="border-t border-[#E5E5E5] px-4 py-3 text-center">
               <button
                 type="button"
                 onClick={handleLoadMore}
                 disabled={loading}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-black transition-opacity hover:underline disabled:opacity-40"
+                className="inline-flex items-center gap-2 text-sm font-medium text-black transition-opacity duration-200 hover:opacity-60 disabled:opacity-40"
               >
-                {loading && (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                )}
+                {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 {loading ? "Loading…" : "Load More Reports"}
               </button>
             </div>
           )}
 
-          <div className="flex items-center justify-between border-t border-black/[0.04] bg-gray-50/40 px-5 py-3">
+          <div className="flex items-center justify-between gap-3 border-t border-[#E5E5E5] bg-[#FAFAFA] px-4 py-3">
             <Link
               href="/track-report"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-black transition-opacity hover:opacity-60"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-black/60 transition-colors duration-200 ease-out hover:text-black"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              Track a report with token
+              Track with token
             </Link>
             <Link
               href="/submit-report"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-black transition-opacity hover:opacity-60"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-black/60 transition-colors duration-200 ease-out hover:text-black"
             >
               <Plus className="h-3.5 w-3.5" />
               Submit new report

@@ -8,7 +8,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { authErrorBannerClass, authInputClass, authLabelClass, authLinkClass, authPrimaryBtnClass, authSuccessBannerClass } from './auth-ui'
+import { authErrorBannerClass, authLabelClass, authLinkClass, authPrimaryBtnClass, authSuccessBannerClass } from './auth-ui'
 
 import AuthDivider from './AuthDivider'
 import GoogleAuthButton from './GoogleAuthButton'
@@ -113,7 +113,6 @@ const CreateAccountCard: React.FC<CreateAccountCardProps> = ({
                 <Input
                   id="firstName"
                   placeholder={t("auth.firstNamePlaceholder")}
-                  className={authInputClass(!!errors.first_name)}
                   aria-invalid={!!errors.first_name}
                   disabled={isSigningUp}
                   {...register('first_name')}
@@ -130,7 +129,6 @@ const CreateAccountCard: React.FC<CreateAccountCardProps> = ({
                 <Input
                   id="lastName"
                   placeholder={t("auth.lastNamePlaceholder")}
-                  className={authInputClass(!!errors.last_name)}
                   aria-invalid={!!errors.last_name}
                   disabled={isSigningUp}
                   {...register('last_name')}
@@ -148,7 +146,6 @@ const CreateAccountCard: React.FC<CreateAccountCardProps> = ({
               <Input
                 id="email"
                 placeholder={t("auth.emailPlaceholder")}
-                className={authInputClass(!!errors.email)}
                 aria-invalid={!!errors.email}
                 disabled={isSigningUp}
                 {...register('email', { onChange: () => setAlreadyVerified(false) })}

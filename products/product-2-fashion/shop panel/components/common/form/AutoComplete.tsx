@@ -133,7 +133,7 @@ const Autocomplete = <TValue extends string,>({
                   setOpen(false);
                 }
               }}
-              className={cn("h-10 rounded-none border-[#CBCBCB] pr-10", triggerClassName)}
+              className={cn("pr-10", triggerClassName)}
             />
 
             <button
@@ -148,7 +148,7 @@ const Autocomplete = <TValue extends string,>({
                 setOpen((p) => !p);
               }}
               className={cn(
-                "absolute right-0 top-0 grid h-10 w-10 place-items-center",
+                "absolute right-0 top-0 grid h-11 w-11 place-items-center",
                 "text-muted-foreground hover:text-foreground",
                 "disabled:opacity-60",
               )}

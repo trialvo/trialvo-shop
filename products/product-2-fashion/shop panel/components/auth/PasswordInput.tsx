@@ -40,11 +40,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
           onBlur={onBlur}
           disabled={disabled}
           aria-invalid={!!error}
-          className={`h-11 rounded-[4px] pr-12 text-[14px] shadow-none ${
-            error
-              ? "border-destructive focus-visible:border-destructive focus-visible:ring-1 focus-visible:ring-destructive/25"
-              : "border-border focus-visible:border-foreground focus-visible:ring-1 focus-visible:ring-foreground/20"
-          }`}
+          className="pr-12"
         />
         <button
           type="button"

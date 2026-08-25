@@ -6,7 +6,7 @@ import Breadcrumbs from "@/components/breadcrumb/Breadcrumbs";
 import AccountLayout from "@/components/account/AccountLayout";
 import AccountSidebar from "@/components/account/AccountSidebar";
 import MyReportsCard from "./MyReportsCard";
-import { ExternalLink, FileText } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useLanguage } from "@/providers/LanguageProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -16,45 +16,37 @@ type Props = {
 
 function ContentSkeleton() {
   return (
-    <div className="space-y-3">
-      {/* Header skeleton */}
-      <div className="border-0 bg-white px-4 py-2.5 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-5 w-5 rounded" />
-            <Skeleton className="h-6 w-28 rounded" />
-          </div>
-          <Skeleton className="h-4 w-28 rounded" />
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
+        <Skeleton className="h-7 w-36 rounded-sm" />
+        <Skeleton className="h-4 w-28 rounded-sm" />
       </div>
 
-      {/* Card skeleton */}
-      <div className="bg-white shadow-[0px_0px_10px_rgba(0,0,0,0.06)]">
-        <div className="flex items-center justify-between border-b border-black/[0.04] px-5 py-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-8 w-8" />
-            <div className="space-y-1.5">
-              <Skeleton className="h-3.5 w-24 rounded" />
-              <Skeleton className="h-3 w-52 rounded" />
-            </div>
+      <div className="overflow-hidden rounded-md border border-[#E5E5E5] bg-white">
+        <div className="flex items-center justify-between border-b border-[#F0F0F0] px-4 py-3.5">
+          <div className="space-y-1.5">
+            <Skeleton className="h-3.5 w-40 rounded-sm" />
+            <Skeleton className="h-3 w-52 rounded-sm" />
           </div>
           <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-8" />
-            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-24 rounded-md" />
           </div>
         </div>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-start gap-3 border-b border-black/[0.04] px-5 py-4 last:border-0 animate-pulse">
-            <div className="mt-1.5 h-2 w-2 rounded-full bg-gray-200" />
+          <div
+            key={i}
+            className="flex items-start gap-3 border-b border-[#E5E5E5] px-4 py-3.5 last:border-0"
+          >
+            <div className="mt-1.5 h-2 w-2 animate-pulse rounded-full bg-gray-200" />
             <div className="flex-1 space-y-2">
-              <Skeleton className="h-3.5 w-3/4 rounded" />
-              <Skeleton className="h-3 w-1/2 rounded" />
+              <Skeleton className="h-3.5 w-3/4 rounded-sm" />
+              <Skeleton className="h-3 w-1/2 rounded-sm" />
               <div className="flex gap-2">
-                <Skeleton className="h-5 w-16 rounded" />
-                <Skeleton className="h-5 w-12 rounded" />
+                <Skeleton className="h-5 w-16 rounded-sm" />
+                <Skeleton className="h-5 w-12 rounded-sm" />
               </div>
             </div>
-            <Skeleton className="mt-1 h-4 w-4 rounded" />
           </div>
         ))}
       </div>
@@ -65,11 +57,11 @@ function ContentSkeleton() {
 function BreadcrumbSkeleton() {
   return (
     <div className="flex items-center gap-2 py-3">
-      <Skeleton className="h-3.5 w-12 rounded" />
-      <Skeleton className="h-3.5 w-3 rounded" />
-      <Skeleton className="h-3.5 w-16 rounded" />
-      <Skeleton className="h-3.5 w-3 rounded" />
-      <Skeleton className="h-3.5 w-20 rounded" />
+      <Skeleton className="h-3.5 w-12 rounded-sm" />
+      <Skeleton className="h-3.5 w-3 rounded-sm" />
+      <Skeleton className="h-3.5 w-16 rounded-sm" />
+      <Skeleton className="h-3.5 w-3 rounded-sm" />
+      <Skeleton className="h-3.5 w-20 rounded-sm" />
     </div>
   );
 }
@@ -78,7 +70,7 @@ const MyReportsPageClient: React.FC<Props> = ({ highlightReportId }) => {
   const { isLangReady } = useLanguage();
 
   return (
-    <section className="container mx-auto pt-11 px-1.5 pb-6 sm:pt-0 sm:px-0">
+    <section className="container mx-auto px-3 pb-10 pt-11 min-[768px]:px-0 min-[768px]:pb-14 min-[768px]:pt-0">
       {isLangReady ? (
         <Breadcrumbs
           items={[
@@ -91,27 +83,27 @@ const MyReportsPageClient: React.FC<Props> = ({ highlightReportId }) => {
         <BreadcrumbSkeleton />
       )}
 
-      <div className="sm:mb-17.5">
+      <div className="mt-2 min-[768px]:mb-14">
         <AccountLayout sidebar={<AccountSidebar activeKey="my-reports" />}>
           {isLangReady ? (
-            <div className="space-y-3">
-              <div className="border-0 bg-white px-4 py-2.5 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-black" />
-                    <h1 className="text-xl font-bold text-black">My Reports</h1>
-                  </div>
-                  <Link
-                    href="/track-report"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-black transition-opacity hover:opacity-60"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Track with token
-                  </Link>
-                </div>
+            <div className="space-y-4">
+              <div className="flex items-end justify-between gap-3 border-b border-[#E5E5E5] pb-3">
+                <h1 className="text-xl font-semibold tracking-tight text-black min-[768px]:text-[22px]">
+                  My Reports
+                </h1>
+                <Link
+                  href="/track-report"
+                  className="mb-0.5 inline-flex items-center gap-1.5 text-xs font-medium text-black/60 transition-colors duration-200 ease-out hover:text-black"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Track with token
+                </Link>
               </div>
 
-              <MyReportsCard highlightReportId={highlightReportId} />
+              <MyReportsCard
+                highlightReportId={highlightReportId}
+                hideTitle
+              />
             </div>
           ) : (
             <ContentSkeleton />

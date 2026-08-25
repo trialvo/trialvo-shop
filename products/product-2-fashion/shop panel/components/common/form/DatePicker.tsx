@@ -49,7 +49,8 @@ const DatePicker: React.FC<Props> = ({
           variant="outline"
           disabled={disabled}
           className={cn(
-            "h-9 w-full justify-between rounded-none border-[#CBCBCB] bg-white px-3 text-sm font-normal text-black",
+            "h-11 w-full justify-between rounded-[4px] border border-border bg-background px-3 text-[14px] font-normal text-foreground shadow-none",
+            "hover:bg-background focus-visible:border-foreground focus-visible:ring-1 focus-visible:ring-foreground/20",
             !value && "text-[#999999]",
             className
           )}
