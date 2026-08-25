@@ -45,8 +45,13 @@ const OrderItems: React.FC<Props> = ({ items, className }) => {
 
   return (
     <div className={cn("pt-4", className)}>
-      <h3 className="text-sm font-semibold">{buyNowId === null ? hasPath ? `Ordered ${items?.length > 0 ? "Item's" : "Item"
-        }` : "Items in Cart" : "Item for Order"}</h3>
+      <h3 className="text-xs font-medium tracking-wide text-black/45">
+        {buyNowId === null
+          ? hasPath
+            ? `Ordered ${items?.length === 1 ? "item" : "items"}`
+            : "Items in cart"
+          : "Item for order"}
+      </h3>
 
       {items?.length === 0 ? (
         <div className="my-10 flex flex-col items-center justify-center">
@@ -65,13 +70,13 @@ const OrderItems: React.FC<Props> = ({ items, className }) => {
             onClick={() => {
               router.push("/");
             }}
-            className="mt-4 h-8 rounded-none bg-black px-8 text-xs font-semibold text-white hover:bg-black/90"
+            className="mt-4 h-8 rounded-[4px] bg-black px-8 text-xs font-semibold text-white hover:bg-black/90"
           >
             Start Shopping
           </Button>
         </div>
       ) : (
-        <div className="max-h-none overflow-visible sm:max-h-70 sm:overflow-auto sm:pr-3">
+        <div className="mt-1 max-h-none overflow-visible sm:max-h-70 sm:overflow-auto">
           {items?.map((item) => (
             <OrderedItem key={item.id} item={item} onRemove={() => handleDelete(item?.id)} />
           ))}

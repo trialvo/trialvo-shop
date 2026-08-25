@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import React from "react";
 
 import DeliverySelector from "@/components/delivery/DeliverySelector";
@@ -17,10 +16,9 @@ import { useAppDispatch } from "@/redux/hooks";
 import { openModal } from "@/redux/slices/modalManagerSlice";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useRouter } from "next/navigation";
-import { PiShoppingCartLight } from "react-icons/pi";
 import AddressListPanel from "../account/address-book/AddressListPanel";
-import AddressHeader from "../address-selector/AddressHeader";
 import CustomerInformation from "./CustomerInformation";
+import { FiPlus } from "react-icons/fi";
 
 type Props = {
   isAuthenticate: boolean;
@@ -51,6 +49,28 @@ type Props = {
   emailRequired?: boolean;
 };
 
+function CheckoutSection({
+  title,
+  action,
+  error,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <h2 className="text-base font-semibold tracking-tight text-black">{title}</h2>
+        {action}
+      </div>
+      {error ? <p className="mb-2 text-xs font-medium text-red-600">{error}</p> : null}
+      {children}
+    </section>
+  );
+}
 
 const CheckoutLeft: React.FC<Props> = ({
   isAuthenticate,
@@ -171,24 +191,24 @@ const CheckoutLeft: React.FC<Props> = ({
   };
 
   return (
-    <Card className="rounded-none border-none! shadow-[0px_0px_10px_rgba(0,0,0,0.10)] bg-white px-2 sm:px-6 sm:py-4.25 gap-2 sm:gap-6">
-      <div className="flex items-center gap-2">
-        <PiShoppingCartLight className="h-6 w-6" />
-        <h1 className="text-[22px] font-semibold">{t("checkout.title")}</h1>
-      </div>
-
-      <div className="space-y-4">
-        <div className="space-y-2" data-checkout-error="addressId">
-          {isAuthenticate && (
-            <AddressHeader
-              onAddNew={handleOpen}
-            />
-          )}
-
-          {errors?.addressId ? (
-            <p className="text-xs font-medium text-red-600">{errors.addressId}</p>
-          ) : null}
-
+    <div className="space-y-8">
+      <div data-checkout-error="addressId">
+        <CheckoutSection
+          title={isAuthenticate ? t("checkout.deliveryAddress") : t("checkout.customerInfo")}
+          error={errors?.addressId}
+          action={
+            isAuthenticate ? (
+              <button
+                type="button"
+                onClick={handleOpen}
+                className="inline-flex shrink-0 items-center gap-1 text-sm text-black/70 underline-offset-2 hover:text-black hover:underline"
+              >
+                <FiPlus className="h-3.5 w-3.5" />
+                {t("checkout.addAddress")}
+              </button>
+            ) : undefined
+          }
+        >
           {showTopSectionSkeleton ? (
             <AddressListPanel
               isLoading
@@ -215,42 +235,46 @@ const CheckoutLeft: React.FC<Props> = ({
           ) : (
             <CustomerInformation onGuestInfoUpdate={onGuestInfoUpdate} formRef={guestFormRef} emailRequired={emailRequired} />
           )}
-
-        </div>
-
-        <div className="space-y-1" data-checkout-error="deliveryChargeId">
-          {errors?.deliveryChargeId ? (
-            <p className="text-xs font-medium text-red-600">{errors.deliveryChargeId}</p>
-          ) : null}
-
-          <DeliverySelector value={deliveryChargeId} onChange={setDeliveryChargeId} />
-        </div>
-
-        <div className="space-y-1" data-checkout-error="paymentProvider">
-          {errors?.paymentProvider ? (
-            <p className="text-xs font-medium text-red-600">{errors.paymentProvider}</p>
-          ) : null}
-
-          <PaymentMethod value={paymentProvider} onChange={setPaymentProvider} />
-        </div>
-
-        <div className="pt-2 sm:sticky sm:z-10 sm:-bottom-5">
-          <Button
-            type="button"
-            onClick={onPlaceOrder}
-            className="hidden sm:block h-12 w-full rounded-none bg-black text-white hover:bg-black/90"
-            disabled={Boolean(isSubmitting)}
-            isLoading={Boolean(isSubmitting)}
-          >
-            {t("checkout.placeOrder")}
-          </Button>
-
-          <p className="sm:mt-2 text-center text-xs text-muted-foreground">
-            {t("checkout.agreeTerms")}
-          </p>
-        </div>
+        </CheckoutSection>
       </div>
-    </Card>
+
+      <div className="h-px bg-[#E5E5E5]" />
+
+      <div data-checkout-error="deliveryChargeId">
+        <CheckoutSection
+          title={t("checkout.deliveryArea")}
+          error={errors?.deliveryChargeId}
+        >
+          <DeliverySelector hideTitle value={deliveryChargeId} onChange={setDeliveryChargeId} />
+        </CheckoutSection>
+      </div>
+
+      <div className="h-px bg-[#E5E5E5]" />
+
+      <div data-checkout-error="paymentProvider">
+        <CheckoutSection
+          title={t("checkout.paymentMethod")}
+          error={errors?.paymentProvider}
+        >
+          <PaymentMethod hideTitle value={paymentProvider} onChange={setPaymentProvider} />
+        </CheckoutSection>
+      </div>
+
+      <div className="hidden sm:block">
+        <Button
+          type="button"
+          onClick={onPlaceOrder}
+          className="h-12 w-full rounded-[4px] bg-black text-[15px] font-semibold text-white hover:bg-black/90 focus-visible:ring-2 focus-visible:ring-black/30"
+          disabled={Boolean(isSubmitting)}
+          isLoading={Boolean(isSubmitting)}
+        >
+          {t("checkout.placeOrder")}
+        </Button>
+        <p className="mt-2.5 text-center text-xs text-black/40">
+          {t("checkout.agreeTerms")}
+        </p>
+      </div>
+    </div>
   );
 };
 

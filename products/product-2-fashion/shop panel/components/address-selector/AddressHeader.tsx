@@ -8,12 +8,13 @@ type Props = {
 
 const AddressHeader: React.FC<Props> = ({ onAddNew }) => {
   return (
-    <div className="flex items-center justify-between">
-      <h2 className="text-lg font-semibold">Delivery Address</h2>
+    <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-3">
+      <h2 className="text-sm font-semibold tracking-tight text-black">Delivery Address</h2>
 
       <Button
+        type="button"
         variant="link"
-        className="flex items-center gap-1 text-[#0088FF]"
+        className="h-auto p-0 text-sm font-medium text-black hover:underline"
         onClick={onAddNew}
       >
         <FiPlus className="h-4 w-4" />

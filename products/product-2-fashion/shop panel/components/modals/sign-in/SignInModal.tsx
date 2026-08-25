@@ -2,11 +2,10 @@
 
 import SignInCard from "@/components/auth/SignInCard";
 import ModalShell from "@/components/modals/ModalShell";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import * as React from "react";
-import { FiArrowLeft, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 
 type Props = {
   open: boolean;
@@ -36,40 +35,40 @@ const SignInModal: React.FC<Props> = ({
       onOpenChange={onOpenChange}
       isTop={isTop}
       zIndex={zIndex}
+      title={t("auth.signInTitle")}
       contentClassName={cn(
-        "p-0",
-        "w-screen max-w-none",
-        "h-[100dvh] sm:h-auto",
-        "rounded-none",
-        "sm:w-[540px]!",
+        "overflow-hidden p-0",
+        "w-[calc(100vw-32px)] max-w-[440px]",
+        "max-h-[min(640px,90dvh)]",
+        "rounded-[4px] border-[#E5E5E5]",
         contentClassName,
       )}
     >
-      <div className="relative flex h-full flex-col bg-white">
-        <div className="sticky top-0 z-20 flex items-center gap-2 border-b border-black/10 bg-white px-4 py-3 sm:hidden">
+      <div className="flex max-h-[min(640px,90dvh)] flex-col bg-white">
+        <div className="flex items-center justify-between border-b border-[#E5E5E5] px-5 py-3.5">
+          <h2 className="text-[15px] font-semibold tracking-tight text-black">
+            {t("auth.signInTitle")}
+          </h2>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            aria-label="Back"
-            className="inline-flex h-9 w-9 items-center justify-center transition-colors duration-200 hover:bg-[#f1f1f1] cursor-pointer"
+            aria-label={t("common.close")}
+            className="grid h-8 w-8 place-items-center text-black/55 transition-colors hover:bg-black/5 hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30"
           >
-            <FiArrowLeft className="h-5 w-5 text-black" />
+            <FiX className="h-4 w-4" />
           </button>
-
-          <div className="flex-1 text-left text-lg font-semibold text-black">{t("auth.signInTitle")}</div>
         </div>
 
-        <Button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="absolute -right-5 -top-5 hidden h-10 w-10 rounded-none bg-black p-0 text-white sm:inline-flex"
-          aria-label="Close"
-        >
-          <FiX className="h-5 w-5" />
-        </Button>
-
         <div className="flex-1 overflow-y-auto">
-          <SignInCard forgotHref={forgotHref} createHref={createHref} onNavigate={onOpenChange} className="px-5 py-6 min-[576px]:px-7 min-[576px]:py-7" shadowClass="shadow-none" redirectToCheckout={true} />
+          <SignInCard
+            forgotHref={forgotHref}
+            createHref={createHref}
+            onNavigate={onOpenChange}
+            hideTitle
+            className="px-5 py-5"
+            shadowClass="shadow-none"
+            redirectToCheckout={true}
+          />
         </div>
       </div>
     </ModalShell>

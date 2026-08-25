@@ -21,7 +21,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({ value, onChange }) => {
 
       <div className="flex items-center gap-2">
         <Input
-          className="h-9 rounded-none"
+          className="h-9"
           value={`BDT ${value.min.toFixed(2)}`}
           onChange={(e) => {
             const num = Number(e.target.value.replaceAll(/[^\d.]/g, ""));
@@ -30,7 +30,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({ value, onChange }) => {
         />
         <span className="text-muted-foreground">-</span>
         <Input
-          className="h-9 rounded-none"
+          className="h-9"
           value={`BDT ${value.max.toFixed(2)}`}
           onChange={(e) => {
             const num = Number(e.target.value.replaceAll(/[^\d.]/g, ""));

@@ -179,6 +179,13 @@
  },
  "checkout": {
   "title": "চেকআউট",
+  "subtitle": "বিবরণ দেখে অর্ডার সম্পন্ন করুন।",
+  "customerInfo": "গ্রাহকের তথ্য",
+  "deliveryAddress": "ডেলিভারি ঠিকানা",
+  "deliveryArea": "ডেলিভারি এলাকা",
+  "paymentMethod": "পেমেন্ট পদ্ধতি",
+  "alreadyHaveAccount": "ইতিমধ্যে অ্যাকাউন্ট আছে?",
+  "addAddress": "ঠিকানা যোগ করুন",
   "placeOrder": "অর্ডার করুন",
   "agreeTerms": "অর্ডার দেওয়ার মাধ্যমে আপনি আমাদের নিয়ম ও শর্তে রাজি হচ্ছেন",
   "deleteAddressTitle": "এই ঠিকানা মুছে ফেলতে চান?",
@@ -239,7 +246,10 @@
  },
  "productCard": {
   "quickAdd": "দ্রুত যোগ করুন",
-  "addToWishlist": "পছন্দের তালিকায় যোগ করুন"
+  "addToWishlist": "পছন্দের তালিকায় যোগ করুন",
+  "addToCompare": "তুলনায় যোগ করুন",
+  "removeFromCompare": "তুলনা থেকে সরান",
+  "compareFull": "তুলনা ভর্তি"
  },
  "productDetails": {
   "description": "বিবরণ",

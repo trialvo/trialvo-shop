@@ -26,6 +26,7 @@ type Props = {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  hideTitle?: boolean;
 };
 
 function toChargeNumber(v: unknown): number {
@@ -33,7 +34,7 @@ function toChargeNumber(v: unknown): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-const DeliverySelector: React.FC<Props> = ({ value, onChange, className }) => {
+const DeliverySelector: React.FC<Props> = ({ value, onChange, className, hideTitle = false }) => {
   const { charges, isLoading } = useDelivery();
   const dispatch = useAppDispatch();
 
@@ -71,10 +72,12 @@ const DeliverySelector: React.FC<Props> = ({ value, onChange, className }) => {
 
   if (isLoading) {
     return (
-      <section className={cn("space-y-3", className)}>
-        <h2 className="text-base font-semibold">Select Delivery Area</h2>
+      <section className={cn(hideTitle ? "space-y-0" : "space-y-3", className)}>
+        {hideTitle ? null : (
+          <h2 className="text-sm font-semibold tracking-tight text-black">Select Delivery Area</h2>
+        )}
 
-        <div className={cn("grid gap-3", "grid-cols-2", "min-[501px]:grid-cols-3")}>
+        <div className={cn("grid gap-2", hideTitle ? "grid-cols-1" : "grid-cols-2 min-[501px]:grid-cols-3")}>
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className={cn(i === 2 ? "max-[500px]:col-span-2" : undefined)}>
               <div className="rounded border border-[#E9E9E9] bg-white p-4">
@@ -99,13 +102,15 @@ const DeliverySelector: React.FC<Props> = ({ value, onChange, className }) => {
   const total = charges?.length ?? 0;
 
   return (
-    <section className={cn("space-y-3", className)}>
-      <h2 className="text-base font-semibold">Select Delivery Area</h2>
+    <section className={cn(hideTitle ? "space-y-0" : "space-y-3", className)}>
+      {hideTitle ? null : (
+        <h2 className="text-sm font-semibold tracking-tight text-black">Select Delivery Area</h2>
+      )}
 
       <RadioGroup
         value={value}
         onValueChange={(v) => onChange(String(v))}
-        className={cn("grid gap-3", "grid-cols-2", "min-[501px]:grid-cols-3")}
+        className={cn("grid gap-2", hideTitle ? "grid-cols-1" : "grid-cols-2 min-[501px]:grid-cols-3")}
       >
         {(charges ?? []).map((option, idx) => {
           const isLast = idx === total - 1;

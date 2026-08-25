@@ -21,10 +21,10 @@ const PaymentCard: React.FC<Props> = ({
     <label
       htmlFor={id}
       className={clsx(
-        "flex cursor-pointer items-center justify-between border p-2 sm:p-4 transition",
+        "flex cursor-pointer items-center justify-between border px-4 py-3.5 transition-colors",
         checked
-          ? "border-black"
-          : "border-gray-400 hover:border-gray-400"
+          ? "border-black bg-[#FAFAFA]"
+          : "border-[#E5E5E5] hover:border-black/30"
       )}
     >
       <div className="flex items-center gap-3">

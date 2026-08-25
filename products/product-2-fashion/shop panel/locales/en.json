@@ -179,6 +179,13 @@
  },
  "checkout": {
   "title": "Checkout",
+  "subtitle": "Review your details and place your order.",
+  "customerInfo": "Customer Information",
+  "deliveryAddress": "Delivery Address",
+  "deliveryArea": "Delivery Area",
+  "paymentMethod": "Payment Method",
+  "alreadyHaveAccount": "Already have an account?",
+  "addAddress": "Add address",
   "placeOrder": "Place Order",
   "agreeTerms": "By placing your order, you agree to our terms and conditions",
   "deleteAddressTitle": "Are you sure you want delete this address?",
@@ -239,7 +246,10 @@
  },
  "productCard": {
   "quickAdd": "Quick Add",
-  "addToWishlist": "Add to wishlist"
+  "addToWishlist": "Add to wishlist",
+  "addToCompare": "Add to compare",
+  "removeFromCompare": "Remove from compare",
+  "compareFull": "Compare is full"
  },
  "productDetails": {
   "description": "Description",

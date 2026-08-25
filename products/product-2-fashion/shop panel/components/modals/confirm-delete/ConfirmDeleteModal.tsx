@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import * as React from "react";
+import { FiX } from "react-icons/fi";
 
 type Props = {
   open: boolean;
@@ -46,25 +47,39 @@ const ConfirmDeleteModal: React.FC<Props> = ({
       onOpenChange={onOpenChange}
       isTop={isTop}
       zIndex={zIndex}
+      title={resolvedTitle}
       contentClassName={cn(
-        "w-[calc(100vw-24px)] max-w-[560px]",
-        "p-0",
+        "overflow-hidden p-0",
+        "w-[calc(100vw-32px)] max-w-[440px]",
+        "rounded-[4px] border-[#E5E5E5]",
         className,
       )}
     >
-      <div className="p-7">
-        <h3 className="text-lg font-semibold text-black">{resolvedTitle}</h3>
+      <div className="bg-white">
+        <div className="flex items-start justify-between gap-3 border-b border-[#E5E5E5] px-5 py-4">
+          <h3 className="pr-2 text-[15px] font-semibold leading-snug tracking-tight text-black">
+            {resolvedTitle}
+          </h3>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            aria-label={t("common.close")}
+            className="grid h-8 w-8 shrink-0 place-items-center text-black/55 transition-colors hover:bg-black/5 hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30"
+          >
+            <FiX className="h-4 w-4" />
+          </button>
+        </div>
 
-        <p className="mt-3 max-w-110 text-sm leading-5 text-black/60">
+        <p className="px-5 py-4 text-sm leading-relaxed text-black/55">
           {resolvedDescription}
         </p>
 
-        <div className="mt-6 flex items-center gap-3">
+        <div className="flex items-center justify-end gap-2 border-t border-[#E5E5E5] px-5 py-3.5">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="h-10 rounded-none border-[#BDBDBD] px-6 text-sm font-medium text-black"
+            className="h-10 rounded-[4px] border-[#E5E5E5] px-4 text-sm font-medium text-black hover:border-black hover:bg-white"
           >
             {resolvedCancelText}
           </Button>
@@ -75,7 +90,7 @@ const ConfirmDeleteModal: React.FC<Props> = ({
               onConfirm?.();
               onOpenChange(false);
             }}
-            className="h-10 rounded-none bg-black px-6 text-sm font-medium text-white hover:bg-black/90"
+            className="h-10 rounded-[4px] bg-black px-4 text-sm font-medium text-white hover:bg-black/90"
           >
             {resolvedConfirmText}
           </Button>

@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { FiTag, FiX } from "react-icons/fi";
-import { TbReceiptDollar } from "react-icons/tb";
+import { FiX } from "react-icons/fi";
 
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { selectAppliedCoupon, selectCartTotals } from "@/redux/selectors/cartSelectors";
@@ -115,32 +114,33 @@ const OrderSummary: React.FC<Props> = ({ items }) => {
   };
 
   return (
-    <section className="sm:sticky sm:top-19.5 border-0 shadow-[0px_0px_10px_rgba(0,0,0,0.10)] bg-white">
-      <div className="flex items-center gap-2 text-lg font-semibold border-b border-[#F1F1F1] py-4 px-3">
-        <TbReceiptDollar className="h-5 w-5" />
-        {t("orderSummary.title")}
+    <section className="border border-[#E5E5E5] bg-white sm:sticky sm:top-19.5">
+      <div className="border-b border-[#E5E5E5] px-5 py-4">
+        <h2 className="text-base font-semibold tracking-tight text-black">
+          {t("orderSummary.title")}
+        </h2>
       </div>
 
-      <OrderItems items={items} className="px-3 mb-4" />
+      <OrderItems items={items} className="px-5" />
 
-      <div className="bg-[#F3FAFF] p-4">
-        <div className="flex items-center gap-1.5 text-sm text-[#343434] font-semibold mb-1">
-          <FiTag className="h-5 w-5" />
+      <div className="border-t border-[#E5E5E5] px-5 py-4">
+        <p className="mb-2.5 text-xs font-medium tracking-wide text-black/45">
           {t("orderSummary.couponCode")}
-        </div>
+        </p>
 
         {appliedCoupon?.coupon ? (
-          <div className="flex items-center justify-between bg-white border border-green-500 p-3 rounded">
-            <div className="flex items-center gap-2">
-              <span className="text-green-600 font-medium">{t("orderSummary.applied")}</span>
-              <span className="font-semibold">{appliedCoupon.coupon}</span>
+          <div className="flex items-center justify-between border border-[#E5E5E5] bg-white px-3 py-2.5">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-black/50">{t("orderSummary.applied")}</span>
+              <span className="font-semibold text-black">{appliedCoupon.coupon}</span>
             </div>
             <button
+              type="button"
               onClick={handleRemoveCoupon}
-              className="text-gray-500 hover:text-red-500 transition-colors p-1 cursor-pointer"
+              className="p-1 text-black/40 transition-colors hover:text-black"
               aria-label="Remove coupon"
             >
-              <FiX className="h-5 w-5" />
+              <FiX className="h-4 w-4" />
             </button>
           </div>
         ) : (
@@ -153,17 +153,16 @@ const OrderSummary: React.FC<Props> = ({ items }) => {
       </div>
 
       {hasMixedDelivery && (
-        <div className="mx-3 mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-          <span className="mt-0.5 shrink-0">🚚</span>
+        <div className="mx-5 mb-1 border border-[#E5E5E5] px-3 py-2.5 text-xs leading-relaxed text-black/55">
           <p>
-            Your cart has <strong>mixed delivery</strong>: some items ship free, others don't.
-            A delivery charge applies, but free-delivery items are <strong>excluded from weight surcharge</strong>.
+            Your cart has mixed delivery: some items ship free, others don&apos;t.
+            A delivery charge applies, but free-delivery items are excluded from the weight surcharge.
           </p>
         </div>
       )}
 
       <OrderTotals
-        className="px-3"
+        className="px-5"
         hasCouponDiscount={Boolean(appliedCoupon?.coupon)}
         hasMixedDelivery={hasMixedDelivery}
         totals={{

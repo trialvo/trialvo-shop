@@ -25,8 +25,8 @@ const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({
         <Skeleton className="h-full w-full rounded-none" />
 
         {showWishlist ? (
-          <div className="absolute bottom-2 right-2">
-            <Skeleton className="h-8 w-8 rounded-full" />
+          <div className="absolute top-2 right-2">
+            <Skeleton className="h-8 w-8 rounded-[4px]" />
           </div>
         ) : null}
 
