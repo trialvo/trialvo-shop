@@ -82,10 +82,9 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ value, onChange }) => {
   });
 
   return (
-    <div className="space-y-6 sticky top-[78px]">
-      <div>
-        <h2 className="text-lg font-semibold">Filters</h2>
-        <Separator className="mt-3" />
+    <div className="sticky top-[78px] space-y-6">
+      <div className="border-b border-[#E5E5E5] pb-3">
+        <h2 className="text-sm font-semibold tracking-tight text-black">Filters</h2>
       </div>
 
       <PriceFilter value={value.price} onChange={(price) => onChange({ ...value, price })} />

@@ -36,7 +36,7 @@ const AddressListPanel: React.FC<Props> = ({
 }) => {
   if (isLoading) {
     return (
-      <RadioGroup value={value} onValueChange={onChange} className="gap-3">
+      <RadioGroup value={value} onValueChange={onChange} className="gap-2">
         {Array.from({ length: skeletonCount }).map((_, idx) => (
           <AddressSelectableCardSkeleton key={`address-skel-${idx}`} />
         ))}
@@ -59,7 +59,7 @@ const AddressListPanel: React.FC<Props> = ({
   }
 
   return (
-    <RadioGroup value={value} onValueChange={onChange} className="gap-3">
+    <RadioGroup value={value} onValueChange={onChange} className="gap-2">
       {items.map((item) => {
         const idStr = String(item.id);
 

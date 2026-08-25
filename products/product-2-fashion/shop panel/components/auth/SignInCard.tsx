@@ -30,6 +30,7 @@ interface SignInCardProps {
   className?: string;
   onNavigate?: (open: boolean) => void;
   redirectToCheckout?: boolean;
+  hideTitle?: boolean;
 }
 
 const SignInCard: React.FC<SignInCardProps> = ({
@@ -39,6 +40,7 @@ const SignInCard: React.FC<SignInCardProps> = ({
   className,
   onNavigate,
   redirectToCheckout = false,
+  hideTitle = false,
 }) => {
   const router = useRouter();
   const { ip } = useClientIp();
@@ -116,11 +118,13 @@ const SignInCard: React.FC<SignInCardProps> = ({
 
   return (
     <div className={`w-full ${className ?? ""} ${shadowClass ?? ""}`}>
-          <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground min-[576px]:text-[32px]">
-            {t("auth.signInTitle")}
-          </h1>
+          {hideTitle ? null : (
+            <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground min-[576px]:text-[32px]">
+              {t("auth.signInTitle")}
+            </h1>
+          )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className={hideTitle ? "space-y-4" : "mt-6 space-y-4"}>
             <div className="space-y-1.5">
               <Label htmlFor="emailOrMobile" className={authLabelClass}>
                 {t("auth.emailOrMobile")}

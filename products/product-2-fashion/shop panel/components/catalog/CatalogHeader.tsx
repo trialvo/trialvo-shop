@@ -29,28 +29,32 @@ const CatalogHeader: React.FC<CatalogHeaderProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className={cn("sticky top-10 py-2 bg-white sm:top-17.5 z-30 mb-1.5 sm:mb-6", className)}>
-      <div className="hidden items-center justify-between gap-4 min-[500px]:flex">
-        <h1 className="text-2xl font-semibold text-black">{title}</h1>
-        <SortSelect value={sort} onChange={onSortChange} />
-      </div>
-
-      <div className="flex flex-col gap-3 min-[500px]:hidden">
-        <div className="flex items-center justify-between gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => dispatch(openDrawer({ key: "filters" }))}
-            className={cn(
-              "h-9 rounded-none border-transparent p-0! text-sm font-medium text-black shadow-none hover:bg-transparent",
-              "hover:bg-none"
-            )}
-          >
-            <FaSliders className="h-4 w-4" />
-            {t("catalog.filter")}
-          </Button>
+    <div
+      className={cn(
+        "mb-4 border-b border-[#E5E5E5] bg-white py-3 sm:sticky sm:top-17.5 sm:z-30 sm:mb-6",
+        className,
+      )}
+    >
+      <div className="flex items-end justify-between gap-3">
+        <h1 className="min-w-0 truncate text-xl font-semibold tracking-tight text-black min-[768px]:text-[22px]">
+          {title}
+        </h1>
+        <div className="hidden shrink-0 min-[500px]:block">
           <SortSelect value={sort} onChange={onSortChange} />
         </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3 min-[500px]:hidden">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => dispatch(openDrawer({ key: "filters" }))}
+          className="h-9 rounded-none border-transparent p-0! text-sm font-medium text-black shadow-none hover:bg-transparent"
+        >
+          <FaSliders className="h-4 w-4" />
+          {t("catalog.filter")}
+        </Button>
+        <SortSelect value={sort} onChange={onSortChange} />
       </div>
     </div>
   );

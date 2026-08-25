@@ -9,11 +9,12 @@ import PaymentCard from "./PaymentCard";
 type Props = {
   value?: string;
   onChange?: React.Dispatch<React.SetStateAction<string>>;
+  hideTitle?: boolean;
 };
 
 const COD_PROVIDER_KEY = "cod";
 
-const PaymentMethod: React.FC<Props> = ({ value, onChange }) => {
+const PaymentMethod: React.FC<Props> = ({ value, onChange, hideTitle = false }) => {
   const { data, providersLoading } = usePaymentProvider({ is_active: true });
 
   const providers = data?.providers ?? [];
@@ -53,13 +54,15 @@ const PaymentMethod: React.FC<Props> = ({ value, onChange }) => {
   const total = providers.length;
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-base font-semibold">Payment Method</h2>
+    <section className={hideTitle ? "space-y-0" : "space-y-3"}>
+      {hideTitle ? null : (
+        <h2 className="text-sm font-semibold tracking-tight text-black">Payment Method</h2>
+      )}
 
       <RadioGroup
         value={controlledValue}
         onValueChange={(v) => setControlledValue(String(v))}
-        className={cn("grid gap-3", "grid-cols-2", "min-[501px]:grid-cols-3")}
+        className={cn("grid gap-2", hideTitle ? "grid-cols-1" : "grid-cols-2 min-[501px]:grid-cols-3")}
       >
         {(providersLoading ? [] : providers).map((method, idx) => {
           const providerId = String(method.provider);

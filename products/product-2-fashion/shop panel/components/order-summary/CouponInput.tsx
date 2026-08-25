@@ -38,18 +38,20 @@ const CouponInput: React.FC<Props> = ({ onApply, disabled, apiError }) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="bg-[#F3FAFF] p-4 px-2 space-y-2"
+      className="space-y-2"
     >
       <div className="flex gap-2">
         <Input
           placeholder={t("orderSummary.couponPlaceholder")}
           {...register("coupon")}
           aria-invalid={!!errors.coupon}
+          className="h-10"
         />
 
         <Button
           type="submit"
-          className="h-11 rounded-[4px] bg-black text-white transition-colors hover:bg-black/75 disabled:cursor-not-allowed"
+          variant="outline"
+          className="h-10 shrink-0 rounded-[4px] border-[#E5E5E5] px-4 text-sm font-medium text-black hover:border-black hover:bg-white"
           disabled={isSubmitting || disabled}
         >
           {t("orderSummary.apply")}

@@ -12,8 +12,7 @@ import { FiSearch } from "react-icons/fi";
 import ProductCardMobile from "../product/ProductCardMobile";
 import CategorySkeleton from "./CategorySkeleton";
 import { useTranslation } from "@/hooks/useTranslation";
-import AddToCompareButton from "@/components/compare/AddToCompareButton";
-import { useCompareStore } from "@/hooks/useCompareStore";
+import type { CompareSlot } from "@/hooks/useCompareStore";
 
 export type ProductGridProps = {
   products: ProductListItem[];
@@ -54,7 +53,6 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   const handleFavoriteClick = useHandleFavoriteClick();
   const { language } = useLanguage();
   const { t } = useTranslation();
-  const compareStore = useCompareStore();
 
   const observerTarget = React.useRef<HTMLDivElement>(null);
 
@@ -120,8 +118,9 @@ const ProductGrid: React.FC<ProductGridProps> = ({
         <p className="mt-1 max-w-md text-sm text-black/60">{t("catalog.loadErrorDesc") ?? "Something went wrong. Please check your connection and try again."}</p>
         {onRetry && (
           <button
+            type="button"
             onClick={onRetry}
-            className="mt-4 px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50"
+            className="mt-4 border border-[#E5E5E5] px-4 py-2 text-sm text-black hover:border-black"
           >
             {t("catalog.retry") ?? "Try Again"}
           </button>
@@ -148,8 +147,9 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
         {hasActiveFilters && onClearFilters && (
           <button
+            type="button"
             onClick={onClearFilters}
-            className="mt-4 px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50"
+            className="mt-4 border border-[#E5E5E5] px-4 py-2 text-sm text-black hover:border-black"
           >
             {t("catalog.clearFilters")}
           </button>
@@ -160,7 +160,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:gap-y-15 md:grid-cols-3 2xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 gap-y-6 md:grid-cols-3 md:gap-4 md:gap-y-10 2xl:grid-cols-4">
         {products?.map((product) => {
           const firstImage = product?.thumbnail ?? product?.images?.[0]?.path;
 
@@ -172,62 +172,38 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           const finalPrice = hasDiscount ? discountArray[0]?.final_price : defaultVariations?.final_price;
           const sellingPrice = hasDiscount ? discountArray[0]?.selling_price : defaultVariations?.selling_price;
 
+          const compareProduct: CompareSlot = {
+            id: product.id,
+            name: product.name,
+            slug: product.slug,
+            thumbnail: product.thumbnail,
+            images: product.images,
+          };
+
+          const cardProps = {
+            href: `/products/${product?.slug}/${product?.id}/`,
+            title: getLocalName(product?.name ?? "", product?.name_bd, language),
+            isFavorite: Boolean(product?.is_favourite),
+            price: finalPrice ?? 0,
+            oldPrice: sellingPrice ?? 0,
+            imageSrc: firstImage,
+            avgRating: product?.avg_rating,
+            reviewCount: product?.review_count,
+            compareProduct,
+            onQuickAdd: () => handleOpenQuickAdd(product?.id),
+            onWishlist: () => {
+              handleFavoriteClick(product as unknown as ProductDetail);
+            },
+          };
+
           return (
             <div key={product.id}>
               <div className="block min-[501px]:hidden">
-                <div className="relative">
-                  <ProductCardMobile
-                    href={`/products/${product?.slug}/${product?.id}/`}
-                    title={getLocalName(product?.name ?? "", product?.name_bd, language)}
-                    isFavorite={product?.is_favourite}
-                    price={finalPrice ?? 0}
-                    oldPrice={sellingPrice ?? 0}
-                    imageSrc={firstImage}
-                    avgRating={product?.avg_rating}
-                    reviewCount={product?.review_count}
-                    onQuickAdd={() => handleOpenQuickAdd(product?.id)}
-                    onWishlist={() => {
-                      handleFavoriteClick(product as unknown as ProductDetail);
-                    }}
-                  />
-                  <div
-                    className="absolute bottom-12 left-1.5 z-20 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                    style={{ opacity: compareStore.isInCompare(product.id) ? 1 : undefined }}
-                  >
-                    <AddToCompareButton
-                      product={{ id: product.id, name: product.name, slug: product.slug, thumbnail: product.thumbnail, images: product.images }}
-                      variant="icon"
-                    />
-                  </div>
-                </div>
+                <ProductCardMobile {...cardProps} />
               </div>
 
               <div className="hidden min-[501px]:block">
-                <div className="group relative">
-                  <ProductCard
-                    href={`/products/${product?.slug}/${product?.id}/`}
-                    title={getLocalName(product?.name ?? "", product?.name_bd, language)}
-                    isFavorite={product?.is_favourite}
-                    price={finalPrice ?? 0}
-                    oldPrice={sellingPrice ?? 0}
-                    imageSrc={firstImage}
-                    avgRating={product?.avg_rating}
-                    reviewCount={product?.review_count}
-                    onQuickAdd={() => handleOpenQuickAdd(product?.id)}
-                    onWishlist={() => {
-                      handleFavoriteClick(product as unknown as ProductDetail);
-                    }}
-                  />
-                  <div
-                    className="absolute bottom-12 left-1.5 z-20 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                    style={{ opacity: compareStore.isInCompare(product.id) ? 1 : undefined }}
-                  >
-                    <AddToCompareButton
-                      product={{ id: product.id, name: product.name, slug: product.slug, thumbnail: product.thumbnail, images: product.images }}
-                      variant="icon"
-                    />
-                  </div>
-                </div>
+                <ProductCard {...cardProps} />
               </div>
             </div>
           );

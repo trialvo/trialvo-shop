@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { FiCheck, FiGitCommit, FiX } from "react-icons/fi";
+import { FiCheck, FiX } from "react-icons/fi";
+import { MdOutlineCompareArrows } from "react-icons/md";
 import { cn } from "@/lib/utils";
 import { useCompareStore } from "@/hooks/useCompareStore";
 import type { CompareSlot } from "@/hooks/useCompareStore";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface AddToCompareButtonProps {
   product: CompareSlot;
@@ -17,9 +19,13 @@ export default function AddToCompareButton({
   variant = "icon",
   className,
 }: AddToCompareButtonProps) {
+  const { t } = useTranslation();
   const { addToCompare, removeFromCompare, isInCompare, isFull } =
     useCompareStore();
   const inCompare = isInCompare(product.id);
+  const addLabel = t("productCard.addToCompare");
+  const removeLabel = t("productCard.removeFromCompare");
+  const fullLabel = t("productCard.compareFull");
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -35,27 +41,23 @@ export default function AddToCompareButton({
     return (
       <button
         type="button"
-        aria-label={inCompare ? "Remove from compare" : "Add to compare"}
+        aria-label={inCompare ? removeLabel : addLabel}
+        aria-pressed={inCompare}
         onClick={handleClick}
         disabled={!inCompare && isFull}
-        title={
-          inCompare
-            ? "Remove from compare"
-            : isFull
-              ? "Compare slots full — remove one first"
-              : "Add to compare"
-        }
+        title={inCompare ? removeLabel : isFull ? fullLabel : addLabel}
         className={cn(
-          "flex h-8 w-8 items-center justify-center border transition-all duration-200",
+          "flex h-8 w-8 items-center justify-center rounded-[4px] border shadow-sm transition-colors",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/40",
           inCompare
             ? "border-black bg-black text-white"
             : isFull
-              ? "cursor-not-allowed border-gray-200 bg-white/70 text-gray-300"
-              : "border-gray-200 bg-white/80 text-gray-500 hover:border-black hover:bg-black hover:text-white",
+              ? "cursor-not-allowed border-black/10 bg-white text-black/25"
+              : "border-black/10 bg-white text-black hover:border-black",
           className,
         )}
       >
-        {inCompare ? <FiCheck size={13} /> : <FiGitCommit size={13} />}
+        {inCompare ? <FiCheck size={14} /> : <MdOutlineCompareArrows size={16} />}
       </button>
     );
   }
@@ -63,10 +65,13 @@ export default function AddToCompareButton({
   return (
     <button
       type="button"
+      aria-label={inCompare ? removeLabel : addLabel}
+      aria-pressed={inCompare}
       onClick={handleClick}
       disabled={!inCompare && isFull}
       className={cn(
-        "inline-flex items-center gap-2 border px-4 py-2.5 text-sm font-semibold transition-all duration-200",
+        "inline-flex items-center gap-2 border px-4 py-2.5 text-sm font-semibold transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/40",
         inCompare
           ? "border-black bg-black/[0.03] text-black hover:bg-black/[0.06]"
           : isFull
@@ -78,13 +83,13 @@ export default function AddToCompareButton({
       {inCompare ? (
         <>
           <FiCheck size={15} className="text-black" />
-          Added to Compare
+          {removeLabel}
           <FiX size={13} className="ml-0.5 text-gray-400" />
         </>
       ) : (
         <>
-          <FiGitCommit size={15} />
-          {isFull ? "Compare Full" : "Add to Compare"}
+          <MdOutlineCompareArrows size={16} />
+          {isFull ? fullLabel : addLabel}
         </>
       )}
     </button>

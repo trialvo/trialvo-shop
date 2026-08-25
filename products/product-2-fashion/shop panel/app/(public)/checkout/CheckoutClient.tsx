@@ -443,8 +443,15 @@ const CheckoutClient: React.FC = () => {
 
 
   return (
-    <section className="container mx-auto sm:pb-6">
+    <section>
       <Breadcrumbs items={[{ label: t("breadcrumb.home"), href: "/" }, { label: t("checkout.breadcrumb") }]} />
+
+      <div className="mt-2 mb-6">
+        <h1 className="text-[26px] font-semibold tracking-tight text-black min-[768px]:text-[28px]">
+          {t("checkout.title")}
+        </h1>
+        <p className="mt-1 text-sm text-black/45">{t("checkout.subtitle")}</p>
+      </div>
 
       <input
         type="hidden"
@@ -465,7 +472,7 @@ const CheckoutClient: React.FC = () => {
         readOnly
       />
 
-      <div className="sm:mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_420px]">
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-14">
         <CheckoutLeft
           isAuthenticate={isAuthenticated}
           selectedAddressId={addressId}
@@ -492,8 +499,8 @@ const CheckoutClient: React.FC = () => {
         <CheckoutRight items={orderItems} />
       </div>
 
-      <div className="block sm:hidden fixed bottom-0 right-0 left-0 bg-white border-0 shadow-[0px_-2px_20px_rgba(0,0,0,0.06)] p-2 space-y-1.5 z-30">
-        <div className="flex justify-between text-base font-semibold">
+      <div className="fixed inset-x-0 bottom-0 z-30 space-y-1.5 border-t border-[#E5E5E5] bg-white px-3 py-2.5 sm:hidden pb-[max(0.625rem,env(safe-area-inset-bottom))]">
+        <div className="flex justify-between text-sm font-semibold text-black">
           <span>{t("checkout.totalAmount")}</span>
           <span>BDT {total?.total?.toLocaleString()}</span>
         </div>
@@ -501,7 +508,7 @@ const CheckoutClient: React.FC = () => {
         <Button
           type="button"
           onClick={isAuthenticated ? handleAuthenticatedOrder : handleGuestOrder}
-          className="h-12 w-full rounded-none bg-black text-white hover:bg-black/90"
+          className="h-11 w-full rounded-[4px] bg-black text-white hover:bg-black/90"
           disabled={isAuthenticated ? isSubmitting : isGuestOrderLoading}
           isLoading={isAuthenticated ? isSubmitting : isGuestOrderLoading}
         >

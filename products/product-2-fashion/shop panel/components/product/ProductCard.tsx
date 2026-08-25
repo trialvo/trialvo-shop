@@ -1,12 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import type { CompareSlot } from "@/hooks/useCompareStore";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { FiHeart } from "react-icons/fi";
+import ProductCardActions from "./ProductCardActions";
 import ProductImage from "./ProductImage";
 import ProductInfo from "./ProductInfo";
-import { useTranslation } from "@/hooks/useTranslation";
 
 interface ProductCardProps {
   title: string;
@@ -20,6 +20,7 @@ interface ProductCardProps {
   priority?: boolean;
   avgRating?: number;
   reviewCount?: number;
+  compareProduct?: CompareSlot;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -34,6 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   priority = false,
   avgRating,
   reviewCount,
+  compareProduct,
 }) => {
   const router = useRouter();
   const { t } = useTranslation();
@@ -68,24 +70,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
           }}
         />
 
-        <button
-          type="button"
-          aria-label={t("productCard.addToWishlist")}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onWishlist?.();
-          }}
-          className={cn(
-            "absolute right-2 z-20 grid h-8 w-8 place-items-center text-white drop-shadow transition-all duration-300 hover:scale-110",
-            "bottom-2 group-hover:bottom-12",
-          )}
-        >
-          <FiHeart
-            className={cn("h-4 w-4", isFavorite && "fill-white")}
-            strokeWidth={1.5}
-          />
-        </button>
+        <ProductCardActions
+          isFavorite={isFavorite}
+          wishlistLabel={t("productCard.addToWishlist")}
+          onWishlist={onWishlist}
+          compareProduct={compareProduct}
+        />
       </div>
 
       <ProductInfo

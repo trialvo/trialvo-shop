@@ -1,14 +1,14 @@
 "use client";
 
 import CustomerInformationForm, { type CustomerInformationValues, type CustomerInformationFormRef } from "@/form/CustomerInformationForm";
-import Link from "next/link";
-import React from "react";
-import { FiInfo, FiLogIn } from "react-icons/fi";
-
+import { useTranslation } from "@/hooks/useTranslation";
 import type { UpdateGuestOrderPayload } from "@/lib/api/guest-order/service";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { selectGuestId } from "@/redux/selectors/cartSelectors";
 import { openModal } from "@/redux/slices/modalManagerSlice";
+import Link from "next/link";
+import React from "react";
+import { FiLogIn } from "react-icons/fi";
 
 type Props = {
   onGuestInfoUpdate?: (data: UpdateGuestOrderPayload) => void;
@@ -21,6 +21,7 @@ type Props = {
 const CustomerInformation: React.FC<Props> = ({ onGuestInfoUpdate, formRef, emailRequired = false }) => {
 
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
   const guestOrderId = useAppSelector(selectGuestId)?.id;
 
   const lastPayloadRef = React.useRef<string>("");
@@ -56,17 +57,17 @@ const CustomerInformation: React.FC<Props> = ({ onGuestInfoUpdate, formRef, emai
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold">Customer Information</h2>
-
+      <div className="mb-5 flex items-center justify-between gap-3 border border-[#E5E5E5] px-4 py-3">
+        <p className="text-sm text-black/55">{t("checkout.alreadyHaveAccount")}</p>
         <button
+          type="button"
           onClick={() => {
             dispatch(openModal({ key: "signIn", payload: { forgotHref: "/forgot-password", createHref: "/sign-up" } }));
           }}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#0088FF] hover:underline cursor-pointer"
+          className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-black underline-offset-2 hover:underline"
         >
           <FiLogIn className="h-4 w-4" />
-          Sign In
+          {t("common.signIn")}
         </button>
       </div>
 
@@ -76,20 +77,16 @@ const CustomerInformation: React.FC<Props> = ({ onGuestInfoUpdate, formRef, emai
         emailRequired={emailRequired}
       />
 
-
-      <div className="flex items-center gap-2 text-[10px] mt-2 text-[#343434]">
-        <FiInfo className="h-4 w-4 text-black/60" />
-        <span>
-          <Link href="/sign-in" className="text-[#0088FF] hover:underline">
-            Login
-          </Link>{" "}
-          or{" "}
-          <Link href="/sign-up" className="text-[#0088FF] hover:underline">
-            register
-          </Link>{" "}
-          to save addresses for faster checkout next time
-        </span>
-      </div>
+      <p className="mt-3 text-xs leading-relaxed text-black/45">
+        <Link href="/sign-in" className="font-medium text-black hover:underline">
+          {t("common.signIn")}
+        </Link>
+        {" or "}
+        <Link href="/sign-up" className="font-medium text-black hover:underline">
+          {t("auth.createAccountTitle")}
+        </Link>
+        {" to save addresses for next time."}
+      </p>
     </section>
   );
 };

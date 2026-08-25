@@ -40,18 +40,28 @@ const DeliveryCard: React.FC<Props> = ({
     <label
       htmlFor={id}
       className={cn(
-        "flex cursor-pointer items-center justify-between border px-2 sm:px-4 py-2 sm:py-4 transition",
+        "flex cursor-pointer items-center justify-between gap-4 border px-4 py-3.5 transition-colors",
         checked
-          ? "border-black"
-          : "border-gray-400 hover:border-gray-400"
+          ? "border-black bg-[#FAFAFA]"
+          : "border-[#E5E5E5] hover:border-black/30"
       )}
     >
-      <div className="flex items-start gap-3">
-        <RadioGroupItem id={id} value={id} className="mt-1" />
+      <div className="flex min-w-0 items-start gap-3">
+        <RadioGroupItem id={id} value={id} className="mt-0.5" />
 
-        <div>
-          <p className="text-xs w-fit bg-[#D9EFFF] px-1.5 py-0.5 font-normal mb-2">{tag ?? title}</p>
-          <p className="text-sm text-black font-medium">{name}</p>
+        <div className="min-w-0">
+          {name ? (
+            <>
+              {tag || title ? (
+                <p className="mb-0.5 text-[11px] capitalize text-black/40">
+                  {tag ?? title}
+                </p>
+              ) : null}
+              <p className="text-sm font-medium text-black">{name}</p>
+            </>
+          ) : (
+            <p className="text-sm font-medium text-black">{title ?? tag}</p>
+          )}
           {phone && (
             <div className="mt-0.5">
               <div className="flex flex-wrap items-center gap-1.5">
@@ -83,35 +93,25 @@ const DeliveryCard: React.FC<Props> = ({
               <p className="text-xs text-black font-normal">{addressLine}</p>
             )
           }
-          {
-            price && (
-              <p className="text-xs text-black font-normal">{price}</p>
-            )
-          }
         </div>
       </div>
 
-      {
-        safeSrc && (
-          <div
-            className={cn(
-              `
-          relative h-6 w-6 overflow-hidden border-0
-          transition-colors duration-200
-          group-hover:border-[#999999]
-        `,
-            )}
-          >
+      <div className="flex shrink-0 items-center gap-3">
+        {price ? (
+          <p className="text-sm font-medium text-black">{price}</p>
+        ) : null}
+        {safeSrc ? (
+          <div className="relative h-6 w-6 overflow-hidden">
             <ImageWithFallback
               src={toPublicUrl(safeSrc) || ""}
               alt="Delivery Icon"
               fill
               preload
-              className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+              className="object-cover"
             />
           </div>
-        )
-      }
+        ) : null}
+      </div>
     </label>
   );
 };
