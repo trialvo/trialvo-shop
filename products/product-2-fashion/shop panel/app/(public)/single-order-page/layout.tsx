@@ -17,6 +17,7 @@ export default function SingleOrderPageLayout({
         #single-order-page-root { position: relative; z-index: 999; }
         /* Hide the default shop layout elements — exempt our data-sop headers */
         header:not([data-sop]) { display: none !important; }
+        [data-mobile-header-chrome] { display: none !important; }
         footer:not([data-sop]) { display: none !important; }
         nav:not([data-sop]) { display: none !important; }
         [class*="min-[500px]:block"][class*="sticky"]:not([data-sop]) { display: none !important; }

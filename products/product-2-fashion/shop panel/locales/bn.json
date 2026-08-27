@@ -261,6 +261,13 @@
   "removeFromCompare": "তুলনা থেকে সরান",
   "compareFull": "তুলনা ভর্তি"
  },
+ "compareBar": {
+  "oneSelected": "১টি পণ্য নির্বাচিত",
+  "twoSelected": "২টি পণ্য তুলনা করুন",
+  "compare": "তুলনা",
+  "clear": "মুছুন",
+  "clearCompare": "তুলনা মুছুন"
+ },
  "productDetails": {
   "description": "বিবরণ",
   "material": "উপাদান:",

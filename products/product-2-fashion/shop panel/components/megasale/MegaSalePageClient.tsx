@@ -179,7 +179,7 @@ const CountdownBlock: React.FC<{
 
 const MegaSalePageSkeleton: React.FC<{ productSkeletonCount: number }> = ({ productSkeletonCount }) => {
   return (
-    <section className="container mx-auto px-4 py-6 sm:px-0">
+    <section className="container mx-auto px-4 py-6 max-[500px]:pt-2 sm:px-0">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Mega Sale" }]} />
 
       <div className="mt-4 overflow-hidden border border-[#E5E5E5] bg-white">
@@ -208,7 +208,7 @@ const MegaSalePageSkeleton: React.FC<{ productSkeletonCount: number }> = ({ prod
 
 const MegaSaleDisabledState: React.FC = () => {
   return (
-    <section className="container mx-auto px-4 py-6 sm:px-0">
+    <section className="container mx-auto px-4 py-6 max-[500px]:pt-2 sm:px-0">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Mega Sale" }]} />
 
       <div className="mt-6 border-2 border-dashed border-[#E5E5E5] bg-[#FAFAFA] py-18 text-center">
@@ -398,7 +398,7 @@ const MegaSalePageClient: React.FC = () => {
   }
 
   return (
-    <section className="container mx-auto px-4 py-6 sm:px-0 sm:py-7">
+    <section className="container mx-auto px-4 py-6 max-[500px]:pt-2 sm:px-0 sm:py-7">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Mega Sale" }]} />
 
       <MegaSaleBanner

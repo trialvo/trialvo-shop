@@ -255,7 +255,7 @@ export default function SingleOrderPageClient({ slug, id }: Props) {
         </div>
       </header>
 
-      <section data-sop="true" className="container mx-auto max-[501px]:pt-11.5 max-[501px]:px-2 pb-6">
+      <section data-sop="true" className="container mx-auto pb-6 max-[500px]:px-2 max-[500px]:pt-2">
         {/* ── Product Top: Gallery + Info ─────────────────────────────── */}
         <div className="sm:mt-4 mb-4 sm:mb-10 grid grid-cols-1 gap-4 sm:gap-15 md:grid-cols-12">
           {/* Gallery */}

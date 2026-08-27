@@ -18,7 +18,7 @@ const PolicyPageClient: React.FC<Props> = ({ policy }) => {
   const displayTitle = getLocalName(policy.title, policy.bd_title, language);
 
   return (
-    <div className="container mx-auto pb-6 max-[501px]:pt-11.5 max-[501px]:px-2">
+    <div className="container mx-auto pb-6 max-[500px]:px-2 max-[500px]:pt-2">
       <Breadcrumbs
         items={[{ label: "Home", href: "/" }, { label: displayTitle }]}
       />

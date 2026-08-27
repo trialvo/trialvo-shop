@@ -74,7 +74,7 @@ const EditAddressClient: React.FC = () => {
   };
 
   return (
-    <section className="container mx-auto px-3 pb-10 pt-11 min-[768px]:px-0 min-[768px]:pb-14 min-[768px]:pt-0">
+    <section className="container mx-auto px-3 pb-10 pt-2 min-[768px]:px-0 min-[768px]:pb-14 min-[768px]:pt-0">
       <Breadcrumbs
         items={[
           { label: t("breadcrumb.home"), href: "/" },

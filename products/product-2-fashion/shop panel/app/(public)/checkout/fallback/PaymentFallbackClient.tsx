@@ -54,7 +54,7 @@ export default function PaymentFallbackClient({ status, orderId }: Props) {
   }, [normalized, orderId, router, status]);
 
   return (
-    <section className="container mx-auto pb-6 pt-10">
+    <section className="container mx-auto pb-6 pt-2 min-[501px]:pt-10">
       <Card className="rounded-none border-0 shadow-[6px_0_18px_rgba(0,0,0,0.06)] p-6">
         <div className="space-y-4">
           <div className="space-y-2">

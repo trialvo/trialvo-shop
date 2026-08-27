@@ -90,7 +90,7 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
     }, [bindControls, showNavUi, safeSlides.length]);
 
     return (
-        <section className="relative w-full overflow-x-clip bg-[#F7F4EE] px-3 py-3 min-[576px]:px-4 min-[576px]:py-3.5 min-[768px]:px-5 min-[768px]:py-4 min-[992px]:px-6 min-[1200px]:px-8 min-[1400px]:px-10">
+        <section className="relative w-full overflow-x-clip bg-[#F7F4EE] px-3 pt-2 pb-3 min-[501px]:pt-3 min-[576px]:px-4 min-[576px]:py-3.5 min-[768px]:px-5 min-[768px]:py-4 min-[992px]:px-6 min-[1200px]:px-8 min-[1400px]:px-10">
             <div className={[
                 "relative w-full overflow-hidden rounded-xl min-[768px]:rounded-2xl",
                 "h-[200px] min-[576px]:h-[260px]",

@@ -52,7 +52,7 @@ export default function ComparePage() {
   );
 
   return (
-    <section className="container mx-auto px-3 pb-16 pt-11 min-[768px]:px-0 min-[768px]:pb-20 min-[768px]:pt-0">
+    <section className="container mx-auto px-3 pb-16 pt-2 min-[768px]:px-0 min-[768px]:pb-20 min-[768px]:pt-0">
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Compare" }]} />
 
       <div className="mt-1 min-[768px]:mt-2">
@@ -64,7 +64,7 @@ export default function ComparePage() {
         </p>
       </div>
 
-      <div className="sticky top-[var(--shop-header-offset,72px)] z-20 mt-5 bg-white/95 py-2 backdrop-blur-sm transition-[top] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]">
+      <div className="sticky top-11 z-20 mt-5 bg-white py-2 pt-0 min-[576px]:top-12 min-[768px]:top-[var(--shop-header-offset,72px)] min-[768px]:bg-white/95 min-[768px]:pt-2 min-[768px]:backdrop-blur-sm">
         <div className="grid grid-cols-2 rounded-xl bg-[#F3F1ED] p-1">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;

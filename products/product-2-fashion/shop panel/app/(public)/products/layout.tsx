@@ -5,5 +5,5 @@ export default function ProductsLayout({
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  return <section className="container mx-auto max-[501px]:pt-11.5 max-[501px]:px-2 pb-6">{children}</section>;
+  return <section className="container mx-auto pb-6 max-[500px]:px-2 max-[500px]:pt-2">{children}</section>;
 }

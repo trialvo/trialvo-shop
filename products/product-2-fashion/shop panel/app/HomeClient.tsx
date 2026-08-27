@@ -90,7 +90,7 @@ export default function HomeClient() {
  }, [dispatch, isAuthenticated, user]);
 
  return (
-  <main className="font-sans dark:bg-black max-[501px]:pt-11.5">
+  <main className="font-sans dark:bg-black">
    <HeroSliderWrapper />
    <ServicesBar className="my-4 sm:my-10" />
    <div className="px-2 md:px-0">
