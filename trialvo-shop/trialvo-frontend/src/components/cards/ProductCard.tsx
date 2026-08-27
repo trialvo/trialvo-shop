@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCategories } from "@/hooks/useCategories";
 import { resolveCategoryLabel } from "@/lib/digitalGoods";
@@ -60,7 +62,7 @@ export function ProductCard({
       itemType="https://schema.org/Product"
     >
       <Link
-        to={card.href}
+        href={card.href}
         className="flex h-full flex-col outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label={card.title}
       >

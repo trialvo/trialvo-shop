@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFeaturedProducts } from "@/hooks/useProducts";
@@ -33,7 +35,7 @@ export function FeaturedMarketplace() {
             </p>
           </div>
           <Button asChild variant="outline" className="h-10 rounded-md bg-card">
-            <Link to="/products">
+            <Link href="/products">
               {language === "bn" ? "সব প্রোডাক্ট দেখুন" : "Browse all products"}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>

@@ -1,5 +1,7 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import {
   AlertTriangle,
   ArrowRight,
@@ -44,7 +46,7 @@ function CategoryTile({ category, language, index }: Readonly<TileProps>) {
       transition={{ delay: index * 0.04, duration: 0.35 }}
     >
       <Link
-        to={`/products?category=${category.slug}`}
+        href={`/products?category=${category.slug}`}
         className="group flex h-full flex-col rounded-lg border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-md"
       >
         <div className="mb-4 flex items-start justify-between gap-3">
@@ -101,7 +103,7 @@ export function CategoryBrowse() {
             </p>
           </div>
           <Link
-            to="/products"
+            href="/products"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
           >
             {language === "bn" ? "সব ক্যাটাগরি" : "All categories"}

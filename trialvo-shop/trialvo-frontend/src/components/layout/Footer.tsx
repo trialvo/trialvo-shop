@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BrandLogo } from "@/components/brand";
@@ -67,7 +69,7 @@ export default function Footer() {
       <div className="container-custom py-12 md:py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           <div className="lg:col-span-1">
-            <Link to="/" className="mb-4 inline-flex" aria-label={name}>
+            <Link href="/" className="mb-4 inline-flex" aria-label={name}>
               <BrandLogo withWordmark wordmark={name} size="md" />
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
@@ -84,7 +86,7 @@ export default function Footer() {
                 {group.links.map((link) => (
                   <li key={link.href}>
                     <Link
-                      to={link.href}
+                      href={link.href}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {linkLabel(group.id, link.label, language)}

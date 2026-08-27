@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { localize } from "@/lib/localize";
@@ -58,7 +60,7 @@ export function AboutHero({ content, language }: Readonly<AboutHeroProps>) {
               asChild
               className="h-10 rounded-lg bg-accent px-5 font-semibold text-accent-foreground hover:bg-accent/90"
             >
-              <Link to="/products">
+              <Link href="/products">
                 {localize(content.primaryCta, language)}
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
               </Link>
@@ -68,7 +70,7 @@ export function AboutHero({ content, language }: Readonly<AboutHeroProps>) {
               variant="outline"
               className="h-10 rounded-lg border-white/35 bg-white/10 px-5 text-white backdrop-blur-sm hover:bg-white/18 hover:text-white"
             >
-              <Link to="/contact">
+              <Link href="/contact">
                 {localize(content.secondaryCta, language)}
               </Link>
             </Button>

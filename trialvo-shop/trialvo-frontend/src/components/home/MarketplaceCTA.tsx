@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -35,7 +37,7 @@ export function MarketplaceCTA() {
             size="lg"
             className="h-11 rounded-md bg-accent px-6 font-semibold text-accent-foreground hover:bg-accent/90"
           >
-            <Link to="/products">
+            <Link href="/products">
               {language === "bn" ? "মার্কেটপ্লেস খুলুন" : "Open marketplace"}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>

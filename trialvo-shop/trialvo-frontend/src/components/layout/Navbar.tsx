@@ -1,5 +1,8 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Globe, Menu, X } from "lucide-react";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -12,8 +15,8 @@ export default function Navbar() {
   const { language, setLanguage, t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  const isHome = location.pathname === "/";
+  const pathname = usePathname();
+  const isHome = pathname === "/";
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 12);
@@ -24,7 +27,7 @@ export default function Navbar() {
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [location]);
+  }, [pathname]);
 
   const navLinks = [
     { href: "/", label: t("nav.home") },
@@ -34,7 +37,7 @@ export default function Navbar() {
   ];
 
   const isActive = (href: string) =>
-    href === "/" ? location.pathname === "/" : location.pathname.startsWith(href);
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const transparent = isHome && !isScrolled && !isMobileMenuOpen;
   const name = brandName(language);
@@ -51,7 +54,7 @@ export default function Navbar() {
       <nav className="container-custom" aria-label="Main navigation">
         <div className="flex h-16 items-center justify-between md:h-[4.5rem]">
           <Link
-            to="/"
+            href="/"
             className="group inline-flex items-center transition-opacity hover:opacity-90"
             aria-label={name}
           >
@@ -77,7 +80,7 @@ export default function Navbar() {
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                to={link.href}
+                href={link.href}
                 className={cn(
                   "rounded-md px-3.5 py-2 text-sm font-medium transition-colors",
                   transparent
@@ -122,7 +125,7 @@ export default function Navbar() {
             </Button>
 
             <Button asChild size="sm" className="hidden h-9 rounded-md px-4 font-semibold md:inline-flex">
-              <Link to="/products">{language === "bn" ? "ব্রাউজ" : "Browse"}</Link>
+              <Link href="/products">{language === "bn" ? "ব্রাউজ" : "Browse"}</Link>
             </Button>
 
             <Button
@@ -147,7 +150,7 @@ export default function Navbar() {
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
-                  to={link.href}
+                  href={link.href}
                   className={cn(
                     "rounded-md px-4 py-3 text-sm font-medium",
                     isActive(link.href)
@@ -159,7 +162,7 @@ export default function Navbar() {
                 </Link>
               ))}
               <Link
-                to="/products"
+                href="/products"
                 className="mt-1 rounded-md bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground"
               >
                 {language === "bn" ? "সব প্রোডাক্ট ব্রাউজ" : "Browse all products"}

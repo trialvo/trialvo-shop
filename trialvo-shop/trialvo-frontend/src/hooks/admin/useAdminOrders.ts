@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { API_BASE } from "@/lib/env";
 
 export interface Order {
   id: string;
@@ -199,8 +200,6 @@ export function useExportOrders() {
       const queryStr = new URLSearchParams(
         Object.entries(params).filter(([, v]) => v) as [string, string][],
       ).toString();
-      const API_BASE =
-        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       const token = localStorage.getItem("auth_token");
       const res = await fetch(`${API_BASE}/admin/orders/export?${queryStr}`, {
         headers: { Authorization: `Bearer ${token}` },

@@ -1,5 +1,7 @@
+"use client";
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from "next/link";
 import { ArrowRight, Phone, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -85,7 +87,7 @@ const CTASection: React.FC = () => {
        size="lg"
        className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-14 px-10 text-base shadow-lg shadow-accent/25 rounded-xl"
       >
-       <Link to="/products">
+       <Link href="/products">
         {t('hero.cta.products')}
         <ArrowRight className="ml-2 w-5 h-5" />
        </Link>
@@ -96,7 +98,7 @@ const CTASection: React.FC = () => {
        size="lg"
        className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white h-14 px-10 text-base rounded-xl"
       >
-       <Link to="/contact">
+       <Link href="/contact">
         <Phone className="mr-2 w-5 h-5" />
         {t('hero.cta.contact')}
        </Link>

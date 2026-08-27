@@ -1,5 +1,7 @@
+"use client";
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from "next/link";
 import { ShoppingCart, Shirt, Gift, Watch, Smartphone, LucideIcon } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -31,7 +33,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
 
   return (
     <Link
-      to={`/products?category=${id}`}
+      href={`/products?category=${id}`}
       className="category-card group"
     >
       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center transition-colors group-hover:bg-primary">

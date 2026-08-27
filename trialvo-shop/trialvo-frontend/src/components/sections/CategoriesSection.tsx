@@ -1,5 +1,7 @@
+"use client";
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from "next/link";
 import { motion } from 'framer-motion';
 import { ShoppingCart, Shirt, Gift, Watch, Smartphone, ArrowRight, AlertTriangle, RotateCcw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -122,7 +124,7 @@ const CategoriesSection: React.FC = () => {
             return (
               <motion.div key={category.id} variants={itemVariants}>
                 <Link
-                  to={`/products?category=${category.slug}`}
+                  href={`/products?category=${category.slug}`}
                   className="group block"
                 >
                   <div className="relative bg-card border border-border rounded-2xl p-6 text-center transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-1 overflow-hidden">

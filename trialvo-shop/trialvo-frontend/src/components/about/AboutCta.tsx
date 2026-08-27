@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+"use client";
+
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { localize } from "@/lib/localize";
@@ -29,7 +31,7 @@ export function AboutCta({ content, language }: Readonly<AboutCtaProps>) {
               asChild
               className="h-10 rounded-lg bg-accent px-5 font-semibold text-accent-foreground hover:bg-accent/90"
             >
-              <Link to="/products">
+              <Link href="/products">
                 {localize(content.primaryCta, language)}
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
               </Link>
@@ -39,7 +41,7 @@ export function AboutCta({ content, language }: Readonly<AboutCtaProps>) {
               variant="outline"
               className="h-10 rounded-lg bg-background px-5"
             >
-              <Link to="/contact">
+              <Link href="/contact">
                 {localize(content.secondaryCta, language)}
               </Link>
             </Button>

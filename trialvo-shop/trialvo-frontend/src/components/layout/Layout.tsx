@@ -1,5 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
-import { useLocation } from "react-router-dom";
+import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { cn } from "@/lib/utils";
@@ -9,7 +11,7 @@ type LayoutProps = {
 };
 
 export default function Layout({ children }: Readonly<LayoutProps>) {
-  const { pathname } = useLocation();
+  const pathname = usePathname();
   const isHome = pathname === "/";
 
   return (

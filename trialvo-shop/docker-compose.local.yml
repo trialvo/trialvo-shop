@@ -111,7 +111,7 @@ services:
       retries: 5
       start_period: 20s
 
-  # ─── Frontend (Vite HMR in Docker) ──────────────────────
+  # ─── Frontend (Next.js HMR in Docker) ───────────────────
   frontend:
     build:
       context: ./trialvo-frontend
@@ -120,7 +120,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      VITE_API_URL: http://localhost:5010/api
+      NEXT_PUBLIC_API_URL: http://localhost:5010/api
+      WATCHPACK_POLLING: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
     volumes:
       - ./trialvo-frontend:/app
       - frontend_node_modules:/app/node_modules
