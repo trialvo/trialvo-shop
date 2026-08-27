@@ -25,7 +25,11 @@ import { Product } from "./header.types";
 import SearchPopup from "./SearchPopup";
 
 const PROMO_DISMISS_KEY = "shop-promo-dismissed";
+const SCROLL_TO_TOP_EVENT = "shop:scroll-to-top";
 const headerSlideEase = "duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]";
+const AT_TOP_ENTER = 8;
+const AT_TOP_LEAVE = 48;
+const HEADER_EXPAND_LOCK_MS = 480;
 
 type SubCategory = {
   id: number;
@@ -180,6 +184,7 @@ const Header: React.FC = () => {
   const navInnerRef = React.useRef<HTMLDivElement>(null);
   const lastScrollY = React.useRef(0);
   const scrollLockUntil = React.useRef(0);
+  const atTopRef = React.useRef(true);
   const [promoDismissed, setPromoDismissed] = React.useState(false);
   const [atTop, setAtTop] = React.useState(true);
   const [navCollapsed, setNavCollapsed] = React.useState(false);
@@ -197,39 +202,83 @@ const Header: React.FC = () => {
   React.useEffect(() => {
     lastScrollY.current = window.scrollY;
 
+    const lockAfterHeaderResize = (now: number, extraMs = 0) => {
+      scrollLockUntil.current = Math.max(
+        scrollLockUntil.current,
+        now + HEADER_EXPAND_LOCK_MS + extraMs,
+      );
+    };
+
+    const settleExpandedAtTop = (now = Date.now()) => {
+      if (!atTopRef.current) {
+        atTopRef.current = true;
+        setAtTop(true);
+        lockAfterHeaderResize(now);
+      }
+      setNavCollapsed((prev) => {
+        if (prev) lockAfterHeaderResize(now);
+        return false;
+      });
+    };
+
     const onScroll = () => {
       const y = window.scrollY;
       const now = Date.now();
       const delta = y - lastScrollY.current;
       lastScrollY.current = y;
-      setAtTop(y <= 2);
 
-      if (y <= 8) {
-        setNavCollapsed(false);
-        scrollLockUntil.current = 0;
+      if (now < scrollLockUntil.current) {
+        if (y <= AT_TOP_ENTER) settleExpandedAtTop(now);
         return;
+      }
+
+      if (y <= AT_TOP_ENTER) {
+        settleExpandedAtTop(now);
+        return;
+      }
+
+      if (atTopRef.current && y > AT_TOP_LEAVE) {
+        atTopRef.current = false;
+        setAtTop(false);
+        lockAfterHeaderResize(now);
       }
 
       // Ignore tiny jitter and lock briefly after a toggle so header
       // height changes (--shop-header-offset) don't re-trigger scroll.
-      if (Math.abs(delta) < 14 || now < scrollLockUntil.current) return;
+      if (Math.abs(delta) < 14) return;
 
       if (delta > 28) {
         setNavCollapsed((prev) => {
-          if (!prev) scrollLockUntil.current = now + 400;
+          if (!prev) lockAfterHeaderResize(now);
           return true;
         });
       } else if (delta < -28) {
         setNavCollapsed((prev) => {
-          if (prev) scrollLockUntil.current = now + 400;
+          if (prev) lockAfterHeaderResize(now);
           return false;
         });
       }
     };
 
+    const onScrollToTop = () => {
+      // Hold promo/nav/offset still while smooth-scroll runs. Expand once
+      // on arrival so header growth cannot bounce scrollY and retrigger.
+      lockAfterHeaderResize(Date.now(), 700);
+    };
+
+    const onScrollEnd = () => {
+      if (window.scrollY <= AT_TOP_ENTER) settleExpandedAtTop();
+    };
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("scrollend", onScrollEnd);
+    window.addEventListener(SCROLL_TO_TOP_EVENT, onScrollToTop);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scrollend", onScrollEnd);
+      window.removeEventListener(SCROLL_TO_TOP_EVENT, onScrollToTop);
+    };
   }, []);
 
   const showPromo = !promoDismissed && atTop;
@@ -242,13 +291,16 @@ const Header: React.FC = () => {
 
     const syncOffset = () => {
       if (!desktopQuery.matches) {
-        document.documentElement.style.removeProperty("--shop-header-offset");
+        if (document.documentElement.style.getPropertyValue("--shop-header-offset")) {
+          document.documentElement.style.removeProperty("--shop-header-offset");
+        }
         return;
       }
       const promo = showPromo ? (promoInnerRef.current?.offsetHeight ?? 0) : 0;
       const utility = utilityRef.current?.offsetHeight ?? 0;
       const nav = navCollapsed ? 0 : (navInnerRef.current?.offsetHeight ?? 0);
       const value = `${promo + utility + nav}px`;
+      if (el.style.getPropertyValue("--shop-header-offset") === value) return;
       el.style.setProperty("--shop-header-offset", value);
       document.documentElement.style.setProperty("--shop-header-offset", value);
     };

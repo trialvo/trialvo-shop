@@ -25,10 +25,12 @@ const SortSelect: React.FC<SortSelectProps> = ({ value, onChange }) => {
   ];
 
   return (
-    <div className="flex items-center gap-1">
-      <Label className="text-sm font-semibold text-black">{t("catalog.sortBy")}</Label>
+    <div className="flex min-w-0 items-center gap-2">
+      <Label className="hidden shrink-0 text-sm font-medium text-black/55 sm:block">
+        {t("catalog.sortBy")}
+      </Label>
 
-      <div className="w-48">
+      <div className="w-[9.5rem] min-[400px]:w-44 sm:w-52">
         <SelectDropdown
           value={value}
           onChange={onChange}
@@ -36,12 +38,12 @@ const SortSelect: React.FC<SortSelectProps> = ({ value, onChange }) => {
           placeholder={t("catalog.sort.featured")}
           searchPlaceholder={t("catalog.sortBy")}
           emptyText={t("catalog.noProducts")}
-          triggerClassName="h-9 w-full justify-between rounded-none border-0 p-0 shadow-none text-left"
-          contentClassName="w-48"
+          triggerClassName="h-9 w-full justify-between rounded-none border-[#E5E5E5] px-2.5 text-left text-sm font-medium shadow-none"
+          contentClassName="w-52"
           listMaxHeightClassName="max-h-64"
           side="bottom"
-          sideOffset={-2}
-          closeOnSelect={true}
+          sideOffset={4}
+          closeOnSelect
         />
       </div>
     </div>

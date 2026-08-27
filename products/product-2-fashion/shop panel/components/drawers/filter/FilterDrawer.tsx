@@ -1,6 +1,7 @@
 "use client";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import * as React from "react";
 import FilterHeader from "./FilterHeader";
@@ -17,7 +18,7 @@ import {
   selectCatalogPrice,
   selectCatalogSizes,
 } from "@/redux/selectors/catalogFilterSelectors";
-import { setPrice, toggleColor, toggleSize } from "@/redux/slices/catalogFilterSlice";
+import { clearFilters, setPrice, toggleColor, toggleSize } from "@/redux/slices/catalogFilterSlice";
 
 type Props = {
   open: boolean;
@@ -29,6 +30,7 @@ type Props = {
 
 const FilterDrawer: React.FC<Props> = ({ open, onOpenChange, className }) => {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
 
   const price = useAppSelector(selectCatalogPrice);
   const sizeValues = useAppSelector(selectCatalogSizes);
@@ -69,9 +71,13 @@ const FilterDrawer: React.FC<Props> = ({ open, onOpenChange, className }) => {
     <div className={cn("flex h-full flex-col bg-white", className)}>
       <FilterHeader onClose={() => onOpenChange(false)} />
 
-      <ScrollArea className="flex-1 min-h-0 pb-14">
-        <div className="space-y-8 px-4 py-4">
-          <PriceFilter value={price} onChange={(next) => dispatch(setPrice(next))} />
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="space-y-6 px-4 py-4">
+          <PriceFilter
+            title={t("catalog.price")}
+            value={price}
+            onChange={(next) => dispatch(setPrice(next))}
+          />
 
           <Separator />
 
@@ -84,7 +90,7 @@ const FilterDrawer: React.FC<Props> = ({ open, onOpenChange, className }) => {
             />
           ) : (
             <CheckboxFilter
-              title="Size"
+              title={t("catalog.size")}
               options={variants}
               selected={sizeSet}
               onToggle={(v) => dispatch(toggleSize(String(v)))}
@@ -104,7 +110,7 @@ const FilterDrawer: React.FC<Props> = ({ open, onOpenChange, className }) => {
             />
           ) : (
             <CheckboxFilter
-              title="Color"
+              title={t("catalog.color")}
               options={allColors}
               selected={colorSet}
               onToggle={(v) => dispatch(toggleColor(String(v)))}
@@ -114,6 +120,23 @@ const FilterDrawer: React.FC<Props> = ({ open, onOpenChange, className }) => {
           )}
         </div>
       </ScrollArea>
+
+      <div className="flex shrink-0 items-center gap-2 border-t border-[#E5E5E5] bg-white px-4 py-3">
+        <button
+          type="button"
+          onClick={() => dispatch(clearFilters())}
+          className="h-10 flex-1 border border-[#E5E5E5] text-sm font-medium text-black hover:border-black"
+        >
+          {t("catalog.clearFilters")}
+        </button>
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="h-10 flex-1 bg-black text-sm font-medium text-white hover:bg-black/90"
+        >
+          {t("catalog.done")}
+        </button>
+      </div>
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useColor } from "@/hooks/useColor";
 import { useVariant } from "@/hooks/useVariant";
 import React from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import CheckboxFilter from "./CheckboxFilter";
 import PriceFilter, { type PriceFilterValue } from "./PriceFilter";
 
@@ -55,6 +56,7 @@ export function EmptyFilterState({
 }
 
 const FilterSidebar: React.FC<FilterSidebarProps> = ({ value, onChange }) => {
+  const { t } = useTranslation();
   const [sizeSearch, setSizeSearch] = React.useState<string>("");
   const [colorSearch, setColorSearch] = React.useState<string>("");
 
@@ -82,12 +84,16 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ value, onChange }) => {
   });
 
   return (
-    <div className="sticky top-[78px] space-y-6">
+    <div className="space-y-6">
       <div className="border-b border-[#E5E5E5] pb-3">
-        <h2 className="text-sm font-semibold tracking-tight text-black">Filters</h2>
+        <h2 className="text-sm font-semibold tracking-tight text-black">{t("catalog.filters")}</h2>
       </div>
 
-      <PriceFilter value={value.price} onChange={(price) => onChange({ ...value, price })} />
+      <PriceFilter
+        title={t("catalog.price")}
+        value={value.price}
+        onChange={(price) => onChange({ ...value, price })}
+      />
 
       <Separator />
 
@@ -100,7 +106,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ value, onChange }) => {
         />
       ) : (
         <CheckboxFilter
-          title="Size"
+          title={t("catalog.size")}
           options={variants}
           selected={value.sizes}
           onToggle={(v) => {
@@ -124,7 +130,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ value, onChange }) => {
         />
       ) : (
         <CheckboxFilter
-          title="Color"
+          title={t("catalog.color")}
           options={allColors}
           selected={value.colors}
           onToggle={(v) => {

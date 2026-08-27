@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 import { FiArrowUp } from "react-icons/fi";
 
+const SCROLL_TO_TOP_EVENT = "shop:scroll-to-top";
+
 const ScrollToTopButton: React.FC = () => {
   const [visible, setVisible] = React.useState(false);
 
@@ -18,7 +20,10 @@ const ScrollToTopButton: React.FC = () => {
     <button
       type="button"
       aria-label="Scroll to top"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={() => {
+        window.dispatchEvent(new Event(SCROLL_TO_TOP_EVENT));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }}
       className={cn(
         "fixed right-4 z-[60] grid h-11 w-11 cursor-pointer place-items-center rounded-full bg-foreground text-background shadow-[0_8px_24px_rgba(0,0,0,0.16)]",
         "bottom-20 min-[768px]:bottom-8 min-[768px]:right-6",

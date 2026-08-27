@@ -6,7 +6,7 @@ export default function CategoryLayout({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <section className="container mx-auto pb-6 max-[501px]:pt-11.5 max-[501px]:px-2">
+    <section className="container mx-auto px-4 pb-24 pt-2 min-[768px]:pb-12 min-[768px]:pt-0">
       {children}
     </section>
   );

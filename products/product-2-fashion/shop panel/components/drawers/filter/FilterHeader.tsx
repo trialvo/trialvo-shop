@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import * as React from "react";
-import { FiMenu, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 
 type Props = {
   onClose: () => void;
@@ -11,33 +11,25 @@ type Props = {
 };
 
 const FilterHeader: React.FC<Props> = ({ onClose, className }) => {
+  const { t } = useTranslation();
+
   return (
     <div
       className={cn(
-        "flex items-center justify-between",
-        "h-14 border-b border-black/10 bg-white px-4",
+        "flex h-14 shrink-0 items-center justify-between border-b border-[#E5E5E5] bg-white px-2",
         className,
       )}
     >
-      <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 place-items-center text-black" aria-hidden="true">
-          <FiMenu className="h-6 w-6" />
-        </span>
-        <span className="text-lg font-semibold text-black">Filters</span>
-      </div>
+      <h2 className="px-2 text-base font-semibold text-black">{t("catalog.filters")}</h2>
 
-      <Button
+      <button
         type="button"
-        variant="ghost"
         onClick={onClose}
-        className={cn(
-          "h-10 w-10 rounded-none p-0 text-black shadow-none",
-          "hover:bg-black/5 focus-visible:ring-0 focus-visible:ring-offset-0",
-        )}
-        aria-label="Close filters"
+        aria-label={t("common.close")}
+        className="grid h-10 w-10 place-items-center text-black hover:bg-black/5"
       >
-        <FiX className="h-6 w-6" />
-      </Button>
+        <FiX className="h-5 w-5" />
+      </button>
     </div>
   );
 };

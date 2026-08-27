@@ -4,7 +4,7 @@ import ImageWithFallback from "@/components/common/ImageWithFallback";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import { CiImageOff } from "react-icons/ci";
-import { FiGitCommit, FiHeart, FiLayers, FiTag, FiUser } from "react-icons/fi";
+import { FiGitCommit, FiHeart, FiLayers, FiLogIn, FiLogOut, FiTag, FiUser, FiUserPlus } from "react-icons/fi";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategory } from "@/hooks/useCategory";
@@ -15,13 +15,12 @@ import { cn, getLocalName, getUserAvatarSrc, getUserDisplayName, toPublicUrl } f
 import { useAuth } from "@/hooks/useAuth";
 import type { ChildCategory, SubCategory } from "@/lib/api/category/service";
 import DrawerShell from "../DrawerShell";
-import MenuList from "./MenuList";
+import MenuList, { MenuRow } from "./MenuList";
 import MenuTopBar from "./MenuTopBar";
 
 import { useLogout } from "@/hooks/useLogout";
 import { isProductDetailsRoute, shouldHideBottomNav } from "@/lib/routeMatchers";
 import LangToggleButton from "@/components/header/LangToggleButton";
-import { LogOut } from "lucide-react";
 import type { MenuLevel, MenuNode } from "./menu.types";
 
 type Props = {
@@ -60,82 +59,28 @@ function parseOpenSubId(href: string): number | null {
 
 function SubListSkeleton(): React.ReactElement {
   return (
-    <div className="divide-y">
+    <div>
       {Array.from({ length: 10 }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between px-4 py-3">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-6 w-6 rounded" />
+        <div key={i} className="flex items-center justify-between border-b border-[#E5E5E5] px-4 py-3.5">
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-5 w-5" />
         </div>
       ))}
     </div>
   );
 }
 
-function ChildGridSkeleton(): React.ReactElement {
+function ChildThumb({ src, alt }: { src: string | null; alt: string }): React.ReactElement {
   return (
-    <div className="p-4">
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="h-20 w-full rounded-none" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ChildCategoryTile({
-  child,
-  onNavigate,
-  language,
-}: Readonly<{
-  child: ChildCategory;
-  onNavigate: (href: string) => void;
-  language: string | null;
-}>): React.ReactElement {
-  const src =
-    typeof child.img_path === "string" && child.img_path.trim().length > 0
-      ? toPublicUrl(child.img_path)
-      : null;
-
-  const href = toChildHref(child);
-
-  return (
-    <button
-      type="button"
-      onClick={() => onNavigate(href)}
-      className={cn(
-        "group w-full cursor-pointer text-left",
-        "outline-none focus-visible:ring-2 focus-visible:ring-black/30",
+    <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-[#E5E5E5] bg-[#F8F8F8]">
+      {!src ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <CiImageOff className="h-4 w-4 text-black/30" />
+        </div>
+      ) : (
+        <ImageWithFallback src={src} alt={alt} fill sizes="40px" className="object-contain object-center" />
       )}
-    >
-      <div
-        className={cn(
-          "relative h-20 w-20 overflow-hidden border border-black/10 bg-[#F8F8F8]",
-          "transition-colors hover:border-black/40",
-        )}
-      >
-        {!src ? (
-          <div className="flex h-full w-full items-center justify-center">
-            <CiImageOff className="h-6 w-6 text-foreground/50" />
-          </div>
-        ) : (
-          <ImageWithFallback
-            src={src}
-            alt={child.name}
-            fill
-            sizes="80px"
-            className="object-contain object-center transition-transform duration-200 group-hover:scale-[1.03]"
-          />
-        )}
-      </div>
-
-      <div className="mt-1 text-xs font-medium leading-4 text-black line-clamp-1">
-        {getLocalName(child.name, child.name_bd, language)}
-      </div>
-    </button>
+    </div>
   );
 }
 
@@ -265,170 +210,151 @@ const MenuDrawer: React.FC<Props> = ({
           onClose={handleClose}
         />
 
-        <div className="flex-1 min-h-0 overflow-y-auto pb-13">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {isLoading ? (
-            activeLevel.kind === "children" ? (
-              <ChildGridSkeleton />
-            ) : (
-              <SubListSkeleton />
-            )
+            <SubListSkeleton />
           ) : activeLevel.kind === "children" ? (
-            <div className="p-4">
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                {(activeSub?.child_categories ?? []).map((child) => (
-                  <ChildCategoryTile key={child.id} child={child} onNavigate={navigateTo} language={language} />
-                ))}
-              </div>
+            <>
+              {activeSub ? (
+                <MenuRow
+                  label={t("common.viewAll")}
+                  onClick={() => navigateTo(toSubHref(activeSub))}
+                  showChevron
+                />
+              ) : null}
 
               {(activeSub?.child_categories ?? []).length === 0 ? (
-                <div className="mt-6 rounded-md border border-dashed border-[#E7E7E7] bg-white p-4 text-center">
-                  <p className="text-sm font-semibold text-black">{t("menu.noChildCategories")}</p>
-                  <p className="text-xs text-[#6B6B6B]">{t("menu.noChildCategoriesSub")}</p>
+                <div className="px-4 py-10 text-center">
+                  <p className="text-sm font-medium text-black">{t("menu.noChildCategories")}</p>
+                  <p className="mt-1 text-xs text-black/50">{t("menu.noChildCategoriesSub")}</p>
                 </div>
-              ) : null}
-            </div>
+              ) : (
+                (activeSub?.child_categories ?? []).map((child) => {
+                  const src =
+                    typeof child.img_path === "string" && child.img_path.trim().length > 0
+                      ? toPublicUrl(child.img_path)
+                      : null;
+                  return (
+                    <MenuRow
+                      key={child.id}
+                      label={getLocalName(child.name, child.name_bd, language)}
+                      onClick={() => navigateTo(toChildHref(child))}
+                      leading={<ChildThumb src={src} alt={child.name} />}
+                      showChevron
+                    />
+                  );
+                })
+              )}
+            </>
           ) : (
             <>
-              {/* ── Quick links: Compare, Offers, and optional Mega Sale (root level only) ── */}
-              {activeLevel.kind === "root" && (
-                <div
-                  className={cn(
-                    "grid gap-2 border-b px-4 py-3",
-                    showMegaSale || visibilityLoading ? "grid-cols-3" : "grid-cols-2",
-                  )}
-                >
-                  <button
-                    type="button"
+              <MenuList nodes={activeLevel.nodes} onNodeClick={handleNodeClick} />
+
+              {activeLevel.kind === "root" ? (
+                <div className="border-t-4 border-[#F4F4F4]">
+                  <MenuRow
+                    icon={FiGitCommit}
+                    label={t("header.addon.compare")}
+                    active={isCompareActive}
                     onClick={() => navigateTo("/compare")}
-                    className={cn(
-                      "inline-flex h-10 items-center justify-center gap-1.5 rounded-none border px-3 text-[13px] font-semibold tracking-[0.01em] transition-colors",
-                      isCompareActive
-                        ? "border-black bg-black text-white"
-                        : "border-[#D9D9D9] bg-[#F8F8F8] text-[#222222] hover:border-[#C6C6C6] hover:bg-[#EEEEEE]",
-                    )}
-                  >
-                    <FiGitCommit className="h-3.5 w-3.5" />
-                    <span>Compare</span>
-                  </button>
-                  <button
-                    type="button"
+                    showChevron
+                  />
+                  <MenuRow
+                    icon={FiLayers}
+                    label={t("header.addon.offers")}
+                    active={isOffersActive}
                     onClick={() => navigateTo("/offers")}
-                    className={cn(
-                      "inline-flex h-10 items-center justify-center gap-1.5 rounded-none border px-3 text-[13px] font-semibold tracking-[0.01em] transition-colors",
-                      isOffersActive
-                        ? "border-black bg-black text-white"
-                        : "border-[#D9D9D9] bg-[#F8F8F8] text-[#222222] hover:border-[#C6C6C6] hover:bg-[#EEEEEE]",
-                    )}
-                  >
-                    <FiLayers className="h-3.5 w-3.5" />
-                    <span>Offers</span>
-                  </button>
+                    showChevron
+                  />
                   {showMegaSale ? (
-                    <button
-                      type="button"
+                    <MenuRow
+                      icon={FiTag}
+                      label={t("header.addon.megaSale")}
+                      active={isMegaSaleActive}
                       onClick={() => navigateTo("/megasale")}
-                      className={cn(
-                        "inline-flex h-10 items-center justify-center gap-1.5 rounded-none border px-3 text-[13px] font-semibold tracking-[0.01em] transition-colors",
-                        isMegaSaleActive
-                          ? "border-black bg-black text-white"
-                          : "border-[#D9D9D9] bg-[#F8F8F8] text-[#222222] hover:border-[#C6C6C6] hover:bg-[#EEEEEE]",
-                      )}
-                    >
-                      <FiTag className="h-3.5 w-3.5" />
-                      <span>Mega Sale</span>
-                    </button>
+                      showChevron
+                    />
                   ) : null}
                   {visibilityLoading ? (
-                    <Skeleton className="h-10 rounded-none" />
+                    <div className="flex items-center justify-between border-b border-[#E5E5E5] px-4 py-3.5">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-5 w-5" />
+                    </div>
                   ) : null}
                 </div>
-              )}
-              <MenuList nodes={activeLevel.nodes} onNodeClick={handleNodeClick} />
+              ) : null}
             </>
           )}
         </div>
 
         <div
           className={cn(
-            "sticky z-50 bg-white divide-y",
-            hidden && !onProductDetails ? "bottom-0" : "bottom-15.25",
-            "shadow-[0_-2px_10px_rgba(0,0,0,0.1)]",
+            "shrink-0 bg-white",
+            !(hidden && !onProductDetails) && "max-[500px]:mb-15.25",
           )}
         >
-          {/* Language toggle */}
-          <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm font-medium text-black/70">{t("menu.language")}</span>
-            <LangToggleButton />
-          </div>
+          <MenuRow
+            staticRow
+            label={t("menu.language")}
+            trailing={<LangToggleButton />}
+            className="border-t-4 border-t-[#F4F4F4]"
+          />
+
           {isAuthenticated ? (
             <>
-              <button
-                type="button"
+              <MenuRow
+                label={userName}
                 onClick={() => navigateTo("/account")}
-                className="flex w-full cursor-pointer items-center gap-3 px-3 py-3.5 text-left hover:bg-black/2"
-              >
-                <div className="relative h-9 w-9 overflow-hidden rounded-full bg-black/5">
-                  {avatarSrc ? (
-                    <ImageWithFallback
-                      src={avatarSrc}
-                      alt={userName}
-                      fill
-                      sizes="36px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <FiUser className="h-5 w-5 text-black" />
-                    </div>
-                  )}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-black line-clamp-1">{userName}</div>
-                  <div className="text-xs text-black/60 line-clamp-1">{t("menu.viewAccount")}</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
+                showChevron
+                leading={
+                  <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-[#E5E5E5] bg-[#F8F8F8]">
+                    {avatarSrc ? (
+                      <ImageWithFallback
+                        src={avatarSrc}
+                        alt={userName}
+                        fill
+                        sizes="32px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <FiUser className="h-4 w-4 text-black/50" />
+                      </div>
+                    )}
+                  </div>
+                }
+              />
+              <MenuRow
+                icon={FiHeart}
+                label={t("menu.favorite")}
                 onClick={() => navigateTo("/account/favorites")}
-                className="flex w-full cursor-pointer items-center gap-2 px-3 py-3.75 text-left hover:bg-black/2"
-              >
-                <FiHeart className="h-5 w-5 text-black" />
-                <span className="text-sm font-normal text-black">{t("menu.favorite")}</span>
-              </button>
-              <button
-                type="button"
+                showChevron
+              />
+              <MenuRow
+                icon={FiLogOut}
+                label={t("menu.logout")}
+                danger
                 onClick={() => {
                   logout();
                   onOpenChange(false);
                   router?.push("/sign-in");
                 }}
-                className="flex w-full items-center gap-3 cursor-pointer px-4 py-3 text-sm font-semibold text-red-600 hover:bg-black/2"
-              >
-                <LogOut className="h-5 w-5 text-red-600" />
-                {t("menu.logout")}
-              </button>
+              />
             </>
           ) : (
             <>
-              <button
-                type="button"
+              <MenuRow
+                icon={FiLogIn}
+                label={t("menu.signIn")}
                 onClick={() => navigateTo("/sign-in")}
-                className="flex w-full cursor-pointer items-center gap-2 px-3 py-3.75 text-left hover:bg-black/2"
-              >
-                <FiUser className="h-5 w-5 text-black" />
-                <span className="text-sm font-normal text-black">{t("menu.signIn")}</span>
-              </button>
-
-              <button
-                type="button"
+                showChevron
+              />
+              <MenuRow
+                icon={FiUserPlus}
+                label={t("menu.createAccount")}
                 onClick={() => navigateTo("/sign-up")}
-                className="flex w-full cursor-pointer items-center gap-2 px-3 py-3.75 text-left hover:bg-black/2"
-              >
-                <FiUser className="h-5 w-5 text-black" />
-                <span className="text-sm font-normal text-black">{t("menu.createAccount")}</span>
-              </button>
+                showChevron
+              />
             </>
           )}
         </div>

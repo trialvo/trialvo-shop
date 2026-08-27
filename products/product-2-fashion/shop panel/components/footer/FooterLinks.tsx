@@ -10,16 +10,16 @@ type Props = {
 const FooterLinks: React.FC<Props> = ({ title, links }) => {
   return (
     <div>
-      <h4 className="mb-7 text-base text-white font-semibold uppercase tracking-wide">
+      <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
         {title}
       </h4>
 
-      <ul className="space-y-5.5 text-sm text-white">
+      <ul className="space-y-3 text-sm">
         {links.map((link) => (
           <li key={link.label}>
             <Link
               href={link.href}
-              className="font-normal hover:underline hover:underline-offset-4 transition"
+              className="text-white/70 transition-colors hover:text-white"
             >
               {link.label}
             </Link>

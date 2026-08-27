@@ -1,6 +1,5 @@
 "use client";
 
-import { X } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
@@ -25,6 +24,7 @@ import { addItem, setBuyNowId, setIsCartOpen } from "@/redux/slices/cartSlice";
 import { openDrawer } from "@/redux/slices/drawerManagerSlice";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { useRouter } from "next/navigation";
+import { FiShoppingBag } from "react-icons/fi";
 import QuickAddGalleryCarousel from "./QuickAddGalleryCarousel";
 import { findColorByIdOrName, isFiniteNumber } from "./QuickAddModal";
 
@@ -363,21 +363,10 @@ const QuickAddModalMobile: React.FC<Props> = ({
             onOpenChange={onOpenChange}
             isTop={isTop}
             zIndex={zIndex}
-            contentClassName={cn(
-                "w-[calc(100vw-24px)] max-w-[480px]",
-                "overflow-hidden rounded-md border border-[#E8E8E8] p-0",
-                className,
-            )}
+            title={t("product.addToCart")}
+            icon={<FiShoppingBag className="h-4 w-4" strokeWidth={1.75} />}
+            contentClassName={cn("max-w-[480px]", className)}
         >
-            <Button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="absolute right-2.5 top-2.5 z-20 h-8 w-8 rounded-md border border-[#D0D0D0] bg-white p-0 text-[#191919] shadow-none hover:border-[#191919] hover:bg-white"
-                aria-label="Close"
-            >
-                <X className="h-4 w-4" strokeWidth={1.75} />
-            </Button>
-
             <ScrollArea className="max-h-[min(88vh,720px)]">
                 <div className="bg-[#F7F7F7]">
                     <QuickAddGalleryCarousel
