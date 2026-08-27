@@ -4,8 +4,8 @@ import ModalShell from "@/components/modals/ModalShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/hooks/useTranslation";
-import { cn } from "@/lib/utils";
 import * as React from "react";
+import { FiSmartphone } from "react-icons/fi";
 
 type Props = {
     open: boolean;
@@ -79,49 +79,49 @@ const InsertPhoneModal: React.FC<Props> = ({
             onOpenChange={onOpenChange}
             isTop={isTop}
             zIndex={zIndex}
-            contentClassName="max-w-md"
+            title={resolvedTitle}
+            icon={<FiSmartphone className="h-4 w-4" strokeWidth={1.75} />}
+            contentClassName="max-w-[440px]"
+            bodyClassName="space-y-2 px-5 py-4"
+            footer={
+                <>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="h-10 rounded-[4px] border-[#E5E5E5] px-4 text-sm font-medium text-black hover:border-black hover:bg-white"
+                        onClick={() => onOpenChange(false)}
+                        disabled={submitting}
+                    >
+                        {resolvedCancelText}
+                    </Button>
+                    <Button
+                        type="button"
+                        className="h-10 rounded-[4px] bg-black px-4 text-sm font-medium text-white hover:bg-black/90"
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                    >
+                        {submitting ? t("insertPhone.saving") : resolvedConfirmText}
+                    </Button>
+                </>
+            }
         >
-            <div className="border-b border-[#EDEDED] px-5 py-4">
-                <h2 className="text-base font-semibold text-black">{resolvedTitle}</h2>
-                {resolvedDescription ? <p className="mt-1 text-sm text-muted-foreground">{resolvedDescription}</p> : null}
-            </div>
+            {resolvedDescription ? (
+                <p className="text-sm text-black/55">{resolvedDescription}</p>
+            ) : null}
 
-            <div className="px-5 py-4 space-y-2">
-                <label className="text-sm font-medium text-black">{t("insertPhone.mobileNumber")}</label>
+            <label className="text-sm font-medium text-black">{t("insertPhone.mobileNumber")}</label>
 
-                <Input
-                    value={phone}
-                    onChange={(e) => {
-                        setPhone(e.target.value);
-                        if (error) setError(null);
-                    }}
-                    placeholder="01XXXXXXXXX"
-                    inputMode="numeric"
-                />
+            <Input
+                value={phone}
+                onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (error) setError(null);
+                }}
+                placeholder="01XXXXXXXXX"
+                inputMode="numeric"
+            />
 
-                {error ? <p className="text-xs text-[#E52D2D]">{error}</p> : null}
-            </div>
-
-            <div className={cn("flex items-center justify-end gap-3 border-t border-[#EDEDED] px-5 py-4")}>
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="h-10 rounded-none border-[#999999]"
-                    onClick={() => onOpenChange(false)}
-                    disabled={submitting}
-                >
-                    {resolvedCancelText}
-                </Button>
-
-                <Button
-                    type="button"
-                    className="h-10 rounded-none bg-black text-white hover:bg-black/90"
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                >
-                    {submitting ? t("insertPhone.saving") : resolvedConfirmText}
-                </Button>
-            </div>
+            {error ? <p className="text-xs text-[#E52D2D]">{error}</p> : null}
         </ModalShell>
     );
 };

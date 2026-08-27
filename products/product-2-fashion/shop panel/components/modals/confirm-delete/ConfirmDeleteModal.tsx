@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import * as React from "react";
-import { FiX } from "react-icons/fi";
+import { FiAlertTriangle, FiTrash2 } from "react-icons/fi";
+
+export type ConfirmModalIntent = "delete" | "confirm";
 
 type Props = {
   open: boolean;
@@ -16,13 +18,26 @@ type Props = {
 
   cancelText?: string;
   confirmText?: string;
+  intent?: ConfirmModalIntent;
 
   onConfirm?: () => void;
+  confirming?: boolean;
 
   isTop?: boolean;
   zIndex?: number;
   className?: string;
 };
+
+export function inferConfirmIntent(
+  title?: string,
+  confirmText?: string,
+  intent?: ConfirmModalIntent,
+): ConfirmModalIntent {
+  if (intent) return intent;
+  const hay = `${title ?? ""} ${confirmText ?? ""}`.toLowerCase();
+  if (/(cancel|clear)/.test(hay)) return "confirm";
+  return "delete";
+}
 
 const ConfirmDeleteModal: React.FC<Props> = ({
   open,
@@ -31,7 +46,9 @@ const ConfirmDeleteModal: React.FC<Props> = ({
   description,
   cancelText,
   confirmText,
+  intent,
   onConfirm,
+  confirming = false,
   isTop = true,
   zIndex = 80,
   className,
@@ -41,6 +58,9 @@ const ConfirmDeleteModal: React.FC<Props> = ({
   const resolvedDescription = description ?? t("checkout.deleteAddressDesc");
   const resolvedCancelText = cancelText ?? t("checkout.notNow");
   const resolvedConfirmText = confirmText ?? t("checkout.yesDelete");
+  const resolvedIntent = inferConfirmIntent(resolvedTitle, resolvedConfirmText, intent);
+  const isDelete = resolvedIntent === "delete";
+
   return (
     <ModalShell
       open={open}
@@ -48,54 +68,40 @@ const ConfirmDeleteModal: React.FC<Props> = ({
       isTop={isTop}
       zIndex={zIndex}
       title={resolvedTitle}
-      contentClassName={cn(
-        "overflow-hidden p-0",
-        "w-[calc(100vw-32px)] max-w-[440px]",
-        "rounded-[4px] border-[#E5E5E5]",
-        className,
-      )}
-    >
-      <div className="bg-white">
-        <div className="flex items-start justify-between gap-3 border-b border-[#E5E5E5] px-5 py-4">
-          <h3 className="pr-2 text-[15px] font-semibold leading-snug tracking-tight text-black">
-            {resolvedTitle}
-          </h3>
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            aria-label={t("common.close")}
-            className="grid h-8 w-8 shrink-0 place-items-center text-black/55 transition-colors hover:bg-black/5 hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30"
-          >
-            <FiX className="h-4 w-4" />
-          </button>
-        </div>
-
-        <p className="px-5 py-4 text-sm leading-relaxed text-black/55">
-          {resolvedDescription}
-        </p>
-
-        <div className="flex items-center justify-end gap-2 border-t border-[#E5E5E5] px-5 py-3.5">
+      icon={
+        isDelete ? (
+          <FiTrash2 className="h-4 w-4" strokeWidth={1.75} />
+        ) : (
+          <FiAlertTriangle className="h-4 w-4" strokeWidth={1.75} />
+        )
+      }
+      contentClassName={cn("max-w-[440px]", className)}
+      bodyClassName="px-5 py-4"
+      footer={
+        <>
           <Button
             type="button"
             variant="outline"
+            disabled={confirming}
             onClick={() => onOpenChange(false)}
             className="h-10 rounded-[4px] border-[#E5E5E5] px-4 text-sm font-medium text-black hover:border-black hover:bg-white"
           >
             {resolvedCancelText}
           </Button>
-
           <Button
             type="button"
+            disabled={confirming}
             onClick={() => {
               onConfirm?.();
-              onOpenChange(false);
             }}
             className="h-10 rounded-[4px] bg-black px-4 text-sm font-medium text-white hover:bg-black/90"
           >
             {resolvedConfirmText}
           </Button>
-        </div>
-      </div>
+        </>
+      }
+    >
+      <p className="text-sm leading-relaxed text-black/55">{resolvedDescription}</p>
     </ModalShell>
   );
 };

@@ -2,6 +2,7 @@
 
 import type { CompareSlot } from "@/hooks/useCompareStore";
 import { useTranslation } from "@/hooks/useTranslation";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import ProductCardActions from "./ProductCardActions";
@@ -17,6 +18,7 @@ interface ProductCardProps {
   href: string;
   onQuickAdd?: () => void;
   onWishlist?: () => void;
+  className?: string;
   priority?: boolean;
   avgRating?: number;
   reviewCount?: number;
@@ -32,6 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   href,
   onQuickAdd,
   onWishlist,
+  className,
   priority = false,
   avgRating,
   reviewCount,
@@ -46,7 +49,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <article
-      className="group w-full cursor-pointer"
+      className={cn("group w-full cursor-pointer", className)}
       role="link"
       tabIndex={0}
       onClick={goToDetails}

@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import ProductCardMobileSkeleton from "@/components/product/ProductCardMobileSkeleton";
 import ProductCardSkeleton from "@/components/product/ProductCardSkeleton";
 
 export default function CategorySkeleton(): React.ReactElement {
@@ -8,17 +7,9 @@ export default function CategorySkeleton(): React.ReactElement {
 
     return (
         <section>
-            <div className="grid grid-cols-2 gap-3 gap-y-6 md:grid-cols-3 md:gap-4 md:gap-y-10 2xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 gap-y-6 min-[640px]:gap-4 min-[640px]:gap-y-8 md:grid-cols-3 xl:grid-cols-4">
                 {items.map((_, i) => (
-                    <div key={i}>
-                        <div className="block min-[501px]:hidden">
-                            <ProductCardMobileSkeleton />
-                        </div>
-
-                        <div className="hidden min-[501px]:block">
-                            <ProductCardSkeleton />
-                        </div>
-                    </div>
+                    <ProductCardSkeleton key={i} />
                 ))}
             </div>
         </section>

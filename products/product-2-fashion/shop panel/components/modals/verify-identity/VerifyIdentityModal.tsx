@@ -1,11 +1,11 @@
 "use client";
 
 import VerificationIdentityCard from "@/components/auth/VerificationIdentityCard";
-import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { FiX } from "react-icons/fi";
+import { FiShield } from "react-icons/fi";
 import ModalShell from "../ModalShell";
 
 type Props = {
@@ -39,15 +39,14 @@ const VerifyIdentityModal: React.FC<Props> = ({
     onResend,
     onVerify,
     title,
-    description,
     contentClassName,
 }) => {
+    const { t } = useTranslation();
     const [phoneNumber] = useState<string>(() => {
         if (typeof window === "undefined") return "";
         return localStorage.getItem("phone_number") ?? "";
     });
 
-    // Auto-close when the user navigates away
     const pathname = usePathname();
     const initialPathRef = React.useRef(pathname);
     useEffect(() => {
@@ -69,36 +68,19 @@ const VerifyIdentityModal: React.FC<Props> = ({
             isTop={isTop}
             zIndex={zIndex}
             closeOnOutsideClick={false}
-            contentClassName={cn("max-w-[620px]", contentClassName)}
+            title={title ?? t("auth.verifyIdentityTitle")}
+            icon={<FiShield className="h-4 w-4" strokeWidth={1.75} />}
+            contentClassName={cn("max-w-[520px]", contentClassName)}
         >
-            <Button
-                type="button"
-                onClick={handleClose}
-                className="absolute -right-5 -top-5 hidden h-10 w-10 rounded-none bg-black p-0 text-white sm:inline-flex"
-                aria-label="Close"
-            >
-                <FiX className="h-5 w-5" />
-            </Button>
-
-            <button
-                type="button"
-                onClick={handleClose}
-                aria-label="Close"
-                className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-none bg-black p-0 text-white sm:hidden"
-            >
-                <FiX className="h-5 w-5" />
-            </button>
-
-            <div className="max-h-[70vh] overflow-auto">
-                <VerificationIdentityCard
-                    maskedTarget={maskedTarget || phoneNumber}
-                    length={length}
-                    onResend={onResend}
-                    onVerify={onVerify}
-                    signInHref={signInHref}
-                    cardClass="px-5 py-6"
-                />
-            </div>
+            <VerificationIdentityCard
+                maskedTarget={maskedTarget || phoneNumber}
+                length={length}
+                onResend={onResend}
+                onVerify={onVerify}
+                signInHref={signInHref}
+                hideTitle
+                cardClass="px-5 py-5"
+            />
         </ModalShell>
     );
 };

@@ -1,7 +1,6 @@
 "use client";
 
 import ProductCard from "@/components/product/ProductCard";
-import ProductCardMobile from "@/components/product/ProductCardMobile";
 import { useHandleFavoriteClick } from "@/hooks/useHandleFavoriteClick";
 import { useTranslation } from "@/hooks/useTranslation";
 import { RelatedProduct } from "@/lib/api/product/service";
@@ -52,37 +51,19 @@ const RelatedProducts: React.FC<Props> = ({ relatedProducts }) => {
               : defaultVariations?.selling_price;
 
             return (
-              <div key={product.id}>
-                <div className="block min-[501px]:hidden">
-                  <ProductCardMobile
-                    isFavorite={product?.is_favourite}
-                    href={`/products/${product?.slug}/${product?.id}/`}
-                    title={getLocalName(product.name, product.name_bd, language)}
-                    price={finalPrice ?? 0}
-                    oldPrice={sellingPrice ?? 0}
-                    imageSrc={imagePath ?? "/pant.png"}
-                    onQuickAdd={() => handleOpenQuickAdd(product?.id)}
-                    onWishlist={() => {
-                      handleFavoriteClick(product);
-                    }}
-                  />
-                </div>
-
-                <div className="hidden min-[501px]:block">
-                  <ProductCard
-                    isFavorite={product?.is_favourite}
-                    href={`/products/${product?.slug}/${product?.id}/`}
-                    title={getLocalName(product.name, product.name_bd, language)}
-                    price={finalPrice ?? 0}
-                    oldPrice={sellingPrice ?? 0}
-                    imageSrc={imagePath ?? "/pant.png"}
-                    onQuickAdd={() => handleOpenQuickAdd(product?.id)}
-                    onWishlist={() => {
-                      handleFavoriteClick(product);
-                    }}
-                  />
-                </div>
-              </div>
+              <ProductCard
+                key={product.id}
+                isFavorite={product?.is_favourite}
+                href={`/products/${product?.slug}/${product?.id}/`}
+                title={getLocalName(product.name, product.name_bd, language)}
+                price={finalPrice ?? 0}
+                oldPrice={sellingPrice ?? 0}
+                imageSrc={imagePath ?? "/pant.png"}
+                onQuickAdd={() => handleOpenQuickAdd(product?.id)}
+                onWishlist={() => {
+                  handleFavoriteClick(product);
+                }}
+              />
             );
           })}
         </div>

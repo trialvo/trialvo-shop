@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 import * as React from "react";
+import { FiAlertTriangle } from "react-icons/fi";
 
 type Props = {
   open: boolean;
@@ -40,35 +41,30 @@ const CancelOrderModal: React.FC<Props> = ({
   const resolvedDescription = description ?? t("account.orders.cancelOrderDesc");
   const resolvedCancelLabel = cancelLabel ?? t("account.orders.notNow");
   const resolvedConfirmLabel = confirmLabel ?? t("account.orders.yesCancel");
+
   return (
     <ModalShell
       open={open}
       onOpenChange={onOpenChange}
       isTop={isTop}
       zIndex={zIndex}
-      contentClassName={cn(
-        "w-[calc(100vw-24px)] max-w-[520px]",
-        "p-0",
-        className,
-      )}
-    >
-      <div className="p-6">
-        <h3 className="text-base font-semibold text-black">{resolvedTitle}</h3>
-        <p className="mt-3 text-sm leading-5 text-black/70">{resolvedDescription}</p>
-
-        <div className="mt-6 flex items-center gap-3">
+      title={resolvedTitle}
+      icon={<FiAlertTriangle className="h-4 w-4" strokeWidth={1.75} />}
+      contentClassName={cn("max-w-[440px]", className)}
+      bodyClassName="px-5 py-4"
+      footer={
+        <>
           <Button
             type="button"
             variant="outline"
-            className="h-10 rounded-none border-[#BDBDBD] px-6 text-sm font-medium text-black"
+            className="h-10 rounded-[4px] border-[#E5E5E5] px-4 text-sm font-medium text-black hover:border-black hover:bg-white"
             onClick={() => onOpenChange(false)}
           >
             {resolvedCancelLabel}
           </Button>
-
           <Button
             type="button"
-            className="h-10 rounded-none bg-black px-6 text-sm font-medium text-white hover:bg-black/90"
+            className="h-10 rounded-[4px] bg-black px-4 text-sm font-medium text-white hover:bg-black/90"
             onClick={() => {
               onConfirm?.();
               onOpenChange(false);
@@ -76,8 +72,10 @@ const CancelOrderModal: React.FC<Props> = ({
           >
             {resolvedConfirmLabel}
           </Button>
-        </div>
-      </div>
+        </>
+      }
+    >
+      <p className="text-sm leading-relaxed text-black/55">{resolvedDescription}</p>
     </ModalShell>
   );
 };

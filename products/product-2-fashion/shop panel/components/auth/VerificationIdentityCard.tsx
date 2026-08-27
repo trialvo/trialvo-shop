@@ -22,6 +22,7 @@ export type VerificationIdentityCardProps = {
   signInHref?: string;
   cardClass?: string;
   initialOtp?: string;
+  hideTitle?: boolean;
 };
 
 const VerificationIdentityCard: React.FC<VerificationIdentityCardProps> = ({
@@ -31,7 +32,8 @@ const VerificationIdentityCard: React.FC<VerificationIdentityCardProps> = ({
   onVerify,
   signInHref = "/sign-in",
   cardClass,
-  initialOtp = ""
+  initialOtp = "",
+  hideTitle = false,
 }) => {
   const { t } = useTranslation();
   const displayTarget = maskedTarget?.trim() ? maskedTarget : "";
@@ -105,11 +107,13 @@ const VerificationIdentityCard: React.FC<VerificationIdentityCardProps> = ({
 
   return (
     <div className={`w-full ${cardClass ?? ""}`}>
-          <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground min-[576px]:text-[32px]">
-            {t("auth.verifyIdentityTitle")}
-          </h1>
+          {hideTitle ? null : (
+            <h1 className="text-[28px] font-bold tracking-[-0.03em] text-foreground min-[576px]:text-[32px]">
+              {t("auth.verifyIdentityTitle")}
+            </h1>
+          )}
 
-          <p className="mt-1.5 text-[13px] leading-5 text-muted-foreground">
+          <p className={hideTitle ? "text-[13px] leading-5 text-muted-foreground" : "mt-1.5 text-[13px] leading-5 text-muted-foreground"}>
             {t("auth.verifyDesc1")} {length}-{t("auth.verifyDesc2")}{" "}
             <span className="font-medium text-foreground">{displayTarget}</span>
           </p>

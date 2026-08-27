@@ -227,8 +227,18 @@
   "home": "Home"
  },
  "catalog": {
+  "allProducts": "All Products",
+  "products": "products",
+  "filters": "Filters",
+  "done": "Done",
+  "price": "Price",
+  "size": "Size",
+  "color": "Color",
   "filter": "Filter",
-  "sortBy": "Sort By:",
+  "sortBy": "Sort by",
+  "retry": "Try again",
+  "loadError": "Couldn't load products",
+  "loadErrorDesc": "Something went wrong. Check your connection and try again.",
   "sort": {
    "featured": "Featured",
    "nameAsc": "Alphabetically, A-Z",

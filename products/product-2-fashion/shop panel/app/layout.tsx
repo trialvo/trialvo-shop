@@ -135,7 +135,7 @@ export default function RootLayout({
 }>): React.ReactElement {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${inter.variable} ${hindSiliguri.variable} ${openSans.variable} font-sans antialiased`}>
+      <body suppressHydrationWarning className={`${inter.variable} ${hindSiliguri.variable} ${openSans.variable} min-h-dvh font-sans antialiased`}>
         <ShopRuntimeConfigScript />
         {/* ── GTM noscript fallback (for JS-disabled browsers) ── */}
         {GTM_ID && (

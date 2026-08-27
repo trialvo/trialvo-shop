@@ -81,7 +81,7 @@ export const ABOUT_TESTIMONIALS: { kicker: string; items: TestimonialItem[] } = 
         "Under his leadership, Vellora continues to expand its online presence, physical showroom network, and export activities, with a long-term vision of becoming a nationwide fashion brand.",
         "Looking ahead, we aspire to strengthen our export operations and proudly represent Bangladesh in the global fashion market.",
       ],
-      image: { src: "/about/proprietor.jpg", alt: "Leadership" },
+      image: { src: "/images/categories/cat-men.jpg", alt: "Sazzad Hossen" },
       imageSide: "right",
     },
   ],

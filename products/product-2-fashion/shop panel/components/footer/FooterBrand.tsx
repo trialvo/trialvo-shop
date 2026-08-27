@@ -11,7 +11,7 @@ const FooterBrand: React.FC = () => {
   const addressLines = t("footer.address").split("\n");
 
   return (
-    <div>
+    <div className="max-w-70">
       <ImageWithFallback
         src="/logo-white.svg"
         alt="Vellora"
@@ -20,7 +20,7 @@ const FooterBrand: React.FC = () => {
         preload
       />
 
-      <p className="text-sm text-white leading-relaxed mt-6 pb-8">
+      <p className="mt-5 text-sm leading-relaxed text-white/55">
         {addressLines.map((line, i) => (
           <React.Fragment key={i}>
             {line}
@@ -29,13 +29,13 @@ const FooterBrand: React.FC = () => {
         ))}
       </p>
 
-      <div className="space-y-4 text-sm text-white">
-        <p className="flex items-center gap-3">
-          <TbDeviceMobile className="text-white h-5 w-5" />
+      <div className="mt-5 space-y-2.5 text-sm text-white/80">
+        <p className="flex items-center gap-2.5">
+          <TbDeviceMobile className="h-4 w-4 shrink-0 text-white/50" />
           <span>+880 1970680283</span>
         </p>
-        <p className="flex items-center gap-3">
-          <FiMail className="text-white h-5 w-5" />
+        <p className="flex items-center gap-2.5">
+          <FiMail className="h-4 w-4 shrink-0 text-white/50" />
           <span>support@vellora.demo</span>
         </p>
       </div>

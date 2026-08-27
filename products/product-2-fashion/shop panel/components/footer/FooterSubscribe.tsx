@@ -1,12 +1,12 @@
 "use client";
 
-import { useTranslation } from "@/hooks/useTranslation";
 import { useSubscribe } from "@/hooks/useSubscribe";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useAppDispatch } from "@/redux/hooks";
 import { setError as setUiError, setSuccess } from "@/redux/slices/uiSlice";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { FaArrowRight } from "react-icons/fa6";
+import { FiArrowRight } from "react-icons/fi";
 
 const FooterSubscribe: React.FC = () => {
     const { t } = useTranslation();
@@ -34,11 +34,11 @@ const FooterSubscribe: React.FC = () => {
 
     return (
         <div>
-            <h4 className="text-base mb-7 font-semibold uppercase tracking-wide">
+            <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
                 {t("footer.subscribe.title")}
             </h4>
 
-            <p className="text-sm text-white font-normal leading-relaxed mb-6">
+            <p className="mb-5 text-sm leading-relaxed text-white/55">
                 {t("footer.subscribe.body")}
             </p>
 
@@ -47,7 +47,7 @@ const FooterSubscribe: React.FC = () => {
                     const message = formErrors.email?.message;
                     if (message) dispatch(setUiError(message));
                 })}
-                className="flex bg-[#424141] mb-2"
+                className="flex border border-white/15 bg-white/5"
             >
                 <input
                     type="email"
@@ -59,17 +59,17 @@ const FooterSubscribe: React.FC = () => {
                             message: t("footer.subscribe.emailInvalid"),
                         },
                     })}
-                    className="flex-1 bg-transparent px-4 py-3 text-sm outline-none text-white placeholder:text-white transition-shadow duration-200 focus:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]"
+                    className="min-w-0 flex-1 bg-transparent px-3.5 py-2.5 text-sm text-white outline-none placeholder:text-white/35"
                     aria-invalid={Boolean(errors.email)}
                     disabled={isSubscribing}
                 />
                 <button
                     type="submit"
-                    className="px-4 text-white text-xl cursor-pointer transition-colors duration-200 hover:text-[#EDEDED]"
+                    className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                     disabled={isSubscribing}
                     aria-label={t("footer.subscribe.title")}
                 >
-                    <FaArrowRight />
+                    <FiArrowRight className="h-4 w-4" />
                 </button>
             </form>
         </div>

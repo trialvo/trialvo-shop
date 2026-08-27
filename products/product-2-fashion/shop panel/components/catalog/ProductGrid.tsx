@@ -9,7 +9,6 @@ import { useAppDispatch } from "@/redux/hooks";
 import { openModal } from "@/redux/slices/modalManagerSlice";
 import React from "react";
 import { FiSearch } from "react-icons/fi";
-import ProductCardMobile from "../product/ProductCardMobile";
 import CategorySkeleton from "./CategorySkeleton";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { CompareSlot } from "@/hooks/useCompareStore";
@@ -110,42 +109,35 @@ const ProductGrid: React.FC<ProductGridProps> = ({
 
   if (isError && products.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-black/10 bg-white py-14 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/5">
-          <FiSearch className="h-7 w-7 text-black/60" />
-        </div>
-        <h3 className="mt-4 text-base font-semibold text-black">{t("catalog.loadError") ?? "Failed to load products"}</h3>
-        <p className="mt-1 max-w-md text-sm text-black/60">{t("catalog.loadErrorDesc") ?? "Something went wrong. Please check your connection and try again."}</p>
-        {onRetry && (
+      <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+        <FiSearch className="h-6 w-6 text-black/35" />
+        <h3 className="mt-3 text-sm font-semibold text-black">{t("catalog.loadError")}</h3>
+        <p className="mt-1 max-w-md text-sm text-black/50">{t("catalog.loadErrorDesc")}</p>
+        {onRetry ? (
           <button
             type="button"
             onClick={onRetry}
             className="mt-4 border border-[#E5E5E5] px-4 py-2 text-sm text-black hover:border-black"
           >
-            {t("catalog.retry") ?? "Try Again"}
+            {t("catalog.retry")}
           </button>
-        )}
+        ) : null}
       </div>
     );
   }
 
   if (!products?.length && !isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-black/10 bg-white py-14 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/5">
-          <FiSearch className="h-7 w-7 text-black/60" />
-        </div>
-
-        <h3 className="mt-4 text-base font-semibold text-black">
+      <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+        <FiSearch className="h-6 w-6 text-black/35" />
+        <h3 className="mt-3 text-sm font-semibold text-black">
           {hasActiveFilters ? t("catalog.noProductsFiltered") : t("catalog.noProducts")}
         </h3>
-        <p className="mt-1 max-w-md text-sm text-black/60">
-          {hasActiveFilters
-            ? t("catalog.noProductsFilteredDesc")
-            : t("catalog.noProductsDesc")}
+        <p className="mt-1 max-w-md text-sm text-black/50">
+          {hasActiveFilters ? t("catalog.noProductsFilteredDesc") : t("catalog.noProductsDesc")}
         </p>
 
-        {hasActiveFilters && onClearFilters && (
+        {hasActiveFilters && onClearFilters ? (
           <button
             type="button"
             onClick={onClearFilters}
@@ -153,14 +145,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           >
             {t("catalog.clearFilters")}
           </button>
-        )}
+        ) : null}
       </div>
     );
   }
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 gap-y-6 md:grid-cols-3 md:gap-4 md:gap-y-10 2xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 gap-y-6 min-[640px]:gap-4 min-[640px]:gap-y-8 md:grid-cols-3 xl:grid-cols-4">
         {products?.map((product) => {
           const firstImage = product?.thumbnail ?? product?.images?.[0]?.path;
 
@@ -196,17 +188,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
             },
           };
 
-          return (
-            <div key={product.id}>
-              <div className="block min-[501px]:hidden">
-                <ProductCardMobile {...cardProps} />
-              </div>
-
-              <div className="hidden min-[501px]:block">
-                <ProductCard {...cardProps} />
-              </div>
-            </div>
-          );
+          return <ProductCard key={product.id} {...cardProps} />;
         })}
       </div>
 

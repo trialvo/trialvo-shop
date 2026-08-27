@@ -25,7 +25,7 @@ import { useAppDispatch } from "@/redux/hooks";
 import { addItem, setBuyNowId, setIsCartOpen } from "@/redux/slices/cartSlice";
 import { openDrawer } from "@/redux/slices/drawerManagerSlice";
 import { useRouter } from "next/navigation";
-import { FiX } from "react-icons/fi";
+import { FiShoppingBag } from "react-icons/fi";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 
 type Props = {
@@ -444,20 +444,10 @@ const QuickAddModal: React.FC<Props> = ({
       onOpenChange={onOpenChange}
       isTop={isTop}
       zIndex={zIndex}
-      contentClassName={cn(
-        "w-[min(920px,calc(100vw-48px))] max-w-[920px] overflow-hidden rounded-md border border-[#E8E8E8]",
-        className,
-      )}
+      title={t("product.addToCart")}
+      icon={<FiShoppingBag className="h-4 w-4" strokeWidth={1.75} />}
+      contentClassName={cn("w-[min(920px,calc(100vw-32px))] max-w-[920px]", className)}
     >
-      <Button
-        type="button"
-        onClick={() => onOpenChange(false)}
-        className="absolute right-3 top-3 z-20 h-9 w-9 rounded-md border border-[#D0D0D0] bg-white p-0 text-[#191919] shadow-none hover:border-[#191919] hover:bg-white"
-        aria-label="Close"
-      >
-        <FiX className="h-4 w-4" strokeWidth={1.75} />
-      </Button>
-
       <div className="grid gap-0 md:grid-cols-[340px_1fr]">
         <div className="border-b border-[#F1F1F1] bg-[#F7F7F7] md:border-b-0 md:border-r">
           <QuickAddGalleryCarousel
@@ -469,7 +459,7 @@ const QuickAddModal: React.FC<Props> = ({
           />
         </div>
 
-        <div className="flex flex-col justify-center p-5 pr-12 md:p-6 md:pr-14">
+        <div className="flex flex-col justify-center p-5 md:p-6">
           <h3 className="text-base font-medium leading-snug text-[#191919] md:text-lg">
             {productDetail?.name ?? ""}
           </h3>

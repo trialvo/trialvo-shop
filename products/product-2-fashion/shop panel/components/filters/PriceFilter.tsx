@@ -12,16 +12,17 @@ export type PriceFilterValue = {
 export type PriceFilterProps = {
   value: PriceFilterValue;
   onChange: (next: PriceFilterValue) => void;
+  title?: string;
 };
 
-const PriceFilter: React.FC<PriceFilterProps> = ({ value, onChange }) => {
+const PriceFilter: React.FC<PriceFilterProps> = ({ value, onChange, title = "Price" }) => {
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold">Price</h3>
+      <h3 className="text-sm font-semibold text-black">{title}</h3>
 
       <div className="flex items-center gap-2">
         <Input
-          className="h-9"
+          className="h-9 rounded-none border-[#E5E5E5]"
           value={`BDT ${value.min.toFixed(2)}`}
           onChange={(e) => {
             const num = Number(e.target.value.replaceAll(/[^\d.]/g, ""));
@@ -30,7 +31,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({ value, onChange }) => {
         />
         <span className="text-muted-foreground">-</span>
         <Input
-          className="h-9"
+          className="h-9 rounded-none border-[#E5E5E5]"
           value={`BDT ${value.max.toFixed(2)}`}
           onChange={(e) => {
             const num = Number(e.target.value.replaceAll(/[^\d.]/g, ""));

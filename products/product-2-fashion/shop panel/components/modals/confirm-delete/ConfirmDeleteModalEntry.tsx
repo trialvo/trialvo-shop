@@ -40,6 +40,7 @@ const ConfirmDeleteModalEntry: React.FC<ModalEntryProps> = ({
             description={data.description}
             cancelText={data.cancelText}
             confirmText={data.confirmText}
+            confirming={loading}
             onOpenChange={(v) => {
                 if (!v) handleClose();
             }}

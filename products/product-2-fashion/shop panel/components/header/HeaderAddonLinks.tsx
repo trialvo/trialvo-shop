@@ -12,8 +12,11 @@ import { FaWhatsapp } from "react-icons/fa";
 import { FiGitCommit, FiHelpCircle, FiLayers, FiMessageSquare, FiTag } from "react-icons/fi";
 
 const WHATSAPP_HREF = "https://wa.me/+8801970680283";
-const ICON = "h-5 w-5";
+const ICON = "h-4 w-4 min-[576px]:h-[18px] min-[576px]:w-[18px] min-[768px]:h-5 min-[768px]:w-5";
 const MOTION = "duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]";
+const ITEM_BOX =
+  "h-11 w-11 min-[576px]:h-12 min-[576px]:w-12 min-[768px]:h-14 min-[768px]:w-14";
+const RAIL_W = "w-11 min-[576px]:w-12 min-[768px]:w-14";
 
 type AddonLink = {
   key: string;
@@ -33,7 +36,8 @@ function AddonItem({
   external,
 }: Omit<AddonLink, "key" | "show">) {
   const className = cn(
-    "group relative z-0 flex h-14 w-14 items-center justify-center",
+    "group relative z-0 flex items-center justify-center",
+    ITEM_BOX,
     "border-b border-black/6 last:border-b-0",
     "transition-colors",
     MOTION,
@@ -47,13 +51,14 @@ function AddonItem({
     <>
       <span
         className={cn(
-          "pointer-events-none absolute top-0 right-full flex h-14 items-center whitespace-nowrap rounded-l-lg pl-3.5 pr-3",
+          "pointer-events-none absolute top-0 right-full hidden items-center whitespace-nowrap rounded-l-lg pl-3.5 pr-3",
+          "h-11 min-[576px]:h-12 min-[768px]:flex min-[768px]:h-14",
           "text-[13px] font-semibold tracking-tight",
           "translate-x-2 opacity-0",
           "transition-[transform,opacity]",
           MOTION,
-          "group-hover:pointer-events-auto group-hover:translate-x-0 group-hover:opacity-100",
-          "group-focus-visible:pointer-events-auto group-focus-visible:translate-x-0 group-focus-visible:opacity-100",
+          "min-[768px]:group-hover:pointer-events-auto min-[768px]:group-hover:translate-x-0 min-[768px]:group-hover:opacity-100",
+          "min-[768px]:group-focus-visible:pointer-events-auto min-[768px]:group-focus-visible:translate-x-0 min-[768px]:group-focus-visible:opacity-100",
           isActive
             ? "bg-primary text-primary-foreground"
             : "bg-white text-[#191919] shadow-[-8px_4px_20px_rgba(20,16,12,0.08)] group-hover:bg-[#FAF8F5]",
@@ -61,7 +66,7 @@ function AddonItem({
       >
         {label}
       </span>
-      <span className="relative z-10 grid h-5 w-5 place-items-center">{icon}</span>
+      <span className="relative z-10 grid place-items-center">{icon}</span>
     </>
   );
 
@@ -174,14 +179,18 @@ export default function HeaderAddonLinks() {
   if (visibleLinks.length === 0 && !visibilityLoading) return null;
 
   return (
-    <div className="fixed right-0 top-1/2 z-50 hidden -translate-y-1/2 min-[768px]:block">
+    <div className="fixed right-0 top-[45%] z-40 -translate-y-1/2 max-[500px]:top-[42%] min-[768px]:top-1/2 min-[768px]:z-50">
       <nav
         aria-label="Quick links"
-        className="relative flex flex-col items-end rounded-l-2xl"
+        className="relative flex flex-col items-end rounded-l-xl min-[768px]:rounded-l-2xl"
       >
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-14 rounded-l-2xl border border-r-0 border-black/8 bg-white shadow-[-8px_12px_28px_rgba(20,16,12,0.12)]"
+          className={cn(
+            "pointer-events-none absolute inset-y-0 right-0 rounded-l-xl border border-r-0 border-black/8 bg-white shadow-[-8px_12px_28px_rgba(20,16,12,0.12)]",
+            "min-[768px]:rounded-l-2xl",
+            RAIL_W,
+          )}
         />
 
         {visibleLinks.map((link) => (
@@ -196,8 +205,13 @@ export default function HeaderAddonLinks() {
         ))}
 
         {visibilityLoading ? (
-          <div className="relative z-10 flex h-14 w-14 items-center justify-center border-t border-black/6 bg-white">
-            <Skeleton className="h-5 w-5 rounded-full" />
+          <div
+            className={cn(
+              "relative z-10 flex items-center justify-center border-t border-black/6 bg-white",
+              ITEM_BOX,
+            )}
+          >
+            <Skeleton className="h-4 w-4 rounded-full min-[768px]:h-5 min-[768px]:w-5" />
           </div>
         ) : null}
       </nav>

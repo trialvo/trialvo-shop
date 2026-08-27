@@ -43,7 +43,7 @@ const FilterDrawerEntry: React.FC<DrawerEntryProps> = ({
       isTop={isTop}
       zIndex={50}
       side="left"
-      contentClassName="w-[320px] max-w-[100dvw] rounded-none border-r border-black/10 p-0"
+      contentClassName="w-[86vw] max-w-[360px] rounded-none border-r border-[#E5E5E5] p-0"
     >
       <FilterDrawer
         open={open}

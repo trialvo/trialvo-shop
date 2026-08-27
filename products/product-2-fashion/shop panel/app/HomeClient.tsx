@@ -6,7 +6,6 @@ import { useViewApi } from "@/hooks/useViewApi";
 import { useEffect } from "react";
 import HeroSliderWrapper from "./HeroSliderWrapper";
 
-import WhatsAppFloatingButton from "@/components/common/WhatsAppFloatingButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useClientIp } from "@/hooks/useClientIp";
 import { useAppDispatch } from "@/redux/hooks";
@@ -99,7 +98,6 @@ export default function HomeClient() {
     <CategorySection />
     <FeatureProducts />
    </div>
-   <WhatsAppFloatingButton />
   </main>
  );
 }

@@ -18,7 +18,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 }) => {
   return (
     <div className="mt-2.5">
-      <h4 className="max-w-full truncate text-sm font-medium text-[#191919] max-[501px]:text-xs">
+      <h4 className="max-w-full truncate text-sm font-medium text-[#191919]">
         {title}
       </h4>
 
@@ -32,12 +32,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       ) : null}
 
       <div className="mt-1 flex items-baseline gap-1.5">
-        <div className="text-sm font-semibold text-[#191919] max-[501px]:text-xs">
+        <div className="text-sm font-semibold text-[#191919]">
           BDT {price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </div>
 
         {typeof oldPrice === "number" && oldPrice > price ? (
-          <div className="text-xs text-[#888888] line-through max-[501px]:text-[10px]">
+          <div className="text-xs text-[#888888] line-through">
             BDT {oldPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
         ) : null}

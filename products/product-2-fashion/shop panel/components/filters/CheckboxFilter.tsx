@@ -42,10 +42,10 @@ const CheckboxFilter: React.FC<CheckboxFilterProps> = ({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold">{title}</h3>
+      <h3 className="text-sm font-semibold text-black">{title}</h3>
 
       <Input
-        className="h-9"
+        className="h-9 rounded-none border-[#E5E5E5]"
         placeholder={`Search ${title}`}
         value={query}
         onChange={(e) => handleQueryChange(e.target.value)}

@@ -6,7 +6,6 @@ import Breadcrumbs from "@/components/breadcrumb/Breadcrumbs";
 import { SortValue } from "@/components/catalog/types";
 import type { QuickAddProduct } from "@/components/modals/quick-add/quickAdd.types";
 import ProductCard from "@/components/product/ProductCard";
-import ProductCardMobile from "@/components/product/ProductCardMobile";
 import { useFavorite } from "@/hooks/useFavorite";
 import { useProduct } from "@/hooks/useProduct";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -147,48 +146,25 @@ const FavoritesClient: React.FC = () => {
                         : defaultVariations?.selling_price;
 
                       return (
-                        <div key={product?.id}>
-                          <div className="block min-[501px]:hidden">
-                            <ProductCardMobile
-                              href={`/products/${product?.slug}/${product?.id}/`}
-                              title={getLocalName(
-                                product?.name ?? "",
-                                product?.name_bd,
-                                language,
-                              )}
-                              isFavorite={product?.is_favourite}
-                              price={finalPrice ?? 0}
-                              oldPrice={sellingPrice ?? 0}
-                              imageSrc={firstImage}
-                              onQuickAdd={() => handleOpenQuickAdd(product)}
-                              onWishlist={() =>
-                                handleFavoriteClick(
-                                  product as unknown as ProductDetail,
-                                )
-                              }
-                            />
-                          </div>
-                          <div className="hidden min-[501px]:block">
-                            <ProductCard
-                              href={`/products/${product?.slug}/${product?.id}/`}
-                              title={getLocalName(
-                                product?.name ?? "",
-                                product?.name_bd,
-                                language,
-                              )}
-                              isFavorite={product?.is_favourite}
-                              price={finalPrice ?? 0}
-                              oldPrice={sellingPrice ?? 0}
-                              imageSrc={firstImage}
-                              onQuickAdd={() => handleOpenQuickAdd(product)}
-                              onWishlist={() =>
-                                handleFavoriteClick(
-                                  product as unknown as ProductDetail,
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
+                        <ProductCard
+                          key={product?.id}
+                          href={`/products/${product?.slug}/${product?.id}/`}
+                          title={getLocalName(
+                            product?.name ?? "",
+                            product?.name_bd,
+                            language,
+                          )}
+                          isFavorite={product?.is_favourite}
+                          price={finalPrice ?? 0}
+                          oldPrice={sellingPrice ?? 0}
+                          imageSrc={firstImage}
+                          onQuickAdd={() => handleOpenQuickAdd(product)}
+                          onWishlist={() =>
+                            handleFavoriteClick(
+                              product as unknown as ProductDetail,
+                            )
+                          }
+                        />
                       );
                     })}
                   </div>

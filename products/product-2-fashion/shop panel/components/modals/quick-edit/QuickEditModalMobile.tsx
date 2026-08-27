@@ -1,7 +1,6 @@
 // File: components/modals/quick-edit/QuickEditModalMobile.tsx
 "use client";
 
-import { X } from "lucide-react";
 import React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import type { ProductDetail } from "@/lib/api/product/service";
 import { useAppDispatch } from "@/redux/hooks";
 import { editItem } from "@/redux/slices/cartSlice";
+import { FiEdit2 } from "react-icons/fi";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import QuickAddGalleryCarousel from "../quick-add/QuickAddGalleryCarousel";
 import { findColorByIdOrName, isFiniteNumber } from "../quick-add/QuickAddModal";
@@ -225,9 +225,12 @@ const QuickEditModalMobile: React.FC<Props> = ({
         onOpenChange={onOpenChange}
         isTop={isTop}
         zIndex={zIndex}
-        contentClassName={cn("w-[calc(100vw-24px)] max-w-[400px]", className)}
+        title={t("quickEdit.editItem")}
+        icon={<FiEdit2 className="h-4 w-4" strokeWidth={1.75} />}
+        contentClassName={cn("max-w-[400px]", className)}
+        bodyClassName="p-6 text-center"
       >
-        <div className="p-6 text-center">{t("common.loading")}</div>
+        <div>{t("common.loading")}</div>
       </ModalShell>
     );
   }
@@ -239,9 +242,12 @@ const QuickEditModalMobile: React.FC<Props> = ({
         onOpenChange={onOpenChange}
         isTop={isTop}
         zIndex={zIndex}
-        contentClassName={cn("w-[calc(100vw-24px)] max-w-[400px]", className)}
+        title={t("quickEdit.editItem")}
+        icon={<FiEdit2 className="h-4 w-4" strokeWidth={1.75} />}
+        contentClassName={cn("max-w-[400px]", className)}
+        bodyClassName="p-6 text-center text-sm text-black/70"
       >
-        <div className="p-6 text-center text-sm text-black/70">
+        <div>
           {t("quickAdd.failedToLoad")}
         </div>
       </ModalShell>
@@ -254,23 +260,11 @@ const QuickEditModalMobile: React.FC<Props> = ({
       onOpenChange={onOpenChange}
       isTop={isTop}
       zIndex={zIndex}
-      contentClassName={cn(
-        "w-[calc(100vw-24px)] max-w-[400px]",
-        "border border-[#EDEDED] p-0",
-        className
-      )}
+      title={t("quickEdit.editItem")}
+      icon={<FiEdit2 className="h-4 w-4" strokeWidth={1.75} />}
+      contentClassName={cn("max-w-[400px]", className)}
     >
-      <Button
-        type="button"
-        onClick={() => onOpenChange(false)}
-        className="absolute -right-3 -top-3 z-10 h-8 w-8 rounded-none bg-black p-0 text-white hover:bg-black/90"
-        aria-label="Close"
-      >
-        <X className="h-5 w-5" />
-      </Button>
-
       <ScrollArea className="p-4">
-        <h2 className="text-lg font-semibold text-black mb-3">{t("quickEdit.editItem")}</h2>
 
         <QuickAddGalleryCarousel
           images={productDetail?.images ?? []}

@@ -83,12 +83,20 @@ export default function CategoryClient(): React.ReactElement {
 
   const debouncedSort = useDebouncedSort(sort, 300);
 
-  const { value: filters, onChange: onFiltersChange } = useCatalogFilterSidebarState();
+  const { value: filters, onChange: onFiltersChange, onClear } = useCatalogFilterSidebarState();
   const { variantIds, colorIds } = useMultiFilterIds(filters, 1000);
   const debouncedPrice = useDebouncedPrice(filters.price, 1000);
 
-  const title = React.useMemo(() => humanizeSlug(slug), [slug]);
-  const normalizeTitle = React.useMemo(() => decodeSlug(title), [title]);
+  const normalizeTitle = React.useMemo(() => {
+    const key = slug.trim().toLowerCase();
+    if (!key || key === "all" || key === "all-products") return t("catalog.allProducts");
+    return decodeSlug(humanizeSlug(slug));
+  }, [slug, t]);
+
+  const filterCount = React.useMemo(() => {
+    const priceChanged = filters.price.min !== 0 || filters.price.max !== 10000;
+    return filters.sizes.size + filters.colors.size + (priceChanged ? 1 : 0);
+  }, [filters]);
 
   const queryParams: Omit<ProductListParams, "offset" | "page"> = React.useMemo(() => {
     const minPrice =
@@ -129,19 +137,33 @@ export default function CategoryClient(): React.ReactElement {
     return data?.pages.flatMap(page => page.products) ?? [];
   }, [data]);
 
+  const totalProducts = data?.pages[0]?.total;
+
   return (
     <>
       <Breadcrumbs items={[{ label: t("breadcrumb.home"), href: "/" }, { label: normalizeTitle }]} />
 
       <CatalogLayout
         sidebar={<FilterSidebar value={filters} onChange={onFiltersChange} />}
-        header={<CatalogHeader title={normalizeTitle} sort={sort} onSortChange={setSort} />}
+        header={
+          <CatalogHeader
+            title={normalizeTitle}
+            sort={sort}
+            onSortChange={setSort}
+            count={typeof totalProducts === "number" ? totalProducts : undefined}
+            filterCount={filterCount}
+          />
+        }
       >
         <ProductGrid
           products={products}
           isLoading={isLoading}
           isError={isError}
           onRetry={() => refetch()}
+          onClearFilters={onClear}
+          activeFilterCount={filterCount}
+          filterParams={queryParams}
+          totalProducts={totalProducts}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           onLoadMore={() => fetchNextPage()}

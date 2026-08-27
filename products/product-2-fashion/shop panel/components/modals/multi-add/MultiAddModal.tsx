@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAppDispatch } from "@/redux/hooks";
 import { closeModalById } from "@/redux/slices/modalManagerSlice";
-import { X } from "lucide-react";
 import React from "react";
-import { FiPlus } from "react-icons/fi";
+import { FiLayers, FiPlus } from "react-icons/fi";
 import MultiAddItemRow, { type MultiAddLineState } from "./MultiAddItemRow";
 import { MultiAddProduct, MultiAddSubmitPayload } from "./types";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
@@ -114,22 +113,12 @@ const MultiAddModal: React.FC<Props> = ({
       }}
       isTop={isTop}
       zIndex={zIndex}
-      contentClassName={cn(
-        "w-[calc(100vw-24px)] max-w-[850px]",
-        "p-0 rounded-none border border-[#EDEDED] bg-white",
-        className,
-      )}
+      title={t("multiAdd.addToCart")}
+      icon={<FiLayers className="h-4 w-4" strokeWidth={1.75} />}
+      contentClassName={cn("max-w-[850px]", className)}
+      bodyClassName="p-4 lg:p-6"
     >
-      <Button
-        type="button"
-        onClick={handleClose}
-        className="absolute -right-5 -top-5 h-10 w-10 rounded-none bg-black p-0 text-white hover:bg-black/90"
-        aria-label="Close"
-      >
-        <X className="h-5 w-5" />
-      </Button>
-
-      <div className="p-4 lg:p-6">
+      <div>
         <div className="max-h-[70vh] overflow-y-auto pr-1">
           {lines.map((line, idx) => (
             <MultiAddItemRow
