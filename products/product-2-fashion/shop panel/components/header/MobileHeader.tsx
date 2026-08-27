@@ -176,7 +176,7 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
   };
 
   return (
-    <>
+    <div data-mobile-header-chrome="">
       <header
         className={cn(
           "fixed top-0 z-50 w-full bg-background shadow-[0px_0px_20px_rgba(0,0,0,0.06)]",
@@ -251,7 +251,7 @@ const MobileHeader: React.FC<Props> = ({ className }) => {
         category={category}
         onCategoryChange={setCategory}
       />
-    </>
+    </div>
   );
 };
 

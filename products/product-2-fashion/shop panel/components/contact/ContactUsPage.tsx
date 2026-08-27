@@ -11,7 +11,7 @@ import { CONTACT_INFO, CONTACT_MAP, CONTACT_SOCIALS } from "./contact.data";
 
 const ContactUsPage: React.FC = () => {
     return (
-        <div className="container mx-auto max-[501px]:pt-11.5 max-[501px]:px-2 pb-6">
+        <div className="container mx-auto pb-6 max-[500px]:px-2 max-[500px]:pt-2">
             <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Contact Us" }]} />
 
             <div className="space-y-2 sm:space-y-4">

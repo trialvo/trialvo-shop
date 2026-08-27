@@ -33,7 +33,7 @@ const GlassTag: React.FC<{ label: string; className?: string }> = ({ label, clas
 const AuthShell: React.FC<AuthShellProps> = ({ children, className }) => {
   return (
     <div className={cn("flex min-h-screen flex-col bg-background", className)}>
-      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-4 py-6 min-[576px]:px-6 min-[768px]:flex-row min-[768px]:items-stretch min-[768px]:gap-8 min-[768px]:px-8 min-[768px]:py-8 min-[992px]:gap-12 min-[992px]:px-10 min-[1200px]:gap-16">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-4 py-6 max-[500px]:py-3 min-[576px]:px-6 min-[768px]:flex-row min-[768px]:items-stretch min-[768px]:gap-8 min-[768px]:px-8 min-[768px]:py-8 min-[992px]:gap-12 min-[992px]:px-10 min-[1200px]:gap-16">
         <aside className="relative hidden min-h-[520px] overflow-hidden rounded-[28px] min-[768px]:block min-[768px]:min-h-[calc(100vh-4rem)] min-[768px]:w-[50%] min-[992px]:w-[54%] min-[1200px]:w-[56%]">
           <div
             className="absolute inset-0 bg-cover bg-[center_20%]"
@@ -45,7 +45,7 @@ const AuthShell: React.FC<AuthShellProps> = ({ children, className }) => {
           ))}
         </aside>
 
-        <section className="flex flex-1 items-start justify-center py-8 min-[576px]:py-10 min-[768px]:items-center min-[768px]:py-6">
+        <section className="flex flex-1 items-start justify-center py-8 max-[500px]:py-4 min-[576px]:py-10 min-[768px]:items-center min-[768px]:py-6">
           <div className="w-full max-w-[400px]">{children}</div>
         </section>
       </div>

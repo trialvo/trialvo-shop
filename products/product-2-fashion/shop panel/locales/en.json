@@ -261,6 +261,13 @@
   "removeFromCompare": "Remove from compare",
   "compareFull": "Compare is full"
  },
+ "compareBar": {
+  "oneSelected": "1 product selected",
+  "twoSelected": "2 products to compare",
+  "compare": "Compare",
+  "clear": "Clear",
+  "clearCompare": "Clear compare"
+ },
  "productDetails": {
   "description": "Description",
   "material": "Material:",

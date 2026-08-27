@@ -14,7 +14,7 @@ const FAQPage: React.FC = () => {
         FAQ_CATEGORIES.find((c) => c.id === activeId) ?? FAQ_CATEGORIES[0];
 
     return (
-        <div className="container mx-auto pb-6 max-[501px]:pt-11.5 max-[501px]:px-2">
+        <div className="container mx-auto pb-6 max-[500px]:px-2 max-[500px]:pt-2">
             <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "FAQ's" }]} />
 
             <Card className="rounded-none border-0 p-0 gap-3 shadow-none">

@@ -19,7 +19,7 @@ export const metadata: Metadata = buildMetadata({
 
 const Page: React.FC = () => {
   return (
-    <section className="container mx-auto pt-11 px-1.5 pb-6 sm:pt-0 sm:px-0">
+    <section className="container mx-auto px-1.5 pb-6 pt-2 sm:px-0 sm:pt-0">
       <Breadcrumbs
         items={[
           { label: "Home", href: "/" },

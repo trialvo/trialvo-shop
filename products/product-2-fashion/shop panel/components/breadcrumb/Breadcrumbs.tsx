@@ -20,7 +20,7 @@ export type BreadcrumbsProps = {
 
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
   return (
-    <Breadcrumb className="py-3">
+    <Breadcrumb className="py-3 max-[500px]:py-2">
       <BreadcrumbList>
         {items.map((item, idx) => {
           const isLast = idx === items.length - 1;
