@@ -26,12 +26,12 @@ const WORDMARK_CLASS: Record<BrandLogoSize, string> = {
 };
 
 /**
- * Unique eShop Market brand mark.
+ * Trialvo Shop brand mark.
  * Geometric storefront + rising bar chart (commerce growth) in marketplace green.
  */
 export function BrandLogo({
   withWordmark = false,
-  wordmark = "eShop Market",
+  wordmark = "Trialvo Shop",
   size = "md",
   tone = "default",
   className,

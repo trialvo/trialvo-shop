@@ -9,12 +9,12 @@ const TermsPage: React.FC = () => {
 
   const seoData = {
     bn: {
-      title: 'শর্তাবলী - ইশপ মার্কেট',
-      description: 'ইশপ মার্কেটের সেবা ব্যবহারের শর্তাবলী পড়ুন। প্রোডাক্ট কেনার আগে শর্তাবলী জেনে নিন।',
+      title: 'শর্তাবলী - Trialvo Shop',
+      description: 'Trialvo Shop-এর সেবা ব্যবহারের শর্তাবলী পড়ুন। প্রোডাক্ট কেনার আগে শর্তাবলী জেনে নিন।',
     },
     en: {
-      title: 'Terms & Conditions - eShop Market',
-      description: 'Read the terms and conditions for using eShop Market services. Know the terms before purchasing.',
+      title: 'Terms & Conditions - Trialvo Shop',
+      description: 'Read the terms and conditions for using Trialvo Shop services. Know the terms before purchasing.',
     },
   };
 
@@ -25,7 +25,7 @@ const TermsPage: React.FC = () => {
       sections: [
         {
           title: '১. সাধারণ শর্তাবলী',
-          content: 'ইশপ মার্কেটের ওয়েবসাইট ব্যবহার করে আপনি এই শর্তাবলী মেনে নিচ্ছেন। আমাদের প্রোডাক্ট কেনার আগে অবশ্যই এই শর্তাবলী পড়ে নিন।',
+          content: 'Trialvo Shop-এর ওয়েবসাইট ব্যবহার করে আপনি এই শর্তাবলী মেনে নিচ্ছেন। আমাদের প্রোডাক্ট কেনার আগে অবশ্যই এই শর্তাবলী পড়ে নিন।',
         },
         {
           title: '২. প্রোডাক্ট ও সার্ভিস',
@@ -45,7 +45,7 @@ const TermsPage: React.FC = () => {
         },
         {
           title: '৬. দায়বদ্ধতা',
-          content: 'প্রোডাক্ট ব্যবহারের ফলে কোনো ক্ষতি হলে ইশপ মার্কেট দায়ী থাকবে না। ব্যবহারকারী নিজ দায়িত্বে প্রোডাক্ট ব্যবহার করবেন।',
+          content: 'প্রোডাক্ট ব্যবহারের ফলে কোনো ক্ষতি হলে Trialvo Shop দায়ী থাকবে না। ব্যবহারকারী নিজ দায়িত্বে প্রোডাক্ট ব্যবহার করবেন।',
         },
       ],
     },
@@ -55,7 +55,7 @@ const TermsPage: React.FC = () => {
       sections: [
         {
           title: '1. General Terms',
-          content: 'By using the eShop Market website, you agree to these terms. Please read these terms before purchasing any product.',
+          content: 'By using the Trialvo Shop website, you agree to these terms. Please read these terms before purchasing any product.',
         },
         {
           title: '2. Products & Services',
@@ -75,7 +75,7 @@ const TermsPage: React.FC = () => {
         },
         {
           title: '6. Liability',
-          content: 'eShop Market is not liable for any damage resulting from product use. Users use products at their own responsibility.',
+          content: 'Trialvo Shop is not liable for any damage resulting from product use. Users use products at their own responsibility.',
         },
       ],
     },

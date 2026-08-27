@@ -79,7 +79,7 @@ const ProductDetailPage: React.FC = () => {
     },
     brand: {
       '@type': 'Organization',
-      name: language === 'bn' ? 'ইশপ মার্কেট' : 'eShop Market',
+      name: 'Trialvo Shop',
     },
   };
 

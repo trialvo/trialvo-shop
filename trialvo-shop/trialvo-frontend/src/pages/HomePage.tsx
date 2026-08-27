@@ -17,7 +17,7 @@ type HomeSeoCopy = {
 
 const HOME_SEO: Record<"bn" | "en", HomeSeoCopy> = {
   bn: {
-    title: "ইশপ মার্কেট — ডিজিটাল ইকমার্স মার্কেটপ্লেস",
+    title: "Trialvo Shop — ডিজিটাল ইকমার্স মার্কেটপ্লেস",
     description:
       "রেডিমেড ইকমার্স সলিউশনের ডিজিটাল মার্কেটপ্লেস। এডমিন প্যানেল ও শপ ওয়েবসাইট কিনুন বা লাইভ ট্রায়াল করুন।",
     keywords: [
@@ -28,7 +28,7 @@ const HOME_SEO: Record<"bn" | "en", HomeSeoCopy> = {
     ],
   },
   en: {
-    title: "eShop Market — Digital Ecommerce Marketplace",
+    title: "Trialvo Shop — Digital Ecommerce Marketplace",
     description:
       "A digital marketplace for ready-made ecommerce solutions. Buy admin panel + shop or start a live trial.",
     keywords: [

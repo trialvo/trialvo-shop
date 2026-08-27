@@ -76,10 +76,10 @@ const AdminLoginPage = () => {
               <ShieldCheck className="h-8 w-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-              Admin Panel
+              Trialvo Shop
             </CardTitle>
             <CardDescription className="mt-1 text-muted-foreground">
-              Sign in to manage your store
+              Sign in to the admin panel
             </CardDescription>
           </CardHeader>
           <CardContent className="px-6 pb-8">
@@ -139,7 +139,7 @@ const AdminLoginPage = () => {
         </Card>
 
         <p className="mt-8 text-center text-xs font-medium text-muted-foreground/50">
-          © {new Date().getFullYear()} Trialvo Admin Panel
+          © {new Date().getFullYear()} Trialvo Shop Admin
         </p>
       </motion.div>
     </div>

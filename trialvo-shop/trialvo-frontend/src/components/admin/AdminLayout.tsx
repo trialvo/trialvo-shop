@@ -114,7 +114,7 @@ const AdminLayout: React.FC = () => {
         </div>
         {(sidebarOpen || isMobile) && (
           <div className="overflow-hidden">
-            <h1 className="font-bold text-sidebar-foreground text-sm whitespace-nowrap tracking-tight">Trialvo</h1>
+            <h1 className="font-bold text-sidebar-foreground text-sm whitespace-nowrap tracking-tight">Trialvo Shop</h1>
             <p className="text-[10px] text-sidebar-foreground/50 uppercase tracking-[0.15em] font-semibold">Admin Panel</p>
           </div>
         )}

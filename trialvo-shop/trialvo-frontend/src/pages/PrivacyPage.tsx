@@ -9,12 +9,12 @@ const PrivacyPage: React.FC = () => {
 
   const seoData = {
     bn: {
-      title: 'গোপনীয়তা নীতি - ইশপ মার্কেট',
-      description: 'ইশপ মার্কেটের গোপনীয়তা নীতি পড়ুন। আমরা কিভাবে আপনার তথ্য সংরক্ষণ ও ব্যবহার করি জানুন।',
+      title: 'গোপনীয়তা নীতি - Trialvo Shop',
+      description: 'Trialvo Shop-এর গোপনীয়তা নীতি পড়ুন। আমরা কিভাবে আপনার তথ্য সংরক্ষণ ও ব্যবহার করি জানুন।',
     },
     en: {
-      title: 'Privacy Policy - eShop Market',
-      description: 'Read the privacy policy of eShop Market. Learn how we collect, store, and use your information.',
+      title: 'Privacy Policy - Trialvo Shop',
+      description: 'Read the privacy policy of Trialvo Shop. Learn how we collect, store, and use your information.',
     },
   };
 

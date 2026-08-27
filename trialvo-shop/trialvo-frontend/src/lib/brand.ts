@@ -1,10 +1,10 @@
 /**
- * Marketplace brand (eShop Market) + company credit (Trialvo).
+ * Shop brand (Trialvo Shop) + company credit (Trialvo).
  * Company landing: https://trialvo.com/
  */
 export const BRAND = {
-  name: "eShop Market",
-  nameBn: "ইশপ মার্কেট",
+  name: "Trialvo Shop",
+  nameBn: "Trialvo Shop",
   tagline: {
     bn: "প্রফেশনাল ইকমার্স সলিউশন মার্কেটপ্লেস",
     en: "Premium ecommerce solutions marketplace",
@@ -35,8 +35,8 @@ export const BRAND = {
   },
 } as const;
 
-export function brandName(lang: "bn" | "en"): string {
-  return lang === "bn" ? BRAND.nameBn : BRAND.name;
+export function brandName(_lang?: "bn" | "en"): string {
+  return BRAND.name;
 }
 
 export function companyName(lang: "bn" | "en"): string {

@@ -9,7 +9,7 @@ import type { HeroContent } from "@/types/marketplace";
 import { localize } from "@/lib/localize";
 
 const HERO_CONTENT: HeroContent = {
-  brand: { bn: "ট্রায়ালভো", en: "Trialvo" },
+  brand: { bn: "Trialvo Shop", en: "Trialvo Shop" },
   headline: {
     bn: "রেডিমেড ইকমার্স সলিউশন খুঁজুন",
     en: "Find ready-made ecommerce solutions",
