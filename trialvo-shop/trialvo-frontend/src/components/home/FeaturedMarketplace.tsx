@@ -13,9 +13,9 @@ export function FeaturedMarketplace() {
   const { data: featuredProducts, isLoading, isError, refetch } = useFeaturedProducts();
 
   return (
-    <section className="bg-background py-12 md:py-16" aria-labelledby="featured-title">
+    <section className="bg-background py-14 md:py-20" aria-labelledby="featured-title">
       <div className="container-custom">
-        <div className="mb-8 flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
               {language === "bn" ? "মার্কেটপ্লেস" : "Marketplace"}

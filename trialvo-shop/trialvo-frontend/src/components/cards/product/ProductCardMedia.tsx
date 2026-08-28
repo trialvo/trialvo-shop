@@ -239,7 +239,7 @@ export function ProductCardMedia({
       </div>
 
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/25 to-transparent"
         aria-hidden="true"
       />
 
@@ -248,15 +248,15 @@ export function ProductCardMedia({
           type="button"
           onClick={goPrev}
           className={cn(
-            "absolute left-2 top-1/2 z-10 -translate-y-1/2",
+            "absolute left-2.5 top-1/2 z-10 -translate-y-1/2",
             "flex h-8 w-8 items-center justify-center rounded-full",
-            "border border-white/25 bg-black/35 text-white backdrop-blur-sm",
-            "opacity-90 transition-opacity hover:opacity-100",
+            "bg-background/90 text-foreground shadow-sm backdrop-blur",
+            "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           )}
           aria-label="Previous image"
         >
-          <ChevronLeft className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+          <ChevronLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         </button>
       ) : null}
 
@@ -265,15 +265,15 @@ export function ProductCardMedia({
           type="button"
           onClick={goNext}
           className={cn(
-            "absolute right-2 top-1/2 z-10 -translate-y-1/2",
+            "absolute right-2.5 top-1/2 z-10 -translate-y-1/2",
             "flex h-8 w-8 items-center justify-center rounded-full",
-            "border border-white/25 bg-black/35 text-white backdrop-blur-sm",
-            "opacity-90 transition-opacity hover:opacity-100",
+            "bg-background/90 text-foreground shadow-sm backdrop-blur",
+            "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           )}
           aria-label="Next image"
         >
-          <ChevronRight className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+          <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         </button>
       ) : null}
 

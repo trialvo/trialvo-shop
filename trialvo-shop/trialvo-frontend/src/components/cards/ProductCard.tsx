@@ -9,15 +9,13 @@ import {
   ProductCardMedia,
   ProductCardPricing,
 } from "@/components/cards/product";
-import { DynamicBadge } from "@/components/ui/DynamicBadge";
 import { toProductCardViewModel } from "@/types/productCard";
 import type { ProductCardProps } from "@/types/marketplace";
 import { cn } from "@/lib/utils";
 
 /**
- * API-driven product card:
- * real thumbnail, all applicable badges, category from /categories,
- * features/facilities from product payload, live prices.
+ * Clean marketplace card: image, title, a few chips, price.
+ * Overlay badges limited to featured / live trial.
  */
 export function ProductCard({
   product,
@@ -33,30 +31,24 @@ export function ProductCard({
   );
   const card = toProductCardViewModel(product, language, categoryLabel);
   const compact = density === "compact";
+  const overlayBadges = card.badges.filter(
+    (badge) => badge.id === "featured" || badge.id === "trial",
+  );
 
-  const priceHint = language === "bn" ? "বিডিটি / আজীবন লাইসেন্স" : "BDT / LIFETIME LICENSE";
+  const priceHint = language === "bn" ? "আজীবন লাইসেন্স" : "Lifetime license";
   const ctaLabel = card.isTrialable
     ? language === "bn"
-      ? "ট্রায়াল শুরু"
-      : "Start trial"
+      ? "ট্রায়াল"
+      : "Trial"
     : language === "bn"
-      ? "বিস্তারিত দেখুন"
-      : "View details";
-  const trustLabel = card.isTrialable
-    ? language === "bn"
-      ? "সিকিউর চেকআউট। লাইভ ট্রায়াল উপলব্ধ।"
-      : "Secure checkout. Live trial available."
-    : language === "bn"
-      ? "একবার কিনুন। আজীবন সাপোর্ট ও আপডেট।"
-      : "Buy once. Lifetime support and updates.";
+      ? "বিস্তারিত"
+      : "Details";
 
   return (
     <article
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card",
-        "shadow-[0_8px_30px_-12px_rgba(15,23,42,0.18)]",
-        "transition-[transform,box-shadow] duration-300",
-        "hover:-translate-y-0.5 hover:shadow-[0_16px_40px_-16px_rgba(15,23,42,0.28)]",
+        "group flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card",
+        "transition-shadow duration-300 hover:shadow-[0_12px_40px_-20px_rgba(15,23,42,0.28)]",
       )}
       itemScope
       itemType="https://schema.org/Product"
@@ -69,7 +61,7 @@ export function ProductCard({
         <ProductCardMedia
           images={card.images}
           imageAlt={card.title}
-          badges={card.badges}
+          badges={overlayBadges}
           language={language}
           showPlay={card.hasVideo}
         />
@@ -77,30 +69,25 @@ export function ProductCard({
         <div
           className={cn(
             "flex flex-1 flex-col",
-            compact ? "gap-3 p-4" : "gap-3.5 p-5 md:p-6",
+            compact ? "gap-2.5 p-4" : "gap-3 p-5",
           )}
         >
-          <div className="flex items-start justify-between gap-3">
-            <h3
-              className="min-w-0 flex-1 text-[17px] font-bold leading-snug tracking-tight text-foreground md:text-lg"
-              itemProp="name"
-            >
-              {card.title}
-            </h3>
-            {card.categoryLabel ? (
-              <DynamicBadge
-                label={card.categoryLabel}
-                variant="category"
-                surface="flat"
-                size="md"
-                className="shrink-0 normal-case tracking-normal"
-              />
-            ) : null}
-          </div>
+          {card.categoryLabel ? (
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              {card.categoryLabel}
+            </p>
+          ) : null}
+
+          <h3
+            className="text-lg font-semibold leading-snug tracking-tight text-foreground"
+            itemProp="name"
+          >
+            {card.title}
+          </h3>
 
           {card.description ? (
             <p
-              className="line-clamp-3 text-sm leading-relaxed text-muted-foreground"
+              className="line-clamp-2 text-sm leading-relaxed text-muted-foreground"
               itemProp="description"
             >
               {card.description}
@@ -110,7 +97,7 @@ export function ProductCard({
           <ProductCardFeatures features={card.features} />
 
           <div
-            className="mt-auto pt-1"
+            className="mt-auto"
             itemProp="offers"
             itemScope
             itemType="https://schema.org/Offer"
@@ -123,7 +110,6 @@ export function ProductCard({
               language={language}
               priceHint={priceHint}
               ctaLabel={ctaLabel}
-              trustLabel={trustLabel}
             />
           </div>
         </div>

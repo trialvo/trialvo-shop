@@ -19,7 +19,7 @@ export function ProductGrid({
   const gridClass =
     columns === "catalog"
       ? "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3"
-      : "grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3";
+      : "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 xl:grid-cols-3";
 
   if (isLoading) {
     return (
@@ -27,14 +27,14 @@ export function ProductGrid({
         {Array.from({ length: columns === "catalog" ? 6 : 3 }).map((_, i) => (
           <div
             key={`grid-skel-${i}`}
-            className="overflow-hidden rounded-xl border border-border bg-card shadow-md"
+            className="overflow-hidden rounded-2xl border border-border/80 bg-card"
           >
             <Skeleton className="aspect-[16/10] w-full rounded-none" />
             <div className="space-y-3 p-5">
+              <Skeleton className="h-3 w-20" />
               <Skeleton className="h-6 w-4/5" />
               <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-8 w-3/4" />
               <Skeleton className="h-10 w-full" />
             </div>
           </div>
