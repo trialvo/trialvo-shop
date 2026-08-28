@@ -9,11 +9,18 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: {
     default:
-      "Trialvo Shop - রেডিমেড ইকমার্স ওয়েবসাইট | বাংলাদেশের সেরা ইকমার্স সলিউশন",
+      "Trialvo Shop — ready-made ecommerce, lifetime license & support",
     template: "%s | Trialvo Shop",
   },
   description:
-    "বাংলাদেশের সেরা রেডিমেড ইকমার্স সলিউশন। এডমিন প্যানেল + শপ ওয়েবসাইট একসাথে কিনুন। ফ্যাশন, গিফট, টেক - সব ক্যাটাগরির জন্য।",
+    "Buy ready-made ecommerce websites from Trialvo Shop. One-time payment, lifetime support and updates. Available in Bangla and English.",
+  alternates: {
+    languages: {
+      "bn-BD": "https://shop.trialvo.com/bn",
+      "en-US": "https://shop.trialvo.com/en",
+      "x-default": "https://shop.trialvo.com/bn",
+    },
+  },
   authors: [{ name: "Trialvo Shop" }],
   metadataBase: new URL("https://shop.trialvo.com"),
   icons: {

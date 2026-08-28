@@ -3,6 +3,7 @@
 import { useEffect, type FC } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BRAND, brandName } from "@/lib/brand";
+import { absoluteUrl, parsePathname } from "@/lib/i18n";
 
 interface SEOHeadProps {
   title: string;
@@ -71,9 +72,12 @@ const SEOHead: FC<SEOHeadProps> = ({
 }) => {
   const { language } = useLanguage();
   const siteUrl = BRAND.siteUrl;
+  const pathOnly =
+    typeof window !== "undefined"
+      ? parsePathname(window.location.pathname).path
+      : "/";
   const currentUrl =
-    canonicalUrl ||
-    (typeof window !== "undefined" ? window.location.href : siteUrl);
+    canonicalUrl || absoluteUrl(language, `${pathOnly}${typeof window !== "undefined" ? window.location.search : ""}`, siteUrl);
 
   const siteName = brandName(language);
   const fullTitle = `${title} | ${siteName}`;
@@ -94,9 +98,9 @@ const SEOHead: FC<SEOHeadProps> = ({
         : "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
     );
     upsertLink("canonical", currentUrl);
-    upsertLink("alternate", siteUrl, { hrefLang: "bn-BD" });
-    upsertLink("alternate", `${siteUrl}/en`, { hrefLang: "en-US" });
-    upsertLink("alternate", siteUrl, { hrefLang: "x-default" });
+    upsertLink("alternate", absoluteUrl("bn", pathOnly, siteUrl), { hrefLang: "bn-BD" });
+    upsertLink("alternate", absoluteUrl("en", pathOnly, siteUrl), { hrefLang: "en-US" });
+    upsertLink("alternate", absoluteUrl("bn", pathOnly, siteUrl), { hrefLang: "x-default" });
 
     upsertMeta("property", "og:type", ogType);
     upsertMeta("property", "og:title", fullTitle);
@@ -194,6 +198,7 @@ const SEOHead: FC<SEOHeadProps> = ({
     ogImage,
     ogType,
     siteName,
+    pathOnly,
     siteUrl,
     structuredData,
     title,

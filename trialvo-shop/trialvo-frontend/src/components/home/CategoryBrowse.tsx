@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import Link from "next/link";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import {
   AlertTriangle,
   ArrowRight,
@@ -45,7 +45,7 @@ function CategoryTile({ category, language, index }: Readonly<TileProps>) {
       viewport={{ once: true }}
       transition={{ delay: index * 0.04, duration: 0.35 }}
     >
-      <Link
+      <LocalizedLink
         href={`/products?category=${category.slug}`}
         className="group flex h-full flex-col rounded-lg border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-md"
       >
@@ -70,7 +70,7 @@ function CategoryTile({ category, language, index }: Readonly<TileProps>) {
         <p className="mt-4 text-xs font-medium text-muted-foreground">
           {count} {language === "bn" ? "টি আইটেম" : "items"}
         </p>
-      </Link>
+      </LocalizedLink>
     </motion.div>
   );
 }
@@ -102,13 +102,13 @@ export function CategoryBrowse() {
                 : "Browse ready-made ecommerce templates and solutions by category."}
             </p>
           </div>
-          <Link
+          <LocalizedLink
             href="/products"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
           >
             {language === "bn" ? "সব ক্যাটাগরি" : "All categories"}
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
+          </LocalizedLink>
         </div>
 
         {isError && !isLoading ? (

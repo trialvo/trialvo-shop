@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from 'react';
-import Link from 'next/link';
+import LocalizedLink from '@/components/i18n/LocalizedLink';
 import { useParams } from 'next/navigation';
 import Redirect from '@/components/Redirect';
 import { motion } from 'framer-motion';
@@ -112,7 +112,7 @@ const ProductDetailPage: React.FC = () => {
   };
 
   const highlights = [
-    { icon: Headphones, label: language === 'bn' ? '২৪/৭ সাপোর্ট' : '24/7 Support' },
+    { icon: Headphones, label: language === 'bn' ? 'আজীবন সাপোর্ট' : 'Lifetime support' },
     { icon: FileText, label: language === 'bn' ? 'সম্পূর্ণ ডকুমেন্টেশন' : 'Full Documentation' },
     { icon: Package, label: language === 'bn' ? 'সোর্স কোড সহ' : 'Source Code Included' },
     { icon: Clock, label: language === 'bn' ? 'দ্রুত ডেলিভারি' : 'Fast Delivery' },
@@ -135,15 +135,15 @@ const ProductDetailPage: React.FC = () => {
           <nav className="mb-8" aria-label="Breadcrumb">
             <ol className="flex items-center gap-2 text-sm text-muted-foreground">
               <li>
-                <Link href="/" className="hover:text-foreground transition-colors">
+                <LocalizedLink href="/" className="hover:text-foreground transition-colors">
                   {language === 'bn' ? 'হোম' : 'Home'}
-                </Link>
+                </LocalizedLink>
               </li>
               <li>/</li>
               <li>
-                <Link href="/products" className="hover:text-foreground transition-colors">
+                <LocalizedLink href="/products" className="hover:text-foreground transition-colors">
                   {t('nav.products')}
-                </Link>
+                </LocalizedLink>
               </li>
               <li>/</li>
               <li className="text-foreground font-medium truncate max-w-[200px]">
@@ -154,10 +154,10 @@ const ProductDetailPage: React.FC = () => {
 
           {/* Back Button (Mobile) */}
           <Button asChild variant="ghost" size="sm" className="mb-4 md:hidden">
-            <Link href="/products">
+            <LocalizedLink href="/products">
               <ArrowLeft className="w-4 h-4 mr-2" />
               {language === 'bn' ? 'ফিরে যান' : 'Back'}
-            </Link>
+            </LocalizedLink>
           </Button>
 
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
@@ -246,17 +246,17 @@ const ProductDetailPage: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {language === 'bn' ? 'এককালীন পেমেন্ট • আজীবন আপডেট' : 'One-time payment • Lifetime updates'}
+                  {language === 'bn' ? 'এককালীন পেমেন্ট • আজীবন সাপোর্ট ও আপডেট' : 'One-time payment • Lifetime support & updates'}
                 </p>
               </div>
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Button asChild size="lg" className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground h-14 text-base font-semibold">
-                  <Link href={`/checkout?product=${product.slug}`}>
+                  <LocalizedLink href={`/checkout?product=${product.slug}`}>
                     <ShoppingCart className="w-5 h-5 mr-2" />
                     {t('product.buyNow')}
-                  </Link>
+                  </LocalizedLink>
                 </Button>
                 {canRequestTrial && (
                   <Button size="lg" variant="secondary" className="flex-1 h-14 text-base" onClick={() => setTrialOpen(true)}>

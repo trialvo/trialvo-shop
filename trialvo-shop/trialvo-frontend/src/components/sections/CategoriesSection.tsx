@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import Link from "next/link";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { motion } from 'framer-motion';
 import { ShoppingCart, Shirt, Gift, Watch, Smartphone, ArrowRight, AlertTriangle, RotateCcw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -123,7 +123,7 @@ const CategoriesSection: React.FC = () => {
 
             return (
               <motion.div key={category.id} variants={itemVariants}>
-                <Link
+                <LocalizedLink
                   href={`/products?category=${category.slug}`}
                   className="group block"
                 >
@@ -156,7 +156,7 @@ const CategoriesSection: React.FC = () => {
                       )}
                     </div>
                   </div>
-                </Link>
+                </LocalizedLink>
               </motion.div>
             );
           })}

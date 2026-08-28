@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /checkout
-Disallow: /order-success
-
-Sitemap: https://shop.trialvo.com/sitemap.xml

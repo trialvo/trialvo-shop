@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { localize } from "@/lib/localize";
@@ -60,19 +60,19 @@ export function AboutHero({ content, language }: Readonly<AboutHeroProps>) {
               asChild
               className="h-10 rounded-lg bg-accent px-5 font-semibold text-accent-foreground hover:bg-accent/90"
             >
-              <Link href="/products">
+              <LocalizedLink href="/products">
                 {localize(content.primaryCta, language)}
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-              </Link>
+              </LocalizedLink>
             </Button>
             <Button
               asChild
               variant="outline"
               className="h-10 rounded-lg border-white/35 bg-white/10 px-5 text-white backdrop-blur-sm hover:bg-white/18 hover:text-white"
             >
-              <Link href="/contact">
+              <LocalizedLink href="/contact">
                 {localize(content.secondaryCta, language)}
-              </Link>
+              </LocalizedLink>
             </Button>
           </div>
         </div>

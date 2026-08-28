@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import LocalizedLink from '@/components/i18n/LocalizedLink';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShieldCheck, Loader2, CreditCard, AlertTriangle, XCircle } from 'lucide-react';
@@ -69,7 +69,7 @@ const CheckoutPage: React.FC = () => {
           <h1 className="text-2xl font-bold mb-4">
             {language === 'bn' ? 'ট্রায়াল এক্সটেন্ড লিংক অবৈধ' : 'Invalid extend link'}
           </h1>
-          <Button asChild><Link href="/products">{t('nav.products')}</Link></Button>
+          <Button asChild><LocalizedLink href="/products">{t('nav.products')}</LocalizedLink></Button>
         </div>
       </Layout>
     );
@@ -82,7 +82,7 @@ const CheckoutPage: React.FC = () => {
           <h1 className="text-2xl font-bold mb-4">
             {language === 'bn' ? 'প্রোডাক্ট পাওয়া যায়নি' : 'Product not found'}
           </h1>
-          <Button asChild><Link href="/products">{t('nav.products')}</Link></Button>
+          <Button asChild><LocalizedLink href="/products">{t('nav.products')}</LocalizedLink></Button>
         </div>
       </Layout>
     );
@@ -178,10 +178,10 @@ const CheckoutPage: React.FC = () => {
       <section className="section-padding">
         <div className="container-custom max-w-4xl">
           <Button asChild variant="ghost" size="sm" className="mb-6">
-            <Link href={productSlug ? `/products/${productSlug}` : '/products'}>
+            <LocalizedLink href={productSlug ? `/products/${productSlug}` : '/products'}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               {language === 'bn' ? 'ফিরে যান' : 'Back'}
-            </Link>
+            </LocalizedLink>
           </Button>
 
           <h1 className="text-3xl font-bold mb-8">

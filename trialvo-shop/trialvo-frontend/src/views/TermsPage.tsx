@@ -35,15 +35,15 @@ const TermsPage: React.FC = () => {
         },
         {
           title: '৩. মূল্য ও পেমেন্ট',
-          content: 'সকল মূল্য বাংলাদেশি টাকায় (BDT) প্রদর্শিত। পেমেন্ট সম্পন্ন হওয়ার পর প্রোডাক্ট ডেলিভারি করা হয়। রিফান্ড পলিসি প্রযোজ্য শর্ত অনুযায়ী।',
+          content: 'সকল মূল্য বাংলাদেশি টাকায় (BDT) প্রদর্শিত। প্রতিটি প্রোডাক্ট এককালীন কেনাকাটা — কোনো মাসিক ফি নেই। পেমেন্ট সম্পন্ন হওয়ার পর প্রোডাক্ট ডেলিভারি করা হয়। রিফান্ড পলিসি প্রযোজ্য শর্ত অনুযায়ী।',
         },
         {
           title: '৪. লাইসেন্স',
-          content: 'প্রতিটি প্রোডাক্ট একটি ডোমেইনের জন্য লাইসেন্সড। সোর্স কোড পুনরায় বিক্রি করা যাবে না। ব্যক্তিগত বা বাণিজ্যিক প্রজেক্টে ব্যবহার করা যাবে।',
+          content: 'প্রতিটি প্রোডাক্ট একটি ডোমেইনের জন্য আজীবন লাইসেন্সড। একবার কিনলে লাইসেন্স মেয়াদ শেষ হয় না। সোর্স কোড পুনরায় বিক্রি করা যাবে না। ব্যক্তিগত বা বাণিজ্যিক প্রজেক্টে ব্যবহার করা যাবে।',
         },
         {
           title: '৫. সাপোর্ট',
-          content: 'প্রোডাক্ট অনুযায়ী নির্দিষ্ট সময়ের জন্য ফ্রি সাপোর্ট দেওয়া হয়। সাপোর্ট সময় শেষ হওয়ার পর অতিরিক্ত সাপোর্ট আলাদা চার্জে পাওয়া যাবে।',
+          content: 'প্রতিটি প্রোডাক্টে আজীবন সাপোর্ট ও আজীবন আপডেট অন্তর্ভুক্ত। সাপোর্ট সময়সীমা শেষ হয় না। বাগ ফিক্স, গাইডেন্স ও আপডেট ক্রেতার লাইফটাইম জুড়ে প্রযোজ্য।',
         },
         {
           title: '৬. দায়বদ্ধতা',
@@ -65,15 +65,15 @@ const TermsPage: React.FC = () => {
         },
         {
           title: '3. Pricing & Payment',
-          content: 'All prices are displayed in Bangladeshi Taka (BDT). Product delivery is made after payment is completed. Refund policy applies according to applicable terms.',
+          content: 'All prices are displayed in Bangladeshi Taka (BDT). Every product is a one-time purchase — no monthly fees. Product delivery is made after payment is completed. Refund policy applies according to applicable terms.',
         },
         {
           title: '4. License',
-          content: 'Each product is licensed for one domain. Source code cannot be resold. Can be used for personal or commercial projects.',
+          content: 'Each product is a lifetime license for one domain. The license does not expire after purchase. Source code cannot be resold. Can be used for personal or commercial projects.',
         },
         {
           title: '5. Support',
-          content: 'Free support is provided for a specific period according to the product. Additional support is available at extra charge after the support period ends.',
+          content: 'Every product includes lifetime support and lifetime updates. There is no support expiry. Bug fixes, guidance, and updates apply for the lifetime of the purchase.',
         },
         {
           title: '6. Liability',

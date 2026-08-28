@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -37,10 +37,10 @@ export function MarketplaceCTA() {
             size="lg"
             className="h-11 rounded-md bg-accent px-6 font-semibold text-accent-foreground hover:bg-accent/90"
           >
-            <Link href="/products">
+            <LocalizedLink href="/products">
               {language === "bn" ? "মার্কেটপ্লেস খুলুন" : "Open marketplace"}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-            </Link>
+            </LocalizedLink>
           </Button>
         </motion.div>
       </div>

@@ -11,7 +11,7 @@ const TrustSection: React.FC = () => {
       icon: Headphones,
       title: t('trust.support.title'),
       description: t('trust.support.description'),
-      stat: '24/7',
+      stat: '∞',
       gradient: 'from-blue-500 to-cyan-500',
     },
     {

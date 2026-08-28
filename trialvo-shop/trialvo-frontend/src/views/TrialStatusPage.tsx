@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import LocalizedLink from '@/components/i18n/LocalizedLink';
 import { useParams } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Loader2, CheckCircle2, Clock, XCircle, Copy, ExternalLink, KeyRound, Mail, Download, Package } from 'lucide-react';
@@ -99,7 +99,7 @@ const TrialStatusPage: React.FC = () => {
                 : 'This link is expired, was cleared, or is invalid. Submit a new trial request — you will get a fresh status link by email.'}
             </p>
             <Button asChild variant="outline">
-              <Link href="/products">{language === 'bn' ? 'প্রোডাক্টে যান' : 'Browse products'}</Link>
+              <LocalizedLink href="/products">{language === 'bn' ? 'প্রোডাক্টে যান' : 'Browse products'}</LocalizedLink>
             </Button>
           </div>
         )}
@@ -290,11 +290,11 @@ const TrialStatusPage: React.FC = () => {
                         : `Buy a separate extend pack to add more trial days — ৳${Number(extendPriceBdt).toLocaleString()} for +${extendDays} days. Use the same email as this trial.`}
                     </p>
                     <Button asChild className="w-full" variant="default">
-                      <Link href={extendHref}>
+                      <LocalizedLink href={extendHref}>
                         {language === 'bn'
                           ? `ট্রায়াল এক্সটেন্ড (৳${Number(extendPriceBdt).toLocaleString()})`
                           : `Extend trial (৳${Number(extendPriceBdt).toLocaleString()})`}
-                      </Link>
+                      </LocalizedLink>
                     </Button>
                   </div>
                 )}
@@ -306,9 +306,9 @@ const TrialStatusPage: React.FC = () => {
                         : 'Buy the full product for license/conversion — not the extend pack.'}
                     </p>
                     <Button asChild className="w-full" variant="outline">
-                      <Link href={buyHref}>
+                      <LocalizedLink href={buyHref}>
                         {language === 'bn' ? 'প্রোডাক্ট কিনুন' : 'Buy product'}
-                      </Link>
+                      </LocalizedLink>
                     </Button>
                   </div>
                 )}
@@ -316,7 +316,7 @@ const TrialStatusPage: React.FC = () => {
             )}
 
             <Button asChild variant="outline" className="w-full">
-              <Link href="/products">{language === 'bn' ? 'প্রোডাক্টে ফিরুন' : 'Back to products'}</Link>
+              <LocalizedLink href="/products">{language === 'bn' ? 'প্রোডাক্টে ফিরুন' : 'Back to products'}</LocalizedLink>
             </Button>
           </div>
         )}

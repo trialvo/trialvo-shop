@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { usePathname } from "next/navigation";
+import { parsePathname } from "@/lib/i18n";
 import { Globe, Menu, X } from "lucide-react";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,8 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const { path } = parsePathname(pathname || "/");
+  const isHome = path === "/";
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 12);
@@ -37,7 +39,7 @@ export default function Navbar() {
   ];
 
   const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+    href === "/" ? path === "/" : path.startsWith(href);
 
   const transparent = isHome && !isScrolled && !isMobileMenuOpen;
   const name = brandName(language);
@@ -53,7 +55,7 @@ export default function Navbar() {
     >
       <nav className="container-custom" aria-label="Main navigation">
         <div className="flex h-16 items-center justify-between md:h-[4.5rem]">
-          <Link
+          <LocalizedLink
             href="/"
             className="group inline-flex items-center transition-opacity hover:opacity-90"
             aria-label={name}
@@ -74,11 +76,11 @@ export default function Navbar() {
                 markClassName="transition-transform duration-200 group-hover:scale-[1.04]"
               />
             </span>
-          </Link>
+          </LocalizedLink>
 
           <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (
-              <Link
+              <LocalizedLink
                 key={link.href}
                 href={link.href}
                 className={cn(
@@ -93,7 +95,7 @@ export default function Navbar() {
                 )}
               >
                 {link.label}
-              </Link>
+              </LocalizedLink>
             ))}
           </div>
 
@@ -125,7 +127,7 @@ export default function Navbar() {
             </Button>
 
             <Button asChild size="sm" className="hidden h-9 rounded-md px-4 font-semibold md:inline-flex">
-              <Link href="/products">{language === "bn" ? "ব্রাউজ" : "Browse"}</Link>
+              <LocalizedLink href="/products">{language === "bn" ? "ব্রাউজ" : "Browse"}</LocalizedLink>
             </Button>
 
             <Button
@@ -148,7 +150,7 @@ export default function Navbar() {
           <div className="border-t border-border/60 bg-background py-3 md:hidden">
             <div className="flex flex-col gap-1">
               {navLinks.map((link) => (
-                <Link
+                <LocalizedLink
                   key={link.href}
                   href={link.href}
                   className={cn(
@@ -159,14 +161,14 @@ export default function Navbar() {
                   )}
                 >
                   {link.label}
-                </Link>
+                </LocalizedLink>
               ))}
-              <Link
+              <LocalizedLink
                 href="/products"
                 className="mt-1 rounded-md bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground"
               >
                 {language === "bn" ? "সব প্রোডাক্ট ব্রাউজ" : "Browse all products"}
-              </Link>
+              </LocalizedLink>
             </div>
           </div>
         ) : null}

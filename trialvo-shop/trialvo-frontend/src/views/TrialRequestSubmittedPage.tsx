@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
+import LocalizedLink from '@/components/i18n/LocalizedLink';
 import { useSearchParams } from 'next/navigation';
 import { Mail, Home, CheckCircle2 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
@@ -65,13 +65,13 @@ const TrialRequestSubmittedPage: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <Button asChild variant="outline">
-              <Link href="/">
+              <LocalizedLink href="/">
                 <Home className="w-4 h-4 mr-2" />
                 {t('হোমে ফিরুন', 'Back to home')}
-              </Link>
+              </LocalizedLink>
             </Button>
             <Button asChild>
-              <Link href="/products">{t('প্রোডাক্ট দেখুন', 'Browse products')}</Link>
+              <LocalizedLink href="/products">{t('প্রোডাক্ট দেখুন', 'Browse products')}</LocalizedLink>
             </Button>
           </div>
         </div>

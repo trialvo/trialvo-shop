@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCategories } from "@/hooks/useCategories";
 import { resolveCategoryLabel } from "@/lib/digitalGoods";
@@ -34,7 +34,7 @@ export function ProductCard({
   const card = toProductCardViewModel(product, language, categoryLabel);
   const compact = density === "compact";
 
-  const priceHint = language === "bn" ? "বিডিটি / এককালীন" : "BDT / ONE-TIME";
+  const priceHint = language === "bn" ? "বিডিটি / আজীবন লাইসেন্স" : "BDT / LIFETIME LICENSE";
   const ctaLabel = card.isTrialable
     ? language === "bn"
       ? "ট্রায়াল শুরু"
@@ -47,8 +47,8 @@ export function ProductCard({
       ? "সিকিউর চেকআউট। লাইভ ট্রায়াল উপলব্ধ।"
       : "Secure checkout. Live trial available."
     : language === "bn"
-      ? "সিকিউর চেকআউট। ইনস্ট্যান্ট ডিজিটাল ডেলিভারি।"
-      : "Secure checkout. Instant digital delivery.";
+      ? "একবার কিনুন। আজীবন সাপোর্ট ও আপডেট।"
+      : "Buy once. Lifetime support and updates.";
 
   return (
     <article
@@ -61,7 +61,7 @@ export function ProductCard({
       itemScope
       itemType="https://schema.org/Product"
     >
-      <Link
+      <LocalizedLink
         href={card.href}
         className="flex h-full flex-col outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label={card.title}
@@ -127,7 +127,7 @@ export function ProductCard({
             />
           </div>
         </div>
-      </Link>
+      </LocalizedLink>
     </article>
   );
 }

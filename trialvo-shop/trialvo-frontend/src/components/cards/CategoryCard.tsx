@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import Link from "next/link";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { ShoppingCart, Shirt, Gift, Watch, Smartphone, LucideIcon } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -32,7 +32,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   const IconComponent = iconMap[icon] || ShoppingCart;
 
   return (
-    <Link
+    <LocalizedLink
       href={`/products?category=${id}`}
       className="category-card group"
     >
@@ -46,7 +46,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
           {productCount} {language === 'bn' ? 'টি প্রোডাক্ট' : 'Products'}
         </span>
       )}
-    </Link>
+    </LocalizedLink>
   );
 };
 

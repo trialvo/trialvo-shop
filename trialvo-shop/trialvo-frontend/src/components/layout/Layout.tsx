@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { parsePathname } from "@/lib/i18n";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { cn } from "@/lib/utils";
@@ -12,7 +13,8 @@ type LayoutProps = {
 
 export default function Layout({ children }: Readonly<LayoutProps>) {
   const pathname = usePathname();
-  const isHome = pathname === "/";
+  const { path } = parsePathname(pathname || "/");
+  const isHome = path === "/";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

@@ -1,11 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from "next/link";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { localePath } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { HeroSearch } from "@/components/home/HeroSearch";
 import type { HeroContent } from "@/types/marketplace";
@@ -40,7 +41,9 @@ export function MarketplaceHero() {
   const onSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const q = query.trim();
-    router.push(q ? `/products?q=${encodeURIComponent(q)}` : "/products");
+    router.push(
+      localePath(language, q ? `/products?q=${encodeURIComponent(q)}` : "/products"),
+    );
   };
 
   return (
@@ -111,17 +114,17 @@ export function MarketplaceHero() {
               variant="outline"
               className="h-10 rounded-md border-white/35 bg-transparent text-white hover:bg-white/10 hover:text-white"
             >
-              <Link href="/products">
+              <LocalizedLink href="/products">
                 {localize(HERO_CONTENT.primaryCta, language)}
                 <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
-              </Link>
+              </LocalizedLink>
             </Button>
-            <Link
+            <LocalizedLink
               href="/contact"
               className="text-sm font-medium text-white/75 underline-offset-4 transition-colors hover:text-white hover:underline"
             >
               {localize(HERO_CONTENT.secondaryCta, language)}
-            </Link>
+            </LocalizedLink>
           </motion.div>
         </div>
       </div>

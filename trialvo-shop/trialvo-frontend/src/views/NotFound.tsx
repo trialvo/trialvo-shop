@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
+import LocalizedLink from '@/components/i18n/LocalizedLink';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -73,10 +73,10 @@ const NotFound = () => {
               className="flex flex-col sm:flex-row gap-3 justify-center"
             >
               <Button asChild size="lg" className="rounded-xl">
-                <Link href="/">
+                <LocalizedLink href="/">
                   <Home className="w-4 h-4 mr-2" />
                   {language === 'bn' ? 'হোমপেজে যান' : 'Go to Homepage'}
-                </Link>
+                </LocalizedLink>
               </Button>
               <Button asChild variant="outline" size="lg" className="rounded-xl" onClick={() => window.history.back()}>
                 <span className="cursor-pointer">
