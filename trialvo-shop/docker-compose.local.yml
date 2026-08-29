@@ -126,7 +126,11 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
     volumes:
       - ./trialvo-frontend:/app
+      # node_modules and .next stay in named volumes so the container owns its
+      # own copies. Without this, a `next build` run on the host would overwrite
+      # the dev server's .next and break it with missing-chunk errors.
       - frontend_node_modules:/app/node_modules
+      - frontend_next_cache:/app/.next
     develop:
       watch:
         - path: ./trialvo-frontend
@@ -134,6 +138,7 @@ services:
           action: sync
           ignore:
             - node_modules
+            - .next
         - path: ./trialvo-frontend/package.json
           action: rebuild
     networks:
@@ -193,3 +198,4 @@ volumes:
   postgres_data_local:
   redis_data_local:
   frontend_node_modules:
+  frontend_next_cache:
