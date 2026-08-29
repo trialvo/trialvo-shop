@@ -84,14 +84,16 @@ export function productJsonLd({
   description,
   slug,
   image,
-  priceBdt,
+  price,
+  currency,
 }: {
   locale: Locale;
   name: string;
   description: string;
   slug: string;
   image: string;
-  priceBdt: number;
+  price: number;
+  currency: "BDT" | "USD";
 }) {
   const copy = lifetimeCopy(locale);
   const url = absoluteUrl(locale, `/products/${slug}`, BRAND.siteUrl);
@@ -112,8 +114,8 @@ export function productJsonLd({
     offers: {
       "@type": "Offer",
       url,
-      price: priceBdt,
-      priceCurrency: "BDT",
+      price,
+      priceCurrency: currency,
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       priceValidUntil: "2099-12-31",

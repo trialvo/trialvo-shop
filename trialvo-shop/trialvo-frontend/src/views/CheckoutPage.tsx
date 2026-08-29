@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { quoteProductPrice } from '@/lib/productPricing';
+import { quoteProductPrice, shopDiscountLabel, shopDisplayPrice } from '@/lib/productPricing';
 
 const CheckoutPage: React.FC = () => {
   const { language, t } = useLanguage();
@@ -97,9 +97,16 @@ const CheckoutPage: React.FC = () => {
   const productQuote = product
     ? quoteProductPrice(product)
     : null;
-  const priceBdt = isExtend ? extendPriceBdt : (productQuote?.saleBdt ?? 0);
-  const priceUsd = isExtend ? extendPriceUsd : (productQuote?.saleUsd ?? 0);
-  const listBdt = isExtend ? extendPriceBdt : (productQuote?.listBdt ?? 0);
+  const displayQuote = isExtend
+    ? quoteProductPrice({
+        priceBDT: extendPriceBdt,
+        priceUSD: extendPriceUsd,
+        discountPercent: 0,
+      })
+    : productQuote;
+  const display = displayQuote
+    ? shopDisplayPrice(displayQuote, language, t('common.bdt'))
+    : null;
   const showProductDiscount = !isExtend && Boolean(productQuote?.hasDiscount);
 
   const handleInputChange = (
@@ -317,19 +324,19 @@ const CheckoutPage: React.FC = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{language === 'bn' ? 'মূল্য' : 'Price'}</span>
-                {showProductDiscount ? (
+                {showProductDiscount && display ? (
                   <span>
-                    <span className="line-through text-muted-foreground mr-2">৳{Number(listBdt).toLocaleString()}</span>
-                    ৳{Number(priceBdt).toLocaleString()}
+                    <span className="line-through text-muted-foreground mr-2">{display.list}</span>
+                    {display.sale}
                   </span>
                 ) : (
-                  <span>৳{Number(priceBdt).toLocaleString()} (~${priceUsd})</span>
+                  <span>{display?.sale ?? ''}</span>
                 )}
               </div>
-              {showProductDiscount && (
+              {showProductDiscount && productQuote && (
                 <div className="flex justify-between text-sm text-destructive">
-                  <span>{language === 'bn' ? `ছাড় (${productQuote!.discountPercent}%)` : `Discount (${productQuote!.discountPercent}%)`}</span>
-                  <span>-৳{Number(productQuote!.discountBdt).toLocaleString()}</span>
+                  <span>{language === 'bn' ? `ছাড় (${productQuote.discountPercent}%)` : `Discount (${productQuote.discountPercent}%)`}</span>
+                  <span>-{shopDiscountLabel(productQuote, language, t('common.bdt'))}</span>
                 </div>
               )}
               {isExtend && (
@@ -340,7 +347,7 @@ const CheckoutPage: React.FC = () => {
               )}
               <div className="border-t pt-3 flex justify-between font-bold">
                 <span>{language === 'bn' ? 'মোট' : 'Total'}</span>
-                <span>৳{Number(priceBdt).toLocaleString()}</span>
+                <span>{display?.sale ?? ''}</span>
               </div>
               <p className="text-[11px] text-muted-foreground flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" />

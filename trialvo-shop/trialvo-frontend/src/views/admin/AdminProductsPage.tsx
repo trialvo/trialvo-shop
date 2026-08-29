@@ -116,20 +116,27 @@ function normalizeDeployConfig(raw: any): DeployConfigForm {
 
 function AdminPriceCell({ listBdt, listUsd, discountPercent }: { listBdt: number; listUsd: number; discountPercent?: number }) {
   const q = quoteProductPrice({ priceBDT: listBdt, priceUSD: listUsd, discountPercent });
+  const hasUsd = q.listUsd > 0;
   if (!q.hasDiscount) {
     return (
-      <>
-        <span className="text-sm font-bold text-primary">৳{q.listBdt.toLocaleString()}</span>
-        <span className="text-xs text-muted-foreground ml-1">(${q.listUsd})</span>
-      </>
+      <div className="leading-tight">
+        <div className="text-sm font-bold text-primary">৳{q.listBdt.toLocaleString()}</div>
+        {hasUsd ? <div className="text-xs text-muted-foreground">${q.listUsd}</div> : null}
+      </div>
     );
   }
   return (
-    <div>
+    <div className="leading-tight">
       <div>
         <span className="text-xs text-muted-foreground line-through mr-1.5">৳{q.listBdt.toLocaleString()}</span>
         <span className="text-sm font-bold text-primary">৳{q.saleBdt.toLocaleString()}</span>
       </div>
+      {hasUsd ? (
+        <div className="text-xs text-muted-foreground">
+          <span className="line-through mr-1">${q.listUsd}</span>
+          ${q.saleUsd}
+        </div>
+      ) : null}
       <span className="text-[10px] text-destructive font-semibold">-{q.discountPercent}%</span>
     </div>
   );
@@ -486,6 +493,10 @@ const AdminProductsPage: React.FC = () => {
       toast({ title: 'Thumbnail is required', variant: 'destructive' });
       return;
     }
+    if (!(form.price_bdt > 0)) {
+      toast({ title: 'Price (BDT) is required', variant: 'destructive' });
+      return;
+    }
 
     const cleanedForm = {
       ...form,
@@ -716,9 +727,10 @@ const AdminProductsPage: React.FC = () => {
                       onValueChange={(n) => setForm((prev) => ({ ...prev, price_bdt: Math.max(0, Math.round(n * 100) / 100) }))}
                       className={inputClass}
                     />
+                    <p className="text-[11px] text-muted-foreground">Required. Shop uses this as the main price.</p>
                   </div>
                   <div className="space-y-1">
-                    <Label className={labelClass}>Price (USD) *</Label>
+                    <Label className={labelClass}>Price (USD)</Label>
                     <AdminNumberInput
                       min={0}
                       step={0.01}
@@ -726,6 +738,7 @@ const AdminProductsPage: React.FC = () => {
                       onValueChange={(n) => setForm((prev) => ({ ...prev, price_usd: Math.max(0, Math.round(n * 100) / 100) }))}
                       className={inputClass}
                     />
+                    <p className="text-[11px] text-muted-foreground">Optional. English shop shows this if set; otherwise BDT.</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -739,31 +752,49 @@ const AdminProductsPage: React.FC = () => {
                       onValueChange={(n) => setForm((prev) => ({ ...prev, discount_percent: clampDiscountPercent(n) }))}
                       className={inputClass}
                     />
-                    <p className="text-[11px] text-muted-foreground">0 = no discount. List prices stay unchanged.</p>
+                    <p className="text-[11px] text-muted-foreground">Applied to BDT, and to USD if set. 0 = no discount.</p>
                   </div>
                   <div className="space-y-1">
-                    <Label className={labelClass}>Shop / checkout price</Label>
+                    <Label className={labelClass}>Shop preview</Label>
                     {(() => {
                       const q = quoteProductPrice({
                         priceBDT: form.price_bdt,
                         priceUSD: form.price_usd,
                         discountPercent: form.discount_percent,
                       });
-                      if (!q.hasDiscount) {
-                        return (
-                          <p className="text-sm pt-2">
-                            ৳{q.saleBdt.toLocaleString()} <span className="text-xs text-muted-foreground">(${q.saleUsd})</span>
-                          </p>
-                        );
-                      }
+                      const hasUsd = q.listUsd > 0;
                       return (
-                        <p className="text-sm pt-2">
-                          <span className="line-through text-muted-foreground mr-2">৳{q.listBdt.toLocaleString()}</span>
-                          <span className="font-bold text-primary">৳{q.saleBdt.toLocaleString()}</span>
-                          <span className="text-xs text-muted-foreground ml-1">
-                            (${q.listUsd} → ${q.saleUsd}) · -{q.discountPercent}%
-                          </span>
-                        </p>
+                        <div className="text-sm pt-2 space-y-1">
+                          <p>
+                            <span className="text-xs text-muted-foreground mr-1.5">BDT</span>
+                            {q.hasDiscount ? (
+                              <>
+                                <span className="line-through text-muted-foreground mr-1.5">৳{q.listBdt.toLocaleString()}</span>
+                                <span className="font-bold text-primary">৳{q.saleBdt.toLocaleString()}</span>
+                              </>
+                            ) : (
+                              <span className="font-bold text-primary">৳{q.saleBdt.toLocaleString()}</span>
+                            )}
+                            {q.hasDiscount ? (
+                              <span className="text-xs text-destructive ml-1.5">-{q.discountPercent}%</span>
+                            ) : null}
+                          </p>
+                          {hasUsd ? (
+                            <p>
+                              <span className="text-xs text-muted-foreground mr-1.5">USD</span>
+                              {q.hasDiscount ? (
+                                <>
+                                  <span className="line-through text-muted-foreground mr-1.5">${q.listUsd}</span>
+                                  <span className="font-bold text-primary">${q.saleUsd}</span>
+                                </>
+                              ) : (
+                                <span className="font-bold text-primary">${q.saleUsd}</span>
+                              )}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">USD not set — English shop will show BDT.</p>
+                          )}
+                        </div>
                       );
                     })()}
                   </div>

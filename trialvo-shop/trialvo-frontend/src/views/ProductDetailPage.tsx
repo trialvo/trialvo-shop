@@ -16,7 +16,7 @@ import ScreenshotGallery from '@/components/gallery/ScreenshotGallery';
 import { useProduct, useRelatedProducts } from '@/hooks/useProducts';
 import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
 import { resolveMediaUrl } from '@/lib/mediaUrl';
-import { quoteProductPrice } from '@/lib/productPricing';
+import { quoteProductPrice, shopDisplayPrice } from '@/lib/productPricing';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -69,6 +69,7 @@ const ProductDetailPage: React.FC = () => {
     .filter(Boolean);
 
   const quote = quoteProductPrice(product);
+  const display = shopDisplayPrice(quote, language, t('common.bdt'));
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -77,8 +78,8 @@ const ProductDetailPage: React.FC = () => {
     image: resolveMediaUrl(product.thumbnail),
     offers: {
       '@type': 'Offer',
-      price: quote.saleBdt,
-      priceCurrency: 'BDT',
+      price: display.saleRaw,
+      priceCurrency: display.currency,
       availability: 'https://schema.org/InStock',
     },
     brand: {
@@ -223,27 +224,22 @@ const ProductDetailPage: React.FC = () => {
                   {quote.hasDiscount ? (
                     <>
                       <span className="text-2xl font-semibold text-muted-foreground line-through decoration-destructive decoration-2">
-                        {t('common.bdt')}{quote.listBdt.toLocaleString()}
+                        {display.list}
                       </span>
-                      <span className="text-4xl font-bold text-primary" itemProp="price" content={String(quote.saleBdt)}>
-                        {t('common.bdt')}{quote.saleBdt.toLocaleString()}
+                      <span className="text-4xl font-bold text-primary" itemProp="price" content={String(display.saleRaw)}>
+                        {display.sale}
                       </span>
                       <span className="rounded-md bg-destructive/15 px-2 py-0.5 text-sm font-bold text-destructive">
                         -{quote.discountPercent}%
                       </span>
                     </>
                   ) : (
-                    <span className="text-4xl font-bold text-primary" itemProp="price" content={String(quote.saleBdt)}>
-                      {t('common.bdt')}{quote.saleBdt.toLocaleString()}
+                    <span className="text-4xl font-bold text-primary" itemProp="price" content={String(display.saleRaw)}>
+                      {display.sale}
                     </span>
                   )}
-                  <meta itemProp="priceCurrency" content="BDT" />
+                  <meta itemProp="priceCurrency" content={display.currency} />
                   <link itemProp="availability" href="https://schema.org/InStock" />
-                  <span className="text-lg text-muted-foreground">
-                    {quote.hasDiscount
-                      ? <><span className="line-through mr-1.5">~${quote.listUsd}</span>~${quote.saleUsd}</>
-                      : `(~$${quote.saleUsd})`}
-                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {language === 'bn' ? 'এককালীন পেমেন্ট • আজীবন সাপোর্ট ও আপডেট' : 'One-time payment • Lifetime support & updates'}

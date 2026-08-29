@@ -565,7 +565,7 @@ const AdminSettingsPage: React.FC = () => {
           />
          </div>
          <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground font-medium">Price (BDT)</Label>
+          <Label className="text-xs text-muted-foreground font-medium">Price (BDT) — Bangla shop</Label>
           <AdminNumberInput
            min={0}
            step={1}
@@ -576,7 +576,7 @@ const AdminSettingsPage: React.FC = () => {
           />
          </div>
          <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground font-medium">Price (USD display)</Label>
+          <Label className="text-xs text-muted-foreground font-medium">Price (USD) — English shop</Label>
           <AdminNumberInput
            min={0}
            step={0.01}

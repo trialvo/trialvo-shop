@@ -1,6 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { formatPriceBdt, formatPriceUsd } from "@/lib/digitalGoods";
-import { quoteProductPrice } from "@/lib/productPricing";
+import { quoteProductPrice, shopDisplayPrice } from "@/lib/productPricing";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 
 export type ProductCardPricingProps = {
@@ -14,7 +13,7 @@ export type ProductCardPricingProps = {
   trustLabel?: string;
 };
 
-/** Price + CTA — one row, no extra trust chrome. */
+/** One declared currency: BDT on Bangla, USD on English. */
 export function ProductCardPricing({
   amountBdt,
   amountUsd,
@@ -29,6 +28,7 @@ export function ProductCardPricing({
     priceUSD: amountUsd,
     discountPercent,
   });
+  const display = shopDisplayPrice(quote, language, currencyLabel);
 
   return (
     <div className="flex items-end justify-between gap-3 border-t border-border/60 pt-4">
@@ -40,32 +40,27 @@ export function ProductCardPricing({
           {quote.hasDiscount ? (
             <>
               <span className="text-sm text-muted-foreground line-through">
-                {formatPriceBdt(quote.listBdt, language, currencyLabel)}
+                {display.list}
               </span>
               <span
                 className="text-[1.35rem] font-semibold tracking-tight text-foreground"
                 itemProp="price"
-                content={String(quote.saleBdt)}
+                content={String(display.saleRaw)}
               >
-                {formatPriceBdt(quote.saleBdt, language, currencyLabel)}
+                {display.sale}
               </span>
             </>
           ) : (
             <span
               className="text-[1.35rem] font-semibold tracking-tight text-foreground"
               itemProp="price"
-              content={String(quote.saleBdt)}
+              content={String(display.saleRaw)}
             >
-              {formatPriceBdt(quote.saleBdt, language, currencyLabel)}
+              {display.sale}
             </span>
           )}
         </div>
-        {quote.listUsd > 0 ? (
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {formatPriceUsd(quote.saleUsd, language)} USD
-          </p>
-        ) : null}
-        <meta itemProp="priceCurrency" content="BDT" />
+        <meta itemProp="priceCurrency" content={display.currency} />
       </div>
 
       <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-accent transition-colors group-hover:text-accent/80">

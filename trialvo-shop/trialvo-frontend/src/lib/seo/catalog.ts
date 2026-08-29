@@ -1,4 +1,5 @@
 import { API_BASE } from "@/lib/env";
+import { quoteProductPrice } from "@/lib/productPricing";
 
 const SERVER_API_BASE =
   process.env.INTERNAL_API_URL || API_BASE;
@@ -14,6 +15,7 @@ export type SeoProduct = {
   };
   thumbnail: string;
   priceBdt: number;
+  priceUsd: number;
   discountPercent: number;
   faq: { question: { bn: string; en: string }; answer: { bn: string; en: string } }[];
 };
@@ -29,9 +31,11 @@ function parseJson<T>(value: T | string | null | undefined, fallback: T): T {
 }
 
 function mapRow(row: Record<string, unknown>): SeoProduct {
-  const price = Number(row.price_bdt) || 0;
-  const discount = Number(row.discount_percent) || 0;
-  const sale = discount > 0 ? Math.round(price * (1 - discount / 100)) : price;
+  const quote = quoteProductPrice({
+    priceBDT: Number(row.price_bdt) || 0,
+    priceUSD: Number(row.price_usd) || 0,
+    discountPercent: Number(row.discount_percent) || 0,
+  });
   return {
     slug: String(row.slug || ""),
     name: parseJson(row.name, { bn: "", en: "" }),
@@ -42,8 +46,9 @@ function mapRow(row: Record<string, unknown>): SeoProduct {
       keywords: { bn: [] as string[], en: [] as string[] },
     }),
     thumbnail: String(row.thumbnail || ""),
-    priceBdt: sale,
-    discountPercent: discount,
+    priceBdt: quote.saleBdt,
+    priceUsd: quote.saleUsd,
+    discountPercent: quote.discountPercent,
     faq: parseJson(row.faq, []),
   };
 }

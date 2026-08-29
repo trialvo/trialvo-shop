@@ -10,7 +10,7 @@ import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
 import { useProduct } from '@/hooks/useProducts';
 import { useOrder } from '@/hooks/useOrders';
-import { quoteProductPrice } from '@/lib/productPricing';
+import { quoteProductPrice, shopDisplayPrice } from '@/lib/productPricing';
 import { Button } from '@/components/ui/button';
 
 const OrderSuccessPage: React.FC = () => {
@@ -25,6 +25,7 @@ const OrderSuccessPage: React.FC = () => {
   const { data: product, isLoading } = useProduct(productSlug || undefined);
   const { data: order } = useOrder(orderId && orderId !== 'ORD-XXXXXX' ? orderId : null);
   const quote = product ? quoteProductPrice(product) : null;
+  const display = quote ? shopDisplayPrice(quote, language, t('common.bdt')) : null;
   const paidBdt = order?.total_bdt != null
     ? Number(order.total_bdt)
     : quote?.saleBdt;
@@ -106,15 +107,21 @@ const OrderSuccessPage: React.FC = () => {
                   <div className="text-left">
                     <h3 className="font-semibold">{product.name[language]}</h3>
                     <p className="text-primary font-bold">
-                      {quote?.hasDiscount ? (
+                      {quote?.hasDiscount && display ? (
                         <>
                           <span className="text-muted-foreground line-through font-semibold mr-2">
-                            {t('common.bdt')}{quote.listBdt.toLocaleString()}
+                            {display.list}
                           </span>
-                          {t('common.bdt')}{(paidBdt ?? quote.saleBdt).toLocaleString()}
+                          {language === 'bn' && paidBdt != null
+                            ? `${t('common.bdt')}${paidBdt.toLocaleString()}`
+                            : display.sale}
                         </>
                       ) : (
-                        <>{t('common.bdt')}{(paidBdt ?? product.priceBDT).toLocaleString()}</>
+                        <>
+                          {language === 'bn' && paidBdt != null
+                            ? `${t('common.bdt')}${paidBdt.toLocaleString()}`
+                            : (display?.sale ?? '')}
+                        </>
                       )}
                     </p>
                   </div>
