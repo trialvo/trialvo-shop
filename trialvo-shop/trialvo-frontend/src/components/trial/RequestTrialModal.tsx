@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -135,8 +136,9 @@ export function RequestTrialModal({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {t("ট্রায়াল অনুরোধ", "Request Trial")} — {productName}
+            {t("ফ্রি ট্রায়াল শুরু করুন", "Start free trial")}
           </DialogTitle>
+          <DialogDescription>{productName}</DialogDescription>
         </DialogHeader>
 
         <Form {...form} key={`${trialType}-${language}`}>
@@ -246,7 +248,7 @@ export function RequestTrialModal({
               {submit.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
-              {t("অনুরোধ পাঠান", "Submit Request")}
+              {t("ট্রায়াল অনুরোধ পাঠান", "Submit trial request")}
             </Button>
           </form>
         </Form>

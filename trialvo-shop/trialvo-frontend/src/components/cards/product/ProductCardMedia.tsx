@@ -223,7 +223,7 @@ export function ProductCardMedia({
                 <img
                   src={src}
                   alt={index === safePage ? imageAlt : ""}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                   loading={index === 0 ? "eager" : "lazy"}
                   draggable={false}
                   itemProp={index === 0 ? "image" : undefined}
@@ -239,7 +239,7 @@ export function ProductCardMedia({
       </div>
 
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/25 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 via-black/10 to-transparent"
         aria-hidden="true"
       />
 

@@ -5,7 +5,7 @@ import LocalizedLink from '@/components/i18n/LocalizedLink';
 import { useParams } from 'next/navigation';
 import Redirect from '@/components/Redirect';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, ShoppingCart, Play, Star, Award, Clock, Package, Headphones, FileText, Video, Loader2, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Check, ShoppingCart, Play, Star, Award, Clock, Package, Headphones, FileText, Video, Loader2, FlaskConical } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
 import SEOHead from '@/components/seo/SEOHead';
@@ -258,9 +258,19 @@ const ProductDetailPage: React.FC = () => {
                   </LocalizedLink>
                 </Button>
                 {canRequestTrial && (
-                  <Button size="lg" variant="secondary" className="flex-1 h-14 text-base" onClick={() => setTrialOpen(true)}>
-                    <ClipboardList className="w-5 h-5 mr-2" />
-                    {language === 'bn' ? 'ট্রায়াল চাই' : 'Request Trial'}
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="h-14 flex-1 flex-col gap-0.5 rounded-xl border-border bg-background text-base font-semibold shadow-none hover:bg-muted/60"
+                    onClick={() => setTrialOpen(true)}
+                  >
+                    <span className="inline-flex items-center">
+                      <FlaskConical className="mr-2 h-5 w-5" />
+                      {language === 'bn' ? 'ফ্রি ট্রায়াল শুরু করুন' : 'Start free trial'}
+                    </span>
+                    <span className="text-[11px] font-normal text-muted-foreground">
+                      {language === 'bn' ? 'পেমেন্ট লাগবে না' : 'No payment required'}
+                    </span>
                   </Button>
                 )}
                 {shopDemoUrl ? (

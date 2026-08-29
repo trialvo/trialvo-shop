@@ -21,7 +21,7 @@ export function ProductCardFeatures({
       {visible.map((feature) => (
         <li
           key={feature.id}
-          className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted/70 px-2 py-1 text-[11px] font-medium leading-none text-muted-foreground"
+          className="inline-flex max-w-full items-center gap-1 rounded-full border border-border/70 bg-muted/50 px-2.5 py-1 text-[11px] font-medium leading-none text-foreground/80"
         >
           <Check className="h-3 w-3 shrink-0 text-accent" strokeWidth={2.5} aria-hidden="true" />
           <span className="truncate">{feature.label}</span>

@@ -13,28 +13,28 @@ export function FeaturedMarketplace() {
   const { data: featuredProducts, isLoading, isError, refetch } = useFeaturedProducts();
 
   return (
-    <section className="bg-background py-14 md:py-20" aria-labelledby="featured-title">
+    <section className="bg-muted/25 py-16 md:py-24" aria-labelledby="featured-title">
       <div className="container-custom">
-        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+        <div className="mb-12 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
               {language === "bn" ? "মার্কেটপ্লেস" : "Marketplace"}
             </p>
             <h2
               id="featured-title"
-              className="font-display text-2xl font-bold tracking-tight md:text-3xl"
+              className="font-display text-3xl font-bold tracking-tight md:text-4xl"
             >
               {language === "bn"
                 ? "ফিচার্ড ডিজিটাল প্রোডাক্ট"
                 : "Featured digital products"}
             </h2>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground md:text-base">
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
               {language === "bn"
                 ? "রেডিমেড ইকমার্স সলিউশন—লাইভ ট্রায়াল চালান, তারপর কিনুন।"
                 : "Ready-made ecommerce solutions—trial live, then purchase."}
             </p>
           </div>
-          <Button asChild variant="outline" className="h-10 rounded-md bg-card">
+          <Button asChild variant="outline" className="h-10 rounded-lg bg-background">
             <LocalizedLink href="/products">
               {language === "bn" ? "সব প্রোডাক্ট দেখুন" : "Browse all products"}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
