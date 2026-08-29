@@ -80,7 +80,7 @@ export function ProductCard({
           className="flex flex-1 flex-col gap-2.5 outline-none"
         >
           {card.categoryLabel ? (
-            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground sm:text-[11px]">
               {card.categoryLabel}
             </p>
           ) : null}

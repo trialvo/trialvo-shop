@@ -16,7 +16,9 @@ export function Eyebrow({ children, tone = "default", className }: Readonly<Eyeb
   return (
     <span
       className={cn(
-        "block text-[11px] font-semibold uppercase leading-none tracking-[0.16em]",
+        // 12px on phones, 11px from sm up: uppercase tracking at 11px is hard
+        // to read on a small screen, especially in Bengali.
+        "block text-xs font-semibold uppercase leading-none tracking-[0.16em] sm:text-[11px]",
         tone === "inverted" ? "text-primary-foreground/70" : "text-accent-strong",
         className,
       )}

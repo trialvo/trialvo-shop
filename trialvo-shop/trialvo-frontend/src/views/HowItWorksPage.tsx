@@ -3,7 +3,6 @@
 import {
   ArrowRight,
   Check,
-  ChevronRight,
   ClipboardList,
   RefreshCw,
   Route,
@@ -11,6 +10,7 @@ import {
 import { motion } from "framer-motion";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
 import Layout from "@/components/layout/Layout";
+import Breadcrumb from "@/components/navigation/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Eyebrow, IconTile, Section, Surface } from "@/components/section";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -54,19 +54,9 @@ export default function HowItWorksPage() {
   return (
     <Layout>
       <Section tone="muted" pattern="mesh" size="sm" divider="bottom">
-        <nav aria-label="Breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <li>
-              <LocalizedLink href="/" className="hover:text-foreground">
-                {ui.home}
-              </LocalizedLink>
-            </li>
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-            <li aria-current="page" className="font-medium text-foreground">
-              {ui.title}
-            </li>
-          </ol>
-        </nav>
+        <Breadcrumb
+          items={[{ label: ui.home, href: "/" }, { label: ui.title }]}
+        />
 
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
           <IconTile icon={Route} size="lg" />
@@ -87,7 +77,7 @@ export default function HowItWorksPage() {
               <li key={step.id}>
                 <a
                   href={`#${step.id}`}
-                  className="text-xs font-medium text-muted-foreground underline decoration-border decoration-1 underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent/50"
+                  className="inline-flex min-h-[2rem] items-center py-1 text-xs font-medium text-muted-foreground underline decoration-border decoration-1 underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent/50"
                 >
                   {step.title}
                 </a>
@@ -151,7 +141,7 @@ export default function HowItWorksPage() {
       </Section>
 
       <Section tone="muted" pattern="dots" divider="top">
-        <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
           <Surface sheen className="p-6 md:p-8">
             <IconTile icon={ClipboardList} size="lg" className="mb-5" />
             <h2 className="font-display text-xl font-bold tracking-tight">

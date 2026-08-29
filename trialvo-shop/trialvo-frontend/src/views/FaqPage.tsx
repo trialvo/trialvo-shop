@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
 import Layout from "@/components/layout/Layout";
+import Breadcrumb from "@/components/navigation/Breadcrumb";
 import FaqAccordion from "@/components/faq/FaqAccordion";
 import { Button } from "@/components/ui/button";
 import { Eyebrow, IconTile, Section, SectionIntro, Surface } from "@/components/section";
@@ -59,19 +60,9 @@ export default function FaqPage() {
   return (
     <Layout>
       <Section tone="muted" pattern="mesh" size="sm" divider="bottom">
-        <nav aria-label="Breadcrumb" className="mb-6">
-          <ol className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <li>
-              <LocalizedLink href="/" className="hover:text-foreground">
-                {ui.home}
-              </LocalizedLink>
-            </li>
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-            <li aria-current="page" className="font-medium text-foreground">
-              {ui.title}
-            </li>
-          </ol>
-        </nav>
+        <Breadcrumb
+          items={[{ label: ui.home, href: "/" }, { label: ui.title }]}
+        />
 
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
           <IconTile icon={MessageCircleQuestion} size="lg" />
@@ -92,7 +83,7 @@ export default function FaqPage() {
               <li key={group.id}>
                 <a
                   href={`#${group.id}`}
-                  className="text-xs font-medium text-muted-foreground underline decoration-border decoration-1 underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent/50"
+                  className="inline-flex min-h-[2rem] items-center py-1 text-xs font-medium text-muted-foreground underline decoration-border decoration-1 underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent/50"
                 >
                   {group.title}
                 </a>
@@ -118,7 +109,7 @@ export default function FaqPage() {
       </Section>
 
       <Section tone="muted" pattern="dots" divider="top">
-        <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
           <Surface sheen className="p-6 md:p-8">
             <IconTile icon={LifeBuoy} size="lg" className="mb-5" />
             <h2 className="font-display text-xl font-bold tracking-tight">
@@ -147,14 +138,14 @@ export default function FaqPage() {
             <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-sm">
               <a
                 href={`mailto:${BRAND.contactEmail}`}
-                className="inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-accent-strong"
+                className="inline-flex min-h-[2.25rem] items-center gap-2 py-1 text-muted-foreground transition-colors hover:text-accent-strong"
               >
                 <Mail className="h-4 w-4 text-accent" aria-hidden="true" />
                 {BRAND.contactEmail}
               </a>
               <a
                 href={BRAND.contactPhoneHref}
-                className="inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-accent-strong"
+                className="inline-flex min-h-[2.25rem] items-center gap-2 py-1 text-muted-foreground transition-colors hover:text-accent-strong"
               >
                 <Phone className="h-4 w-4 text-accent" aria-hidden="true" />
                 {BRAND.contactPhone}

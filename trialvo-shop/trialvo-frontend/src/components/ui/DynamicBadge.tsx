@@ -33,8 +33,9 @@ export const dynamicBadgeVariants = cva(
         flat: "",
       },
       size: {
-        sm: "text-[10px] leading-none",
-        md: "text-[11px] leading-none",
+        // One step larger on phones — these caps sit at the readability floor.
+        sm: "text-[11px] leading-none sm:text-[10px]",
+        md: "text-xs leading-none sm:text-[11px]",
       },
     },
     compoundVariants: [

@@ -41,7 +41,7 @@ export function ProductDetailGallery({
     <div>
       {tabs.length > 1 ? (
         <div
-          className="mb-4 flex gap-1 border-b border-border"
+          className="mb-4 flex gap-1 overflow-x-auto border-b border-border"
           role="tablist"
           aria-label={language === "bn" ? "স্ক্রিনশট সেট" : "Screenshot set"}
         >
@@ -56,7 +56,9 @@ export function ProductDetailGallery({
                 aria-selected={isActive}
                 onClick={() => setPane(tab.id)}
                 className={cn(
-                  "-mb-px inline-flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors",
+                  // Tighter on phones so both sets fit without scrolling; the
+                  // row still scrolls if a label ever grows.
+                  "-mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-2.5 text-[13px] font-semibold transition-colors sm:gap-2 sm:px-3 sm:text-sm",
                   isActive
                     ? "border-accent text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",

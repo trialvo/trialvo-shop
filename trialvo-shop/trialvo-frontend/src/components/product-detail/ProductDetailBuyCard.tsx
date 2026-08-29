@@ -56,7 +56,7 @@ export function ProductDetailBuyCard({
       itemScope
       itemType="https://schema.org/Offer"
     >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:text-[11px]">
         {copy.license}
       </p>
 

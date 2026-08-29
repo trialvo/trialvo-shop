@@ -34,7 +34,7 @@ export function CatalogBuyingGuide() {
           lead={guide.intro}
         />
 
-        <div className="grid gap-5 md:grid-cols-2 lg:gap-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:gap-6">
           {guide.sections.map((section, index) => (
             <Surface
               as="article"

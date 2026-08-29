@@ -7,4 +7,5 @@ export { ProductDetailHighlights } from "./ProductDetailHighlights";
 export { ProductDetailIntro } from "./ProductDetailIntro";
 export { ProductDetailRelated } from "./ProductDetailRelated";
 export { ProductDetailSpecs } from "./ProductDetailSpecs";
+export { ProductDetailStickyBar } from "./ProductDetailStickyBar";
 export { ProductDetailVideo } from "./ProductDetailVideo";

@@ -9,6 +9,7 @@ import {
   ScrollText,
 } from "lucide-react";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
+import Breadcrumb from "@/components/navigation/Breadcrumb";
 import { Eyebrow, IconTile, Section, SectionIntro, Surface } from "@/components/section";
 import { BRAND } from "@/lib/brand";
 import type { Locale } from "@/lib/i18n";
@@ -116,21 +117,13 @@ export function LegalDocument({
   return (
     <>
       <Section tone="muted" pattern="mesh" size="sm" divider="bottom">
-        <nav aria-label="Breadcrumb" className="mb-6">
-          <ol className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-            <li>
-              <LocalizedLink href="/" className="hover:text-foreground">
-                {ui.home}
-              </LocalizedLink>
-            </li>
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-            <li className="text-foreground/70">{ui.legal}</li>
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-            <li aria-current="page" className="font-medium text-foreground">
-              {doc.title}
-            </li>
-          </ol>
-        </nav>
+        <Breadcrumb
+          items={[
+            { label: ui.home, href: "/" },
+            { label: ui.legal },
+            { label: doc.title },
+          ]}
+        />
 
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
           <IconTile icon={ScrollText} size="lg" />
@@ -151,7 +144,7 @@ export function LegalDocument({
       </Section>
 
       <Section>
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-14">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-14">
           <div className="min-w-0">
             <Surface
               as="nav"
@@ -200,14 +193,14 @@ export function LegalDocument({
               <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-border pt-5 text-sm">
                 <a
                   href={`mailto:${BRAND.contactEmail}`}
-                  className="inline-flex items-center gap-2 font-medium text-foreground transition-colors hover:text-accent-strong"
+                  className="inline-flex min-h-[2.25rem] items-center gap-2 py-1 font-medium text-foreground transition-colors hover:text-accent-strong"
                 >
                   <Mail className="h-4 w-4 text-accent" aria-hidden="true" />
                   {BRAND.contactEmail}
                 </a>
                 <a
                   href={BRAND.contactPhoneHref}
-                  className="inline-flex items-center gap-2 font-medium text-foreground transition-colors hover:text-accent-strong"
+                  className="inline-flex min-h-[2.25rem] items-center gap-2 py-1 font-medium text-foreground transition-colors hover:text-accent-strong"
                 >
                   <Phone className="h-4 w-4 text-accent" aria-hidden="true" />
                   {BRAND.contactPhone}
@@ -269,7 +262,7 @@ export function LegalDocument({
           lead={ui.otherDocsHint}
         />
 
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {related.map((item) => (
             <li key={item.key}>
               <Surface

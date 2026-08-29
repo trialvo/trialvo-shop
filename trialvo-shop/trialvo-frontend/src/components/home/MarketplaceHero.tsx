@@ -109,7 +109,7 @@ export function MarketplaceHero() {
               aria-hidden="true"
               className="h-3.5 w-px bg-white/25"
             />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">
+            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70 sm:text-[11px]">
               {localize(LIVE_BADGE, language)}
             </span>
           </motion.div>
@@ -156,7 +156,7 @@ export function MarketplaceHero() {
                 <LocalizedLink
                   key={category.id}
                   href={`/products?category=${category.slug}`}
-                  className="text-xs font-medium text-white/75 underline decoration-white/25 decoration-1 underline-offset-4 transition-colors hover:text-white hover:decoration-white/70"
+                  className="inline-flex min-h-[2rem] items-center py-1 text-xs font-medium text-white/75 underline decoration-white/25 decoration-1 underline-offset-4 transition-colors hover:text-white hover:decoration-white/70"
                 >
                   {localize(category.name, language, category.slug)}
                 </LocalizedLink>
@@ -190,7 +190,7 @@ export function MarketplaceHero() {
             </Button>
             <LocalizedLink
               href="/contact"
-              className="px-1 text-sm font-medium text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline"
+              className="inline-flex min-h-[2.75rem] items-center px-1 text-sm font-medium text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline"
             >
               {localize(HERO_CONTENT.secondaryCta, language)}
             </LocalizedLink>

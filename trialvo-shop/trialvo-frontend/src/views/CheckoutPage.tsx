@@ -243,11 +243,11 @@ const CheckoutPage: React.FC = () => {
             </motion.div>
           )}
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <form onSubmit={handleSubmit} className="space-y-6 border rounded-xl p-6 bg-card">
                 <h2 className="font-semibold">{t('checkout.customerInfo')}</h2>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="name">{t('checkout.name')} *</Label>
                     <Input id="name" name="name" required value={formData.name} onChange={handleInputChange} />

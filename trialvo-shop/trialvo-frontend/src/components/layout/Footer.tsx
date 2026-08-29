@@ -59,7 +59,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-border bg-background" role="contentinfo">
       <div className="container-custom py-12 md:py-14">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
           <div className="lg:col-span-1">
             <LocalizedLink href="/" className="mb-4 inline-flex" aria-label={name}>
               <BrandLogo withWordmark wordmark={name} size="md" />
@@ -69,7 +69,7 @@ export default function Footer() {
             </p>
             <a
               href="/feed.xml"
-              className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="mt-3 inline-flex min-h-[2rem] items-center gap-1.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               <Rss className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
               {language === "bn" ? "প্রোডাক্ট ফিড" : "Product feed"}
@@ -81,12 +81,12 @@ export default function Footer() {
               <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.12em] text-foreground">
                 {localize(column.title, language)}
               </h3>
-              <ul className="space-y-2.5">
+              <ul className="space-y-0.5">
                 {column.links.map((link) => (
                   <li key={link.href}>
                     <LocalizedLink
                       href={link.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      className="inline-flex min-h-[2rem] items-center py-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {localize(link.label, language)}
                     </LocalizedLink>
@@ -100,19 +100,22 @@ export default function Footer() {
             <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.12em] text-foreground">
               {language === "bn" ? "যোগাযোগ" : "Contact"}
             </h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+            <ul className="space-y-1.5 text-sm text-muted-foreground">
               <li className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
                 <a
                   href={`mailto:${BRAND.contactEmail}`}
-                  className="hover:text-foreground"
+                  className="inline-flex min-h-[2rem] items-center break-all py-1 hover:text-foreground"
                 >
                   {BRAND.contactEmail}
                 </a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-                <a href={BRAND.contactPhoneHref} className="hover:text-foreground">
+                <a
+                  href={BRAND.contactPhoneHref}
+                  className="inline-flex min-h-[2rem] items-center py-1 hover:text-foreground"
+                >
                   {BRAND.contactPhone}
                 </a>
               </li>

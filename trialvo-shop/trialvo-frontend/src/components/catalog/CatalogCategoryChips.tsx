@@ -101,7 +101,7 @@ export function CatalogCategoryChips({
             {typeof count === "number" ? (
               <span
                 className={cn(
-                  "text-[11px] font-semibold tabular-nums",
+                  "text-xs font-semibold tabular-nums sm:text-[11px]",
                   selected ? "text-accent-foreground/75" : "text-muted-foreground",
                 )}
               >

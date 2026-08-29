@@ -29,7 +29,7 @@ export function ProductCardPricing({
 
   return (
     <div className="flex items-baseline justify-between gap-3 whitespace-nowrap border-t border-border/60 pt-4">
-      <p className="min-w-0 truncate text-[11px] font-medium text-muted-foreground">
+      <p className="min-w-0 truncate text-xs font-medium text-muted-foreground sm:text-[11px]">
         {priceHint}
       </p>
       <div className="flex shrink-0 items-baseline gap-2">
@@ -47,7 +47,7 @@ export function ProductCardPricing({
         </span>
         <ShopUsdHint
           display={display}
-          className="text-[11px] leading-none text-muted-foreground"
+          className="text-xs leading-none text-muted-foreground sm:text-[11px]"
         />
       </div>
       <meta itemProp="priceCurrency" content="BDT" />

@@ -257,9 +257,10 @@ export function ProductCardMedia({
           onClick={goPrev}
           className={cn(
             "absolute left-2.5 top-1/2 z-10 -translate-y-1/2",
-            "flex h-8 w-8 items-center justify-center rounded-full",
+            "flex h-9 w-9 items-center justify-center rounded-full sm:h-8 sm:w-8",
             "bg-background/90 text-foreground shadow-sm backdrop-blur",
-            "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100",
+            // Touch screens never hover, so the arrows stay visible there.
+            "transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           )}
           aria-label="Previous image"
@@ -274,9 +275,9 @@ export function ProductCardMedia({
           onClick={goNext}
           className={cn(
             "absolute right-2.5 top-1/2 z-10 -translate-y-1/2",
-            "flex h-8 w-8 items-center justify-center rounded-full",
+            "flex h-9 w-9 items-center justify-center rounded-full sm:h-8 sm:w-8",
             "bg-background/90 text-foreground shadow-sm backdrop-blur",
-            "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100",
+            "transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           )}
           aria-label="Next image"

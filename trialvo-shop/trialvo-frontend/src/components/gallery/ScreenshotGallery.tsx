@@ -231,7 +231,7 @@ const ScreenshotGallery: React.FC<ScreenshotGalleryProps> = ({
                 variant="secondary"
                 size="icon"
                 aria-label="Previous screenshot"
-                className="absolute left-3 top-1/2 h-9 w-9 -translate-y-1/2 rounded-md opacity-0 shadow-card transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                className="absolute left-3 top-1/2 h-10 w-10 -translate-y-1/2 rounded-md shadow-card transition-opacity focus-visible:opacity-100 sm:h-9 sm:w-9 sm:opacity-0 sm:group-hover:opacity-100"
                 onClick={handlePrev}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -240,7 +240,7 @@ const ScreenshotGallery: React.FC<ScreenshotGalleryProps> = ({
                 variant="secondary"
                 size="icon"
                 aria-label="Next screenshot"
-                className="absolute right-3 top-1/2 h-9 w-9 -translate-y-1/2 rounded-md opacity-0 shadow-card transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                className="absolute right-3 top-1/2 h-10 w-10 -translate-y-1/2 rounded-md shadow-card transition-opacity focus-visible:opacity-100 sm:h-9 sm:w-9 sm:opacity-0 sm:group-hover:opacity-100"
                 onClick={handleNext}
               >
                 <ChevronRight className="h-4 w-4" />

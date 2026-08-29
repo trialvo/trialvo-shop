@@ -177,19 +177,19 @@ export function ContactGuidance({
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
             <LocalizedLink
               href="/faq"
-              className="text-accent underline-offset-4 hover:underline"
+              className="inline-flex min-h-[2rem] items-center text-accent underline-offset-4 hover:underline"
             >
               {isBn ? "সাধারণ প্রশ্নোত্তর" : "Frequently asked questions"}
             </LocalizedLink>
             <LocalizedLink
               href="/support-policy"
-              className="text-accent underline-offset-4 hover:underline"
+              className="inline-flex min-h-[2rem] items-center text-accent underline-offset-4 hover:underline"
             >
               {isBn ? "সাপোর্ট নীতি" : "Support Policy"}
             </LocalizedLink>
             <LocalizedLink
               href="/how-it-works"
-              className="text-accent underline-offset-4 hover:underline"
+              className="inline-flex min-h-[2rem] items-center text-accent underline-offset-4 hover:underline"
             >
               {isBn ? "কীভাবে কাজ করে" : "How it works"}
             </LocalizedLink>

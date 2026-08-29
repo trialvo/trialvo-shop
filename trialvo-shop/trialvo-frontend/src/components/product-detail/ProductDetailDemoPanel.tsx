@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, KeyRound, LayoutDashboard, Store } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { IconTile, Surface } from "@/components/section";
+import { Eyebrow, IconTile, Surface } from "@/components/section";
 import { getDemoTargets, type DemoTargetId } from "@/lib/digitalGoods";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 import type { Product } from "@/types/product";
@@ -82,9 +82,7 @@ export function ProductDetailDemoPanel({
   return (
     <Surface sheen className="overflow-hidden">
       <div className="border-b border-border px-6 pb-5 pt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-strong">
-          {copy.eyebrow}
-        </p>
+        <Eyebrow>{copy.eyebrow}</Eyebrow>
         <h2 className="mt-2 font-display text-lg font-bold tracking-tight text-foreground">
           {copy.title}
         </h2>
@@ -147,7 +145,7 @@ export function ProductDetailDemoPanel({
           <button
             type="button"
             onClick={onStartTrial}
-            className="font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent/50"
+                  className="inline-flex min-h-[2rem] items-center py-1 font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent/50"
           >
             {copy.trialCta}
           </button>

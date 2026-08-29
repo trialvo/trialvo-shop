@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { Surface } from "@/components/section";
+import { Eyebrow, Surface } from "@/components/section";
 
 export type ProductDetailSpecsProps = {
   id: string;
@@ -24,9 +24,7 @@ export function ProductDetailSpecs({
 
   return (
     <section aria-labelledby={id}>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-strong">
-        {eyebrow}
-      </p>
+      <Eyebrow>{eyebrow}</Eyebrow>
       <h2
         id={id}
         className="mt-2 font-display text-xl font-bold tracking-tight text-foreground"

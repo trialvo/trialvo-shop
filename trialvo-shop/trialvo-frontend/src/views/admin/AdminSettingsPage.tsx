@@ -415,7 +415,7 @@ const AdminSettingsPage: React.FC = () => {
            type="button"
            aria-label={showCurrentPass ? 'Hide password' : 'Show password'}
            onClick={() => setShowCurrentPass((v) => !v)}
-           className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+           className="absolute right-0.5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
            {showCurrentPass ? <EyeOff className="w-4 h-4 pointer-events-none" /> : <Eye className="w-4 h-4 pointer-events-none" />}
           </button>
@@ -437,7 +437,7 @@ const AdminSettingsPage: React.FC = () => {
            type="button"
            aria-label={showNewPass ? 'Hide password' : 'Show password'}
            onClick={() => setShowNewPass((v) => !v)}
-           className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+           className="absolute right-0.5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
            {showNewPass ? <EyeOff className="w-4 h-4 pointer-events-none" /> : <Eye className="w-4 h-4 pointer-events-none" />}
           </button>
@@ -459,7 +459,7 @@ const AdminSettingsPage: React.FC = () => {
            type="button"
            aria-label={showConfirmPass ? 'Hide password' : 'Show password'}
            onClick={() => setShowConfirmPass((v) => !v)}
-           className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+           className="absolute right-0.5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
            {showConfirmPass ? <EyeOff className="w-4 h-4 pointer-events-none" /> : <Eye className="w-4 h-4 pointer-events-none" />}
           </button>
@@ -698,7 +698,7 @@ const AdminSettingsPage: React.FC = () => {
           type="button"
           aria-label={showSmtpPass ? 'Hide password' : 'Show password'}
           onClick={() => setShowSmtpPass((v) => !v)}
-          className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+          className="absolute right-0.5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
          >
           {showSmtpPass ? <EyeOff className="w-4 h-4 pointer-events-none" /> : <Eye className="w-4 h-4 pointer-events-none" />}
          </button>
@@ -797,7 +797,7 @@ const AdminSettingsPage: React.FC = () => {
           type="button"
           aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
           onClick={() => setShowApiKey((v) => !v)}
-          className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+          className="absolute right-0.5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
          >
           {showApiKey ? <EyeOff className="w-4 h-4 pointer-events-none" /> : <Eye className="w-4 h-4 pointer-events-none" />}
          </button>
@@ -817,7 +817,7 @@ const AdminSettingsPage: React.FC = () => {
           type="button"
           aria-label={showIpnSecret ? 'Hide secret' : 'Show secret'}
           onClick={() => setShowIpnSecret((v) => !v)}
-          className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
+          className="absolute right-0.5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
          >
           {showIpnSecret ? <EyeOff className="w-4 h-4 pointer-events-none" /> : <Eye className="w-4 h-4 pointer-events-none" />}
          </button>

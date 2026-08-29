@@ -141,7 +141,7 @@ export function CompareOptions() {
                 <tr className="border-b border-border bg-muted/50">
                   <th
                     scope="col"
-                    className="px-5 py-5 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground"
+                    className="px-5 py-5 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground sm:text-[11px]"
                   >
                     {language === "bn" ? "বিবেচ্য বিষয়" : "What to weigh"}
                   </th>
@@ -159,7 +159,7 @@ export function CompareOptions() {
                       )}
                     >
                       {column.highlight ? (
-                        <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.14em] text-accent-strong">
+                        <span className="mb-2 block text-[11px] font-bold uppercase tracking-[0.14em] text-accent-strong sm:text-[10px]">
                           {language === "bn" ? "প্রস্তাবিত" : "Recommended"}
                         </span>
                       ) : null}

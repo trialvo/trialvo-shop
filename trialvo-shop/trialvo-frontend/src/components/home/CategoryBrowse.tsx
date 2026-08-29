@@ -72,7 +72,7 @@ function CategoryTile({ category, language, index }: Readonly<TileProps>) {
               ? "ডিজিটাল ইকমার্স সলিউশন"
               : "Digital ecommerce solutions")}
         </p>
-        <p className="mt-5 text-[11px] font-semibold text-muted-foreground">
+        <p className="mt-5 text-xs font-semibold text-muted-foreground sm:text-[11px]">
           {count} {language === "bn" ? "টি আইটেম" : "items"}
         </p>
       </Surface>

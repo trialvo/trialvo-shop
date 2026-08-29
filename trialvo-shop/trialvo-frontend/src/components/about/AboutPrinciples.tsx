@@ -26,7 +26,7 @@ export function AboutPrinciples({
         lead={supporting}
       />
 
-      <ol className="relative grid gap-4 md:grid-cols-3">
+      <ol className="relative grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Rail tying the steps together as one sequence; offset matches the
             icon centre for a p-6 card with a medium IconTile. */}
         <div

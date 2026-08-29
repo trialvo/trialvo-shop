@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import LocalizedLink from '@/components/i18n/LocalizedLink';
@@ -17,6 +17,7 @@ import {
   ProductDetailIntro,
   ProductDetailRelated,
   ProductDetailSpecs,
+  ProductDetailStickyBar,
   ProductDetailVideo,
 } from '@/components/product-detail';
 import { Section } from '@/components/section';
@@ -30,6 +31,7 @@ const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const { language, t } = useLanguage();
   const [trialOpen, setTrialOpen] = useState(false);
+  const buyCardRef = useRef<HTMLDivElement>(null);
 
   const { data: product, isLoading, error } = useProduct(slug);
   const { data: relatedProducts = [] } = useRelatedProducts(
@@ -93,12 +95,12 @@ const ProductDetailPage: React.FC = () => {
             language={language}
           />
 
-          <div className="grid items-start gap-8 lg:grid-cols-12 lg:gap-x-12 lg:gap-y-10">
-            <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1">
+          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12 lg:gap-x-12 lg:gap-y-10">
+            <div className="min-w-0 lg:col-span-5 lg:col-start-8 lg:row-start-1">
               <ProductDetailIntro product={product} language={language} />
             </div>
 
-            <div className="lg:sticky lg:top-24 lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:self-start">
+            <div className="min-w-0 lg:sticky lg:top-24 lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:self-start">
               <ProductDetailGallery
                 product={product}
                 language={language}
@@ -107,15 +109,17 @@ const ProductDetailPage: React.FC = () => {
               />
             </div>
 
-            <div className="space-y-6 lg:col-span-5 lg:col-start-8 lg:row-start-2">
-              <ProductDetailBuyCard
-                product={product}
-                language={language}
-                currencyLabel={t('common.bdt')}
-                buyLabel={t('product.buyNow')}
-                canRequestTrial={canRequestTrial}
-                onStartTrial={() => setTrialOpen(true)}
-              />
+            <div className="min-w-0 space-y-6 lg:col-span-5 lg:col-start-8 lg:row-start-2">
+              <div ref={buyCardRef}>
+                <ProductDetailBuyCard
+                  product={product}
+                  language={language}
+                  currencyLabel={t('common.bdt')}
+                  buyLabel={t('product.buyNow')}
+                  canRequestTrial={canRequestTrial}
+                  onStartTrial={() => setTrialOpen(true)}
+                />
+              </div>
 
               <ProductDetailDemoPanel
                 product={product}
@@ -164,6 +168,16 @@ const ProductDetailPage: React.FC = () => {
           title={t('product.related')}
         />
       </article>
+
+      <ProductDetailStickyBar
+        product={product}
+        language={language}
+        currencyLabel={t('common.bdt')}
+        buyLabel={t('product.buyNow')}
+        canRequestTrial={canRequestTrial}
+        onStartTrial={() => setTrialOpen(true)}
+        watch={buyCardRef}
+      />
 
       {canRequestTrial ? (
         <RequestTrialModal

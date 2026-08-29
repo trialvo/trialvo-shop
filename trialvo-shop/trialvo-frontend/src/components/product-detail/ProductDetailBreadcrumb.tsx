@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
-import LocalizedLink from "@/components/i18n/LocalizedLink";
+import Breadcrumb from "@/components/navigation/Breadcrumb";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 
 export type ProductDetailBreadcrumbProps = {
@@ -16,31 +15,14 @@ export function ProductDetailBreadcrumb({
   language,
 }: Readonly<ProductDetailBreadcrumbProps>) {
   return (
-    <nav aria-label="Breadcrumb" className="mb-8">
-      <ol className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-        <li>
-          <LocalizedLink href="/" className="transition-colors hover:text-foreground">
-            {language === "bn" ? "হোম" : "Home"}
-          </LocalizedLink>
-        </li>
-        <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <li>
-          <LocalizedLink
-            href="/products"
-            className="transition-colors hover:text-foreground"
-          >
-            {productsLabel}
-          </LocalizedLink>
-        </li>
-        <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <li
-          aria-current="page"
-          className="max-w-[18rem] truncate font-medium text-foreground"
-        >
-          {title}
-        </li>
-      </ol>
-    </nav>
+    <Breadcrumb
+      className="mb-6 md:mb-8"
+      items={[
+        { label: language === "bn" ? "হোম" : "Home", href: "/" },
+        { label: productsLabel, href: "/products" },
+        { label: title },
+      ]}
+    />
   );
 }
 

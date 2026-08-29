@@ -21,14 +21,14 @@ export function ProductCardFeatures({
       {visible.map((feature) => (
         <li
           key={feature.id}
-          className="inline-flex max-w-full items-center gap-1.5 text-[11px] font-medium leading-none text-muted-foreground"
+          className="inline-flex max-w-full items-center gap-1.5 text-xs font-medium leading-none text-muted-foreground sm:text-[11px]"
         >
           <Check className="h-3 w-3 shrink-0 text-accent" strokeWidth={2.5} aria-hidden="true" />
           <span className="truncate">{feature.label}</span>
         </li>
       ))}
       {extra > 0 ? (
-        <li className="text-[11px] font-medium leading-none text-muted-foreground">
+        <li className="text-xs font-medium leading-none text-muted-foreground sm:text-[11px]">
           +{extra}
         </li>
       ) : null}

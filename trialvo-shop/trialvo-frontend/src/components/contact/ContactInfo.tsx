@@ -49,13 +49,13 @@ export function ContactInfo({
             >
               <IconTile icon={Icon} size="sm" />
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[11px]">
                   {label}
                 </p>
                 {channel.href ? (
                   <a
                     href={channel.href}
-                    className="mt-1 block truncate text-sm font-semibold text-foreground transition-colors hover:text-accent"
+                    className="mt-1 flex min-h-[2rem] items-center truncate text-sm font-semibold text-foreground transition-colors hover:text-accent"
                   >
                     {value}
                   </a>

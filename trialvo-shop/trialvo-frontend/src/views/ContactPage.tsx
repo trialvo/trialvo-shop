@@ -39,7 +39,7 @@ export default function ContactPage() {
       <ContactHero content={content.hero} language={language} />
 
       <Section tone="muted" size="sm" className="py-10 md:py-14">
-        <div className="grid gap-6 lg:grid-cols-5 lg:gap-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8">
           <div className="lg:col-span-3">
             <ContactForm
               labels={content.form}
