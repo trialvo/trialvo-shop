@@ -47,10 +47,10 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        "group flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-border/70 bg-card",
-        "shadow-[0_1px_0_rgba(15,23,42,0.04)]",
-        "transition-[transform,box-shadow,border-color] duration-300",
-        "hover:-translate-y-1 hover:border-border hover:shadow-[0_22px_50px_-24px_rgba(15,23,42,0.38)]",
+        // Shares the site-wide elevation tokens so the lift reads correctly in
+        // dark mode too, where a hardcoded rgba shadow would disappear.
+        "surface surface-sheen surface-interactive",
+        "group flex h-full flex-col overflow-hidden rounded-[1.35rem]",
       )}
       itemScope
       itemType="https://schema.org/Product"

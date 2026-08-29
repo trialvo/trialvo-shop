@@ -47,6 +47,8 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          // Contrast-safe step for small accent-coloured text.
+          strong: "hsl(var(--accent-strong))",
         },
         success: {
           DEFAULT: "hsl(var(--success))",
@@ -81,6 +83,9 @@ export default {
         'soft-md': 'var(--shadow-md)',
         'soft-lg': 'var(--shadow-lg)',
         'soft-xl': 'var(--shadow-xl)',
+        card: 'var(--shadow-card)',
+        'card-lifted': 'var(--shadow-card-lifted)',
+        'accent-glow': 'var(--shadow-accent-glow)',
       },
       keyframes: {
         "accordion-down": {

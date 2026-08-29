@@ -77,14 +77,11 @@ const OrderSuccessPage: React.FC = () => {
               <span className="ml-2 font-mono font-bold text-lg">{orderId}</span>
             </div>
 
-            {/* Trialvo Pay Transaction Badge */}
             {transactionId && (
-              <div className="flex items-center justify-center gap-2 mb-6">
-                <div className="inline-flex items-center gap-2 bg-success/10 border border-success/30 text-success rounded-full px-4 py-1.5 text-sm font-medium">
-                  <ShieldCheck className="w-4 h-4" />
-                  {language === 'bn' ? 'পেমেন্ট নিশ্চিত হয়েছে' : 'Payment Confirmed'}
-                  <span className="font-mono text-xs opacity-70">{transactionId.substring(0, 12)}...</span>
-                </div>
+              <div className="mb-6 flex items-center justify-center gap-2 text-sm font-medium text-success">
+                <ShieldCheck className="w-4 h-4" />
+                {language === 'bn' ? 'পেমেন্ট নিশ্চিত হয়েছে' : 'Payment Confirmed'}
+                <span className="font-mono text-xs opacity-70">{transactionId.substring(0, 12)}...</span>
               </div>
             )}
 

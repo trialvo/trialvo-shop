@@ -11,6 +11,7 @@ import {
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localize } from "@/lib/localize";
+import { IconTile, Section, SectionIntro, Surface } from "@/components/section";
 import type { LocalizedString } from "@/types/marketplace";
 
 type Reason = {
@@ -103,53 +104,50 @@ export function WhyTrialvo() {
   const { language } = useLanguage();
 
   return (
-    <section className="border-t border-border bg-background py-14 md:py-20" aria-labelledby="why-title">
-      <div className="container-custom">
-        <div className="mb-10 max-w-3xl">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            {language === "bn" ? "কেন Trialvo Shop" : "Why Trialvo Shop"}
-          </p>
-          <h2
-            id="why-title"
-            className="font-display text-2xl font-bold tracking-tight md:text-3xl"
-          >
-            {language === "bn"
-              ? "রেডিমেড ইকমার্স ওয়েবসাইট কেনার সময় যা আসলে গুরুত্বপূর্ণ"
-              : "What actually matters when buying a ready-made ecommerce website"}
-          </h2>
-          <p className="mt-3 text-[15px] leading-7 text-muted-foreground">
-            {language === "bn"
-              ? "সস্তা টেমপ্লেট আর সাবস্ক্রিপশন প্ল্যাটফর্মের মাঝামাঝি একটা জায়গা আছে — সম্পূর্ণ সোর্স কোডসহ প্রোডাকশন-রেডি সলিউশন, এককালীন দামে, আর সমস্যায় পড়লে পাশে থাকার মতো সাপোর্ট। ঠিক সেটাই আমরা দিই।"
-              : "There is a gap between a cheap template and a subscription platform: a production-ready solution with full source code, at a one-time price, with support that stays with you when something breaks. That gap is what we fill."}
-          </p>
-        </div>
+    <Section labelledBy="why-title" pattern="dots" divider="top">
+      <SectionIntro
+        id="why-title"
+        eyebrow={language === "bn" ? "কেন Trialvo Shop" : "Why Trialvo Shop"}
+        title={
+          language === "bn"
+            ? "রেডিমেড ইকমার্স ওয়েবসাইট কেনার সময় যা আসলে গুরুত্বপূর্ণ"
+            : "What actually matters when buying a ready-made ecommerce website"
+        }
+        lead={
+          language === "bn"
+            ? "সস্তা টেমপ্লেট আর সাবস্ক্রিপশন প্ল্যাটফর্মের মাঝামাঝি একটা জায়গা আছে — সম্পূর্ণ সোর্স কোডসহ প্রোডাকশন-রেডি সলিউশন, এককালীন দামে, আর সমস্যায় পড়লে পাশে থাকার মতো সাপোর্ট। ঠিক সেটাই আমরা দিই।"
+            : "There is a gap between a cheap template and a subscription platform: a production-ready solution with full source code, at a one-time price, with support that stays with you when something breaks. That gap is what we fill."
+        }
+      />
 
-        <ul className="grid gap-x-8 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">
-          {REASONS.map((reason, index) => {
-            const Icon = reason.icon;
-            return (
-              <motion.li
-                key={reason.id}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: (index % 4) * 0.05, duration: 0.35 }}
-              >
-                <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-accent">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {REASONS.map((reason, index) => {
+          const Icon = reason.icon;
+          return (
+            <motion.li
+              key={reason.id}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: (index % 4) * 0.05, duration: 0.35 }}
+            >
+              <Surface sheen interactive className="group h-full p-6">
+                <IconTile
+                  icon={Icon}
+                  className="mb-5 group-hover:bg-accent group-hover:text-accent-foreground group-hover:ring-accent"
+                />
                 <h3 className="font-display text-[15px] font-bold leading-6 tracking-tight text-foreground">
                   {localize(reason.title, language)}
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {localize(reason.description, language)}
                 </p>
-              </motion.li>
-            );
-          })}
-        </ul>
-      </div>
-    </section>
+              </Surface>
+            </motion.li>
+          );
+        })}
+      </ul>
+    </Section>
   );
 }
 

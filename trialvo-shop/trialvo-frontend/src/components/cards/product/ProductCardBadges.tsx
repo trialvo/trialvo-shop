@@ -25,7 +25,9 @@ export function ProductCardBadges({
   return (
     <ul
       className={cn(
-        "flex flex-wrap gap-1.5",
+        // Wider gap than a chip row needs, since plain labels would otherwise
+        // read as one run-on string.
+        "flex flex-wrap gap-x-3 gap-y-1",
         placement === "overlay" && "absolute left-3 top-3 z-10 max-w-[70%]",
         placement === "inline" && "relative",
       )}

@@ -12,6 +12,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useProducts } from "@/hooks/useProducts";
 import { useCatalogFilters } from "@/hooks/useCatalogFilters";
 import { localize } from "@/lib/localize";
+import { Surface } from "@/components/section";
 
 /**
  * Category chips, result count, and the product grid. Reads the query string,
@@ -100,11 +101,10 @@ export function CatalogBrowser() {
       </div>
 
       {isError && !isLoading ? (
-        <div className="rounded-xl border border-border bg-card px-6 py-14 text-center">
-          <PackageSearch
-            className="mx-auto mb-3 h-8 w-8 text-muted-foreground"
-            aria-hidden="true"
-          />
+        <Surface sheen className="px-6 py-14 text-center">
+          <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground ring-1 ring-inset ring-border">
+            <PackageSearch className="h-5 w-5" aria-hidden="true" />
+          </span>
           <p className="text-sm text-muted-foreground">
             {language === "bn"
               ? "প্রোডাক্ট লোড হয়নি। আবার চেষ্টা করুন।"
@@ -118,7 +118,7 @@ export function CatalogBrowser() {
           >
             {language === "bn" ? "আবার চেষ্টা" : "Retry"}
           </Button>
-        </div>
+        </Surface>
       ) : (
         <>
           <ProductGrid

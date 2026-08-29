@@ -1,4 +1,5 @@
 import { localize } from "@/lib/localize";
+import { Section, SectionIntro } from "@/components/section";
 import type { AboutStoryContent } from "@/types/about";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 
@@ -10,34 +11,29 @@ export type AboutStoryProps = {
 /** Readable story block — short paragraphs, standard typography */
 export function AboutStory({ content, language }: Readonly<AboutStoryProps>) {
   return (
-    <section className="py-12 md:py-16" aria-labelledby="about-story-title">
-      <div className="container-custom">
-        <div className="mx-auto max-w-3xl">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            {localize(content.eyebrow, language)}
-          </p>
-          <h2
-            id="about-story-title"
-            className="font-display text-2xl font-bold tracking-tight md:text-3xl"
-          >
-            {localize(content.title, language)}
-          </h2>
-          <div className="mt-5 space-y-4">
-            {content.paragraphs.map((paragraph) => {
-              const text = localize(paragraph, language);
-              return (
-                <p
-                  key={text}
-                  className="text-[15px] leading-7 text-muted-foreground md:text-base md:leading-7"
-                >
-                  {text}
-                </p>
-              );
-            })}
-          </div>
+    <Section labelledBy="about-story-title" tone="muted" pattern="mesh">
+      <div className="mx-auto max-w-3xl">
+        <SectionIntro
+          id="about-story-title"
+          className="mb-6 md:mb-8"
+          eyebrow={localize(content.eyebrow, language)}
+          title={localize(content.title, language)}
+        />
+        <div className="space-y-4">
+          {content.paragraphs.map((paragraph) => {
+            const text = localize(paragraph, language);
+            return (
+              <p
+                key={text}
+                className="text-[15px] leading-7 text-muted-foreground md:text-base md:leading-[1.75]"
+              >
+                {text}
+              </p>
+            );
+          })}
         </div>
       </div>
-    </section>
+    </Section>
   );
 }
 

@@ -1,6 +1,8 @@
 import ProductCard from "@/components/cards/ProductCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PackageOpen } from "lucide-react";
 import { motion } from "framer-motion";
+import { Surface } from "@/components/section";
 import type { ProductGridProps } from "@/types/marketplace";
 
 type Props = ProductGridProps & {
@@ -25,9 +27,10 @@ export function ProductGrid({
     return (
       <div className={gridClass} aria-busy="true">
         {Array.from({ length: columns === "catalog" ? 6 : 3 }).map((_, i) => (
-          <div
+          <Surface
             key={`grid-skel-${i}`}
-            className="overflow-hidden rounded-2xl border border-border/80 bg-card"
+            sheen
+            className="overflow-hidden rounded-[1.35rem]"
           >
             <Skeleton className="aspect-[16/10] w-full rounded-none" />
             <div className="space-y-3 p-5">
@@ -40,7 +43,7 @@ export function ProductGrid({
                 <Skeleton className="h-9 flex-1" />
               </div>
             </div>
-          </div>
+          </Surface>
         ))}
       </div>
     );
@@ -48,7 +51,10 @@ export function ProductGrid({
 
   if (products.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
+      <div className="rounded-2xl border border-dashed border-border bg-card/60 px-6 py-20 text-center shadow-card">
+        <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground ring-1 ring-inset ring-border">
+          <PackageOpen className="h-5 w-5" aria-hidden="true" />
+        </span>
         <p className="text-sm text-muted-foreground">
           {emptyMessage ?? "No products found"}
         </p>

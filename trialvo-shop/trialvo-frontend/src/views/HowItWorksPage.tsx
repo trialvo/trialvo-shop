@@ -1,10 +1,18 @@
 "use client";
 
-import { ArrowRight, Check, ChevronRight, ClipboardList, Route } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  ChevronRight,
+  ClipboardList,
+  RefreshCw,
+  Route,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { Eyebrow, IconTile, Section, Surface } from "@/components/section";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { howItWorks } from "@/lib/content/howItWorks";
 
@@ -45,165 +53,180 @@ export default function HowItWorksPage() {
 
   return (
     <Layout>
-      <section className="border-b border-border bg-muted/30">
-        <div className="container-custom py-10 md:py-14">
-          <nav aria-label="Breadcrumb" className="mb-5">
-            <ol className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <li>
-                <LocalizedLink href="/" className="hover:text-foreground">
-                  {ui.home}
-                </LocalizedLink>
-              </li>
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-              <li aria-current="page" className="font-medium text-foreground">
-                {ui.title}
-              </li>
-            </ol>
-          </nav>
+      <Section tone="muted" pattern="mesh" size="sm" divider="bottom">
+        <nav aria-label="Breadcrumb" className="mb-6">
+          <ol className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <li>
+              <LocalizedLink href="/" className="hover:text-foreground">
+                {ui.home}
+              </LocalizedLink>
+            </li>
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            <li aria-current="page" className="font-medium text-foreground">
+              {ui.title}
+            </li>
+          </ol>
+        </nav>
 
-          <p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            <Route className="h-4 w-4" aria-hidden="true" />
-            {ui.eyebrow}
-          </p>
-          <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-            {ui.title}
-          </h1>
-          <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">
-            {ui.lead}
-          </p>
-
-          <nav aria-label={ui.steps} className="mt-7">
-            <ol className="flex flex-wrap gap-2">
-              {content.steps.map((step) => (
-                <li key={step.id}>
-                  <a
-                    href={`#${step.id}`}
-                    className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground"
-                  >
-                    {step.title}
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </nav>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+          <IconTile icon={Route} size="lg" />
+          <div className="min-w-0">
+            <Eyebrow className="mb-4">{ui.eyebrow}</Eyebrow>
+            <h1 className="font-display text-[2rem] font-bold leading-[1.12] tracking-tight sm:text-[2.25rem] md:text-[2.75rem]">
+              {ui.title}
+            </h1>
+            <p className="mt-4 max-w-[68ch] text-[15px] leading-7 text-muted-foreground md:text-base md:leading-[1.75]">
+              {ui.lead}
+            </p>
+          </div>
         </div>
-      </section>
 
-      <section className="bg-background py-12 md:py-16">
-        <div className="container-custom max-w-4xl">
-          <ol className="space-y-6">
-            {content.steps.map((step, index) => (
-              <motion.li
-                key={step.id}
-                id={step.id}
-                className="scroll-mt-28 rounded-2xl border border-border bg-card p-6 md:p-8"
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: Math.min(index, 2) * 0.05, duration: 0.35 }}
+        <nav aria-label={ui.steps} className="mt-8">
+          <ol className="flex flex-wrap gap-x-6 gap-y-2">
+            {content.steps.map((step) => (
+              <li key={step.id}>
+                <a
+                  href={`#${step.id}`}
+                  className="text-xs font-medium text-muted-foreground underline decoration-border decoration-1 underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent/50"
+                >
+                  {step.title}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      </Section>
+
+      <Section containerClassName="max-w-4xl">
+        <ol className="relative space-y-5 md:space-y-6">
+          {/* Rail tying the five steps together as one sequence. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-8 left-[1.375rem] w-px bg-gradient-to-b from-transparent via-border to-transparent sm:left-7"
+          />
+          {content.steps.map((step, index) => (
+            <motion.li
+              key={step.id}
+              id={step.id}
+              className="relative scroll-mt-28 pl-[3.75rem] sm:pl-20"
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: Math.min(index, 2) * 0.05, duration: 0.35 }}
+            >
+              {/* Opaque base so the connector rail stops at the marker
+                  instead of showing through its translucent tint. */}
+              <IconTile
+                size="lg"
+                className="absolute left-0 top-6 h-11 w-11 rounded-xl bg-background font-display text-sm font-bold tabular-nums sm:top-8 sm:h-14 sm:w-14 sm:rounded-2xl sm:text-base"
               >
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">
-                    {step.eyebrow}
-                  </p>
-                  <span className="font-display text-3xl font-bold tabular-nums text-muted-foreground/25">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                </div>
+                {String(index + 1).padStart(2, "0")}
+              </IconTile>
+
+              <Surface sheen className="p-6 md:p-8">
+                <Eyebrow className="mb-4">{step.eyebrow}</Eyebrow>
                 <h2 className="font-display text-xl font-bold tracking-tight md:text-2xl">
                   {step.title}
                 </h2>
-                <p className="mt-2.5 text-[15px] leading-7 text-muted-foreground">
+                <p className="mt-2.5 max-w-[68ch] text-[15px] leading-7 text-muted-foreground">
                   {step.summary}
                 </p>
-                <ul className="mt-5 space-y-2.5 border-t border-border/60 pt-5">
+                <ul className="mt-6 space-y-3 border-t border-border pt-5">
                   {step.details.map((detail) => (
                     <li
                       key={detail}
                       className="flex gap-3 text-sm leading-6 text-foreground/80"
                     >
-                      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/12 text-accent">
-                        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/[0.12] text-accent ring-1 ring-inset ring-accent/20">
+                        <Check className="h-3 w-3" aria-hidden="true" />
                       </span>
                       <span>{detail}</span>
                     </li>
                   ))}
                 </ul>
-              </motion.li>
-            ))}
-          </ol>
-        </div>
-      </section>
+              </Surface>
+            </motion.li>
+          ))}
+        </ol>
+      </Section>
 
-      <section className="border-t border-border bg-muted/25 py-12 md:py-16">
-        <div className="container-custom">
-          <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-            <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
-              <span className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-accent">
-                <ClipboardList className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <h2 className="font-display text-xl font-bold tracking-tight">
-                {content.prepareTitle}
-              </h2>
-              <p className="mt-2 text-[15px] leading-7 text-muted-foreground">
-                {content.prepareIntro}
-              </p>
-              <ul className="mt-5 space-y-2.5">
-                {content.prepare.map((item) => (
-                  <li key={item} className="flex gap-3 text-sm leading-6 text-foreground/80">
-                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/12 text-accent">
-                      <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                    </span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
-              <h2 className="font-display text-xl font-bold tracking-tight">
-                {content.afterTitle}
-              </h2>
-              <p className="mt-2 text-[15px] leading-7 text-muted-foreground">
-                {content.afterIntro}
-              </p>
-              <ul className="mt-5 space-y-2.5">
-                {content.after.map((item) => (
-                  <li key={item} className="flex gap-3 text-sm leading-6 text-muted-foreground">
-                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-accent">
-                      <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                    </span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-border bg-card p-6 md:p-8">
-            <h2 className="font-display text-xl font-bold tracking-tight md:text-2xl">
-              {ui.ctaTitle}
+      <Section tone="muted" pattern="dots" divider="top">
+        <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+          <Surface sheen className="p-6 md:p-8">
+            <IconTile icon={ClipboardList} size="lg" className="mb-5" />
+            <h2 className="font-display text-xl font-bold tracking-tight">
+              {content.prepareTitle}
             </h2>
-            <p className="mt-2 max-w-2xl text-[15px] leading-7 text-muted-foreground">
-              {ui.ctaBody}
+            <p className="mt-2.5 text-[15px] leading-7 text-muted-foreground">
+              {content.prepareIntro}
             </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Button asChild className="h-11 rounded-lg">
-                <LocalizedLink href="/products">
-                  {ui.browse}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </LocalizedLink>
-              </Button>
-              <Button asChild variant="outline" className="h-11 rounded-lg bg-background">
-                <LocalizedLink href="/faq">{ui.faq}</LocalizedLink>
-              </Button>
-              <Button asChild variant="outline" className="h-11 rounded-lg bg-background">
-                <LocalizedLink href="/contact">{ui.contact}</LocalizedLink>
-              </Button>
-            </div>
-          </div>
+            <ul className="mt-6 space-y-3 border-t border-border pt-5">
+              {content.prepare.map((item) => (
+                <li key={item} className="flex gap-3 text-sm leading-6 text-foreground/80">
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/[0.12] text-accent ring-1 ring-inset ring-accent/20">
+                    <Check className="h-3 w-3" aria-hidden="true" />
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Surface>
+
+          <Surface sheen className="p-6 md:p-8">
+            <IconTile icon={RefreshCw} size="lg" tone="neutral" className="mb-5" />
+            <h2 className="font-display text-xl font-bold tracking-tight">
+              {content.afterTitle}
+            </h2>
+            <p className="mt-2.5 text-[15px] leading-7 text-muted-foreground">
+              {content.afterIntro}
+            </p>
+            <ul className="mt-6 space-y-3 border-t border-border pt-5">
+              {content.after.map((item) => (
+                <li key={item} className="flex gap-3 text-sm leading-6 text-muted-foreground">
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-accent ring-1 ring-inset ring-border">
+                    <Check className="h-3 w-3" aria-hidden="true" />
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Surface>
         </div>
-      </section>
+
+        <Surface tone="accent" sheen className="mt-6 p-6 md:p-8">
+          <h2 className="font-display text-xl font-bold tracking-tight md:text-2xl">
+            {ui.ctaTitle}
+          </h2>
+          <p className="mt-2.5 max-w-2xl text-[15px] leading-7 text-muted-foreground">
+            {ui.ctaBody}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button
+              asChild
+              className="h-11 rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+            >
+              <LocalizedLink href="/products">
+                {ui.browse}
+                <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+              </LocalizedLink>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 rounded-lg bg-background shadow-card"
+            >
+              <LocalizedLink href="/faq">{ui.faq}</LocalizedLink>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 rounded-lg bg-background shadow-card"
+            >
+              <LocalizedLink href="/contact">{ui.contact}</LocalizedLink>
+            </Button>
+          </div>
+        </Surface>
+      </Section>
     </Layout>
   );
 }

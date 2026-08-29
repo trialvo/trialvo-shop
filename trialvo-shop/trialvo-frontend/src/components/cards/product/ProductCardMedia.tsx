@@ -243,6 +243,14 @@ export function ProductCardMedia({
         aria-hidden="true"
       />
 
+      {/* Keeps the unchipped overlay labels legible over a light photo. */}
+      {badges.length > 0 ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-black/45 to-transparent"
+          aria-hidden="true"
+        />
+      ) : null}
+
       {canSlide ? (
         <button
           type="button"

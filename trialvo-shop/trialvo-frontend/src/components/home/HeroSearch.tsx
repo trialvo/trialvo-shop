@@ -28,8 +28,12 @@ export function HeroSearch({
       onSubmit={onSubmit}
       role="search"
       className={cn(
-        "flex w-full max-w-xl items-center gap-2 rounded-lg bg-white p-1.5 shadow-lg shadow-black/20",
-        "ring-1 ring-black/5",
+        "flex w-full max-w-xl items-center gap-2 rounded-xl bg-white p-2",
+        // Deep drop plus a bright rim makes the field read as the focal
+        // control of the hero rather than a plain input on a photo.
+        "shadow-[0_1px_2px_rgba(0,0,0,0.08),0_18px_44px_-16px_rgba(0,0,0,0.55)]",
+        "ring-1 ring-white/25",
+        "transition-shadow focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.08),0_22px_52px_-16px_rgba(0,0,0,0.6)]",
         className,
       )}
       style={{ colorScheme: "light" }}
@@ -50,7 +54,7 @@ export function HeroSearch({
             language === "bn" ? "ফ্যাশন, গিফট, টেক…" : "Fashion, gift, tech…"
           }
           className={cn(
-            "h-10 w-full min-w-0 bg-transparent text-sm outline-none",
+            "h-11 w-full min-w-0 bg-transparent text-[15px] outline-none",
             "text-zinc-900 caret-zinc-900",
             "placeholder:text-zinc-400",
             "[&::-webkit-search-cancel-button]:appearance-none",
@@ -62,7 +66,7 @@ export function HeroSearch({
       </div>
       <Button
         type="submit"
-        className="h-10 shrink-0 rounded-md bg-accent px-5 font-semibold text-accent-foreground hover:bg-accent/90"
+        className="h-11 shrink-0 rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/90"
       >
         {language === "bn" ? "খুঁজুন" : "Search"}
       </Button>

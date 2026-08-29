@@ -4,6 +4,7 @@ import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { localize } from "@/lib/localize";
+import { IconTile, Section, SectionIntro, Surface } from "@/components/section";
 import type { LocalizedString } from "@/types/marketplace";
 
 const INCLUDED: LocalizedString[] = [
@@ -76,89 +77,106 @@ export function WhatsIncluded() {
   const { language } = useLanguage();
 
   return (
-    <section className="border-t border-border bg-muted/25 py-14 md:py-20" aria-labelledby="included-title">
-      <div className="container-custom">
-        <div className="mb-10 max-w-3xl">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            {language === "bn" ? "প্যাকেজে যা থাকে" : "In every package"}
-          </p>
-          <h2
-            id="included-title"
-            className="font-display text-2xl font-bold tracking-tight md:text-3xl"
-          >
-            {language === "bn"
-              ? "প্রতিটি প্রোডাক্টে কী কী পাচ্ছেন — এবং কী পাচ্ছেন না"
-              : "Exactly what you get with every product — and what you do not"}
-          </h2>
-          <p className="mt-3 text-[15px] leading-7 text-muted-foreground">
-            {language === "bn"
-              ? "কেনার পর অবাক হওয়ার কিছু থাকা উচিত নয়। তাই অন্তর্ভুক্ত ও অন্তর্ভুক্ত নয় — দুটোই আগে থেকে পরিষ্কার করে দিচ্ছি।"
-              : "Nothing after purchase should be a surprise, so both the inclusions and the exclusions are stated up front."}
-          </p>
-        </div>
+    <Section labelledBy="included-title" tone="muted" divider="both">
+      <SectionIntro
+        id="included-title"
+        eyebrow={language === "bn" ? "প্যাকেজে যা থাকে" : "In every package"}
+        title={
+          language === "bn"
+            ? "প্রতিটি প্রোডাক্টে কী কী পাচ্ছেন — এবং কী পাচ্ছেন না"
+            : "Exactly what you get with every product — and what you do not"
+        }
+        lead={
+          language === "bn"
+            ? "কেনার পর অবাক হওয়ার কিছু থাকা উচিত নয়। তাই অন্তর্ভুক্ত ও অন্তর্ভুক্ত নয় — দুটোই আগে থেকে পরিষ্কার করে দিচ্ছি।"
+            : "Nothing after purchase should be a surprise, so both the inclusions and the exclusions are stated up front."
+        }
+      />
 
-        <div className="grid gap-6 lg:grid-cols-5 lg:gap-8">
-          <motion.div
-            className="rounded-2xl border border-border bg-card p-6 md:p-8 lg:col-span-3"
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.35 }}
-          >
-            <h3 className="font-display text-lg font-bold tracking-tight">
-              {language === "bn" ? "অন্তর্ভুক্ত" : "Included"}
-            </h3>
-            <ul className="mt-5 space-y-3">
+      <div className="grid gap-5 lg:grid-cols-5 lg:gap-6">
+        <motion.div
+          className="lg:col-span-3"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.35 }}
+        >
+          {/* Accent-tinted so the inclusion list is the visual winner of the pair. */}
+          <Surface sheen className="h-full overflow-hidden p-6 md:p-8">
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent"
+            />
+            <div className="flex items-center gap-3">
+              <IconTile icon={Check} size="sm" />
+              <h3 className="font-display text-lg font-bold tracking-tight">
+                {language === "bn" ? "অন্তর্ভুক্ত" : "Included"}
+              </h3>
+            </div>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {INCLUDED.map((item) => (
-                <li key={item.en} className="flex gap-3 text-sm leading-6 text-foreground/80">
-                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/12 text-accent">
+                <li
+                  key={item.en}
+                  className="flex gap-3 text-sm leading-6 text-foreground/80"
+                >
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/[0.12] text-accent ring-1 ring-inset ring-accent/20">
                     <Check className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
                   <span>{localize(item, language)}</span>
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </Surface>
+        </motion.div>
 
-          <motion.div
-            className="rounded-2xl border border-border bg-card p-6 md:p-8 lg:col-span-2"
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.05, duration: 0.35 }}
-          >
-            <h3 className="font-display text-lg font-bold tracking-tight">
-              {language === "bn" ? "অন্তর্ভুক্ত নয়" : "Not included"}
-            </h3>
-            <ul className="mt-5 space-y-3">
+        <motion.div
+          className="lg:col-span-2"
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.05, duration: 0.35 }}
+        >
+          <Surface sheen className="flex h-full flex-col p-6 md:p-8">
+            <div className="flex items-center gap-3">
+              <IconTile icon={X} size="sm" tone="neutral" />
+              <h3 className="font-display text-lg font-bold tracking-tight">
+                {language === "bn" ? "অন্তর্ভুক্ত নয়" : "Not included"}
+              </h3>
+            </div>
+            <ul className="mt-6 space-y-3">
               {NOT_INCLUDED.map((item) => (
-                <li key={item.en} className="flex gap-3 text-sm leading-6 text-muted-foreground">
-                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <li
+                  key={item.en}
+                  className="flex gap-3 text-sm leading-6 text-muted-foreground"
+                >
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground ring-1 ring-inset ring-border">
                     <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </span>
                   <span>{localize(item, language)}</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-[13px] leading-6 text-muted-foreground">
-              {language === "bn"
-                ? "এগুলোর কোনোটি দরকার হলে আমরা আলাদা সেবা হিসেবে করে দিতে পারি।"
-                : "If you need any of these, we can take them on as a separate service."}
-            </p>
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="mt-4 h-9 rounded-lg bg-background"
-            >
-              <LocalizedLink href="/contact">
-                {language === "bn" ? "কোটেশন নিন" : "Get a quote"}
-              </LocalizedLink>
-            </Button>
-          </motion.div>
-        </div>
+            <div className="mt-auto pt-6">
+              <p className="text-[13px] leading-6 text-muted-foreground">
+                {language === "bn"
+                  ? "এগুলোর কোনোটি দরকার হলে আমরা আলাদা সেবা হিসেবে করে দিতে পারি।"
+                  : "If you need any of these, we can take them on as a separate service."}
+              </p>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="mt-4 h-10 rounded-lg bg-background shadow-card"
+              >
+                <LocalizedLink href="/contact">
+                  {language === "bn" ? "কোটেশন নিন" : "Get a quote"}
+                </LocalizedLink>
+              </Button>
+            </div>
+          </Surface>
+        </motion.div>
       </div>
-    </section>
+    </Section>
   );
 }
 

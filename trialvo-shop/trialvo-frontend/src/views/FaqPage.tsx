@@ -1,10 +1,18 @@
 "use client";
 
-import { ChevronRight, LifeBuoy, Mail, MessageCircleQuestion, Phone } from "lucide-react";
+import {
+  ChevronRight,
+  LifeBuoy,
+  Mail,
+  MessageCircleQuestion,
+  Phone,
+  ScrollText,
+} from "lucide-react";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
 import Layout from "@/components/layout/Layout";
 import FaqAccordion from "@/components/faq/FaqAccordion";
 import { Button } from "@/components/ui/button";
+import { Eyebrow, IconTile, Section, SectionIntro, Surface } from "@/components/section";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BRAND } from "@/lib/brand";
 import { faqGroups } from "@/lib/content/faq";
@@ -50,132 +58,137 @@ export default function FaqPage() {
 
   return (
     <Layout>
-      <section className="border-b border-border bg-muted/30">
-        <div className="container-custom py-10 md:py-14">
-          <nav aria-label="Breadcrumb" className="mb-5">
-            <ol className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <li>
-                <LocalizedLink href="/" className="hover:text-foreground">
-                  {ui.home}
-                </LocalizedLink>
-              </li>
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-              <li aria-current="page" className="font-medium text-foreground">
-                {ui.title}
-              </li>
-            </ol>
-          </nav>
+      <Section tone="muted" pattern="mesh" size="sm" divider="bottom">
+        <nav aria-label="Breadcrumb" className="mb-6">
+          <ol className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <li>
+              <LocalizedLink href="/" className="hover:text-foreground">
+                {ui.home}
+              </LocalizedLink>
+            </li>
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            <li aria-current="page" className="font-medium text-foreground">
+              {ui.title}
+            </li>
+          </ol>
+        </nav>
 
-          <p className="mb-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            <MessageCircleQuestion className="h-4 w-4" aria-hidden="true" />
-            {ui.eyebrow}
-          </p>
-          <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-            {ui.title}
-          </h1>
-          <p className="mt-4 max-w-3xl text-[15px] leading-7 text-muted-foreground">
-            {ui.lead}
-          </p>
-
-          <nav aria-label={ui.jump} className="mt-7">
-            <ul className="flex flex-wrap gap-2">
-              {groups.map((group) => (
-                <li key={group.id}>
-                  <a
-                    href={`#${group.id}`}
-                    className="inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-accent/40 hover:text-foreground"
-                  >
-                    {group.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+          <IconTile icon={MessageCircleQuestion} size="lg" />
+          <div className="min-w-0">
+            <Eyebrow className="mb-4">{ui.eyebrow}</Eyebrow>
+            <h1 className="font-display text-[2rem] font-bold leading-[1.12] tracking-tight sm:text-[2.25rem] md:text-[2.75rem]">
+              {ui.title}
+            </h1>
+            <p className="mt-4 max-w-[68ch] text-[15px] leading-7 text-muted-foreground md:text-base md:leading-[1.75]">
+              {ui.lead}
+            </p>
+          </div>
         </div>
-      </section>
 
-      <section className="bg-background py-12 md:py-16">
-        <div className="container-custom max-w-4xl">
+        <nav aria-label={ui.jump} className="mt-8">
+          <ul className="flex flex-wrap gap-x-6 gap-y-2">
+            {groups.map((group) => (
+              <li key={group.id}>
+                <a
+                  href={`#${group.id}`}
+                  className="text-xs font-medium text-muted-foreground underline decoration-border decoration-1 underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent/50"
+                >
+                  {group.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </Section>
+
+      <Section containerClassName="max-w-4xl">
+        <div className="space-y-14 md:space-y-20">
           {groups.map((group) => (
-            <div key={group.id} id={group.id} className="scroll-mt-28 pb-12 last:pb-0">
-              <h2 className="font-display text-xl font-bold tracking-tight md:text-2xl">
-                {group.title}
-              </h2>
-              <p className="mb-5 mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                {group.description}
-              </p>
+            <div key={group.id} id={group.id} className="scroll-mt-28">
+              <SectionIntro
+                className="mb-6 md:mb-7"
+                title={group.title}
+                lead={group.description}
+              />
               <FaqAccordion entries={group.entries} />
             </div>
           ))}
         </div>
-      </section>
+      </Section>
 
-      <section className="border-t border-border bg-muted/30 py-12 md:py-16">
-        <div className="container-custom">
-          <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
-            <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
-              <span className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-accent">
-                <LifeBuoy className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <h2 className="font-display text-xl font-bold tracking-tight">
-                {ui.stillTitle}
-              </h2>
-              <p className="mt-2 text-[15px] leading-7 text-muted-foreground">
-                {ui.stillBody}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Button asChild size="sm" className="h-10 rounded-lg">
-                  <LocalizedLink href="/contact">{ui.contact}</LocalizedLink>
-                </Button>
-                <Button asChild size="sm" variant="outline" className="h-10 rounded-lg bg-background">
-                  <LocalizedLink href="/products">{ui.browse}</LocalizedLink>
-                </Button>
-              </div>
-              <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                <a
-                  href={`mailto:${BRAND.contactEmail}`}
-                  className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Mail className="h-4 w-4 text-accent" aria-hidden="true" />
-                  {BRAND.contactEmail}
-                </a>
-                <a
-                  href={BRAND.contactPhoneHref}
-                  className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Phone className="h-4 w-4 text-accent" aria-hidden="true" />
-                  {BRAND.contactPhone}
-                </a>
-              </div>
+      <Section tone="muted" pattern="dots" divider="top">
+        <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+          <Surface sheen className="p-6 md:p-8">
+            <IconTile icon={LifeBuoy} size="lg" className="mb-5" />
+            <h2 className="font-display text-xl font-bold tracking-tight">
+              {ui.stillTitle}
+            </h2>
+            <p className="mt-2.5 text-[15px] leading-7 text-muted-foreground">
+              {ui.stillBody}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button
+                asChild
+                size="sm"
+                className="h-10 rounded-lg bg-accent px-5 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+              >
+                <LocalizedLink href="/contact">{ui.contact}</LocalizedLink>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="h-10 rounded-lg bg-background shadow-card"
+              >
+                <LocalizedLink href="/products">{ui.browse}</LocalizedLink>
+              </Button>
             </div>
+            <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-sm">
+              <a
+                href={`mailto:${BRAND.contactEmail}`}
+                className="inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-accent-strong"
+              >
+                <Mail className="h-4 w-4 text-accent" aria-hidden="true" />
+                {BRAND.contactEmail}
+              </a>
+              <a
+                href={BRAND.contactPhoneHref}
+                className="inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-accent-strong"
+              >
+                <Phone className="h-4 w-4 text-accent" aria-hidden="true" />
+                {BRAND.contactPhone}
+              </a>
+            </div>
+          </Surface>
 
-            <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
-              <h2 className="font-display text-xl font-bold tracking-tight">
-                {ui.policyTitle}
-              </h2>
-              <p className="mt-2 text-[15px] leading-7 text-muted-foreground">
-                {ui.policyBody}
-              </p>
-              <ul className="mt-5 space-y-2.5">
-                {policies.map((policy) => (
-                  <li key={policy.key}>
-                    <LocalizedLink
-                      href={policy.path}
-                      className="group inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-accent"
-                    >
-                      <ChevronRight
-                        className="h-4 w-4 text-accent transition-transform group-hover:translate-x-0.5"
-                        aria-hidden="true"
-                      />
-                      {policy.title}
-                    </LocalizedLink>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <Surface sheen className="p-6 md:p-8">
+            <IconTile icon={ScrollText} size="lg" tone="neutral" className="mb-5" />
+            <h2 className="font-display text-xl font-bold tracking-tight">
+              {ui.policyTitle}
+            </h2>
+            <p className="mt-2.5 text-[15px] leading-7 text-muted-foreground">
+              {ui.policyBody}
+            </p>
+            <ul className="mt-5 space-y-1">
+              {policies.map((policy) => (
+                <li key={policy.key}>
+                  <LocalizedLink
+                    href={policy.path}
+                    className="group -mx-3 flex items-center justify-between gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-accent-strong"
+                  >
+                    {policy.title}
+                    <ChevronRight
+                      className="h-4 w-4 shrink-0 text-accent transition-transform group-hover:translate-x-0.5"
+                      aria-hidden="true"
+                    />
+                  </LocalizedLink>
+                </li>
+              ))}
+            </ul>
+          </Surface>
         </div>
-      </section>
+      </Section>
     </Layout>
   );
 }

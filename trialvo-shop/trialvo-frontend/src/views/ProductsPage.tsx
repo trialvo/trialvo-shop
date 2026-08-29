@@ -10,6 +10,7 @@ import {
   CatalogPageHeader,
   CatalogSearchBar,
 } from "@/components/catalog";
+import { Section } from "@/components/section";
 
 /**
  * Marketplace catalog — API products and categories, search via `?q=`,
@@ -25,39 +26,39 @@ const ProductsPage = () => {
 
   return (
     <Layout>
-      <section className="border-b border-border bg-gradient-to-b from-muted/50 to-background py-10 md:py-14">
-        <div className="container-custom">
-          <CatalogPageHeader
-            title={
-              language === "bn"
-                ? "রেডিমেড ইকমার্স ওয়েবসাইট ও ডিজিটাল প্রোডাক্ট"
-                : "Ready-made ecommerce websites and digital products"
-            }
-            description={
-              language === "bn"
-                ? "প্রতিটি প্রোডাক্টে গ্রাহকমুখী শপ, সম্পূর্ণ অ্যাডমিন প্যানেল ও পূর্ণ সোর্স কোড থাকে—এককালীন পেমেন্ট, আজীবন লাইসেন্স, আজীবন সাপোর্ট ও আপডেট। কেনার আগে লাইভ ট্রায়াল চালিয়ে দেখুন, তারপর সিদ্ধান্ত নিন।"
-                : "Every product ships with a customer-facing storefront, a complete admin panel, and the full source code — one-time payment, lifetime license, lifetime support and updates. Run a live trial before you decide."
-            }
-          />
-          <Suspense
-            fallback={<div className="h-[60px] max-w-2xl rounded-xl border border-border bg-card" />}
-          >
-            <CatalogSearchBar className="max-w-2xl" />
-          </Suspense>
-        </div>
-      </section>
+      <Section
+        pattern="mesh"
+        divider="bottom"
+        className="py-12 md:py-16"
+      >
+        <CatalogPageHeader
+          title={
+            language === "bn"
+              ? "রেডিমেড ইকমার্স ওয়েবসাইট ও ডিজিটাল প্রোডাক্ট"
+              : "Ready-made ecommerce websites and digital products"
+          }
+          description={
+            language === "bn"
+              ? "প্রতিটি প্রোডাক্টে গ্রাহকমুখী শপ, সম্পূর্ণ অ্যাডমিন প্যানেল ও পূর্ণ সোর্স কোড থাকে—এককালীন পেমেন্ট, আজীবন লাইসেন্স, আজীবন সাপোর্ট ও আপডেট। কেনার আগে লাইভ ট্রায়াল চালিয়ে দেখুন, তারপর সিদ্ধান্ত নিন।"
+              : "Every product ships with a customer-facing storefront, a complete admin panel, and the full source code — one-time payment, lifetime license, lifetime support and updates. Run a live trial before you decide."
+          }
+        />
+        <Suspense
+          fallback={
+            <div className="h-[64px] max-w-2xl rounded-xl border border-border bg-card shadow-card" />
+          }
+        >
+          <CatalogSearchBar className="max-w-2xl" />
+        </Suspense>
+      </Section>
 
-      <section className="py-8 md:py-10">
-        <div className="container-custom">
-          <Suspense
-            fallback={
-              <ProductGrid products={[]} isLoading columns="catalog" />
-            }
-          >
-            <CatalogBrowser />
-          </Suspense>
-        </div>
-      </section>
+      <Section size="sm" className="py-8 md:py-12">
+        <Suspense
+          fallback={<ProductGrid products={[]} isLoading columns="catalog" />}
+        >
+          <CatalogBrowser />
+        </Suspense>
+      </Section>
 
       <CatalogBuyingGuide />
     </Layout>

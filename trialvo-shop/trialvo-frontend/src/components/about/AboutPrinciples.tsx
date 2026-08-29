@@ -1,4 +1,5 @@
 import { localize } from "@/lib/localize";
+import { IconTile, Section, SectionIntro, Surface } from "@/components/section";
 import type { AboutPrincipleItem } from "@/types/about";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 
@@ -17,39 +18,40 @@ export function AboutPrinciples({
   supporting,
 }: Readonly<AboutPrinciplesProps>) {
   return (
-    <section className="py-12 md:py-16" aria-labelledby="about-principles-title">
-      <div className="container-custom">
-        <div className="mb-8 max-w-2xl">
-          <h2
-            id="about-principles-title"
-            className="font-display text-2xl font-bold tracking-tight md:text-3xl"
-          >
-            {title}
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground md:text-base">
-            {supporting}
-          </p>
-        </div>
+    <Section labelledBy="about-principles-title" divider="top">
+      <SectionIntro
+        id="about-principles-title"
+        className="mb-8 md:mb-10"
+        title={title}
+        lead={supporting}
+      />
 
-        <ol className="grid gap-6 md:grid-cols-3 md:gap-8">
-          {principles.map((principle) => (
-            <li key={principle.id} className="flex gap-4 md:block">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground md:mb-4">
-                {principle.step}
-              </span>
-              <div>
-                <h3 className="text-base font-semibold text-foreground">
-                  {localize(principle.title, language)}
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                  {localize(principle.description, language)}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
+      <ol className="relative grid gap-4 md:grid-cols-3">
+        {/* Rail tying the steps together as one sequence; offset matches the
+            icon centre for a p-6 card with a medium IconTile. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-[2.875rem] hidden h-px bg-gradient-to-r from-transparent via-border to-transparent md:block"
+        />
+        {principles.map((principle) => (
+          <li key={principle.id} className="relative">
+            <Surface sheen className="h-full p-6">
+              <IconTile className="mb-4">
+                <span className="font-display text-sm font-bold tabular-nums">
+                  {principle.step}
+                </span>
+              </IconTile>
+              <h3 className="font-display text-base font-bold leading-6 tracking-tight text-foreground">
+                {localize(principle.title, language)}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {localize(principle.description, language)}
+              </p>
+            </Surface>
+          </li>
+        ))}
+      </ol>
+    </Section>
   );
 }
 

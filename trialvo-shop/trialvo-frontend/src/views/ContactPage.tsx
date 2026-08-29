@@ -9,6 +9,7 @@ import {
   ContactHero,
   ContactInfo,
 } from "@/components/contact";
+import { Section } from "@/components/section";
 import { CONTACT_PAGE_CONTENT } from "@/lib/contactContent";
 import { localize } from "@/lib/localize";
 import { useCreateContactMessage } from "@/hooks/useContactMessages";
@@ -37,28 +38,26 @@ export default function ContactPage() {
     <Layout>
       <ContactHero content={content.hero} language={language} />
 
-      <section className="bg-muted/20 py-10 md:py-14">
-        <div className="container-custom">
-          <div className="grid gap-6 lg:grid-cols-5 lg:gap-8">
-            <div className="lg:col-span-3">
-              <ContactForm
-                labels={content.form}
-                language={language}
-                isSubmitting={createMessage.isPending}
-                onSubmit={handleSubmit}
-              />
-            </div>
-            <div className="lg:col-span-2">
-              <ContactInfo
-                info={content.info}
-                channels={content.channels}
-                language={language}
-                className="lg:sticky lg:top-24"
-              />
-            </div>
+      <Section tone="muted" size="sm" className="py-10 md:py-14">
+        <div className="grid gap-6 lg:grid-cols-5 lg:gap-8">
+          <div className="lg:col-span-3">
+            <ContactForm
+              labels={content.form}
+              language={language}
+              isSubmitting={createMessage.isPending}
+              onSubmit={handleSubmit}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <ContactInfo
+              info={content.info}
+              channels={content.channels}
+              language={language}
+              className="lg:sticky lg:top-24"
+            />
           </div>
         </div>
-      </section>
+      </Section>
 
       <ContactGuidance language={language} />
     </Layout>
