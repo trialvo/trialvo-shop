@@ -1,21 +1,6 @@
-import type { Metadata } from "next";
-import PrivacyPage from "@/views/PrivacyPage";
-import { pageSeo } from "@/lib/seo/copy";
-import { buildPageMetadata, resolveLocale } from "@/lib/seo/metadata";
+import { createLegalRoute } from "@/lib/seo/legalRoute";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ lang: string }>;
-}): Promise<Metadata> {
-  const locale = resolveLocale((await params).lang);
-  return buildPageMetadata({
-    locale,
-    path: "/privacy",
-    seo: pageSeo("privacy", locale),
-  });
-}
+const route = createLegalRoute("privacy");
 
-export default function Page() {
-  return <PrivacyPage />;
-}
+export const generateMetadata = route.generateMetadata;
+export default route.Page;

@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 import { CheckCircle, Mail, Download, FileText, Server, Home, Loader2, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
-import SEOHead from '@/components/seo/SEOHead';
 import { useProduct } from '@/hooks/useProducts';
 import { useOrder } from '@/hooks/useOrders';
 import { quoteProductPrice, shopDisplayPrice } from '@/lib/productPricing';
@@ -51,12 +50,6 @@ const OrderSuccessPage: React.FC = () => {
 
   return (
     <Layout>
-      <SEOHead
-        title={t('orderSuccess.title')}
-        description={t('orderSuccess.message')}
-        noindex
-      />
-
       <section className="section-padding">
         <div className="container-custom max-w-2xl">
           <motion.div

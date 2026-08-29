@@ -5,7 +5,6 @@ import LocalizedLink from '@/components/i18n/LocalizedLink';
 import { useSearchParams } from 'next/navigation';
 import { Mail, Home, CheckCircle2 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
-import SEOHead from '@/components/seo/SEOHead';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -23,12 +22,6 @@ const TrialRequestSubmittedPage: React.FC = () => {
 
   return (
     <Layout>
-      <SEOHead
-        title={t('ট্রায়াল অনুরোধ পাঠানো হয়েছে', 'Trial request submitted')}
-        description={t('ইমেইল চেক করুন', 'Check your email')}
-        noindex
-      />
-
       <section className="section-padding">
         <div className="container-custom max-w-lg text-center space-y-6">
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">

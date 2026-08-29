@@ -8,7 +8,6 @@ import { motion } from 'framer-motion';
 import { Home, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
-import SEOHead from '@/components/seo/SEOHead';
 import { Button } from '@/components/ui/button';
 
 const NotFound = () => {
@@ -21,12 +20,6 @@ const NotFound = () => {
 
   return (
     <Layout>
-      <SEOHead
-        title={language === 'bn' ? 'পেজ পাওয়া যায়নি' : 'Page Not Found'}
-        description={language === 'bn' ? 'ওহ! আপনি যে পেজটি খুঁজছেন তা পাওয়া যায়নি।' : 'Oops! The page you are looking for was not found.'}
-        noindex={true}
-      />
-
       <section className="relative min-h-[calc(100vh-12rem)] flex items-center justify-center overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:60px_60px] dark:bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)]" />

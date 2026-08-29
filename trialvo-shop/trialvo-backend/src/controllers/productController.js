@@ -7,6 +7,7 @@ const {
     linkMediaToProduct,
 } = require('../services/mediaCleanup');
 const { clampDiscountPercent } = require('../lib/productPricing');
+const { notifySeoChangeAsync } = require('../services/seoNotify');
 
 // Helper: build parameterized query with $1, $2, ... placeholders
 function pgParams(startIdx, count) {
@@ -117,6 +118,7 @@ async function createProduct(req, res, next) {
         const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
         // Link any freshly uploaded /uploads assets to this product for later cleanup.
         await linkMediaToProduct(id, collectProductMediaUrls(rows[0]));
+        if (rows[0].is_active) notifySeoChangeAsync({ slugs: [rows[0].slug] });
         res.status(201).json(rows[0]);
     } catch (error) {
         next(error);
@@ -167,6 +169,10 @@ async function updateProduct(req, res, next) {
         const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
         await cleanupOrphanedProductMedia(before.rows[0], rows[0]);
         await linkMediaToProduct(id, collectProductMediaUrls(rows[0]));
+        // A slug change leaves the old URL stale, so refresh both.
+        notifySeoChangeAsync({
+            slugs: [...new Set([before.rows[0].slug, rows[0].slug])],
+        });
         res.json(rows[0]);
     } catch (error) {
         next(error);
@@ -184,6 +190,7 @@ async function deleteProduct(req, res, next) {
         await pool.query('DELETE FROM products WHERE id = $1', [id]);
         // Best-effort: remove uploaded files that belonged to this product.
         await cleanupAllProductMedia(rows[0]);
+        notifySeoChangeAsync({ slugs: [rows[0].slug], paths: ['/products'] });
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         next(error);
@@ -240,6 +247,13 @@ async function bulkToggleProducts(req, res, next) {
 
         const placeholders = ids.map((_, i) => `$${i + 2}`).join(',');
         await pool.query(`UPDATE products SET ${field} = $1 WHERE id IN (${placeholders})`, [value ? 1 : 0, ...ids]);
+
+        const { rows: changed } = await pool.query(
+            `SELECT slug FROM products WHERE id IN (${ids.map((_, i) => `$${i + 1}`).join(',')})`,
+            ids
+        );
+        notifySeoChangeAsync({ slugs: changed.map((row) => row.slug), paths: ['/products'] });
+
         res.json({ message: `${ids.length} products updated` });
     } catch (error) {
         next(error);

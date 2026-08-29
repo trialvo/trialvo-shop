@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import ContactPage from "@/views/ContactPage";
 import JsonLd from "@/components/seo/JsonLd";
 import { pageSeo } from "@/lib/seo/copy";
-import { breadcrumbJsonLd } from "@/lib/seo/jsonld";
+import {
+  breadcrumbJsonLd,
+  graphJsonLd,
+  organizationJsonLd,
+  webPageJsonLd,
+} from "@/lib/seo/jsonld";
 import { buildPageMetadata, resolveLocale } from "@/lib/seo/metadata";
 
 export async function generateMetadata({
@@ -24,14 +29,26 @@ export default async function Page({
   params: Promise<{ lang: string }>;
 }) {
   const locale = resolveLocale((await params).lang);
+  const seo = pageSeo("contact", locale);
+
   return (
     <>
       <JsonLd
-        id="seo-breadcrumb-contact"
-        data={breadcrumbJsonLd(locale, [
-          { name: locale === "bn" ? "হোম" : "Home", path: "/" },
-          { name: locale === "bn" ? "যোগাযোগ" : "Contact", path: "/contact" },
-        ])}
+        id="seo-contact"
+        data={graphJsonLd(
+          webPageJsonLd({
+            locale,
+            path: "/contact",
+            name: seo.title,
+            description: seo.description,
+            type: "ContactPage",
+          }),
+          organizationJsonLd(locale),
+          breadcrumbJsonLd(locale, [
+            { name: locale === "bn" ? "হোম" : "Home", path: "/" },
+            { name: locale === "bn" ? "যোগাযোগ" : "Contact", path: "/contact" },
+          ]),
+        )}
       />
       <ContactPage />
     </>

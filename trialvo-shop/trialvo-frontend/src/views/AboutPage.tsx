@@ -3,12 +3,12 @@
 import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Layout from "@/components/layout/Layout";
-import SEOHead from "@/components/seo/SEOHead";
 import {
   AboutCta,
   AboutHero,
   AboutHighlights,
   AboutPrinciples,
+  AboutServices,
   AboutStory,
   AboutValues,
 } from "@/components/about";
@@ -23,7 +23,6 @@ import { useProducts } from "@/hooks/useProducts";
 export default function AboutPage() {
   const { language } = useLanguage();
   const content = ABOUT_PAGE_CONTENT;
-  const seo = content.seo[language];
 
   const { data: products, isLoading: productsLoading } = useProducts();
 
@@ -32,37 +31,8 @@ export default function AboutPage() {
     [content.highlights, language, products],
   );
 
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: language === "bn" ? "হোম" : "Home",
-        item: typeof window !== "undefined" ? `${window.location.origin}/` : "/",
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: language === "bn" ? "আমাদের সম্পর্কে" : "About",
-        item:
-          typeof window !== "undefined"
-            ? `${window.location.origin}/about`
-            : "/about",
-      },
-    ],
-  } as const;
-
   return (
     <Layout>
-      <SEOHead
-        title={seo.title}
-        description={seo.description}
-        keywords={seo.keywords}
-        structuredData={breadcrumbSchema}
-      />
-
       <AboutHero content={content.hero} language={language} />
       <AboutHighlights
         items={highlights}
@@ -80,6 +50,7 @@ export default function AboutPage() {
             : "Four simple principles that guide how we work."
         }
       />
+      <AboutServices language={language} />
       <AboutPrinciples
         principles={content.principles}
         language={language}

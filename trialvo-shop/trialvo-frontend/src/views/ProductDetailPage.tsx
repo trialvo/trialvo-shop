@@ -8,7 +8,6 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Check, ShoppingCart, Play, Star, Award, Clock, Package, Headphones, FileText, Video, Loader2, FlaskConical } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
-import SEOHead from '@/components/seo/SEOHead';
 import RequestTrialModal from '@/components/trial/RequestTrialModal';
 import ProductCard from '@/components/cards/ProductCard';
 import FAQ from '@/components/sections/FAQ';
@@ -20,7 +19,7 @@ import { quoteProductPrice, shopDisplayPrice } from '@/lib/productPricing';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import type { Product } from '@/data/products';
+import type { Product } from '@/types/product';
 
 /** Public shop browse URL from deploy_config (trials still gate admin). */
 function resolveShopDemoUrl(product: Product): string {
@@ -70,48 +69,6 @@ const ProductDetailPage: React.FC = () => {
 
   const quote = quoteProductPrice(product);
   const display = shopDisplayPrice(quote, language, t('common.bdt'));
-  const productSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name[language],
-    description: product.shortDescription[language],
-    image: resolveMediaUrl(product.thumbnail),
-    offers: {
-      '@type': 'Offer',
-      price: display.saleRaw,
-      priceCurrency: display.currency,
-      availability: 'https://schema.org/InStock',
-    },
-    brand: {
-      '@type': 'Organization',
-      name: 'Trialvo Shop',
-    },
-  };
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: language === 'bn' ? 'হোম' : 'Home',
-        item: typeof window !== 'undefined' ? window.location.origin : '',
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: t('nav.products'),
-        item: typeof window !== 'undefined' ? `${window.location.origin}/products` : '',
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: product.name[language],
-      },
-    ],
-  };
-
   const highlights = [
     { icon: Headphones, label: language === 'bn' ? 'আজীবন সাপোর্ট' : 'Lifetime support' },
     { icon: FileText, label: language === 'bn' ? 'সম্পূর্ণ ডকুমেন্টেশন' : 'Full Documentation' },
@@ -121,15 +78,6 @@ const ProductDetailPage: React.FC = () => {
 
   return (
     <Layout>
-      <SEOHead
-        title={product.seo.title[language]}
-        description={product.seo.description[language]}
-        keywords={product.seo.keywords[language]}
-        ogImage={resolveMediaUrl(product.thumbnail)}
-        ogType="product"
-        structuredData={productSchema}
-      />
-
       <article className="section-padding" itemScope itemType="https://schema.org/Product">
         <div className="container-custom">
           {/* Breadcrumb */}
@@ -370,9 +318,6 @@ const ProductDetailPage: React.FC = () => {
           )}
         </div>
       </article>
-
-      {/* Structured Data */}
-      <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
 
       {canRequestTrial && (
         <RequestTrialModal

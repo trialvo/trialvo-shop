@@ -20,6 +20,8 @@ interface ConfirmDialogProps {
   /** When set, the user must type this exact word before confirm is enabled (§12.3). */
   typedConfirmWord?: string;
   busy?: boolean;
+  /** Extra body content rendered between the header and the confirm controls. */
+  children?: React.ReactNode;
 }
 
 /**
@@ -31,7 +33,7 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({
   open, onOpenChange, title, description,
   confirmLabel = 'Confirm', cancelLabel = 'Cancel',
-  onConfirm, destructive, typedConfirmWord, busy,
+  onConfirm, destructive, typedConfirmWord, busy, children,
 }: ConfirmDialogProps) {
   const [typed, setTyped] = useState('');
 
@@ -52,6 +54,8 @@ export function ConfirmDialog({
           </DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
+
+        {children ? <div className="space-y-3 py-1 text-sm">{children}</div> : null}
 
         {typedConfirmWord && (
           <div className="space-y-1.5 py-1">

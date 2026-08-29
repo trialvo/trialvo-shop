@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { Product } from "@/data/products";
+import type { Product } from "@/types/product";
 import type { ProductApiRow } from "@/types/marketplace";
 
 function parseJsonField<T>(value: T | string | null | undefined, fallback: T): T {

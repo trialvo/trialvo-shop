@@ -1,4 +1,4 @@
-import type { Product } from "@/data/products";
+import type { Product } from "@/types/product";
 import {
   getProductBadges,
   type ProductBadge,

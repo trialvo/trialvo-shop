@@ -1,4 +1,4 @@
-import type { Product } from "@/data/products";
+import type { Product } from "@/types/product";
 import type { LocalizedString, MarketplaceLanguage } from "@/types/marketplace";
 
 export type GigCardMediaProps = {

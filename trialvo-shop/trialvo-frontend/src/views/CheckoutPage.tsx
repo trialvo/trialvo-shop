@@ -7,7 +7,6 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ShieldCheck, Loader2, CreditCard, AlertTriangle, XCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Layout from '@/components/layout/Layout';
-import SEOHead from '@/components/seo/SEOHead';
 import { useProduct } from '@/hooks/useProducts';
 import { useCreateOrder } from '@/hooks/useOrders';
 import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
@@ -172,16 +171,6 @@ const CheckoutPage: React.FC = () => {
 
   return (
     <Layout>
-      <SEOHead
-        title={isExtend
-          ? (language === 'bn' ? 'ট্রায়াল এক্সটেন্ড' : 'Extend trial')
-          : (language === 'bn' ? 'চেকআউট - অর্ডার সম্পন্ন করুন' : 'Checkout - Complete Your Order')}
-        description={isExtend
-          ? 'Pay to extend your trial period'
-          : 'Complete checkout to purchase your selected ecommerce solution.'}
-        noindex
-      />
-
       <section className="section-padding">
         <div className="container-custom max-w-4xl">
           <Button asChild variant="ghost" size="sm" className="mb-6">

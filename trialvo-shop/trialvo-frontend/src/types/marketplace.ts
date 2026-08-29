@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import type { Product } from "@/data/products";
+import type { Product } from "@/types/product";
 import type { Category } from "@/hooks/useCategories";
 
 /** Bilingual copy used across marketplace surfaces */

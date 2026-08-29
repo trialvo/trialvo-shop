@@ -14,6 +14,7 @@ const {
 } = require('../controllers/orderController');
 const { adminGetTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } = require('../controllers/testimonialController');
 const { adminGetMessages, toggleRead, deleteMessage, getUnreadCount } = require('../controllers/contactMessageController');
+const { getSeoStatus, resubmitSeo } = require('../controllers/seoController');
 
 // All admin routes require auth
 router.use(authenticate);
@@ -39,6 +40,10 @@ router.put('/products/reorder', reorderProducts);
 router.post('/products/:id/duplicate', duplicateProduct);
 router.put('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProduct);
+
+// Instant indexing
+router.get('/seo/status', getSeoStatus);
+router.post('/seo/resubmit', resubmitSeo);
 
 // Orders
 router.get('/orders', adminGetOrders);

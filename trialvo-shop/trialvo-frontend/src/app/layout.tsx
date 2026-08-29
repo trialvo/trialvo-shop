@@ -1,11 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import Providers from "./providers";
+import { BRAND } from "@/lib/brand";
+import { DEFAULT_LOCALE, LOCALE_HREFLANG, LOCALES } from "@/lib/i18n";
 import "@/index.css";
 
 export const viewport: Viewport = {
   themeColor: "#1DBF73",
 };
 
+const OG_IMAGE = `${BRAND.siteUrl}/api/og`;
+
+/**
+ * Defaults only. Every indexable route sets its own metadata through
+ * `buildPageMetadata`, so what remains here is the fallback for routes without
+ * any — chiefly `/admin` and the 404.
+ */
 export const metadata: Metadata = {
   title: {
     default:
@@ -16,41 +25,42 @@ export const metadata: Metadata = {
     "Buy ready-made ecommerce websites from Trialvo Shop. One-time payment, lifetime support and updates. Available in Bangla and English.",
   alternates: {
     languages: {
-      "bn-BD": "https://shop.trialvo.com/bn",
-      "en-US": "https://shop.trialvo.com/en",
-      "x-default": "https://shop.trialvo.com/bn",
+      ...Object.fromEntries(
+        LOCALES.map((locale) => [
+          LOCALE_HREFLANG[locale],
+          `${BRAND.siteUrl}/${locale}`,
+        ]),
+      ),
+      "x-default": `${BRAND.siteUrl}/${DEFAULT_LOCALE}`,
     },
   },
-  authors: [{ name: "Trialvo Shop" }],
-  metadataBase: new URL("https://shop.trialvo.com"),
+  applicationName: BRAND.name,
+  authors: [{ name: BRAND.name, url: BRAND.siteUrl }],
+  publisher: BRAND.company.name,
+  metadataBase: new URL(BRAND.siteUrl),
   icons: {
     icon: "/favicon.svg",
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Trialvo Shop - রেডিমেড ইকমার্স ওয়েবসাইট",
+    title: "Trialvo Shop — ready-made ecommerce, lifetime license & support",
     description:
-      "বাংলাদেশের সেরা রেডিমেড ইকমার্স সলিউশন। এডমিন প্যানেল + শপ ওয়েবসাইট একসাথে কিনুন।",
+      "Buy ready-made ecommerce websites with the full source code. One-time payment, lifetime license, lifetime support and updates.",
     type: "website",
-    url: "https://shop.trialvo.com",
-    siteName: "Trialvo Shop",
+    url: BRAND.siteUrl,
+    siteName: BRAND.name,
     locale: "bn_BD",
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=630&fit=crop",
-        width: 1200,
-        height: 630,
-      },
-    ],
+    alternateLocale: ["en_US"],
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: BRAND.name }],
   },
   twitter: {
     card: "summary_large_image",
-    site: "@trialvo",
-    title: "Trialvo Shop - রেডিমেড ইকমার্স ওয়েবসাইট",
-    description: "বাংলাদেশের সেরা রেডিমেড ইকমার্স সলিউশন",
-    images: [
-      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=630&fit=crop",
-    ],
+    site: BRAND.social.twitter,
+    creator: BRAND.social.twitter,
+    title: "Trialvo Shop — ready-made ecommerce, lifetime license & support",
+    description:
+      "Ready-made ecommerce websites with full source code. One-time payment, lifetime license and support.",
+    images: [OG_IMAGE],
   },
 };
 

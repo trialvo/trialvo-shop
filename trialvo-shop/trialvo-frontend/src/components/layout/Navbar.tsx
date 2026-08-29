@@ -34,6 +34,11 @@ export default function Navbar() {
   const navLinks = [
     { href: "/", label: t("nav.home") },
     { href: "/products", label: t("nav.products") },
+    {
+      href: "/how-it-works",
+      label: language === "bn" ? "কীভাবে কাজ করে" : "How it works",
+    },
+    { href: "/faq", label: language === "bn" ? "প্রশ্নোত্তর" : "FAQ" },
     { href: "/about", label: t("nav.about") },
     { href: "/contact", label: t("nav.contact") },
   ];

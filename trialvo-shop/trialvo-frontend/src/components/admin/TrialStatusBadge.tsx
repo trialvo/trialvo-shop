@@ -59,9 +59,9 @@ const STATUS_MAP: Record<string, StatusMeta> = {
  */
 export function TrialStatusBadge({ status, className }: { status: string; className?: string }) {
   const key = String(status || '').toLowerCase();
-  const meta = STATUS_MAP[key] || {
+  const meta: StatusMeta = STATUS_MAP[key] || {
     label: status || 'Unknown',
-    variant: 'outline' as BadgeVariant,
+    variant: 'outline',
     icon: <Clock className={ICON} />,
   };
 

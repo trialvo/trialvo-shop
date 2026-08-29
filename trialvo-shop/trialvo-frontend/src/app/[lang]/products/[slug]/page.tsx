@@ -4,7 +4,13 @@ import JsonLd from "@/components/seo/JsonLd";
 import { resolveMediaUrl } from "@/lib/mediaUrl";
 import { fetchSeoProduct } from "@/lib/seo/catalog";
 import { pageSeo } from "@/lib/seo/copy";
-import { breadcrumbJsonLd, faqJsonLd, productJsonLd } from "@/lib/seo/jsonld";
+import {
+  breadcrumbJsonLd,
+  faqJsonLd,
+  graphJsonLd,
+  productJsonLd,
+  webPageJsonLd,
+} from "@/lib/seo/jsonld";
 import { buildPageMetadata, resolveLocale } from "@/lib/seo/metadata";
 
 export async function generateMetadata({
@@ -54,10 +60,20 @@ export default async function Page({
   return (
     <>
       {product ? (
-        <>
-          <JsonLd
-            id="seo-product"
-            data={productJsonLd({
+        <JsonLd
+          id="seo-product"
+          data={graphJsonLd(
+            webPageJsonLd({
+              locale,
+              path: `/products/${product.slug}`,
+              name: product.seo.title[locale] || product.name[locale] || product.slug,
+              description:
+                product.seo.description[locale] ||
+                product.shortDescription[locale] ||
+                "",
+              type: "ItemPage",
+            }),
+            productJsonLd({
               locale,
               name: product.name[locale] || product.name.en,
               description:
@@ -66,21 +82,18 @@ export default async function Page({
               image: resolveMediaUrl(product.thumbnail),
               price: product.priceBdt,
               currency: "BDT",
-            })}
-          />
-          <JsonLd
-            id="seo-breadcrumb-product"
-            data={breadcrumbJsonLd(locale, [
+            }),
+            faqJsonLd(faqItems),
+            breadcrumbJsonLd(locale, [
               { name: locale === "bn" ? "হোম" : "Home", path: "/" },
               {
                 name: locale === "bn" ? "প্রোডাক্ট" : "Products",
                 path: "/products",
               },
               { name: product.name[locale] || product.slug },
-            ])}
-          />
-          <JsonLd id="seo-faq-product" data={faqJsonLd(faqItems)} />
-        </>
+            ]),
+          )}
+        />
       ) : null}
       <ProductDetailPage />
     </>

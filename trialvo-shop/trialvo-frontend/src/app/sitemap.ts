@@ -3,15 +3,10 @@ import { BRAND } from "@/lib/brand";
 import { LOCALES, absoluteUrl } from "@/lib/i18n";
 import { languageAlternates } from "@/lib/seo/metadata";
 import { fetchSeoProducts } from "@/lib/seo/catalog";
+import { PUBLIC_ROUTES } from "@/lib/seo/routes";
 
-const STATIC_PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"]; priority: number }[] = [
-  { path: "/", changeFrequency: "daily", priority: 1 },
-  { path: "/products", changeFrequency: "daily", priority: 0.9 },
-  { path: "/about", changeFrequency: "monthly", priority: 0.7 },
-  { path: "/contact", changeFrequency: "monthly", priority: 0.7 },
-  { path: "/terms", changeFrequency: "yearly", priority: 0.4 },
-  { path: "/privacy", changeFrequency: "yearly", priority: 0.4 },
-];
+/** Re-read the catalog hourly so new products enter the sitemap without a deploy. */
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await fetchSeoProducts();
@@ -19,7 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
 
   for (const locale of LOCALES) {
-    for (const page of STATIC_PATHS) {
+    for (const page of PUBLIC_ROUTES) {
       entries.push({
         url: absoluteUrl(locale, page.path, BRAND.siteUrl),
         lastModified: now,
@@ -37,9 +32,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "weekly",
         priority: 0.8,
         alternates: { languages: languageAlternates(path) },
+        ...(product.thumbnail
+          ? { images: [absoluteMedia(product.thumbnail)] }
+          : {}),
       });
     }
   }
 
   return entries;
+}
+
+/** Sitemap image entries must be absolute; stored thumbnails may be relative. */
+function absoluteMedia(src: string): string {
+  if (/^https?:\/\//i.test(src)) return src;
+  return `${BRAND.siteUrl.replace(/\/$/, "")}/${src.replace(/^\//, "")}`;
 }
