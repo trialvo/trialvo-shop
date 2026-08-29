@@ -28,35 +28,28 @@ export function ProductCardPricing({
   const display = shopDisplayPrice(quote, language, currencyLabel);
 
   return (
-    <div className="border-t border-border/60 pt-4">
-      <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+    <div className="flex items-baseline justify-between gap-3 whitespace-nowrap border-t border-border/60 pt-4">
+      <p className="min-w-0 truncate text-[11px] font-medium text-muted-foreground">
         {priceHint}
       </p>
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      <div className="flex shrink-0 items-baseline gap-2">
         {quote.hasDiscount ? (
-          <>
-            <span className="text-sm text-muted-foreground line-through">
-              {display.list}
-            </span>
-            <span
-              className="text-[1.45rem] font-semibold tracking-tight text-foreground"
-              itemProp="price"
-              content={String(display.saleRaw)}
-            >
-              {display.sale}
-            </span>
-          </>
-        ) : (
-          <span
-            className="text-[1.45rem] font-semibold tracking-tight text-foreground"
-            itemProp="price"
-            content={String(display.saleRaw)}
-          >
-            {display.sale}
+          <span className="text-sm text-muted-foreground line-through">
+            {display.list}
           </span>
-        )}
+        ) : null}
+        <span
+          className="text-xl font-semibold tracking-tight text-foreground"
+          itemProp="price"
+          content={String(display.saleRaw)}
+        >
+          {display.sale}
+        </span>
+        <ShopUsdHint
+          display={display}
+          className="text-[11px] leading-none text-muted-foreground"
+        />
       </div>
-      <ShopUsdHint display={display} className="mt-0.5 block text-[11px] leading-none text-muted-foreground" />
       <meta itemProp="priceCurrency" content="BDT" />
     </div>
   );
