@@ -92,6 +92,14 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Runs before React hydrates. Applies the stored theme, then strips attributes
+ * that password/VPN/shopping extensions inject onto every node (bis_skin_checked,
+ * bis_register, __processed_*). Those extras are what Next reports as a
+ * hydration mismatch even when our markup is identical.
+ */
+const THEME_BOOT_SCRIPT = `(function(){try{var t=localStorage.getItem("trialvo-theme");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.add(d?"dark":"light");}catch(e){}var KNOWN=["bis_skin_checked","bis_register"];function junk(name){if(!name)return false;if(KNOWN.indexOf(name)!==-1)return true;return name.indexOf("__processed_")===0;}function strip(el){if(!el||!el.attributes)return;for(var i=el.attributes.length-1;i>=0;i--){var a=el.attributes[i];if(a&&junk(a.name))el.removeAttribute(a.name);}}function walk(root){strip(root);if(!root.querySelectorAll)return;var all=root.querySelectorAll("*");for(var i=0;i<all.length;i++)strip(all[i]);}try{walk(document.documentElement);}catch(e){}try{var obs=new MutationObserver(function(ms){for(var i=0;i<ms.length;i++){var m=ms[i];if(m.type==="attributes"&&junk(m.attributeName))strip(m.target);var nodes=m.addedNodes;for(var j=0;j<nodes.length;j++){if(nodes[j].nodeType===1)walk(nodes[j]);}}});obs.observe(document.documentElement,{attributes:true,childList:true,subtree:true});setTimeout(function(){obs.disconnect();},8000);}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -103,7 +111,12 @@ export default function RootLayout({
       className={FONT_VARS}
       suppressHydrationWarning
     >
-      <body>
+      <body suppressHydrationWarning>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: THEME_BOOT_SCRIPT,
+          }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>
