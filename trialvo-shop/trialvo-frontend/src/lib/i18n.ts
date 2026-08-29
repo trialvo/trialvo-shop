@@ -1,6 +1,7 @@
 export const LOCALES = ["bn", "en"] as const;
 export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = "bn";
+/** First-visit language, and the target of the x-default hreflang. */
+export const DEFAULT_LOCALE: Locale = "en";
 
 export const LOCALE_HTML: Record<Locale, string> = {
   bn: "bn",

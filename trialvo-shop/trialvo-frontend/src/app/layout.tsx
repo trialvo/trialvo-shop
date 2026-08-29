@@ -1,8 +1,36 @@
 import type { Metadata, Viewport } from "next";
+import { Anek_Bangla, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import Providers from "./providers";
 import { BRAND } from "@/lib/brand";
 import { DEFAULT_LOCALE, LOCALE_HREFLANG, LOCALES } from "@/lib/i18n";
 import "@/index.css";
+
+/**
+ * Self-hosted through next/font: the files are served from our own origin, so
+ * there is no blocking request to Google and no flash of unstyled text. All
+ * three are variable fonts, hence no weight list.
+ */
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+/** Latin headings only — geometric shapes that Inter deliberately avoids. */
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
+
+/** Bengali body and headings. Handles conjuncts (juktakkhor) correctly. */
+const anekBangla = Anek_Bangla({
+  subsets: ["bengali", "latin"],
+  variable: "--font-anek-bangla",
+  display: "swap",
+});
+
+const FONT_VARS = `${inter.variable} ${jakarta.variable} ${anekBangla.variable}`;
 
 export const viewport: Viewport = {
   themeColor: "#1DBF73",
@@ -49,8 +77,8 @@ export const metadata: Metadata = {
     type: "website",
     url: BRAND.siteUrl,
     siteName: BRAND.name,
-    locale: "bn_BD",
-    alternateLocale: ["en_US"],
+    locale: "en_US",
+    alternateLocale: ["bn_BD"],
     images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: BRAND.name }],
   },
   twitter: {
@@ -70,19 +98,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="bn" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html
+      lang={DEFAULT_LOCALE}
+      className={FONT_VARS}
+      suppressHydrationWarning
+    >
       <body>
         <Providers>{children}</Providers>
       </body>

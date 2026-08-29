@@ -14,11 +14,13 @@ export default {
     },
     extend: {
       fontFamily: {
-        // Bangla-capable fonts first — Figtree has no Bengali glyphs/shaping.
-        bangla: ['Noto Sans Bengali', 'Hind Siliguri', 'Figtree', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
-        english: ['Figtree', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
-        display: ['Noto Sans Bengali', 'Hind Siliguri', 'Figtree', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
-        sans: ['Noto Sans Bengali', 'Hind Siliguri', 'Figtree', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+        // Resolve through the same CSS vars as index.css so there is one source
+        // of truth. Bangla-capable families lead every stack a Bangla string can
+        // reach — Inter and Jakarta carry no Bengali glyphs.
+        bangla: ['var(--font-bangla)'],
+        english: ['var(--font-english)'],
+        display: ['var(--font-display)'],
+        sans: ['var(--font-bangla)'],
       },
       colors: {
         border: "hsl(var(--border))",

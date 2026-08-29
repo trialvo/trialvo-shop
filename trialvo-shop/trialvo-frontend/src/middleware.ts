@@ -3,13 +3,17 @@ import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
 
+/**
+ * A returning visitor's own choice wins; everyone else gets DEFAULT_LOCALE.
+ *
+ * Accept-Language is deliberately not consulted. Most browsers in this market
+ * send `bn`, so sniffing it would send nearly every first-time visitor to the
+ * Bangla site and make the default unreachable. The language switcher writes
+ * the cookie, so an explicit preference still persists for a year.
+ */
 function detectLocale(request: NextRequest) {
   const cookie = request.cookies.get(LOCALE_COOKIE)?.value;
   if (isLocale(cookie)) return cookie;
-
-  const header = request.headers.get("accept-language") || "";
-  if (header.toLowerCase().includes("bn")) return "bn" as const;
-  if (header.toLowerCase().includes("en")) return "en" as const;
   return DEFAULT_LOCALE;
 }
 

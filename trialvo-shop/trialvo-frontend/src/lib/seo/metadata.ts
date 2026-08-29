@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BRAND } from "@/lib/brand";
 import {
   absoluteUrl,
+  DEFAULT_LOCALE,
   isLocale,
   LOCALES,
   LOCALE_HREFLANG,
@@ -11,12 +12,12 @@ import {
 import type { PageSeoCopy } from "@/lib/seo/copy";
 
 export function resolveLocale(lang: string | undefined): Locale {
-  return isLocale(lang) ? lang : "bn";
+  return isLocale(lang) ? lang : DEFAULT_LOCALE;
 }
 
 export function languageAlternates(path: string) {
   const languages: Record<string, string> = {
-    "x-default": absoluteUrl("bn", path, BRAND.siteUrl),
+    "x-default": absoluteUrl(DEFAULT_LOCALE, path, BRAND.siteUrl),
   };
   for (const locale of LOCALES) {
     languages[LOCALE_HREFLANG[locale]] = absoluteUrl(locale, path, BRAND.siteUrl);

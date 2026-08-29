@@ -47,12 +47,18 @@
     --radius: 0.5rem;
 
     /*
-     * Typography: Noto Sans Bengali / Hind Siliguri first for proper Bangla
-     * conjuncts (juktakkhor). Figtree is Latin-only — never put it first for BN.
+     * Typography. The --font-* vars without a suffix are injected by next/font
+     * in the root layout; the named families after them are fallbacks.
+     *
+     * A Bengali-capable family must come first in every stack a Bangla string
+     * can land in: Inter and Jakarta have no Bengali glyphs, so leading with
+     * either would break conjuncts (juktakkhor).
      */
-    --font-bangla: "Noto Sans Bengali", "Hind Siliguri", "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-english: "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-display: "Noto Sans Bengali", "Hind Siliguri", "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-bangla: var(--font-anek-bangla), "Noto Sans Bengali", "Hind Siliguri", Arial, sans-serif;
+    --font-english: var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-display: var(--font-anek-bangla), "Noto Sans Bengali", "Hind Siliguri", Arial, sans-serif;
+    /* Latin headings get the geometric display face. */
+    --font-display-en: var(--font-jakarta), var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
 
     --shadow-sm: 0 1px 2px 0 hsl(210 6% 14% / 0.04);
     --shadow-md:
@@ -197,18 +203,24 @@
     flex-shrink: 0;
   }
 
+  /*
+   * The lang-* class is set server-side on a wrapper in [lang]/layout.tsx, and
+   * again on <body> by LanguageContext after hydration. The selectors below are
+   * class-only (not `body.lang-*`) so both placements match. `body` itself is
+   * the English base, which covers /admin where no wrapper exists.
+   */
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-english);
+    font-feature-settings: "ss01" on, "cv01" on;
+    letter-spacing: -0.011em;
+  }
+
+  .lang-bn {
     font-family: var(--font-bangla);
     /* Latin stylistic sets + negative tracking break Bangla conjunct shaping */
     font-feature-settings: normal;
     letter-spacing: normal;
-  }
-
-  body.lang-en {
-    font-family: var(--font-english);
-    font-feature-settings: "ss01" on, "cv01" on;
-    letter-spacing: -0.011em;
   }
 
   h1,
@@ -218,18 +230,18 @@
   h5,
   h6 {
     @apply font-semibold;
-    font-family: var(--font-display);
-    letter-spacing: normal;
+    font-family: var(--font-display-en);
+    letter-spacing: -0.02em;
   }
 
-  body.lang-en h1,
-  body.lang-en h2,
-  body.lang-en h3,
-  body.lang-en h4,
-  body.lang-en h5,
-  body.lang-en h6 {
-    font-family: var(--font-english);
-    letter-spacing: -0.02em;
+  .lang-bn h1,
+  .lang-bn h2,
+  .lang-bn h3,
+  .lang-bn h4,
+  .lang-bn h5,
+  .lang-bn h6 {
+    font-family: var(--font-display);
+    letter-spacing: normal;
   }
 
   /* Bengali Typography Optimization */
@@ -244,29 +256,24 @@
   }
 
   .font-display {
-    font-family: var(--font-display);
-    letter-spacing: normal;
+    font-family: var(--font-display-en);
   }
 
-  body.lang-en .font-display {
-    font-family: var(--font-english);
+  .lang-bn .font-display {
+    font-family: var(--font-display);
+    letter-spacing: normal;
   }
 
   /*
    * Tailwind tracking-* utilities break Bangla ligatures/diacritics.
    * Force normal letter-spacing whenever UI language is Bangla.
    */
-  html[lang="bn"] .tracking-tighter,
-  html[lang="bn"] .tracking-tight,
-  html[lang="bn"] .tracking-normal,
-  html[lang="bn"] .tracking-wide,
-  html[lang="bn"] .tracking-wider,
-  html[lang="bn"] .tracking-widest,
-  body.lang-bn .tracking-tighter,
-  body.lang-bn .tracking-tight,
-  body.lang-bn .tracking-wide,
-  body.lang-bn .tracking-wider,
-  body.lang-bn .tracking-widest {
+  .lang-bn .tracking-tighter,
+  .lang-bn .tracking-tight,
+  .lang-bn .tracking-normal,
+  .lang-bn .tracking-wide,
+  .lang-bn .tracking-wider,
+  .lang-bn .tracking-widest {
     letter-spacing: normal !important;
   }
 }

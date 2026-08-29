@@ -38,7 +38,17 @@ export default async function LocaleLayout({
     <>
       <JsonLd id="seo-organization" data={organizationJsonLd(lang)} />
       <JsonLd id="seo-website" data={websiteJsonLd(lang)} />
-      {children}
+      {/*
+        `<html lang>` lives in the root layout, which cannot read this segment's
+        param, and reading it from headers() would make every route dynamic.
+        Declaring the language on a wrapper instead is valid HTML and overrides
+        it for this subtree, so crawlers and screen readers see the real
+        language in the server HTML. The lang-* class does the same for the
+        font, avoiding a reflow once LanguageContext hydrates.
+      */}
+      <div lang={lang} className={`lang-${lang}`}>
+        {children}
+      </div>
     </>
   );
 }
