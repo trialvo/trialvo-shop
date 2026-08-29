@@ -7,6 +7,7 @@ const {
     linkMediaToProduct,
 } = require('../services/mediaCleanup');
 const { clampDiscountPercent } = require('../lib/productPricing');
+const { normalizeVideoUrl } = require('../lib/videoUrl');
 const { notifySeoChangeAsync } = require('../services/seoNotify');
 
 // Helper: build parameterized query with $1, $2, ... placeholders
@@ -100,13 +101,16 @@ async function createProduct(req, res, next) {
             faq, seo, is_featured, is_active, deploy_config, is_trialable,
         } = req.body;
 
+        const video = normalizeVideoUrl(video_url);
+        if (!video.ok) return res.status(400).json({ error: video.error });
+
         await pool.query(
             `INSERT INTO products (id, slug, category, price_bdt, price_usd, discount_percent, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active, deploy_config, is_trialable)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
             [
                 id, slug, category || 'ecommerce', price_bdt || 0, price_usd || 0,
                 clampDiscountPercent(discount_percent),
-                thumbnail || '', JSON.stringify(images || {}), video_url || null,
+                thumbnail || '', JSON.stringify(images || {}), video.value,
                 JSON.stringify(demo || []), JSON.stringify(name),
                 JSON.stringify(short_description || {}), JSON.stringify(features || {}),
                 JSON.stringify(facilities || {}), JSON.stringify(faq || []),
@@ -154,6 +158,11 @@ async function updateProduct(req, res, next) {
             if (jsonFields.includes(key)) stored = value == null ? null : JSON.stringify(value);
             else if (boolFields.includes(key)) stored = value ? 1 : 0;
             else if (key === 'discount_percent') stored = clampDiscountPercent(value);
+            else if (key === 'video_url') {
+                const video = normalizeVideoUrl(value);
+                if (!video.ok) return res.status(400).json({ error: video.error });
+                stored = video.value;
+            }
             fields.push(`${key} = $${paramIdx}`);
             values.push(stored);
             paramIdx++;

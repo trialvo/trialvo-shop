@@ -12,6 +12,7 @@ import {
   webPageJsonLd,
 } from "@/lib/seo/jsonld";
 import { buildPageMetadata, resolveLocale } from "@/lib/seo/metadata";
+import { parseVideoUrl } from "@/lib/videoEmbed";
 
 export async function generateMetadata({
   params,
@@ -57,6 +58,12 @@ export default async function Page({
       answer: item.answer?.[locale] || item.answer?.en || "",
     })).filter((item) => item.question && item.answer) || [];
 
+  const parsedVideo = parseVideoUrl(product?.videoUrl);
+  const productName = product ? product.name[locale] || product.name.en : "";
+  const productDescription = product
+    ? product.shortDescription[locale] || product.shortDescription.en
+    : "";
+
   return (
     <>
       {product ? (
@@ -75,13 +82,21 @@ export default async function Page({
             }),
             productJsonLd({
               locale,
-              name: product.name[locale] || product.name.en,
-              description:
-                product.shortDescription[locale] || product.shortDescription.en,
+              name: productName,
+              description: productDescription,
               slug: product.slug,
               image: resolveMediaUrl(product.thumbnail),
               price: product.priceBdt,
               currency: "BDT",
+              video: parsedVideo
+                ? {
+                    name: `${productName} demo`,
+                    description: productDescription,
+                    embedUrl: parsedVideo.embedUrl,
+                    contentUrl: parsedVideo.watchUrl,
+                    thumbnailUrl: parsedVideo.thumbnailUrl,
+                  }
+                : undefined,
             }),
             faqJsonLd(faqItems),
             breadcrumbJsonLd(locale, [

@@ -29,6 +29,8 @@ import ImageUploadButton from '@/components/admin/ImageUploadButton';
 import { useCleanupMediaUrls } from '@/hooks/useMedia';
 import { isManagedUploadUrl, normalizeProductImages, resolveMediaUrl } from '@/lib/mediaUrl';
 import { clampDiscountPercent, quoteProductPrice } from '@/lib/productPricing';
+import { parseVideoUrl } from '@/lib/videoEmbed';
+import { AdminVideoUrlField } from '@/components/admin/AdminVideoUrlField';
 
 // ─── Types ─────────────────────────────────────────────────────
 interface FaqItem {
@@ -498,8 +500,18 @@ const AdminProductsPage: React.FC = () => {
       return;
     }
 
+    const videoUrl = form.video_url.trim();
+    if (videoUrl && !parseVideoUrl(videoUrl)) {
+      toast({
+        title: 'Video URL must be a YouTube, Vimeo, Loom, or direct video file link',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const cleanedForm = {
       ...form,
+      video_url: videoUrl,
       price_bdt: form.price_bdt,
       price_usd: form.price_usd,
       discount_percent: clampDiscountPercent(form.discount_percent),
@@ -874,15 +886,12 @@ const AdminProductsPage: React.FC = () => {
                   onRemoveUrl={queueMediaCleanup}
                   onChange={(vals) => setForm((prev) => ({ ...prev, images: { ...prev.images, shop: vals } }))}
                 />
-                <div className="space-y-1">
-                  <Label className={labelClass}>Video URL</Label>
-                  <Input
-                    value={form.video_url}
-                    onChange={(e) => setForm({ ...form, video_url: e.target.value })}
-                    className={inputClass}
-                    placeholder="https://youtube.com/embed/..."
-                  />
-                </div>
+                <AdminVideoUrlField
+                  value={form.video_url}
+                  onChange={(video_url) => setForm({ ...form, video_url })}
+                  inputClass={inputClass}
+                  labelClass={labelClass}
+                />
               </div>
             </div>
 

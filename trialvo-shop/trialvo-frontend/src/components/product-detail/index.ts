@@ -1,0 +1,10 @@
+export { ProductDetailBreadcrumb } from "./ProductDetailBreadcrumb";
+export { ProductDetailBuyCard } from "./ProductDetailBuyCard";
+export { ProductDetailDemoPanel } from "./ProductDetailDemoPanel";
+export { ProductDetailFaq } from "./ProductDetailFaq";
+export { ProductDetailGallery } from "./ProductDetailGallery";
+export { ProductDetailHighlights } from "./ProductDetailHighlights";
+export { ProductDetailIntro } from "./ProductDetailIntro";
+export { ProductDetailRelated } from "./ProductDetailRelated";
+export { ProductDetailSpecs } from "./ProductDetailSpecs";
+export { ProductDetailVideo } from "./ProductDetailVideo";

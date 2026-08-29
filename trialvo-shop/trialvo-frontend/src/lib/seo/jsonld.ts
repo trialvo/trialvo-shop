@@ -101,6 +101,7 @@ export function productJsonLd({
   image,
   price,
   currency,
+  video,
 }: {
   locale: Locale;
   name: string;
@@ -109,6 +110,13 @@ export function productJsonLd({
   image: string;
   price: number;
   currency: "BDT" | "USD";
+  video?: {
+    name: string;
+    description: string;
+    embedUrl: string;
+    contentUrl: string;
+    thumbnailUrl?: string;
+  };
 }) {
   const copy = lifetimeCopy(locale);
   const url = absoluteUrl(locale, `/products/${slug}`, BRAND.siteUrl);
@@ -141,6 +149,18 @@ export function productJsonLd({
       { "@type": "PropertyValue", name: "Support", value: copy.support },
       { "@type": "PropertyValue", name: "Updates", value: copy.updates },
     ],
+    ...(video
+      ? {
+          video: {
+            "@type": "VideoObject",
+            name: video.name,
+            description: video.description,
+            embedUrl: video.embedUrl,
+            contentUrl: video.contentUrl,
+            thumbnailUrl: video.thumbnailUrl || image,
+          },
+        }
+      : {}),
   };
 }
 

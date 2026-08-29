@@ -40,6 +40,11 @@ export type SectionProps = {
   containerClassName?: string;
   /** Render children without the standard max-width container */
   bleed?: boolean;
+  /**
+   * Clip content to the band. Must be false when a child uses
+   * `position: sticky`, since an `overflow` ancestor becomes its scrollport.
+   */
+  clip?: boolean;
   children: ReactNode;
   /** Forwarded to the rendered element — e.g. aria-label on an unheaded band */
   [prop: string]: unknown;
@@ -63,6 +68,7 @@ export function Section({
   className,
   containerClassName,
   bleed = false,
+  clip = true,
   children,
   ...rest
 }: Readonly<SectionProps>) {
@@ -76,7 +82,8 @@ export function Section({
       id={id}
       aria-labelledby={labelledBy}
       className={cn(
-        "relative isolate overflow-hidden",
+        "relative isolate",
+        clip ? "overflow-hidden" : "overflow-visible",
         TONE[tone],
         SIZE[size],
         className,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ImageGalleryModal from './ImageGalleryModal';
 import { cn } from '@/lib/utils';
@@ -10,6 +10,11 @@ interface ScreenshotGalleryProps {
   className?: string;
 }
 
+/**
+ * Screenshot viewer with a thumbnail rail that sits beside the image on wide
+ * screens. Keeping the rail vertical means the whole gallery stays short
+ * enough to pin in a sticky column instead of scrolling out of view.
+ */
 const ScreenshotGallery: React.FC<ScreenshotGalleryProps> = ({
   images,
   title,
@@ -26,95 +31,96 @@ const ScreenshotGallery: React.FC<ScreenshotGalleryProps> = ({
     setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
   };
 
-  const openModal = (index: number) => {
-    setCurrentIndex(index);
-    setIsModalOpen(true);
-  };
-
   if (!images || images.length === 0) return null;
+
+  const hasMany = images.length > 1;
+  const index = Math.min(currentIndex, images.length - 1);
 
   return (
     <>
-      <div className={cn('relative group', className)}>
-        {/* Main Image */}
-        <div
-          className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted cursor-zoom-in"
-          onClick={() => openModal(currentIndex)}
-        >
-          <img
-            src={images[currentIndex]}
-            alt={title ? `${title} - Screenshot ${currentIndex + 1}` : `Screenshot ${currentIndex + 1}`}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          
-          {/* Zoom indicator */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-            <ZoomIn className="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-
-          {/* Image counter badge */}
-          <div className="absolute bottom-3 right-3 bg-black/60 text-white text-sm px-3 py-1 rounded-full">
-            {currentIndex + 1} / {images.length}
-          </div>
-        </div>
-
-        {/* Navigation Arrows */}
-        {images.length > 1 && (
-          <>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="absolute left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-10 w-10 rounded-full shadow-lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrev();
-              }}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-10 w-10 rounded-full shadow-lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </>
+      <div
+        className={cn(
+          hasMany && 'sm:grid sm:grid-cols-[4.25rem_minmax(0,1fr)] sm:gap-3',
+          className,
         )}
-
-        {/* Thumbnail Strip */}
-        {images.length > 1 && (
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
-            {images.map((img, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={cn(
-                  'flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all',
-                  index === currentIndex
-                    ? 'border-primary ring-2 ring-primary/20'
-                    : 'border-transparent hover:border-muted-foreground/30'
-                )}
-              >
-                <img
-                  src={img}
-                  alt={`Thumbnail ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </button>
+      >
+        {hasMany ? (
+          <ul className="order-2 mt-3 flex gap-2 overflow-x-auto pb-1 sm:order-none sm:mt-0 sm:max-h-[26rem] sm:flex-col sm:overflow-y-auto sm:overflow-x-hidden sm:pb-0 sm:pr-1">
+            {images.map((img, thumbIndex) => (
+              <li key={`${img}-${thumbIndex}`} className="shrink-0 sm:w-full">
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex(thumbIndex)}
+                  aria-label={`Screenshot ${thumbIndex + 1}`}
+                  aria-current={thumbIndex === index}
+                  className={cn(
+                    'block h-14 w-20 overflow-hidden rounded-md ring-1 ring-inset transition-all sm:w-full',
+                    thumbIndex === index
+                      ? 'opacity-100 ring-2 ring-accent'
+                      : 'opacity-60 ring-border hover:opacity-100',
+                  )}
+                >
+                  <img src={img} alt="" className="h-full w-full object-cover" />
+                </button>
+              </li>
             ))}
-          </div>
-        )}
+          </ul>
+        ) : null}
+
+        <div className="group relative">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="relative block aspect-[16/10] w-full cursor-zoom-in overflow-hidden rounded-xl bg-muted"
+          >
+            <img
+              src={images[index]}
+              alt={
+                title
+                  ? `${title} - Screenshot ${index + 1}`
+                  : `Screenshot ${index + 1}`
+              }
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
+            <span className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md bg-background/85 text-foreground opacity-0 shadow-card backdrop-blur transition-opacity group-hover:opacity-100">
+              <Maximize2 className="h-4 w-4" aria-hidden="true" />
+            </span>
+            {hasMany ? (
+              <span className="absolute bottom-3 right-3 rounded-md bg-foreground/75 px-2 py-0.5 text-[11px] font-medium tabular-nums text-background">
+                {index + 1} / {images.length}
+              </span>
+            ) : null}
+          </button>
+
+          {hasMany ? (
+            <>
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label="Previous screenshot"
+                className="absolute left-3 top-1/2 h-9 w-9 -translate-y-1/2 rounded-md opacity-0 shadow-card transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                onClick={handlePrev}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label="Next screenshot"
+                className="absolute right-3 top-1/2 h-9 w-9 -translate-y-1/2 rounded-md opacity-0 shadow-card transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                onClick={handleNext}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          ) : null}
+        </div>
       </div>
 
-      {/* Modal */}
       <ImageGalleryModal
         images={images}
-        currentIndex={currentIndex}
+        currentIndex={index}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onNavigate={setCurrentIndex}

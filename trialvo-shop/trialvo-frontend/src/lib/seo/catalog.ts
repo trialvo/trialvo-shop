@@ -14,6 +14,7 @@ export type SeoProduct = {
     keywords: { bn: string[]; en: string[] };
   };
   thumbnail: string;
+  videoUrl?: string;
   priceBdt: number;
   priceUsd: number;
   discountPercent: number;
@@ -46,6 +47,7 @@ function mapRow(row: Record<string, unknown>): SeoProduct {
       keywords: { bn: [] as string[], en: [] as string[] },
     }),
     thumbnail: String(row.thumbnail || ""),
+    videoUrl: String(row.video_url || "").trim() || undefined,
     priceBdt: quote.saleBdt,
     priceUsd: quote.saleUsd,
     discountPercent: quote.discountPercent,
