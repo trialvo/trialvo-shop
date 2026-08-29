@@ -64,8 +64,8 @@ export default async function Page({
                 product.shortDescription[locale] || product.shortDescription.en,
               slug: product.slug,
               image: resolveMediaUrl(product.thumbnail),
-              price: locale === "en" && product.priceUsd > 0 ? product.priceUsd : product.priceBdt,
-              currency: locale === "en" && product.priceUsd > 0 ? "USD" : "BDT",
+              price: product.priceBdt,
+              currency: "BDT",
             })}
           />
           <JsonLd

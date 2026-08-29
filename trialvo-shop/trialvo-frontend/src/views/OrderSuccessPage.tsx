@@ -112,18 +112,21 @@ const OrderSuccessPage: React.FC = () => {
                           <span className="text-muted-foreground line-through font-semibold mr-2">
                             {display.list}
                           </span>
-                          {language === 'bn' && paidBdt != null
+                          {paidBdt != null
                             ? `${t('common.bdt')}${paidBdt.toLocaleString()}`
                             : display.sale}
                         </>
                       ) : (
                         <>
-                          {language === 'bn' && paidBdt != null
+                          {paidBdt != null
                             ? `${t('common.bdt')}${paidBdt.toLocaleString()}`
                             : (display?.sale ?? '')}
                         </>
                       )}
                     </p>
+                    {display?.hasUsd ? (
+                      <p className="text-[11px] font-normal text-muted-foreground">{display.usdSale}</p>
+                    ) : null}
                   </div>
                 </div>
               </div>

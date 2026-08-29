@@ -238,9 +238,12 @@ const ProductDetailPage: React.FC = () => {
                       {display.sale}
                     </span>
                   )}
-                  <meta itemProp="priceCurrency" content={display.currency} />
+                  <meta itemProp="priceCurrency" content="BDT" />
                   <link itemProp="availability" href="https://schema.org/InStock" />
                 </div>
+                {display.hasUsd ? (
+                  <p className="mb-2 text-xs text-muted-foreground">{display.usdSale}</p>
+                ) : null}
                 <p className="text-sm text-muted-foreground">
                   {language === 'bn' ? 'এককালীন পেমেন্ট • আজীবন সাপোর্ট ও আপডেট' : 'One-time payment • Lifetime support & updates'}
                 </p>

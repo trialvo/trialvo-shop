@@ -62,27 +62,22 @@ export function quoteProductPrice(product: {
   };
 }
 
-/** Shop UI: BDT is the required price. USD shows on English pages only when declared. */
+/** Shop UI: BDT is always the main price. USD is an optional secondary line. */
 export function shopDisplayPrice(
   quote: ProductPriceQuote,
   language: MarketplaceLanguage,
   bdtLabel = "৳",
 ) {
-  if (language === "en" && quote.listUsd > 0) {
-    return {
-      currency: "USD" as const,
-      list: formatPriceUsd(quote.listUsd, language),
-      sale: formatPriceUsd(quote.saleUsd, language),
-      listRaw: quote.listUsd,
-      saleRaw: quote.saleUsd,
-    };
-  }
+  const hasUsd = quote.listUsd > 0;
   return {
     currency: "BDT" as const,
     list: formatPriceBdt(quote.listBdt, language, bdtLabel),
     sale: formatPriceBdt(quote.saleBdt, language, bdtLabel),
     listRaw: quote.listBdt,
     saleRaw: quote.saleBdt,
+    hasUsd,
+    usdList: hasUsd ? formatPriceUsd(quote.listUsd, language) : "",
+    usdSale: hasUsd ? formatPriceUsd(quote.saleUsd, language) : "",
   };
 }
 

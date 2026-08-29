@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import { ShopUsdHint } from "@/components/pricing/ShopUsdHint";
 import { quoteProductPrice, shopDisplayPrice } from "@/lib/productPricing";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 
@@ -13,7 +14,7 @@ export type ProductCardPricingProps = {
   trustLabel?: string;
 };
 
-/** One declared currency: BDT on Bangla, USD on English. */
+/** BDT is the main price on every card. USD, if set, is a small secondary line. */
 export function ProductCardPricing({
   amountBdt,
   amountUsd,
@@ -60,7 +61,8 @@ export function ProductCardPricing({
             </span>
           )}
         </div>
-        <meta itemProp="priceCurrency" content={display.currency} />
+        <ShopUsdHint display={display} className="mt-0.5 block text-[11px] leading-none text-muted-foreground" />
+        <meta itemProp="priceCurrency" content="BDT" />
       </div>
 
       <span className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-accent transition-colors group-hover:text-accent/80">

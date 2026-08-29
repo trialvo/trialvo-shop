@@ -73,9 +73,10 @@ const TrialStatusPage: React.FC = () => {
   const extendDays = trialConfig?.extendDays ?? 30;
   const extendPriceBdt = trialConfig?.extendPriceBdt ?? 1500;
   const extendPriceUsd = trialConfig?.extendPriceUsd ?? 15;
-  const extendPriceLabel = language === 'en'
+  const extendPriceLabel = `৳${Number(extendPriceBdt).toLocaleString()}`;
+  const extendUsdLabel = Number(extendPriceUsd) > 0
     ? `$${Number(extendPriceUsd).toLocaleString('en-US', { minimumFractionDigits: Number(extendPriceUsd) % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 })}`
-    : `৳${Number(extendPriceBdt).toLocaleString()}`;
+    : '';
 
   return (
     <Layout>
@@ -290,8 +291,8 @@ const TrialStatusPage: React.FC = () => {
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground">
                       {language === 'bn'
-                        ? `ট্রায়াল মেয়াদ বাড়াতে আলাদা এক্সটেন্ড প্যাক কিনুন — ${extendPriceLabel} / +${extendDays} দিন। একই ইমেইল ব্যবহার করুন।`
-                        : `Buy a separate extend pack to add more trial days — ${extendPriceLabel} for +${extendDays} days. Use the same email as this trial.`}
+                        ? `ট্রায়াল মেয়াদ বাড়াতে আলাদা এক্সটেন্ড প্যাক কিনুন — ${extendPriceLabel}${extendUsdLabel ? ` (${extendUsdLabel})` : ''} / +${extendDays} দিন। একই ইমেইল ব্যবহার করুন।`
+                        : `Buy a separate extend pack to add more trial days — ${extendPriceLabel}${extendUsdLabel ? ` (${extendUsdLabel})` : ''} for +${extendDays} days. Use the same email as this trial.`}
                     </p>
                     <Button asChild className="w-full" variant="default">
                       <LocalizedLink href={extendHref}>

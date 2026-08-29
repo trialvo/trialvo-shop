@@ -324,14 +324,19 @@ const CheckoutPage: React.FC = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{language === 'bn' ? 'মূল্য' : 'Price'}</span>
-                {showProductDiscount && display ? (
-                  <span>
-                    <span className="line-through text-muted-foreground mr-2">{display.list}</span>
-                    {display.sale}
-                  </span>
-                ) : (
-                  <span>{display?.sale ?? ''}</span>
-                )}
+                <span className="text-right">
+                  {showProductDiscount && display ? (
+                    <span>
+                      <span className="line-through text-muted-foreground mr-2">{display.list}</span>
+                      {display.sale}
+                    </span>
+                  ) : (
+                    <span>{display?.sale ?? ''}</span>
+                  )}
+                  {display?.hasUsd ? (
+                    <span className="block text-[11px] font-normal text-muted-foreground">{display.usdSale}</span>
+                  ) : null}
+                </span>
               </div>
               {showProductDiscount && productQuote && (
                 <div className="flex justify-between text-sm text-destructive">
@@ -347,7 +352,12 @@ const CheckoutPage: React.FC = () => {
               )}
               <div className="border-t pt-3 flex justify-between font-bold">
                 <span>{language === 'bn' ? 'মোট' : 'Total'}</span>
-                <span>{display?.sale ?? ''}</span>
+                <span className="text-right">
+                  {display?.sale ?? ''}
+                  {display?.hasUsd ? (
+                    <span className="block text-[11px] font-normal text-muted-foreground">{display.usdSale}</span>
+                  ) : null}
+                </span>
               </div>
               <p className="text-[11px] text-muted-foreground flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
