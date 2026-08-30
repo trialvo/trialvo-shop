@@ -47,12 +47,18 @@
     --radius: 0.5rem;
 
     /*
-     * Typography: Noto Sans Bengali / Hind Siliguri first for proper Bangla
-     * conjuncts (juktakkhor). Figtree is Latin-only — never put it first for BN.
+     * Typography. The --font-* vars without a suffix are injected by next/font
+     * in the root layout; the named families after them are fallbacks.
+     *
+     * A Bengali-capable family must come first in every stack a Bangla string
+     * can land in: Inter and Jakarta have no Bengali glyphs, so leading with
+     * either would break conjuncts (juktakkhor).
      */
-    --font-bangla: "Noto Sans Bengali", "Hind Siliguri", "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-english: "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-display: "Noto Sans Bengali", "Hind Siliguri", "Figtree", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-bangla: var(--font-anek-bangla), "Noto Sans Bengali", "Hind Siliguri", Arial, sans-serif;
+    --font-english: var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-display: var(--font-anek-bangla), "Noto Sans Bengali", "Hind Siliguri", Arial, sans-serif;
+    /* Latin headings get the geometric display face. */
+    --font-display-en: var(--font-jakarta), var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
 
     --shadow-sm: 0 1px 2px 0 hsl(210 6% 14% / 0.04);
     --shadow-md:
@@ -64,6 +70,34 @@
     --shadow-xl:
       0 24px 40px -14px hsl(210 6% 14% / 0.14),
       0 10px 16px -8px hsl(210 6% 14% / 0.08);
+
+    /*
+     * Card elevation. Two stacked layers — a tight contact shadow plus a wide
+     * soft one — is what separates a surface that looks lifted from one that
+     * looks outlined.
+     */
+    --shadow-card:
+      0 1px 2px hsl(210 6% 14% / 0.04),
+      0 2px 8px -4px hsl(210 6% 14% / 0.06);
+    --shadow-card-lifted:
+      0 2px 4px hsl(210 6% 14% / 0.04),
+      0 18px 36px -16px hsl(210 6% 14% / 0.2);
+    --shadow-accent-glow:
+      0 0 0 1px hsl(153 72% 43% / 0.2),
+      0 20px 44px -22px hsl(153 72% 43% / 0.4);
+
+    /*
+     * Readable accent for small text. The brand accent at 43% lightness only
+     * reaches ~3.3:1 on white, which fails AA for the 11px labels and eyebrows
+     * that now appear on every section, so text uses this darker step while
+     * fills and icons keep the brand value.
+     */
+    --accent-strong: 153 72% 29%;
+
+    /* Hairline that catches light along the top edge of a raised surface. */
+    --sheen-line: hsl(210 6% 14% / 0.1);
+    /* Tint of the decorative dot grid used behind quieter sections. */
+    --pattern-dot: hsl(210 6% 14% / 0.07);
 
     --gradient-hero: linear-gradient(
       135deg,
@@ -133,6 +167,23 @@
     --shadow-xl:
       0 20px 25px -5px hsl(0 0% 0% / 0.4), 0 8px 10px -6px hsl(0 0% 0% / 0.3);
 
+    --shadow-card:
+      0 1px 2px hsl(0 0% 0% / 0.4),
+      0 2px 8px -4px hsl(0 0% 0% / 0.3);
+    --shadow-card-lifted:
+      0 2px 4px hsl(0 0% 0% / 0.4),
+      0 18px 36px -16px hsl(0 0% 0% / 0.55);
+    --shadow-accent-glow:
+      0 0 0 1px hsl(153 72% 43% / 0.28),
+      0 20px 44px -22px hsl(153 72% 43% / 0.45);
+
+    /* On a dark background the accent must go lighter, not darker, to pass. */
+    --accent-strong: 153 62% 62%;
+
+    /* On dark surfaces the light catch is a highlight, not a shadow. */
+    --sheen-line: hsl(0 0% 100% / 0.14);
+    --pattern-dot: hsl(0 0% 100% / 0.07);
+
     --gradient-hero: linear-gradient(
       135deg,
       hsl(220 10% 8%) 0%,
@@ -197,18 +248,24 @@
     flex-shrink: 0;
   }
 
+  /*
+   * The lang-* class is set server-side on a wrapper in [lang]/layout.tsx, and
+   * again on <body> by LanguageContext after hydration. The selectors below are
+   * class-only (not `body.lang-*`) so both placements match. `body` itself is
+   * the English base, which covers /admin where no wrapper exists.
+   */
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-english);
+    font-feature-settings: "ss01" on, "cv01" on;
+    letter-spacing: -0.011em;
+  }
+
+  .lang-bn {
     font-family: var(--font-bangla);
     /* Latin stylistic sets + negative tracking break Bangla conjunct shaping */
     font-feature-settings: normal;
     letter-spacing: normal;
-  }
-
-  body.lang-en {
-    font-family: var(--font-english);
-    font-feature-settings: "ss01" on, "cv01" on;
-    letter-spacing: -0.011em;
   }
 
   h1,
@@ -218,18 +275,18 @@
   h5,
   h6 {
     @apply font-semibold;
-    font-family: var(--font-display);
-    letter-spacing: normal;
+    font-family: var(--font-display-en);
+    letter-spacing: -0.02em;
   }
 
-  body.lang-en h1,
-  body.lang-en h2,
-  body.lang-en h3,
-  body.lang-en h4,
-  body.lang-en h5,
-  body.lang-en h6 {
-    font-family: var(--font-english);
-    letter-spacing: -0.02em;
+  .lang-bn h1,
+  .lang-bn h2,
+  .lang-bn h3,
+  .lang-bn h4,
+  .lang-bn h5,
+  .lang-bn h6 {
+    font-family: var(--font-display);
+    letter-spacing: normal;
   }
 
   /* Bengali Typography Optimization */
@@ -244,29 +301,24 @@
   }
 
   .font-display {
-    font-family: var(--font-display);
-    letter-spacing: normal;
+    font-family: var(--font-display-en);
   }
 
-  body.lang-en .font-display {
-    font-family: var(--font-english);
+  .lang-bn .font-display {
+    font-family: var(--font-display);
+    letter-spacing: normal;
   }
 
   /*
    * Tailwind tracking-* utilities break Bangla ligatures/diacritics.
    * Force normal letter-spacing whenever UI language is Bangla.
    */
-  html[lang="bn"] .tracking-tighter,
-  html[lang="bn"] .tracking-tight,
-  html[lang="bn"] .tracking-normal,
-  html[lang="bn"] .tracking-wide,
-  html[lang="bn"] .tracking-wider,
-  html[lang="bn"] .tracking-widest,
-  body.lang-bn .tracking-tighter,
-  body.lang-bn .tracking-tight,
-  body.lang-bn .tracking-wide,
-  body.lang-bn .tracking-wider,
-  body.lang-bn .tracking-widest {
+  .lang-bn .tracking-tighter,
+  .lang-bn .tracking-tight,
+  .lang-bn .tracking-normal,
+  .lang-bn .tracking-wide,
+  .lang-bn .tracking-wider,
+  .lang-bn .tracking-widest {
     letter-spacing: normal !important;
   }
 }
@@ -297,6 +349,98 @@
   .card-shadow:hover {
     box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
+  }
+
+  /*
+   * ── Elevated surfaces ────────────────────────────────────────────────
+   * The base panel used by every card across the site. Kept as a class
+   * rather than a Tailwind string so the elevation stays identical
+   * everywhere and can be retuned in one place.
+   */
+  .surface {
+    @apply relative rounded-2xl border border-border bg-card;
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Light catch along the top edge; sells the sense of a raised panel. */
+  .surface-sheen::before {
+    content: "";
+    position: absolute;
+    left: 1.5rem;
+    right: 1.5rem;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--sheen-line),
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  .surface-interactive {
+    transition:
+      transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.24s ease;
+  }
+
+  .surface-interactive:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card-lifted);
+    border-color: hsl(var(--accent) / 0.32);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .surface-interactive,
+    .surface-interactive:hover {
+      transform: none;
+      transition: box-shadow 0.24s ease, border-color 0.24s ease;
+    }
+  }
+
+  /*
+   * ── Decorative backgrounds ───────────────────────────────────────────
+   * Applied to an absolutely-positioned layer behind section content, so
+   * text contrast is never affected.
+   */
+  .pattern-dots {
+    background-image: radial-gradient(var(--pattern-dot) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .pattern-grid {
+    background-image:
+      linear-gradient(to right, var(--pattern-dot) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--pattern-dot) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  /* Soft off-centre accent bloom — adds depth without a heavy colour wash. */
+  .mesh-accent {
+    background-image:
+      radial-gradient(
+        ellipse 55% 45% at 12% 0%,
+        hsl(var(--accent) / 0.12),
+        transparent 62%
+      ),
+      radial-gradient(
+        ellipse 45% 40% at 88% 8%,
+        hsl(200 85% 55% / 0.08),
+        transparent 62%
+      );
+  }
+
+  /* Hairline section divider that fades at both ends. */
+  .divider-fade {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--border)),
+      transparent
+    );
   }
 
   /* Button Accent Gradient */

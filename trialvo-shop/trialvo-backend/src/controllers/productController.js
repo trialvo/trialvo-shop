@@ -7,6 +7,8 @@ const {
     linkMediaToProduct,
 } = require('../services/mediaCleanup');
 const { clampDiscountPercent } = require('../lib/productPricing');
+const { normalizeVideoUrl } = require('../lib/videoUrl');
+const { notifySeoChangeAsync } = require('../services/seoNotify');
 
 // Helper: build parameterized query with $1, $2, ... placeholders
 function pgParams(startIdx, count) {
@@ -99,13 +101,16 @@ async function createProduct(req, res, next) {
             faq, seo, is_featured, is_active, deploy_config, is_trialable,
         } = req.body;
 
+        const video = normalizeVideoUrl(video_url);
+        if (!video.ok) return res.status(400).json({ error: video.error });
+
         await pool.query(
             `INSERT INTO products (id, slug, category, price_bdt, price_usd, discount_percent, thumbnail, images, video_url, demo, name, short_description, features, facilities, faq, seo, is_featured, is_active, deploy_config, is_trialable)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)`,
             [
                 id, slug, category || 'ecommerce', price_bdt || 0, price_usd || 0,
                 clampDiscountPercent(discount_percent),
-                thumbnail || '', JSON.stringify(images || {}), video_url || null,
+                thumbnail || '', JSON.stringify(images || {}), video.value,
                 JSON.stringify(demo || []), JSON.stringify(name),
                 JSON.stringify(short_description || {}), JSON.stringify(features || {}),
                 JSON.stringify(facilities || {}), JSON.stringify(faq || []),
@@ -117,6 +122,7 @@ async function createProduct(req, res, next) {
         const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
         // Link any freshly uploaded /uploads assets to this product for later cleanup.
         await linkMediaToProduct(id, collectProductMediaUrls(rows[0]));
+        if (rows[0].is_active) notifySeoChangeAsync({ slugs: [rows[0].slug] });
         res.status(201).json(rows[0]);
     } catch (error) {
         next(error);
@@ -152,6 +158,11 @@ async function updateProduct(req, res, next) {
             if (jsonFields.includes(key)) stored = value == null ? null : JSON.stringify(value);
             else if (boolFields.includes(key)) stored = value ? 1 : 0;
             else if (key === 'discount_percent') stored = clampDiscountPercent(value);
+            else if (key === 'video_url') {
+                const video = normalizeVideoUrl(value);
+                if (!video.ok) return res.status(400).json({ error: video.error });
+                stored = video.value;
+            }
             fields.push(`${key} = $${paramIdx}`);
             values.push(stored);
             paramIdx++;
@@ -167,6 +178,10 @@ async function updateProduct(req, res, next) {
         const { rows } = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
         await cleanupOrphanedProductMedia(before.rows[0], rows[0]);
         await linkMediaToProduct(id, collectProductMediaUrls(rows[0]));
+        // A slug change leaves the old URL stale, so refresh both.
+        notifySeoChangeAsync({
+            slugs: [...new Set([before.rows[0].slug, rows[0].slug])],
+        });
         res.json(rows[0]);
     } catch (error) {
         next(error);
@@ -184,6 +199,7 @@ async function deleteProduct(req, res, next) {
         await pool.query('DELETE FROM products WHERE id = $1', [id]);
         // Best-effort: remove uploaded files that belonged to this product.
         await cleanupAllProductMedia(rows[0]);
+        notifySeoChangeAsync({ slugs: [rows[0].slug], paths: ['/products'] });
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         next(error);
@@ -240,6 +256,13 @@ async function bulkToggleProducts(req, res, next) {
 
         const placeholders = ids.map((_, i) => `$${i + 2}`).join(',');
         await pool.query(`UPDATE products SET ${field} = $1 WHERE id IN (${placeholders})`, [value ? 1 : 0, ...ids]);
+
+        const { rows: changed } = await pool.query(
+            `SELECT slug FROM products WHERE id IN (${ids.map((_, i) => `$${i + 1}`).join(',')})`,
+            ids
+        );
+        notifySeoChangeAsync({ slugs: changed.map((row) => row.slug), paths: ['/products'] });
+
         res.json({ message: `${ids.length} products updated` });
     } catch (error) {
         next(error);

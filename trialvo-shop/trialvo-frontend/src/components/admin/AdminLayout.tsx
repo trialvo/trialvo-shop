@@ -1,5 +1,8 @@
+"use client";
+
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -32,8 +35,16 @@ import {
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/admin/useAdminMessages';
 
+type AdminNavItem = {
+  path: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+  badge?: boolean;
+};
+
 // Nav groups with section labels
-const navGroups = [
+const navGroups: { label: string; items: AdminNavItem[] }[] = [
   {
     label: 'Main',
     items: [
@@ -68,10 +79,10 @@ const navGroups = [
 
 const allNavItems = navGroups.flatMap((g) => g.items);
 
-const AdminLayout: React.FC = () => {
+const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { adminProfile, signOut } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: unreadCount } = useUnreadCount();
@@ -88,12 +99,12 @@ const AdminLayout: React.FC = () => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/admin/login');
+    router.push('/admin/login');
   };
 
   const isActive = (path: string, exact = false) => {
-    if (exact) return location.pathname === path;
-    return location.pathname.startsWith(path);
+    if (exact) return pathname === path;
+    return pathname.startsWith(path);
   };
 
   // Get current nav item for breadcrumb
@@ -114,7 +125,7 @@ const AdminLayout: React.FC = () => {
         </div>
         {(sidebarOpen || isMobile) && (
           <div className="overflow-hidden">
-            <h1 className="font-bold text-sidebar-foreground text-sm whitespace-nowrap tracking-tight">Trialvo</h1>
+            <h1 className="font-bold text-sidebar-foreground text-sm whitespace-nowrap tracking-tight">Trialvo Shop</h1>
             <p className="text-[10px] text-sidebar-foreground/50 uppercase tracking-[0.15em] font-semibold">Admin Panel</p>
           </div>
         )}
@@ -134,7 +145,7 @@ const AdminLayout: React.FC = () => {
                 return (
                   <Link
                     key={item.path}
-                    to={item.path}
+                    href={item.path}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
                       'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 relative group',
@@ -280,7 +291,7 @@ const AdminLayout: React.FC = () => {
 
             {/* Notifications bell */}
             <Button variant="ghost" size="icon" className="relative h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
-              onClick={() => navigate('/admin/messages')}
+              onClick={() => router.push('/admin/messages')}
             >
               <Bell className="w-4 h-4" />
               {unreadCount && unreadCount > 0 && (
@@ -302,7 +313,7 @@ const AdminLayout: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48 bg-card border-border shadow-xl">
                 <DropdownMenuItem asChild className="text-foreground focus:bg-muted focus:text-foreground cursor-pointer">
-                  <Link to="/admin/settings">
+                  <Link href="/admin/settings">
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
                   </Link>
@@ -322,7 +333,7 @@ const AdminLayout: React.FC = () => {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 bg-background">
-          <Outlet />
+          {children}
         </main>
       </div>
     </div>

@@ -1,5 +1,7 @@
+"use client";
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { ArrowRight, Phone, Sparkles, Shield, Zap, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -10,7 +12,7 @@ const HeroSection: React.FC = () => {
 
   const stats = [
     { value: '50+', label: language === 'bn' ? 'রেডিমেড সলিউশন' : 'Ready Solutions' },
-    { value: '24/7', label: language === 'bn' ? 'সাপোর্ট সেবা' : 'Support Service' },
+    { value: language === 'bn' ? 'আজীবন' : 'Lifetime', label: language === 'bn' ? 'সাপোর্ট সেবা' : 'Support' },
     { value: '100%', label: language === 'bn' ? 'সোর্স কোড' : 'Source Code' },
   ];
 
@@ -140,10 +142,10 @@ const HeroSection: React.FC = () => {
                 size="lg"
                 className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-14 px-8 text-base shadow-lg shadow-accent/25"
               >
-                <Link to="/products">
+                <LocalizedLink href="/products">
                   {t('hero.cta.products')}
                   <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
+                </LocalizedLink>
               </Button>
               <Button
                 asChild
@@ -151,10 +153,10 @@ const HeroSection: React.FC = () => {
                 size="lg"
                 className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white h-14 px-8 text-base"
               >
-                <Link to="/contact">
+                <LocalizedLink href="/contact">
                   <Phone className="mr-2 w-5 h-5" />
                   {t('hero.cta.contact')}
-                </Link>
+                </LocalizedLink>
               </Button>
             </motion.div>
           </motion.div>
@@ -175,7 +177,7 @@ const HeroSection: React.FC = () => {
               >
                 <img
                   src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=700&h=500&fit=crop"
-                  alt={language === 'bn' ? 'ইশপ মার্কেট এডমিন প্যানেল প্রিভিউ' : 'eShop Market Admin Panel Preview'}
+                  alt={language === 'bn' ? 'Trialvo Shop এডমিন প্যানেল প্রিভিউ' : 'Trialvo Shop Admin Panel Preview'}
                   className="rounded-2xl shadow-2xl border border-white/10"
                 />
               </motion.div>
@@ -211,7 +213,7 @@ const HeroSection: React.FC = () => {
                     <Zap className="w-6 h-6 text-accent" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold">24/7</div>
+                    <div className="text-2xl font-bold">{language === 'bn' ? 'আজীবন' : 'Lifetime'}</div>
                     <div className="text-sm text-muted-foreground">
                       {t('trust.support.title')}
                     </div>

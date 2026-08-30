@@ -1,4 +1,8 @@
+"use client";
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { localePath, parsePathname, type Locale } from '@/lib/i18n';
 
 export type Language = 'bn' | 'en';
 
@@ -58,8 +62,8 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Trust Section
     'trust.title': 'কেন আমাদের বেছে নেবেন?',
-    'trust.support.title': '২৪/৭ সাপোর্ট',
-    'trust.support.description': 'যেকোনো সমস্যায় আমরা সবসময় আছি',
+    'trust.support.title': 'আজীবন সাপোর্ট',
+    'trust.support.description': 'একবার কিনুন — সাপোর্ট মেয়াদ শেষ হয় না',
     'trust.secure.title': 'নিরাপদ পেমেন্ট',
     'trust.secure.description': 'SSL সুরক্ষিত পেমেন্ট গেটওয়ে',
     'trust.fast.title': 'দ্রুত সেটআপ',
@@ -187,8 +191,8 @@ const translations: Record<Language, Record<string, string>> = {
     
     // Trust Section
     'trust.title': 'Why Choose Us?',
-    'trust.support.title': '24/7 Support',
-    'trust.support.description': 'We are always here to help you',
+    'trust.support.title': 'Lifetime Support',
+    'trust.support.description': 'Buy once — support never expires',
     'trust.secure.title': 'Secure Payment',
     'trust.secure.description': 'SSL secured payment gateway',
     'trust.fast.title': 'Fast Setup',
@@ -277,36 +281,31 @@ interface LanguageProviderProps {
 }
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('bn');
+  const pathname = usePathname() || '/';
+  const router = useRouter();
+  const urlLocale = parsePathname(pathname).locale;
+  const [language, setLanguageState] = useState<Language>(urlLocale);
 
   useEffect(() => {
-    // Check URL for language preference
-    const path = window.location.pathname;
-    if (path.startsWith('/en')) {
-      setLanguageState('en');
-    } else {
-      // Default to Bengali or check localStorage
-      const savedLang = localStorage.getItem('language') as Language;
-      if (savedLang && (savedLang === 'bn' || savedLang === 'en')) {
-        setLanguageState(savedLang);
-      }
-    }
-  }, []);
+    setLanguageState(urlLocale);
+  }, [urlLocale]);
 
   useEffect(() => {
-    // Update body class for font family
     document.body.classList.remove('lang-bn', 'lang-en');
     document.body.classList.add(`lang-${language}`);
-    
-    // Update document language
     document.documentElement.lang = language;
-    
-    // Save to localStorage
     localStorage.setItem('language', language);
+    document.cookie = `NEXT_LOCALE=${language}; path=/; max-age=31536000`;
   }, [language]);
 
   const setLanguage = (lang: Language) => {
+    if (lang === language) return;
+    const { path } = parsePathname(pathname);
+    const search = typeof window !== 'undefined' ? window.location.search : '';
     setLanguageState(lang);
+    if (!pathname.startsWith('/admin')) {
+      router.push(`${localePath(lang as Locale, path)}${search}`);
+    }
   };
 
   const t = (key: string): string => {

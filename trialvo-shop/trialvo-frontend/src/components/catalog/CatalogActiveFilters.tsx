@@ -1,5 +1,4 @@
 import { X } from "lucide-react";
-import { DynamicBadge } from "@/components/ui/DynamicBadge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 
@@ -33,23 +32,15 @@ export function CatalogActiveFilters({
           key={chip.id}
           type="button"
           onClick={chip.onRemove}
-          className="group inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="group inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-accent/40 hover:text-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label={
             language === "bn"
               ? `${chip.label} সরান`
               : `Remove ${chip.label}`
           }
         >
-          <DynamicBadge
-            label={chip.label}
-            variant="neutral"
-            surface="flat"
-            size="md"
-            className="normal-case tracking-normal pr-1.5"
-          />
-          <span className="rounded-full p-0.5 text-muted-foreground transition-colors group-hover:bg-muted group-hover:text-foreground">
-            <X className="h-3.5 w-3.5" />
-          </span>
+          <span>{chip.label}</span>
+          <X className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-accent-strong" />
         </button>
       ))}
       <Button

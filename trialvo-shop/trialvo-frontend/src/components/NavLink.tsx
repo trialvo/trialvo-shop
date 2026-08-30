@@ -1,22 +1,34 @@
-import { NavLink as RouterNavLink, NavLinkProps } from "react-router-dom";
-import { forwardRef } from "react";
-import { cn } from "@/lib/utils";
+"use client";
 
-interface NavLinkCompatProps extends Omit<NavLinkProps, "className"> {
+import LocalizedLink from "@/components/i18n/LocalizedLink";
+import { usePathname } from "next/navigation";
+import { forwardRef, type ComponentProps } from "react";
+import { cn } from "@/lib/utils";
+import { parsePathname } from "@/lib/i18n";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+interface NavLinkCompatProps extends Omit<ComponentProps<typeof LocalizedLink>, "className"> {
   className?: string;
   activeClassName?: string;
   pendingClassName?: string;
 }
 
 const NavLink = forwardRef<HTMLAnchorElement, NavLinkCompatProps>(
-  ({ className, activeClassName, pendingClassName, to, ...props }, ref) => {
+  ({ className, activeClassName, href, ...props }, ref) => {
+    const pathname = usePathname() || "/";
+    const { language } = useLanguage();
+    const { path } = parsePathname(pathname);
+    const hrefStr = typeof href === "string" ? href : href.pathname || "";
+    const isActive =
+      hrefStr === "/" || hrefStr === `/${language}`
+        ? path === "/"
+        : path.startsWith(hrefStr.replace(/^\/(bn|en)/, "") || hrefStr);
+
     return (
-      <RouterNavLink
+      <LocalizedLink
         ref={ref}
-        to={to}
-        className={({ isActive, isPending }) =>
-          cn(className, isActive && activeClassName, isPending && pendingClassName)
-        }
+        href={href}
+        className={cn(className, isActive && activeClassName)}
         {...props}
       />
     );

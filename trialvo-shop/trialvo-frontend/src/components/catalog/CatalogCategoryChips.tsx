@@ -21,6 +21,21 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Smartphone,
 };
 
+/**
+ * Squared buttons rather than pills, so the filters read as controls instead of
+ * badges. The selected state carries the accent fill.
+ */
+function chipClass(selected: boolean) {
+  return cn(
+    "inline-flex shrink-0 items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium",
+    "transition-[background-color,border-color,box-shadow] duration-200",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+    selected
+      ? "border-accent bg-accent text-accent-foreground shadow-card"
+      : "border-border bg-card text-foreground shadow-card hover:border-accent/40 hover:text-accent-strong",
+  );
+}
+
 export type CatalogCategoryChipsProps = {
   categories: Category[];
   selectedSlug: string;
@@ -41,7 +56,7 @@ export function CatalogCategoryChips({
     return (
       <div className="flex gap-2 overflow-hidden" aria-busy="true">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={`chip-skel-${i}`} className="h-10 w-28 rounded-full" />
+          <Skeleton key={`chip-skel-${i}`} className="h-10 w-28 rounded-lg" />
         ))}
       </div>
     );
@@ -60,12 +75,7 @@ export function CatalogCategoryChips({
         role="option"
         aria-selected={!selectedSlug}
         onClick={() => onSelect("")}
-        className={cn(
-          "inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors",
-          !selectedSlug
-            ? "border-accent bg-accent text-accent-foreground shadow-sm"
-            : "border-border bg-card text-foreground hover:border-foreground/20 hover:bg-muted/60",
-        )}
+        className={chipClass(!selectedSlug)}
       >
         <LayoutGrid className="h-4 w-4" aria-hidden="true" />
         {allLabel}
@@ -84,22 +94,15 @@ export function CatalogCategoryChips({
             role="option"
             aria-selected={selected}
             onClick={() => onSelect(category.slug)}
-            className={cn(
-              "inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors",
-              selected
-                ? "border-accent bg-accent text-accent-foreground shadow-sm"
-                : "border-border bg-card text-foreground hover:border-foreground/20 hover:bg-muted/60",
-            )}
+            className={chipClass(selected)}
           >
             <Icon className="h-4 w-4" aria-hidden="true" />
             <span>{name}</span>
             {typeof count === "number" ? (
               <span
                 className={cn(
-                  "rounded-full px-1.5 py-0.5 text-[11px] font-semibold",
-                  selected
-                    ? "bg-white/20 text-accent-foreground"
-                    : "bg-muted text-muted-foreground",
+                  "text-xs font-semibold tabular-nums sm:text-[11px]",
+                  selected ? "text-accent-foreground/75" : "text-muted-foreground",
                 )}
               >
                 {count}

@@ -1,5 +1,7 @@
+"use client";
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { motion } from 'framer-motion';
 import { ShoppingCart, Shirt, Gift, Watch, Smartphone, ArrowRight, AlertTriangle, RotateCcw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -121,8 +123,8 @@ const CategoriesSection: React.FC = () => {
 
             return (
               <motion.div key={category.id} variants={itemVariants}>
-                <Link
-                  to={`/products?category=${category.slug}`}
+                <LocalizedLink
+                  href={`/products?category=${category.slug}`}
                   className="group block"
                 >
                   <div className="relative bg-card border border-border rounded-2xl p-6 text-center transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-1 overflow-hidden">
@@ -154,7 +156,7 @@ const CategoriesSection: React.FC = () => {
                       )}
                     </div>
                   </div>
-                </Link>
+                </LocalizedLink>
               </motion.div>
             );
           })}

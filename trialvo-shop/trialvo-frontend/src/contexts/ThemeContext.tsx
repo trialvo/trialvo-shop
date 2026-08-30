@@ -1,3 +1,5 @@
+"use client";
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
@@ -25,59 +27,76 @@ interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
-function readInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'system';
-
+function readStoredTheme(): Theme {
   try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
     if (stored === 'light' || stored === 'dark' || stored === 'system') {
       return stored;
     }
   } catch {
     // ignore storage errors
   }
-
-  // Default: follow device / OS preference
   return 'system';
 }
 
+function resolveTheme(themeToApply: Theme): 'light' | 'dark' {
+  if (themeToApply !== 'system') return themeToApply;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+}
+
+function applyThemeClass(resolved: 'light' | 'dark') {
+  const root = document.documentElement;
+  root.classList.remove('light', 'dark');
+  root.classList.add(resolved);
+}
+
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(readInitialTheme);
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
-    if (typeof window === 'undefined') return 'light';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
-  });
+  // Always the same on the server and the first client paint. Reading
+  // localStorage in useState is what made ThemeToggle hydrate as Moon/Dark
+  // while the SSR HTML still said Monitor/system.
+  const [theme, setThemeState] = useState<Theme>('system');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    const stored = readStoredTheme();
+    const resolved = resolveTheme(stored);
+    setThemeState(stored);
+    setResolvedTheme(resolved);
+    applyThemeClass(resolved);
+    setReady(true);
+  }, []);
 
-    const getSystemTheme = (): 'light' | 'dark' => {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-    };
+  useEffect(() => {
+    if (!ready) return;
 
-    const applyTheme = (themeToApply: Theme) => {
-      const resolved =
-        themeToApply === 'system' ? getSystemTheme() : themeToApply;
+    const apply = (next: Theme) => {
+      const resolved = resolveTheme(next);
       setResolvedTheme(resolved);
-      root.classList.remove('light', 'dark');
-      root.classList.add(resolved);
+      applyThemeClass(resolved);
     };
 
-    applyTheme(theme);
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    apply(theme);
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
-      if (theme === 'system') applyTheme('system');
+      if (theme === 'system') apply('system');
     };
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  }, [theme, ready]);
+
+  const setTheme = (next: Theme) => {
+    setThemeState(next);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch {
+      // ignore storage errors
+    }
+  };
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>

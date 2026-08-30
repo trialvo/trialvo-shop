@@ -5,6 +5,7 @@ import { Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { FormTextField, FormTextareaField } from "@/components/form";
+import { Surface } from "@/components/section";
 import { localize } from "@/lib/localize";
 import {
   createContactSchema,
@@ -50,12 +51,12 @@ export function ContactForm({
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm md:p-8">
+    <Surface sheen className="p-6 md:p-8">
       <div className="mb-6 border-b border-border pb-5">
-        <h2 className="font-display text-xl font-bold tracking-tight">
+        <h2 className="font-display text-xl font-bold tracking-tight md:text-[1.375rem]">
           {localize(labels.title, language)}
         </h2>
-        <p className="mt-1.5 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {localize(labels.supporting, language)}
         </p>
       </div>
@@ -122,7 +123,7 @@ export function ContactForm({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-lg bg-accent px-6 font-semibold text-accent-foreground hover:bg-accent/90 sm:min-w-[160px]"
+              className="h-11 rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5 disabled:translate-y-0 sm:min-w-[160px]"
             >
               {isSubmitting ? (
                 <>
@@ -142,7 +143,7 @@ export function ContactForm({
           </div>
         </form>
       </Form>
-    </div>
+    </Surface>
   );
 }
 

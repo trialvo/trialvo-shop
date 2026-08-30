@@ -223,7 +223,7 @@ export function ProductCardMedia({
                 <img
                   src={src}
                   alt={index === safePage ? imageAlt : ""}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                   loading={index === 0 ? "eager" : "lazy"}
                   draggable={false}
                   itemProp={index === 0 ? "image" : undefined}
@@ -239,24 +239,33 @@ export function ProductCardMedia({
       </div>
 
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 via-black/10 to-transparent"
         aria-hidden="true"
       />
+
+      {/* Keeps the unchipped overlay labels legible over a light photo. */}
+      {badges.length > 0 ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-black/45 to-transparent"
+          aria-hidden="true"
+        />
+      ) : null}
 
       {canSlide ? (
         <button
           type="button"
           onClick={goPrev}
           className={cn(
-            "absolute left-2 top-1/2 z-10 -translate-y-1/2",
-            "flex h-8 w-8 items-center justify-center rounded-full",
-            "border border-white/25 bg-black/35 text-white backdrop-blur-sm",
-            "opacity-90 transition-opacity hover:opacity-100",
+            "absolute left-2.5 top-1/2 z-10 -translate-y-1/2",
+            "flex h-9 w-9 items-center justify-center rounded-full sm:h-8 sm:w-8",
+            "bg-background/90 text-foreground shadow-sm backdrop-blur",
+            // Touch screens never hover, so the arrows stay visible there.
+            "transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           )}
           aria-label="Previous image"
         >
-          <ChevronLeft className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+          <ChevronLeft className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         </button>
       ) : null}
 
@@ -265,15 +274,15 @@ export function ProductCardMedia({
           type="button"
           onClick={goNext}
           className={cn(
-            "absolute right-2 top-1/2 z-10 -translate-y-1/2",
-            "flex h-8 w-8 items-center justify-center rounded-full",
-            "border border-white/25 bg-black/35 text-white backdrop-blur-sm",
-            "opacity-90 transition-opacity hover:opacity-100",
+            "absolute right-2.5 top-1/2 z-10 -translate-y-1/2",
+            "flex h-9 w-9 items-center justify-center rounded-full sm:h-8 sm:w-8",
+            "bg-background/90 text-foreground shadow-sm backdrop-blur",
+            "transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           )}
           aria-label="Next image"
         >
-          <ChevronRight className="h-4 w-4" strokeWidth={2.25} aria-hidden="true" />
+          <ChevronRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
         </button>
       ) : null}
 

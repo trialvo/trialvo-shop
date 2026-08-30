@@ -17,20 +17,23 @@ export function ProductCardBadges({
   language,
   placement = "overlay",
 }: Readonly<ProductCardBadgesProps>) {
-  if (badges.length === 0) return null;
+  const visible = badges.slice(0, 2);
+  if (visible.length === 0) return null;
 
   const surface = placement === "overlay" ? "overlay" : "flat";
 
   return (
     <ul
       className={cn(
-        "flex flex-wrap gap-1.5",
-        placement === "overlay" && "absolute left-3 top-3 z-10 max-w-[90%]",
+        // Wider gap than a chip row needs, since plain labels would otherwise
+        // read as one run-on string.
+        "flex flex-wrap gap-x-3 gap-y-1",
+        placement === "overlay" && "absolute left-3 top-3 z-10 max-w-[70%]",
         placement === "inline" && "relative",
       )}
       aria-label={language === "bn" ? "প্রোডাক্ট ব্যাজ" : "Product badges"}
     >
-      {badges.map((badge) => (
+      {visible.map((badge) => (
         <li key={badge.id} className="min-w-0">
           <DynamicBadge
             label={localize(badge.label, language)}

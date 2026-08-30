@@ -1,5 +1,7 @@
+"use client";
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -30,10 +32,10 @@ const FeaturedProducts: React.FC = () => {
             </p>
           </div>
           <Button asChild variant="outline" className="mt-4 md:mt-0">
-            <Link to="/products">
+            <LocalizedLink href="/products">
               {t('common.seeAll')}
               <ArrowRight className="ml-2 w-4 h-4" />
-            </Link>
+            </LocalizedLink>
           </Button>
         </div>
 

@@ -1,94 +1,95 @@
-import { Link } from "react-router-dom";
-import { Mail, MapPin, Phone } from "lucide-react";
+"use client";
+
+import LocalizedLink from "@/components/i18n/LocalizedLink";
+import { Mail, MapPin, Phone, Rss } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BrandLogo } from "@/components/brand";
-import type { FooterLinkGroup, LocalizedString } from "@/types/marketplace";
+import type { LocalizedString } from "@/types/marketplace";
 import { localize } from "@/lib/localize";
 import { BRAND, brandName } from "@/lib/brand";
+import { legalIndex } from "@/lib/legal";
 
-const MARKETPLACE_GROUPS: FooterLinkGroup[] = [
-  {
-    id: "marketplace",
-    title: { bn: "মার্কেটপ্লেস", en: "Marketplace" },
-    links: [
-      { href: "/products", label: "All products" },
-      { href: "/products?category=ecommerce", label: "Ecommerce" },
-      { href: "/products?category=fashion", label: "Fashion" },
-      { href: "/products?category=tech", label: "Tech" },
-    ],
-  },
-  {
-    id: "company",
-    title: { bn: "কোম্পানি", en: "Company" },
-    links: [
-      { href: "/about", label: "About" },
-      { href: "/contact", label: "Contact" },
-      { href: "/terms", label: "Terms" },
-      { href: "/privacy", label: "Privacy" },
-    ],
-  },
+type FooterLink = { href: string; label: LocalizedString };
+
+const MARKETPLACE_LINKS: FooterLink[] = [
+  { href: "/products", label: { bn: "সব প্রোডাক্ট", en: "All products" } },
+  { href: "/products?category=ecommerce", label: { bn: "ইকমার্স", en: "Ecommerce" } },
+  { href: "/products?category=fashion", label: { bn: "ফ্যাশন", en: "Fashion" } },
+  { href: "/products?category=tech", label: { bn: "টেক", en: "Tech" } },
 ];
 
-const GROUP_LABELS_BN: Record<string, Record<string, string>> = {
-  marketplace: {
-    "All products": "সব প্রোডাক্ট",
-    Ecommerce: "ইকমার্স",
-    Fashion: "ফ্যাশন",
-    Tech: "টেক",
-  },
-  company: {
-    About: "আমাদের সম্পর্কে",
-    Contact: "যোগাযোগ",
-    Terms: "শর্তাবলী",
-    Privacy: "প্রাইভেসি",
-  },
-};
-
-function linkLabel(
-  groupId: string,
-  englishLabel: string,
-  language: "bn" | "en",
-): string {
-  if (language === "en") return englishLabel;
-  return GROUP_LABELS_BN[groupId]?.[englishLabel] ?? englishLabel;
-}
+const COMPANY_LINKS: FooterLink[] = [
+  { href: "/about", label: { bn: "আমাদের সম্পর্কে", en: "About us" } },
+  { href: "/how-it-works", label: { bn: "কীভাবে কাজ করে", en: "How it works" } },
+  { href: "/faq", label: { bn: "প্রশ্নোত্তর", en: "FAQ" } },
+  { href: "/contact", label: { bn: "যোগাযোগ", en: "Contact" } },
+];
 
 /**
  * Marketplace footer — continuous with page body (not a heavy dark dump).
- * Standard columns: brand, marketplace, company, contact.
+ * Columns: brand, marketplace, company, legal, contact.
  */
 export default function Footer() {
   const { language } = useLanguage();
   const year = new Date().getFullYear();
   const name = brandName(language);
+  const legal = legalIndex(language);
+
+  const columns: { id: string; title: LocalizedString; links: FooterLink[] }[] = [
+    {
+      id: "marketplace",
+      title: { bn: "মার্কেটপ্লেস", en: "Marketplace" },
+      links: MARKETPLACE_LINKS,
+    },
+    {
+      id: "company",
+      title: { bn: "কোম্পানি", en: "Company" },
+      links: COMPANY_LINKS,
+    },
+    {
+      id: "legal",
+      title: { bn: "নীতি ও শর্ত", en: "Legal" },
+      links: legal.map((doc) => ({
+        href: doc.path,
+        label: { bn: doc.title, en: doc.title },
+      })),
+    },
+  ];
 
   return (
     <footer className="border-t border-border bg-background" role="contentinfo">
       <div className="container-custom py-12 md:py-14">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
           <div className="lg:col-span-1">
-            <Link to="/" className="mb-4 inline-flex" aria-label={name}>
+            <LocalizedLink href="/" className="mb-4 inline-flex" aria-label={name}>
               <BrandLogo withWordmark wordmark={name} size="md" />
-            </Link>
+            </LocalizedLink>
             <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
               {localize(BRAND.blurb as LocalizedString, language)}
             </p>
+            <a
+              href="/feed.xml"
+              className="mt-3 inline-flex min-h-[2rem] items-center gap-1.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Rss className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+              {language === "bn" ? "প্রোডাক্ট ফিড" : "Product feed"}
+            </a>
           </div>
 
-          {MARKETPLACE_GROUPS.map((group) => (
-            <div key={group.id}>
+          {columns.map((column) => (
+            <div key={column.id}>
               <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.12em] text-foreground">
-                {localize(group.title, language)}
+                {localize(column.title, language)}
               </h3>
-              <ul className="space-y-2.5">
-                {group.links.map((link) => (
+              <ul className="space-y-0.5">
+                {column.links.map((link) => (
                   <li key={link.href}>
-                    <Link
-                      to={link.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    <LocalizedLink
+                      href={link.href}
+                      className="inline-flex min-h-[2rem] items-center py-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      {linkLabel(group.id, link.label, language)}
-                    </Link>
+                      {localize(link.label, language)}
+                    </LocalizedLink>
                   </li>
                 ))}
               </ul>
@@ -99,19 +100,22 @@ export default function Footer() {
             <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.12em] text-foreground">
               {language === "bn" ? "যোগাযোগ" : "Contact"}
             </h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+            <ul className="space-y-1.5 text-sm text-muted-foreground">
               <li className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
                 <a
                   href={`mailto:${BRAND.contactEmail}`}
-                  className="hover:text-foreground"
+                  className="inline-flex min-h-[2rem] items-center break-all py-1 hover:text-foreground"
                 >
                   {BRAND.contactEmail}
                 </a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-                <a href={BRAND.contactPhoneHref} className="hover:text-foreground">
+                <a
+                  href={BRAND.contactPhoneHref}
+                  className="inline-flex min-h-[2rem] items-center py-1 hover:text-foreground"
+                >
                   {BRAND.contactPhone}
                 </a>
               </li>
@@ -122,6 +126,12 @@ export default function Footer() {
             </ul>
           </div>
         </div>
+
+        <p className="mt-10 max-w-4xl border-t border-border pt-6 text-xs leading-6 text-muted-foreground">
+          {language === "bn"
+            ? `${name} রেডিমেড ইকমার্স ওয়েবসাইট সরবরাহ করে — শপ ফ্রন্টএন্ড, অ্যাডমিন প্যানেল ও সম্পূর্ণ সোর্স কোড একসাথে। প্রতিটি প্রোডাক্ট এককালীন পেমেন্টে আজীবন লাইসেন্স, আজীবন সাপোর্ট ও আজীবন আপডেট সহ, এবং কেনার আগে লাইভ ট্রায়াল করে দেখা যায়।`
+            : `${name} supplies ready-made ecommerce websites — storefront, admin panel, and complete source code together. Every product is a one-time payment with a lifetime license, lifetime support, and lifetime updates, and you can run a live trial before you buy.`}
+        </p>
       </div>
 
       <div className="border-t border-border">

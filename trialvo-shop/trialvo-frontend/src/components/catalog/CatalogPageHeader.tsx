@@ -1,4 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Eyebrow } from "@/components/section";
 
 export type CatalogPageHeaderProps = {
   title: string;
@@ -13,14 +14,14 @@ export function CatalogPageHeader({
   const { language } = useLanguage();
 
   return (
-    <header className="mb-8 max-w-2xl">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+    <header className="mb-8 max-w-3xl">
+      <Eyebrow className="mb-4">
         {language === "bn" ? "মার্কেটপ্লেস ক্যাটালগ" : "Marketplace catalog"}
-      </p>
-      <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
+      </Eyebrow>
+      <h1 className="font-display text-[2rem] font-bold leading-[1.12] tracking-tight sm:text-[2.5rem] md:text-[3rem]">
         {title}
       </h1>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground md:text-base">
+      <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted-foreground md:text-base md:leading-[1.75]">
         {description}
       </p>
     </header>

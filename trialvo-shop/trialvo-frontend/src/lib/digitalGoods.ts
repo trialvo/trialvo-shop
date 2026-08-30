@@ -6,7 +6,7 @@ import {
   Sparkles,
   Star,
 } from "lucide-react";
-import type { Product } from "@/data/products";
+import type { Product } from "@/types/product";
 import type {
   DigitalGoodsTag,
   LocalizedString,
@@ -74,6 +74,70 @@ export function getPrimaryDemoUrl(product: Product): string | null {
   const shopUrl = product.deployConfig?.shared_demo_shop_url;
   if (typeof shopUrl === "string" && shopUrl.trim()) return shopUrl.trim();
   return null;
+}
+
+export type DemoTargetId = "shop" | "admin";
+
+export type DemoTarget = {
+  id: DemoTargetId;
+  url: string;
+  /** Hostname shown next to the link so buyers see where it opens */
+  host: string;
+  /** Admin needs credentials; the storefront is open to anyone */
+  requiresLogin: boolean;
+};
+
+function readConfigUrl(product: Product, key: string): string | null {
+  const value = product.deployConfig?.[key];
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.href.replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Every demo entry point a buyer can open for a product: the customer-facing
+ * storefront and, when configured, the admin panel. Both come from
+ * `deploy_config`, so a product without demo URLs simply returns an empty list.
+ */
+export function getDemoTargets(product: Product): DemoTarget[] {
+  const targets: DemoTarget[] = [];
+
+  const shopUrl = readConfigUrl(product, "shared_demo_shop_url");
+  if (shopUrl) {
+    targets.push({
+      id: "shop",
+      url: shopUrl,
+      host: hostOf(shopUrl),
+      requiresLogin: false,
+    });
+  }
+
+  const adminUrl = readConfigUrl(product, "shared_demo_admin_url");
+  if (adminUrl) {
+    targets.push({
+      id: "admin",
+      url: adminUrl,
+      host: hostOf(adminUrl),
+      requiresLogin: true,
+    });
+  }
+
+  return targets;
 }
 
 /**

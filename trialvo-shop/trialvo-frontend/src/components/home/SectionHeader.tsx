@@ -42,7 +42,7 @@ export function SectionHeader({
     >
       <div className={cn(centered && "mx-auto max-w-2xl")}>
         {eyebrow ? (
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-accent-strong">
             {eyebrow}
           </p>
         ) : null}

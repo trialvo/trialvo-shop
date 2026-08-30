@@ -1,4 +1,5 @@
 import { localize } from "@/lib/localize";
+import { IconTile, Section, SectionIntro, Surface } from "@/components/section";
 import type { AboutValueItem } from "@/types/about";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 
@@ -20,48 +21,38 @@ export function AboutValues({
   supporting,
 }: Readonly<AboutValuesProps>) {
   return (
-    <section
-      className="border-y border-border bg-muted/25 py-12 md:py-16"
-      aria-labelledby="about-values-title"
-    >
-      <div className="container-custom">
-        <div className="mb-8 max-w-2xl">
-          <h2
-            id="about-values-title"
-            className="font-display text-2xl font-bold tracking-tight md:text-3xl"
-          >
-            {title}
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground md:text-base">
-            {supporting}
-          </p>
-        </div>
+    <Section labelledBy="about-values-title" divider="top">
+      <SectionIntro
+        id="about-values-title"
+        className="mb-8 md:mb-10"
+        title={title}
+        lead={supporting}
+      />
 
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {values.map((value) => {
-            const Icon = value.icon;
-            return (
-              <li
-                key={value.id}
-                className="flex gap-4 rounded-lg border border-border/80 bg-background p-5"
-              >
-                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </span>
-                <div className="min-w-0">
-                  <h3 className="text-base font-semibold text-foreground">
-                    {localize(value.title, language)}
-                  </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {localize(value.description, language)}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </section>
+      <ul className="grid gap-4 sm:grid-cols-2">
+        {values.map((value) => {
+          const Icon = value.icon;
+          return (
+            <Surface
+              as="li"
+              key={value.id}
+              sheen
+              className="flex gap-4 p-5 md:p-6"
+            >
+              <IconTile icon={Icon} className="mt-0.5" />
+              <div className="min-w-0">
+                <h3 className="font-display text-base font-bold leading-6 tracking-tight text-foreground">
+                  {localize(value.title, language)}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {localize(value.description, language)}
+                </p>
+              </div>
+            </Surface>
+          );
+        })}
+      </ul>
+    </Section>
   );
 }
 

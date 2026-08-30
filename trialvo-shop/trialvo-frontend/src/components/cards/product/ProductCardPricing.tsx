@@ -1,6 +1,5 @@
-import { ArrowRight, Lock } from "lucide-react";
-import { formatPriceBdt, formatPriceUsd } from "@/lib/digitalGoods";
-import { quoteProductPrice } from "@/lib/productPricing";
+import { ShopUsdHint } from "@/components/pricing/ShopUsdHint";
+import { quoteProductPrice, shopDisplayPrice } from "@/lib/productPricing";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 
 export type ProductCardPricingProps = {
@@ -10,11 +9,9 @@ export type ProductCardPricingProps = {
   currencyLabel: string;
   language: MarketplaceLanguage;
   priceHint: string;
-  ctaLabel: string;
-  trustLabel: string;
 };
 
-/** Price + CTA from API amounts (BDT primary, USD when present) */
+/** BDT is the main price. USD, if set, stays a small secondary line. */
 export function ProductCardPricing({
   amountBdt,
   amountUsd,
@@ -22,79 +19,40 @@ export function ProductCardPricing({
   currencyLabel,
   language,
   priceHint,
-  ctaLabel,
-  trustLabel,
 }: Readonly<ProductCardPricingProps>) {
   const quote = quoteProductPrice({
     priceBDT: amountBdt,
     priceUSD: amountUsd,
     discountPercent,
   });
+  const display = shopDisplayPrice(quote, language, currencyLabel);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            {quote.hasDiscount ? (
-              <>
-                <span className="text-lg font-semibold tracking-tight text-muted-foreground line-through decoration-destructive decoration-2">
-                  {formatPriceBdt(quote.listBdt, language, currencyLabel)}
-                </span>
-                <span
-                  className="text-2xl font-bold tracking-tight text-accent"
-                  itemProp="price"
-                  content={String(quote.saleBdt)}
-                >
-                  {formatPriceBdt(quote.saleBdt, language, currencyLabel)}
-                </span>
-                <span className="rounded bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
-                  -{quote.discountPercent}%
-                </span>
-              </>
-            ) : (
-              <span
-                className="text-2xl font-bold tracking-tight text-accent"
-                itemProp="price"
-                content={String(quote.saleBdt)}
-              >
-                {formatPriceBdt(quote.saleBdt, language, currencyLabel)}
-              </span>
-            )}
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {priceHint}
-            </span>
-          </div>
-          {quote.listUsd > 0 ? (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {quote.hasDiscount ? (
-                <>
-                  <span className="line-through decoration-destructive/80 mr-1.5">
-                    {formatPriceUsd(quote.listUsd, language)} USD
-                  </span>
-                  <span>{formatPriceUsd(quote.saleUsd, language)} USD</span>
-                </>
-              ) : (
-                <>{formatPriceUsd(quote.saleUsd, language)} USD</>
-              )}
-            </p>
-          ) : null}
-          <meta itemProp="priceCurrency" content="BDT" />
-        </div>
-
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2.5 text-sm font-semibold text-accent-foreground shadow-sm transition-colors group-hover:bg-accent/90">
-          {ctaLabel}
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        </span>
-      </div>
-
-      <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
-        <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
-        {trustLabel}
+    <div className="flex items-baseline justify-between gap-3 whitespace-nowrap border-t border-border/60 pt-4">
+      <p className="min-w-0 truncate text-xs font-medium text-muted-foreground sm:text-[11px]">
+        {priceHint}
       </p>
+      <div className="flex shrink-0 items-baseline gap-2">
+        {quote.hasDiscount ? (
+          <span className="text-sm text-muted-foreground line-through">
+            {display.list}
+          </span>
+        ) : null}
+        <span
+          className="text-xl font-semibold tracking-tight text-foreground"
+          itemProp="price"
+          content={String(display.saleRaw)}
+        >
+          {display.sale}
+        </span>
+        <ShopUsdHint
+          display={display}
+          className="text-xs leading-none text-muted-foreground sm:text-[11px]"
+        />
+      </div>
+      <meta itemProp="priceCurrency" content="BDT" />
     </div>
   );
 }
 
 export default ProductCardPricing;
-

@@ -4,3 +4,4 @@ export { AboutValues } from "./AboutValues";
 export { AboutHighlights } from "./AboutHighlights";
 export { AboutPrinciples } from "./AboutPrinciples";
 export { AboutCta } from "./AboutCta";
+export { AboutServices } from "./AboutServices";

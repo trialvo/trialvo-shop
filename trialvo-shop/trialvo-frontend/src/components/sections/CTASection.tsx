@@ -1,5 +1,7 @@
+"use client";
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { ArrowRight, Phone, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -85,10 +87,10 @@ const CTASection: React.FC = () => {
        size="lg"
        className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold h-14 px-10 text-base shadow-lg shadow-accent/25 rounded-xl"
       >
-       <Link to="/products">
+       <LocalizedLink href="/products">
         {t('hero.cta.products')}
         <ArrowRight className="ml-2 w-5 h-5" />
-       </Link>
+       </LocalizedLink>
       </Button>
       <Button
        asChild
@@ -96,10 +98,10 @@ const CTASection: React.FC = () => {
        size="lg"
        className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white h-14 px-10 text-base rounded-xl"
       >
-       <Link to="/contact">
+       <LocalizedLink href="/contact">
         <Phone className="mr-2 w-5 h-5" />
         {t('hero.cta.contact')}
-       </Link>
+       </LocalizedLink>
       </Button>
      </motion.div>
 
@@ -112,8 +114,8 @@ const CTASection: React.FC = () => {
       transition={{ delay: 0.7 }}
      >
       {language === 'bn'
-       ? '✓ সম্পূর্ণ সোর্স কোড  •  ✓ ফ্রি সাপোর্ট  •  ✓ লাইফটাইম আপডেট'
-       : '✓ Full Source Code  •  ✓ Free Support  •  ✓ Lifetime Updates'}
+       ? '✓ সম্পূর্ণ সোর্স কোড  •  ✓ আজীবন সাপোর্ট  •  ✓ আজীবন আপডেট'
+       : '✓ Full source code  •  ✓ Lifetime support  •  ✓ Lifetime updates'}
      </motion.p>
     </motion.div>
    </div>

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { Product } from "@/data/products";
+import type { Product } from "@/types/product";
 
 function parseJsonField<T>(value: unknown, fallback: T): T {
   if (value == null) return fallback;

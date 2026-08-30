@@ -1,5 +1,9 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
+import { usePathname } from "next/navigation";
+import { parsePathname } from "@/lib/i18n";
 import { Globe, Menu, X } from "lucide-react";
 import { useLanguage, type Language } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -12,8 +16,9 @@ export default function Navbar() {
   const { language, setLanguage, t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  const isHome = location.pathname === "/";
+  const pathname = usePathname();
+  const { path } = parsePathname(pathname || "/");
+  const isHome = path === "/";
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 12);
@@ -24,17 +29,22 @@ export default function Navbar() {
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [location]);
+  }, [pathname]);
 
   const navLinks = [
     { href: "/", label: t("nav.home") },
     { href: "/products", label: t("nav.products") },
+    {
+      href: "/how-it-works",
+      label: language === "bn" ? "কীভাবে কাজ করে" : "How it works",
+    },
+    { href: "/faq", label: language === "bn" ? "প্রশ্নোত্তর" : "FAQ" },
     { href: "/about", label: t("nav.about") },
     { href: "/contact", label: t("nav.contact") },
   ];
 
   const isActive = (href: string) =>
-    href === "/" ? location.pathname === "/" : location.pathname.startsWith(href);
+    href === "/" ? path === "/" : path.startsWith(href);
 
   const transparent = isHome && !isScrolled && !isMobileMenuOpen;
   const name = brandName(language);
@@ -45,13 +55,13 @@ export default function Navbar() {
         "fixed inset-x-0 top-0 z-50 transition-all duration-300",
         transparent
           ? "border-transparent bg-transparent"
-          : "border-b border-border/80 bg-background/90 shadow-sm backdrop-blur-md",
+          : "border-b border-border/70 bg-background/80 shadow-card backdrop-blur-xl backdrop-saturate-150",
       )}
     >
       <nav className="container-custom" aria-label="Main navigation">
         <div className="flex h-16 items-center justify-between md:h-[4.5rem]">
-          <Link
-            to="/"
+          <LocalizedLink
+            href="/"
             className="group inline-flex items-center transition-opacity hover:opacity-90"
             aria-label={name}
           >
@@ -71,27 +81,35 @@ export default function Navbar() {
                 markClassName="transition-transform duration-200 group-hover:scale-[1.04]"
               />
             </span>
-          </Link>
+          </LocalizedLink>
 
-          <div className="hidden items-center gap-1 md:flex">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className={cn(
-                  "rounded-md px-3.5 py-2 text-sm font-medium transition-colors",
-                  transparent
-                    ? isActive(link.href)
-                      ? "bg-white/15 text-white"
-                      : "text-white/75 hover:bg-white/10 hover:text-white"
-                    : isActive(link.href)
-                      ? "bg-secondary text-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
+          <div className="hidden items-center gap-0.5 md:flex">
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <LocalizedLink
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "relative rounded-md px-3.5 py-2 text-sm font-medium transition-colors",
+                    // An accent underline marks the current page more elegantly
+                    // than a filled pill, and survives the transparent state.
+                    "after:absolute after:inset-x-3.5 after:-bottom-px after:h-[2px] after:rounded-full after:bg-accent after:transition-transform after:duration-200",
+                    active ? "after:scale-x-100" : "after:scale-x-0",
+                    transparent
+                      ? active
+                        ? "text-white"
+                        : "text-white/75 hover:bg-white/10 hover:text-white"
+                      : active
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {link.label}
+                </LocalizedLink>
+              );
+            })}
           </div>
 
           <div className="flex items-center gap-2">
@@ -121,8 +139,12 @@ export default function Navbar() {
               </span>
             </Button>
 
-            <Button asChild size="sm" className="hidden h-9 rounded-md px-4 font-semibold md:inline-flex">
-              <Link to="/products">{language === "bn" ? "ব্রাউজ" : "Browse"}</Link>
+            <Button
+              asChild
+              size="sm"
+              className="hidden h-9 rounded-lg bg-accent px-4 font-semibold text-accent-foreground shadow-card transition-colors hover:bg-accent/90 md:inline-flex"
+            >
+              <LocalizedLink href="/products">{language === "bn" ? "ব্রাউজ" : "Browse"}</LocalizedLink>
             </Button>
 
             <Button
@@ -144,26 +166,30 @@ export default function Navbar() {
         {isMobileMenuOpen ? (
           <div className="border-t border-border/60 bg-background py-3 md:hidden">
             <div className="flex flex-col gap-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={cn(
-                    "rounded-md px-4 py-3 text-sm font-medium",
-                    isActive(link.href)
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-muted",
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <Link
-                to="/products"
-                className="mt-1 rounded-md bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground"
+              {navLinks.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <LocalizedLink
+                    key={link.href}
+                    href={link.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "rounded-lg px-4 py-3 text-sm font-medium transition-colors",
+                      active
+                        ? "border-l-2 border-accent bg-accent/[0.08] text-accent"
+                        : "text-foreground hover:bg-muted",
+                    )}
+                  >
+                    {link.label}
+                  </LocalizedLink>
+                );
+              })}
+              <LocalizedLink
+                href="/products"
+                className="mt-2 rounded-lg bg-accent px-4 py-3 text-center text-sm font-semibold text-accent-foreground shadow-accent-glow"
               >
                 {language === "bn" ? "সব প্রোডাক্ট ব্রাউজ" : "Browse all products"}
-              </Link>
+              </LocalizedLink>
             </div>
           </div>
         ) : null}

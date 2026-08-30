@@ -2,6 +2,9 @@
  * Must stay in lockstep with trialvo-backend/src/lib/productPricing.js
  */
 
+import { formatPriceBdt, formatPriceUsd } from "@/lib/digitalGoods";
+import type { MarketplaceLanguage } from "@/types/marketplace";
+
 export function roundMoney(value: number | string | null | undefined): number {
   const n = Number(value);
   if (!Number.isFinite(n) || n <= 0) return 0;
@@ -33,6 +36,7 @@ export type ProductPriceQuote = {
   saleBdt: number;
   saleUsd: number;
   discountBdt: number;
+  discountUsd: number;
   hasDiscount: boolean;
 };
 
@@ -53,6 +57,43 @@ export function quoteProductPrice(product: {
     saleBdt,
     saleUsd,
     discountBdt: roundMoney(listBdt - saleBdt),
+    discountUsd: roundMoney(listUsd - saleUsd),
     hasDiscount: percent > 0,
   };
+}
+
+/** Shop UI: BDT is always the main price. USD is an optional secondary line. */
+export function shopDisplayPrice(
+  quote: ProductPriceQuote,
+  language: MarketplaceLanguage,
+  bdtLabel = "৳",
+) {
+  const hasUsd = quote.listUsd > 0;
+  return {
+    currency: "BDT" as const,
+    list: formatPriceBdt(quote.listBdt, language, bdtLabel),
+    sale: formatPriceBdt(quote.saleBdt, language, bdtLabel),
+    listRaw: quote.listBdt,
+    saleRaw: quote.saleBdt,
+    hasUsd,
+    usdList: hasUsd ? formatPriceUsd(quote.listUsd, language) : "",
+    usdSale: hasUsd ? formatPriceUsd(quote.saleUsd, language) : "",
+  };
+}
+
+export function shopDiscountLabel(
+  quote: ProductPriceQuote,
+  language: MarketplaceLanguage,
+  bdtLabel = "৳",
+) {
+  const display = shopDisplayPrice(
+    {
+      ...quote,
+      saleBdt: quote.discountBdt,
+      saleUsd: quote.discountUsd,
+    },
+    language,
+    bdtLabel,
+  );
+  return display.sale;
 }

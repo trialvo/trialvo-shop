@@ -14,16 +14,16 @@ import type { AboutPageContent } from "@/types/about";
 export const ABOUT_PAGE_CONTENT: AboutPageContent = {
   seo: {
     bn: {
-      title: "আমাদের সম্পর্কে - eShop Market",
+      title: "আমাদের সম্পর্কে - Trialvo Shop",
       description:
-        "eShop Market কী এবং কীভাবে রেডিমেড ইকমার্স সলিউশন সাহায্য করে—সংক্ষেপে জানুন।",
-      keywords: ["আমাদের সম্পর্কে", "eShop Market", "ইকমার্স সলিউশন"],
+        "Trialvo Shop কী এবং কীভাবে রেডিমেড ইকমার্স সলিউশন সাহায্য করে—সংক্ষেপে জানুন।",
+      keywords: ["আমাদের সম্পর্কে", "Trialvo Shop", "ইকমার্স সলিউশন"],
     },
     en: {
-      title: "About Us - eShop Market",
+      title: "About Us - Trialvo Shop",
       description:
-        "Learn what eShop Market is and how ready-made ecommerce solutions help you launch faster.",
-      keywords: ["about us", "eShop Market", "ecommerce solutions"],
+        "Learn what Trialvo Shop is and how ready-made ecommerce solutions help you launch faster.",
+      keywords: ["about us", "Trialvo Shop", "ecommerce solutions"],
     },
   },
   hero: {
@@ -32,8 +32,8 @@ export const ABOUT_PAGE_CONTENT: AboutPageContent = {
       en: "About us",
     },
     title: {
-      bn: "eShop Market কে আমরা",
-      en: "Who we are at eShop Market",
+      bn: "Trialvo Shop কে আমরা",
+      en: "Who we are at Trialvo Shop",
     },
     supporting: {
       bn: "রেডিমেড ইকমার্স সলিউশন—কাস্টমাইজেশন, DevOps, মেইনটেন্যান্স, এবং প্রয়োজনমতো যেকোনো সফটওয়্যার বিল্ড।",

@@ -2,7 +2,7 @@
  * Resolve product/media URLs for the shop UI.
  * Uploads are stored as `/uploads/...` and served by the Control Plane API host.
  */
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import { API_BASE } from "@/lib/env";
 
 function apiOrigin(): string {
   try {
