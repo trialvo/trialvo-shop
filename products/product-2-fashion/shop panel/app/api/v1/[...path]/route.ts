@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { API_URL } from "@/config/env";
 
-const API_TIMEOUT_MS = 20000;
+const API_TIMEOUT_MS = 45000;
 
 type RouteContext = {
   params: Promise<{

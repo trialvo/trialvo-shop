@@ -34,11 +34,18 @@ exports.sendReviewReplyMail = async (connection, mailObj) => {
 
     // 3. Create transporter
     const transporter = nodemailer.createTransport({
-        host: cfg.MAIL_HOST,
-        port: parseInt(cfg.MAIL_PORT),
-        secure: parseInt(cfg.MAIL_PORT) === 465,
-        auth: { user: cfg.MAIL_USER, pass: cfg.MAIL_PASS },
-    });
+    host: cfg.MAIL_HOST,
+    port: parseInt(cfg.MAIL_PORT),
+    secure: parseInt(cfg.MAIL_PORT) === 465,
+    requireTLS: parseInt(cfg.MAIL_PORT) !== 465,
+    auth: {
+      user: cfg.MAIL_USER,
+      pass: cfg.MAIL_PASS,
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
+  });
 
     // 4. Setup handlebars
     const hbs = (await import("nodemailer-express-handlebars")).default;

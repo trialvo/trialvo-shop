@@ -486,12 +486,20 @@ exports.createUser = api(
       [userId, req.typed.body.ip || null, userAgent]
     );
 
-    // ─────────────────── Send Email ───────────────────
-    await sendEmailVerification(connection, {
-      name: `${first_name} ${last_name || ""}`,
-      email,
-      otp
-    });
+    // ─────────────────── Send Email (hard cap so shop BFF cannot hang) ───────────────────
+    await Promise.race([
+      sendEmailVerification(connection, {
+        name: `${first_name} ${last_name || ""}`,
+        email,
+        otp
+      }),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new errors.SERVICE_UNAVAILABLE("Email send timed out. Please try Resend OTP.")),
+          15000
+        )
+      ),
+    ]);
 
 
     // Convert array to a key-value object for easy access

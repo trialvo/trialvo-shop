@@ -35,10 +35,14 @@ exports.sendEmailVerification = async (connection, mailObj) => {
     host: cfg.MAIL_HOST,
     port: parseInt(cfg.MAIL_PORT),
     secure: parseInt(cfg.MAIL_PORT) === 465,
+    requireTLS: parseInt(cfg.MAIL_PORT) !== 465,
     auth: {
       user: cfg.MAIL_USER,
       pass: cfg.MAIL_PASS,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
   });
 
   // 4. Setup handlebars (dynamic import)

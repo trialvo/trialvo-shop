@@ -82,7 +82,11 @@ async function buildTransporter(conn) {
   return {
     transporter: nodemailer.createTransport({
       host, port, secure,
+      requireTLS: !secure && port === 587,
       auth: { user, pass },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
     }),
     from,
   };

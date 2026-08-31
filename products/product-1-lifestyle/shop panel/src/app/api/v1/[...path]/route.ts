@@ -8,7 +8,7 @@ import {
 } from "@/lib/auth/session-payload";
 import { setAuthSessionCookies } from "@/lib/auth/server-session";
 
-const API_TIMEOUT_MS = 20000;
+const API_TIMEOUT_MS = 45000;
 const AUTH_SESSION_RESPONSE_PATHS = new Set([
   "user/login",
   "user/verifyEmailOtp",
