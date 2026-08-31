@@ -34,6 +34,7 @@
 const nodemailer  = require('nodemailer');
 const database    = require('../utils/connection');
 const { sendSMS } = require('./sms');
+const { resolveFrom } = require('./mailFrom');
 const { getConfig }           = require('../config/ApplicationSettingsDB');
 const { getPermissionConfig } = require('../config/PermissionSettingsDB');
 
@@ -71,15 +72,19 @@ async function buildTransporter(conn) {
     return null;
   }
 
-  const fromName = cfg.MAIL_FROM_NAME || cfg.EMAIL_FROM_NAME || 'Graduate Fashion';
-  const fromAddr = cfg.MAIL_FROM     || cfg.EMAIL_FROM     || user;
+  // Preserve EMAIL_* aliases and the existing per-product default display name.
+  const from = resolveFrom({
+    MAIL_FROM: cfg.MAIL_FROM || cfg.EMAIL_FROM,
+    MAIL_FROM_NAME: cfg.MAIL_FROM_NAME || cfg.EMAIL_FROM_NAME,
+    MAIL_USER: user,
+  }, 'Graduate Fashion');
 
   return {
     transporter: nodemailer.createTransport({
       host, port, secure,
       auth: { user, pass },
     }),
-    from: `"${fromName}" <${fromAddr}>`,
+    from,
   };
 }
 

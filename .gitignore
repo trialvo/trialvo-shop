@@ -15,6 +15,8 @@ coverage/
 .cache/
 
 # Env & secrets
+.tmp-shot/ses.local.env
+.tmp-shot/*.local.env
 .env
 .env.*
 !.env.example

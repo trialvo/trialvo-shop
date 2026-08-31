@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const errors = require("../helpers/errors"); // adjust path
 const { getConfig } = require("../config/ApplicationSettingsDB"); // adjust path
 const { BRAND_NAME ,SHOP_URL,BRAND_ADDRESS} = require("../config/ApplicationSettings"); // adjust path
+const { resolveFrom } = require("../helpers/mailFrom");
 
 exports.sendEmailVerification = async (connection, mailObj) => {
   const { name, email, otp } = mailObj;
@@ -59,7 +60,7 @@ exports.sendEmailVerification = async (connection, mailObj) => {
  
   try {
     await transporter.sendMail({
-      from: `${BRAND_NAME} <${cfg.MAIL_USER}>`,
+      from: resolveFrom(cfg, BRAND_NAME),
       to: email,
       subject: "Verify Your Email",
       template: "emailverify",

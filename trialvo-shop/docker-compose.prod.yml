@@ -96,6 +96,10 @@ services:
       TRIALVO_PAY_IPN_SECRET: 41215d634fe61aa1693bebbd9e85b935b84a7a4d2be0d4718aca335e3570177b
       FRONTEND_URL: https://shop.trialvo.com
       IPN_URL: http://backend:5000/api/payments/ipn
+      UPLOAD_DIR: /app/uploads
+      STORAGE_DRIVER: local
+    volumes:
+      - ./uploads:/app/uploads
     networks:
       - shop_internal
     healthcheck:

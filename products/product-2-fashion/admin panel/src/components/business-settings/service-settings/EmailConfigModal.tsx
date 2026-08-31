@@ -26,8 +26,29 @@ type Props = {
 
 type Triage = { title: string; steps: string[] };
 
+type SmtpProvider = "custom" | "ses" | "brevo" | "gmail" | "zoho";
+
+const FROM_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const SMTP_PRESETS: Record<Exclude<SmtpProvider, "custom">, { host: string; port: string }> = {
+  ses: { host: "email-smtp.us-east-1.amazonaws.com", port: "587" },
+  brevo: { host: "smtp-relay.brevo.com", port: "587" },
+  gmail: { host: "smtp.gmail.com", port: "587" },
+  zoho: { host: "smtp.zoho.com", port: "587" },
+};
+
 function safeString(v: any) {
   return typeof v === "string" ? v : v == null ? "" : String(v);
+}
+
+function matchProvider(host: string): SmtpProvider {
+  const h = host.trim().toLowerCase();
+  if (!h) return "custom";
+  if (h === SMTP_PRESETS.ses.host || /^email-smtp\.[a-z0-9-]+\.amazonaws\.com$/.test(h)) return "ses";
+  if (h === SMTP_PRESETS.brevo.host) return "brevo";
+  if (h === SMTP_PRESETS.gmail.host) return "gmail";
+  if (h === SMTP_PRESETS.zoho.host) return "zoho";
+  return "custom";
 }
 
 /**
@@ -46,6 +67,7 @@ function triageSmtpError(raw: string): Triage {
         "The username or password (SMTP key) was rejected by the mail server.",
         "For Brevo: MAIL_USER is your SMTP login (…@smtp-brevo.com) and MAIL_PASS is the SMTP key from Transactional → Settings → SMTP.",
         "Do NOT use your Brevo account password or an API key starting with 'xsmtpsib-'.",
+        "For Amazon SES: SMTP credentials are generated in the SES console (SMTP settings) and are NOT your AWS access key or console password.",
         "If unsure, regenerate the SMTP key in your provider and paste it again.",
       ],
     };
@@ -105,19 +127,26 @@ function triageSmtpError(raw: string): Triage {
 }
 
 export default function EmailConfigModal({ open, initial, onClose, onSaved }: Props) {
+  const [provider, setProvider] = useState<SmtpProvider>("custom");
   const [host, setHost] = useState("");
   const [port, setPort] = useState("");
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
+  const [fromAddress, setFromAddress] = useState("");
+  const [fromName, setFromName] = useState("");
   const [triage, setTriage] = useState<Triage | null>(null);
   const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
   useEffect(() => {
     if (!open) return;
-    setHost(safeString(initial?.host));
+    const nextHost = safeString(initial?.host);
+    setProvider(matchProvider(nextHost));
+    setHost(nextHost);
     setPort(safeString(initial?.port));
     setUser(safeString(initial?.user));
     setPass(safeString(initial?.pass));
+    setFromAddress(safeString(initial?.fromAddress));
+    setFromName(safeString(initial?.fromName));
     setTriage(null);
   }, [open, initial]);
 
@@ -132,8 +161,15 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
   }, [open, onClose]);
 
   const mutation = useMutation({
-    mutationFn: (payload: { MAIL_HOST: string; MAIL_PORT: string; MAIL_USER: string; MAIL_PASS: string; setNull: boolean }) =>
-      updateEmailConfig(payload),
+    mutationFn: (payload: {
+      MAIL_HOST: string;
+      MAIL_PORT: string;
+      MAIL_USER: string;
+      MAIL_PASS: string;
+      MAIL_FROM: string;
+      MAIL_FROM_NAME: string;
+      setNull: boolean;
+    }) => updateEmailConfig(payload),
     onSuccess: (res: any) => {
       if (res?.success === true || res?.status === true) {
         setTriage(null);
@@ -164,9 +200,24 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
     return "";
   }, [port]);
 
+  const fromError = useMemo(() => {
+    const trimmed = fromAddress.trim();
+    if (provider === "ses" && !trimmed) return "From Address is required for Amazon SES.";
+    if (trimmed && !FROM_EMAIL_RE.test(trimmed)) return "From Address must be a valid email.";
+    return "";
+  }, [fromAddress, provider]);
+
   const canSave = useMemo(() => {
-    return Boolean(host.trim() && port.trim() && user.trim() && pass.trim()) && !portError;
-  }, [host, port, user, pass, portError]);
+    return Boolean(host.trim() && port.trim() && user.trim() && pass.trim()) && !portError && !fromError;
+  }, [host, port, user, pass, portError, fromError]);
+
+  const applyProvider = (next: SmtpProvider) => {
+    setProvider(next);
+    if (next === "custom") return;
+    const preset = SMTP_PRESETS[next];
+    setHost(preset.host);
+    setPort(preset.port);
+  };
 
   const submit = () => {
     setTriage(null);
@@ -175,6 +226,8 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
       MAIL_PORT: port.trim(),
       MAIL_USER: user.trim(),
       MAIL_PASS: pass.trim(),
+      MAIL_FROM: fromAddress.trim(),
+      MAIL_FROM_NAME: fromName.trim(),
       setNull: false,
     });
   };
@@ -224,6 +277,33 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
         {/* Body */}
         <div className="max-h-[560px] overflow-y-auto px-6 py-5">
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div className="space-y-2 md:col-span-2">
+              <label htmlFor="mail-provider" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Provider
+              </label>
+              <select
+                id="mail-provider"
+                value={provider}
+                onChange={(e) => applyProvider(e.target.value as SmtpProvider)}
+                disabled={mutation.isPending}
+                className="h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none transition-colors duration-150 focus-visible:border-brand-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 disabled:opacity-70 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus-visible:border-brand-500 dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
+              >
+                <option value="custom">Custom / cPanel</option>
+                <option value="ses">Amazon SES</option>
+                <option value="brevo">Brevo</option>
+                <option value="gmail">Gmail / Google Workspace</option>
+                <option value="zoho">Zoho Mail</option>
+              </select>
+              {provider === "ses" ? (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  The SES host region must match your SES region. Default preset is
+                  email-smtp.us-east-1.amazonaws.com (Trialvo production). Other common hosts:
+                  email-smtp.ap-south-1.amazonaws.com, email-smtp.eu-west-1.amazonaws.com,
+                  email-smtp.ap-southeast-1.amazonaws.com.
+                </p>
+              ) : null}
+            </div>
+
             <div className="space-y-2">
               <label htmlFor="mail-host" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 MAIL_HOST <span className="text-error-500">*</span>
@@ -289,6 +369,56 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
               <p className="text-xs text-gray-400 dark:text-gray-500">
                 For Brevo, use the SMTP key (not your account password or an
                 'xsmtpsib-' API key).
+              </p>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label htmlFor="mail-from" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                From Address {provider === "ses" ? <span className="text-error-500">*</span> : null}
+              </label>
+              <Input
+                id="mail-from"
+                type="email"
+                value={fromAddress}
+                onChange={(e) => setFromAddress(e.target.value)}
+                placeholder="noreply@shop.com"
+                disabled={mutation.isPending}
+                error={!!fromError}
+                aria-invalid={!!fromError}
+                aria-describedby={fromError ? "mail-from-error" : "mail-from-hint"}
+              />
+              {fromError ? (
+                <p id="mail-from-error" className="text-xs font-medium text-error-600 dark:text-error-400">
+                  {fromError}
+                </p>
+              ) : (
+                <p id="mail-from-hint" className="text-xs text-gray-400 dark:text-gray-500">
+                  Leave blank to use the SMTP username as the sender. Required for Amazon SES, whose SMTP username is an IAM string, not an email.
+                </p>
+              )}
+              {provider === "ses" && !fromAddress.trim() ? (
+                <div className="flex items-start gap-2 rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 text-xs font-medium text-warning-700 dark:border-warning-900/40 dark:bg-warning-500/10 dark:text-warning-300">
+                  <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                  <span>
+                    SES will authenticate successfully (verify() passes) but refuse to send, because the SMTP username is not a valid sender address. Set a verified From Address (e.g. noreply@yourdomain.com) or mail will fail on the first real order.
+                  </span>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label htmlFor="mail-from-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                From Name <span className="text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
+              </label>
+              <Input
+                id="mail-from-name"
+                value={fromName}
+                onChange={(e) => setFromName(e.target.value)}
+                placeholder="Shop Support"
+                disabled={mutation.isPending}
+              />
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Display name shown to recipients. Leave blank to use the store brand name.
               </p>
             </div>
           </div>

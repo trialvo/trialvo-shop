@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const errors = require("../helpers/errors");
 const { getConfig } = require("../config/ApplicationSettingsDB");
 const { BRAND_NAME, SHOP_URL, BRAND_ADDRESS } = require("../config/ApplicationSettings");
+const { resolveFrom } = require("../helpers/mailFrom");
 
 const hbsPackage = require("handlebars");
 
@@ -63,7 +64,7 @@ exports.sendReviewReplyMail = async (connection, mailObj) => {
     // 6. Send mail
     try {
         await transporter.sendMail({
-            from: `${BRAND_NAME} <${cfg.MAIL_USER}>`,
+            from: resolveFrom(cfg, BRAND_NAME),
             to: email,
             subject: `Response to Your Review of "${product_name}" — ${BRAND_NAME}`,
             template: "reviewreply",

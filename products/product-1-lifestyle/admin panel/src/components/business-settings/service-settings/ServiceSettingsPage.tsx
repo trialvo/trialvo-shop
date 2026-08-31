@@ -169,6 +169,8 @@ export default function ServiceSettingsPage() {
       port: safeString(cfg?.MAIL_PORT),
       user: safeString(cfg?.MAIL_USER),
       pass: safeString(cfg?.MAIL_PASS),
+      fromAddress: safeString(cfg?.MAIL_FROM),
+      fromName: safeString(cfg?.MAIL_FROM_NAME),
     };
   }, [emailQuery.data]);
 

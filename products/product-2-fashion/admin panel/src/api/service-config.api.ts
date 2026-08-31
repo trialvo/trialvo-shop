@@ -38,6 +38,8 @@ export async function updateEmailConfig(payload: {
   MAIL_PORT?: string;
   MAIL_USER?: string;
   MAIL_PASS?: string;
+  MAIL_FROM?: string;
+  MAIL_FROM_NAME?: string;
   setNull?: boolean;
 }) {
   const res = await api.put(`/config/updateEmailConfig`, payload);

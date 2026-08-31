@@ -23,6 +23,8 @@ export type EmailCard = {
   port: string;
   user: string;
   pass: string;
+  fromAddress: string;
+  fromName: string;
 };
 
 export function smsProviderTitle(p: SmsProvider) {

@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 const errors = require("../helpers/errors"); // adjust path
 const { getConfig } = require("../config/ApplicationSettingsDB"); // adjust path
 const { BRAND_NAME ,SHOP_URL,BRAND_ADDRESS} = require("../config/ApplicationSettings"); // adjust path
+const { resolveFrom } = require("../helpers/mailFrom");
 
 const hbsPackage = require("handlebars"); // Import the base handlebars package
 
@@ -73,7 +74,7 @@ exports. sendOrdermail = async (connection, mailObj) => {
  
 
     await transporter.sendMail({
-      from: `${BRAND_NAME} <${cfg.MAIL_USER}>`,
+      from: resolveFrom(cfg, BRAND_NAME),
       to: email,
       subject: `${BRAND_NAME} Order ${order.status === 'approved' ? 'Approved' : order.status === 'cancelled' ? 'Cancelled' : 'Confirmation'}`,
       template: "order",

@@ -418,6 +418,17 @@ exports.getSystemConfig = api(
       formatted[service][provider].config[row.key_name] = row.value;
     }
 
+    // Existing installs have no MAIL_FROM / MAIL_FROM_NAME rows. Always expose
+    // empty strings so the admin EmailCard can prefill without a migration.
+    if (formatted.email) {
+      for (const providerKey of Object.keys(formatted.email)) {
+        const node = formatted.email[providerKey];
+        if (!node || !node.config) continue;
+        if (node.config.MAIL_FROM === undefined) node.config.MAIL_FROM = "";
+        if (node.config.MAIL_FROM_NAME === undefined) node.config.MAIL_FROM_NAME = "";
+      }
+    }
+
     return formatted;
   })
 );
@@ -802,6 +813,8 @@ exports.updateEmailConfig = api(
       MAIL_PORT: { type: "int", required: false },
       MAIL_USER: { type: "string", required: false },
       MAIL_PASS: { type: "string", required: false },
+      MAIL_FROM: { type: "string", required: false },
+      MAIL_FROM_NAME: { type: "string", required: false },
       setNull: { type: "boolean", required: false }
     }
   },
@@ -809,10 +822,11 @@ exports.updateEmailConfig = api(
     // 1. Authorization
     if (!adminInfo.roles.includes("SUPER_ADMIN")) throw new errors.UNAUTHORIZED();
 
-    const { MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS, setNull } = req.typed.body;
-    const configKeys = ['MAIL_HOST', 'MAIL_PORT', 'MAIL_USER', 'MAIL_PASS', 'MESSANGER_MAIL'];
+    const { MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS, MAIL_FROM, MAIL_FROM_NAME, setNull } = req.typed.body;
+    const configKeys = ['MAIL_HOST', 'MAIL_PORT', 'MAIL_USER', 'MAIL_PASS', 'MESSANGER_MAIL', 'MAIL_FROM', 'MAIL_FROM_NAME'];
     let updates = {};
     const isActiveStatus = setNull == true ? 0 : 1; // 0 if clearing, 1 if updating
+    const FROM_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (setNull == true) {
       // Logic for clearing: set all values to empty
@@ -827,9 +841,16 @@ exports.updateEmailConfig = api(
       const host = String(MAIL_HOST).trim();
       const user = String(MAIL_USER).trim();
       const pass = String(MAIL_PASS).trim();
+      const mailFrom = MAIL_FROM != null ? String(MAIL_FROM).trim() : "";
+      const mailFromName = MAIL_FROM_NAME != null ? String(MAIL_FROM_NAME).trim() : "";
       const port = parseInt(MAIL_PORT, 10);
       if (!Number.isFinite(port) || port < 1) {
         throw new errors.INVALID_FIELDS_PROVIDED("MAIL_PORT must be a valid port number (e.g. 587 or 465)");
+      }
+
+      // MAIL_FROM is optional — omitting it keeps cPanel/Brevo behaviour (From = SMTP username).
+      if (mailFrom && !FROM_EMAIL_RE.test(mailFrom)) {
+        throw new errors.INVALID_FIELDS_PROVIDED("MAIL_FROM must be a valid email address (e.g. noreply@shop.com). Leave it blank to use the SMTP username.");
       }
 
       // Port 465 = implicit TLS; 587/25 = STARTTLS (Brevo documents 587)
@@ -860,17 +881,29 @@ exports.updateEmailConfig = api(
         throw new errors.INVALID_FIELDS_PROVIDED(`SMTP Verification Failed: ${raw}${hint}`);
       }
 
-      updates = { MAIL_HOST: host, MAIL_PORT: String(port), MAIL_USER: user, MAIL_PASS: pass };
+      updates = { MAIL_HOST: host, MAIL_PORT: String(port), MAIL_USER: user, MAIL_PASS: pass, MAIL_FROM: mailFrom, MAIL_FROM_NAME: mailFromName };
     }
 
     // 3. Database Execution
-    // await connection.transaction(async (trx) => {
-    // Update values and is_active status for each key
+    // MAIL_FROM / MAIL_FROM_NAME rows do not exist on existing installs, so a
+    // plain UPDATE matches zero rows. system_config has UNIQUE KEY on key_name
+    // only (not (service, key_name)), so SELECT-then-UPDATE/INSERT.
     for (const [key, value] of Object.entries(updates)) {
-      await connection.query(
-        "UPDATE system_config SET value = ?, is_active = ? WHERE key_name = ? AND service = 'email'",
-        [String(value), isActiveStatus, key]
+      const existing = await connection.queryOne(
+        "SELECT id FROM system_config WHERE key_name = ? AND service = 'email'",
+        [key]
       );
+      if (existing && existing.id != null) {
+        await connection.query(
+          "UPDATE system_config SET value = ?, is_active = ? WHERE id = ?",
+          [String(value), isActiveStatus, existing.id]
+        );
+      } else {
+        await connection.query(
+          "INSERT INTO system_config (service, key_name, value, provider, is_active) VALUES (?, ?, ?, ?, ?)",
+          ["email", key, String(value), "custom_smtp", isActiveStatus]
+        );
+      }
     }
 
     // 4. Audit Log
