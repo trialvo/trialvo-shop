@@ -24,11 +24,13 @@ const VideoSection = dynamic(() => import("./VideoSection"), {
 const CategorySection = dynamic(() => import("./CategorySection"), {
  ssr: false,
  loading: () => (
-  <section className="container mx-auto">
-   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-5">
-    {Array.from({ length: 10 }).map((_, i) => (
-     <div key={i} className="aspect-square animate-pulse rounded-xl bg-gray-100" />
-    ))}
+  <section className="w-full bg-[#f4efe8] py-10 sm:py-14">
+   <div className="container mx-auto px-2 md:px-0">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-5">
+     {Array.from({ length: 10 }).map((_, i) => (
+      <div key={i} className="aspect-square animate-pulse rounded-xl bg-[#e8e2d8]" />
+     ))}
+    </div>
    </div>
   </section>
  ),
@@ -90,12 +92,14 @@ export default function HomeClient() {
  }, [dispatch, isAuthenticated, user]);
 
  return (
-  <main className="font-sans dark:bg-black">
+  <main className="font-sans dark:bg-black max-[500px]:min-w-0 max-[500px]:max-w-full max-[500px]:overflow-x-clip">
    <HeroSliderWrapper />
    <ServicesBar className="my-4 sm:my-10" />
-   <div className="px-2 md:px-0">
+   <div className="px-2 md:px-0 max-[500px]:min-w-0 max-[500px]:max-w-full">
     <VideoSection />
-    <CategorySection />
+   </div>
+   <CategorySection />
+   <div className="px-2 md:px-0 max-[500px]:min-w-0 max-[500px]:max-w-full">
     <FeatureProducts />
    </div>
   </main>

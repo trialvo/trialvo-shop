@@ -1,6 +1,7 @@
 "use client";
 
 import Breadcrumbs from "@/components/breadcrumb/Breadcrumbs";
+import ActiveFilterPills from "@/components/catalog/ActiveFilterPills";
 import CatalogHeader from "@/components/catalog/CatalogHeader";
 import CatalogLayout from "@/components/catalog/CatalogLayout";
 import ProductGrid from "@/components/catalog/ProductGrid";
@@ -10,15 +11,16 @@ import { useCatalogFilterSidebarState } from "@/hooks/useCatalogFilterSidebarSta
 import { useDebouncedPrice } from "@/hooks/useDebouncedPrice";
 import { useMultiFilterIds } from "@/hooks/useMultiFilterIds";
 import { useInfiniteProducts } from "@/hooks/useProduct";
+import { useTranslation } from "@/hooks/useTranslation";
 import type { ProductListParams } from "@/lib/api/product/service";
 import { decodeSlug, humanizeSlug } from "@/lib/string";
+import { isDefaultCatalogPrice } from "@/redux/slices/catalogFilterSlice";
 import { useParams, useSearchParams } from "next/navigation";
 import React from "react";
-import { useTranslation } from "@/hooks/useTranslation";
 
 export interface SortConfig {
   sort_by?: string;
-  sort_order?: 'ASC' | 'DESC';
+  sort_order?: "ASC" | "DESC";
   featured?: boolean;
 }
 
@@ -94,9 +96,15 @@ export default function CategoryClient(): React.ReactElement {
   }, [slug, t]);
 
   const filterCount = React.useMemo(() => {
-    const priceChanged = filters.price.min !== 0 || filters.price.max !== 10000;
+    const priceChanged = !isDefaultCatalogPrice(filters.price);
     return filters.sizes.size + filters.colors.size + (priceChanged ? 1 : 0);
   }, [filters]);
+
+  const priceFilterActive = React.useMemo(() => {
+    const min = typeof debouncedPrice.min === "number" ? debouncedPrice.min : 0;
+    const max = typeof debouncedPrice.max === "number" ? debouncedPrice.max : 10000;
+    return !isDefaultCatalogPrice({ min, max });
+  }, [debouncedPrice.min, debouncedPrice.max]);
 
   const queryParams: Omit<ProductListParams, "offset" | "page"> = React.useMemo(() => {
     const minPrice =
@@ -114,14 +122,14 @@ export default function CategoryClient(): React.ReactElement {
       sub_category_id: subId,
       variant_id: variantIds || undefined,
       color_id: colorIds || undefined,
-      min_price: minPrice,
-      max_price: maxPrice,
+      min_price: priceFilterActive ? minPrice : undefined,
+      max_price: priceFilterActive ? maxPrice : undefined,
       sort_by: debouncedSort.sort_by,
       sort_order: debouncedSort.sort_order,
       featured: debouncedSort.featured,
       status: true,
     };
-  }, [childId, subId, debouncedSort, debouncedPrice, variantIds, colorIds]);
+  }, [childId, subId, debouncedSort, debouncedPrice, variantIds, colorIds, priceFilterActive]);
 
   const {
     data,
@@ -134,7 +142,7 @@ export default function CategoryClient(): React.ReactElement {
   } = useInfiniteProducts(queryParams, 12);
 
   const products = React.useMemo(() => {
-    return data?.pages.flatMap(page => page.products) ?? [];
+    return data?.pages.flatMap((page) => page.products) ?? [];
   }, [data]);
 
   const totalProducts = data?.pages[0]?.total;
@@ -155,6 +163,12 @@ export default function CategoryClient(): React.ReactElement {
           />
         }
       >
+        <ActiveFilterPills
+          filters={filters}
+          onChange={onFiltersChange}
+          onClear={onClear}
+        />
+
         <ProductGrid
           products={products}
           isLoading={isLoading}
@@ -162,7 +176,6 @@ export default function CategoryClient(): React.ReactElement {
           onRetry={() => refetch()}
           onClearFilters={onClear}
           activeFilterCount={filterCount}
-          filterParams={queryParams}
           totalProducts={totalProducts}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}

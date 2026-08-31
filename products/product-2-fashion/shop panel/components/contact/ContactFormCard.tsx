@@ -7,14 +7,11 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useContact } from "@/hooks/useContact";
-import type { User } from "@/lib/api/auth/service";
 import type { ContactPayload } from "@/lib/api/contact/service";
-import AuthCookies from "@/lib/auth/cookies";
 import { FiMail } from "react-icons/fi";
 
 const schema = z.object({
@@ -34,6 +31,10 @@ type Props = {
   onCancel?: () => void;
 };
 
+const fieldLabelClass = "text-xs font-semibold text-[#191919]";
+const fieldClass =
+  "h-11 rounded-lg border-black/10 bg-[#FAF8F5] text-[14px] shadow-none placeholder:text-[#A0A0A0] focus-visible:border-[#191919] focus-visible:bg-white focus-visible:ring-[#191919]/15";
+
 const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel }) => {
   const { submitContact, isSubmitting } = useContact();
 
@@ -52,7 +53,6 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
   });
 
   const handleSubmit = async (values: ContactFormValues) => {
-    const user = AuthCookies.getUser<User>();
     const payload: ContactPayload = {
       first_name: values.firstName,
       last_name: values.lastName,
@@ -60,7 +60,6 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
       phone: values.mobile,
       subject: values.subject,
       message: values.message,
-      // user_id: user?.id ?? null,
     };
 
     const loadingId = toast.loading("Sending message...");
@@ -84,29 +83,44 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
     }
   };
 
-  return (
-    <Card className="rounded-none border-0 shadow-[0px_0px_12px_rgba(0,0,0,0.12)] pb-3 pt-0 sm:p-0 gap-0">
-      <CardHeader className="p-4!">
-        <div className="flex items-center gap-2 text-lg font-bold text-black">
-          <FiMail className="h-6 w-6" />
-          Send us a Message
-        </div>
-      </CardHeader>
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+      return;
+    }
+    form.reset();
+  };
 
-      <CardContent className="px-5">
+  return (
+    <div className="overflow-hidden rounded-2xl border border-black/8 bg-white">
+      <div className="border-b border-black/6 px-4 py-4 min-[768px]:px-5">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#F3F1ED] text-[#191919]">
+            <FiMail className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-[15px] font-semibold tracking-tight text-[#191919] min-[768px]:text-base">
+              Send a message
+            </h2>
+            <p className="text-xs text-[#8A8A8A]">We&apos;ll get back to you soon</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 py-5 min-[768px]:px-5 min-[768px]:py-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
-            <div className="grid gap-4 grid-cols-2 items-start">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-black">
-                      First Name <span className="text-[#FF383C]">*</span>
+                    <FormLabel className={fieldLabelClass}>
+                      First name <span className="text-[#C45C5C]">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter your full name" />
+                      <Input {...field} placeholder="First name" className={fieldClass} />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -118,9 +132,9 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-black">Last Name</FormLabel>
+                    <FormLabel className={fieldLabelClass}>Last name</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter your full name" />
+                      <Input {...field} placeholder="Last name" className={fieldClass} />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -128,15 +142,20 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
               />
             </div>
 
-            <div className="grid gap-4 grid-cols-2 items-start">
+            <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2">
               <FormField
                 control={form.control}
                 name="mobile"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-black">Mobile Number</FormLabel>
+                    <FormLabel className={fieldLabelClass}>Mobile number</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="01XXXXXXXXXX" inputMode="numeric" />
+                      <Input
+                        {...field}
+                        placeholder="01XXXXXXXXX"
+                        inputMode="numeric"
+                        className={fieldClass}
+                      />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -148,11 +167,11 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-black">
-                      Email <span className="text-[#FF383C]">*</span>
+                    <FormLabel className={fieldLabelClass}>
+                      Email <span className="text-[#C45C5C]">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter Email" />
+                      <Input {...field} placeholder="you@example.com" className={fieldClass} />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -165,11 +184,11 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
               name="subject"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-black">
-                    Subject <span className="text-[#FF383C]">*</span>
+                  <FormLabel className={fieldLabelClass}>
+                    Subject <span className="text-[#C45C5C]">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Write message subject" />
+                    <Input {...field} placeholder="What is this about?" className={fieldClass} />
                   </FormControl>
                   <FormMessage className="text-xs" />
                 </FormItem>
@@ -181,14 +200,15 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
               name="message"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-black">
-                    Message <span className="text-[#FF383C]">*</span>
+                  <FormLabel className={fieldLabelClass}>
+                    Message <span className="text-[#C45C5C]">*</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       rows={6}
-                      placeholder="Tell us how we can help you...."
+                      placeholder="Tell us how we can help…"
+                      className="min-h-[140px] rounded-lg border-black/10 bg-[#FAF8F5] text-[14px] shadow-none placeholder:text-[#A0A0A0] focus-visible:border-[#191919] focus-visible:bg-white focus-visible:ring-[#191919]/15"
                     />
                   </FormControl>
                   <FormMessage className="text-xs" />
@@ -196,29 +216,29 @@ const ContactFormCard: React.FC<Props> = ({ defaultValues, onSubmit, onCancel })
               )}
             />
 
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-3 pt-1">
               <Button
-                type="button"
-                variant="outline"
-                className="h-10 rounded-none border-[#999999] px-6 text-sm"
-                onClick={() => onCancel?.()}
+                type="submit"
+                className="h-10 rounded-lg bg-[#191919] px-5 text-[13px] font-semibold text-white hover:bg-black"
                 disabled={isSubmitting}
               >
-                Cancel
+                {isSubmitting ? "Sending…" : "Send message"}
               </Button>
 
               <Button
-                type="submit"
-                className="h-10 rounded-none bg-black px-6 text-sm text-white hover:bg-black/90"
+                type="button"
+                variant="outline"
+                className="h-10 rounded-lg border-black/15 bg-white px-5 text-[13px] font-semibold text-[#5F5F5F] hover:bg-[#FAF8F5] hover:text-[#191919]"
+                onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Sending..." : "Send Message"}
+                Clear
               </Button>
             </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

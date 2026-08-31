@@ -53,8 +53,8 @@ export const CONTACT_INFO: ContactInfoItem[] = [
 export const CONTACT_SOCIALS: SocialLink[] = [
   { id: "fb", label: "Facebook", href: "#", icon: FaFacebookF },
   { id: "ig", label: "Instagram", href: "#", icon: FaInstagram },
-  { id: "wa", label: "Whats app", href: "#", icon: FaWhatsapp },
-  { id: "tt", label: "Ticktok", href: "#", icon: FaTiktok },
+  { id: "wa", label: "WhatsApp", href: "#", icon: FaWhatsapp },
+  { id: "tt", label: "TikTok", href: "#", icon: FaTiktok },
 ];
 
 export const CONTACT_MAP = {

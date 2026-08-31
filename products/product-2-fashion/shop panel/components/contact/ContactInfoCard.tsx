@@ -1,6 +1,5 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import React from "react";
-import { FiMail } from "react-icons/fi";
+import { FiPhone } from "react-icons/fi";
 import type { ContactInfoItem } from "./contact.data";
 
 type Props = {
@@ -9,40 +8,48 @@ type Props = {
 
 const ContactInfoCard: React.FC<Props> = ({ info }) => {
   return (
-    <Card className="rounded-none border-0 shadow-[0px_0px_12px_rgba(0,0,0,0.12)] p-0 gap-0">
-      <CardHeader className="px-4! pt-4!">
-        <div className="flex items-center gap-2 text-lg font-bold text-black">
-          <FiMail className="h-6 w-6" />
-          <span>
-            Contact Information
+    <div className="overflow-hidden rounded-2xl border border-black/8 bg-white">
+      <div className="border-b border-black/6 px-4 py-4 min-[768px]:px-5">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#F3F1ED] text-[#191919]">
+            <FiPhone className="h-4 w-4" />
           </span>
+          <div>
+            <h2 className="text-[15px] font-semibold tracking-tight text-[#191919] min-[768px]:text-base">
+              Contact information
+            </h2>
+            <p className="text-xs text-[#8A8A8A]">Reach us anytime</p>
+          </div>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="px-0">
-        <div className="divide-y divide-[#F1F1F1]">
-          {info.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div key={item.id} className="flex gap-4 p-4">
-                <div className="flex h-8 w-8 items-center justify-center bg-black text-white">
-                  <Icon className="h-4 w-4" />
-                </div>
+      <div className="divide-y divide-black/6">
+        {info.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.id} className="flex gap-3.5 px-4 py-4 min-[768px]:px-5">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#191919] text-white">
+                <Icon className="h-4 w-4" strokeWidth={2} />
+              </span>
 
-                <div className="space-y-1">
-                  <p className="text-base font-semibold text-black">{item.title}</p>
-                  {item.lines.map((line, idx) => (
-                    <p key={`${item.id}-${idx}`} className="text-sm text-[#3A3A3A]">
-                      {line}
-                    </p>
-                  ))}
-                </div>
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm font-semibold tracking-tight text-[#191919]">
+                  {item.title}
+                </p>
+                {item.lines.map((line, idx) => (
+                  <p
+                    key={`${item.id}-${idx}`}
+                    className="text-sm leading-relaxed text-[#5F5F5F]"
+                  >
+                    {line}
+                  </p>
+                ))}
               </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 

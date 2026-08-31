@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
-import { fetchPublicPolicyByKey } from "@/lib/api/policy";
+import {
+  fetchPublicPolicies,
+  fetchPublicPolicyByKey,
+} from "@/lib/api/policy";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import PolicyPageClient from "@/components/legal/PolicyPageClient";
@@ -33,13 +36,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 const PolicyPage = async ({ params }: Props) => {
   const { key } = await params;
-  const policy = await fetchPublicPolicyByKey(key);
+  const [policy, policies] = await Promise.all([
+    fetchPublicPolicyByKey(key),
+    fetchPublicPolicies(),
+  ]);
 
   if (!policy) {
     notFound();
   }
 
-  return <PolicyPageClient policy={policy} />;
+  return <PolicyPageClient policy={policy} policies={policies} />;
 };
 
 export default PolicyPage;

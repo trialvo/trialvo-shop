@@ -8,9 +8,9 @@ import { Suspense, type ReactNode } from "react";
 const DefaultLayout = ({ children }: { children: ReactNode }) => {
     return (
         <Suspense>
-            <div suppressHydrationWarning className="flex min-h-dvh w-full min-w-0 flex-col">
+            <div suppressHydrationWarning className="flex min-h-dvh w-full min-w-0 flex-col max-[500px]:max-w-full max-[500px]:overflow-x-clip">
                 <HeaderScrollChrome />
-                <main className="flex-1">
+                <main className="flex-1 max-[500px]:min-w-0 max-[500px]:max-w-full max-[500px]:overflow-x-clip">
                     {children}
                 </main>
                 <HeaderAddonLinks />

@@ -26,7 +26,10 @@
     "compare": "Compare",
     "offers": "Offers",
     "megaSale": "Mega Sale",
-    "help": "Help"
+    "help": "Help",
+    "quickLinks": "Quick links",
+    "openQuickLinks": "Open quick links",
+    "closeQuickLinks": "Close quick links"
   }
  },
  "accountMenu": {

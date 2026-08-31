@@ -1,9 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Link from "next/link";
 import React from "react";
 import { FiShare2 } from "react-icons/fi";
 import type { SocialLink } from "./contact.data";
+import { cn } from "@/lib/utils";
 
 type Props = {
   socials: SocialLink[];
@@ -11,45 +10,48 @@ type Props = {
 
 const FollowUsCard: React.FC<Props> = ({ socials }) => {
   return (
-    <Card className="rounded-none border-0 shadow-[0px_0px_12px_rgba(0,0,0,0.12)] p-0 gap-0">
-      <CardHeader className="border-b border-[#F1F1F1] p-4">
-        <div className="flex items-center gap-2 text-lg font-bold text-black">
-          <FiShare2 className="h-6 w-6" />
-          Follow Us
+    <div className="overflow-hidden rounded-2xl border border-black/8 bg-white">
+      <div className="border-b border-black/6 px-4 py-4 min-[768px]:px-5">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#F3F1ED] text-[#191919]">
+            <FiShare2 className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-[15px] font-semibold tracking-tight text-[#191919] min-[768px]:text-base">
+              Follow us
+            </h2>
+            <p className="text-xs text-[#8A8A8A]">New arrivals & offers</p>
+          </div>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="p-5">
-        <div className="flex flex-wrap gap-3">
+      <div className="px-4 py-4 min-[768px]:px-5 min-[768px]:py-5">
+        <div className="grid grid-cols-2 gap-2.5">
           {socials.map((s) => {
             const Icon = s.icon;
             return (
-              <Button
+              <Link
                 key={s.id}
-                variant="outline"
-                className="h-10 rounded-none border-[#CBCBCB] px-4 text-sm font-medium text-black"
-                asChild
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  "inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-black/8 bg-[#FAF8F5]",
+                  "text-[13px] font-semibold text-[#191919] transition-colors hover:border-black/15 hover:bg-[#F3F1ED]",
+                )}
               >
-                <Link href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span className="mr-2 inline-flex">
-                    <Icon />
-                  </span>
-                  {s.label}
-                </Link>
-              </Button>
+                <Icon className="h-3.5 w-3.5" />
+                {s.label}
+              </Link>
             );
           })}
         </div>
 
-        <div className="mt-4 border border-[#75BFFF] bg-[#F3FAFF] px-3 py-2 text-xs text-black">
-          <span className="font-medium">Join our community for exclusive offers!</span>{" "}
-          <span className="text-[#0088FF]">Follow us</span> on social media for beauty tips, new arrivals, and special discounts.
-        </div>
-      </CardContent>
-    </Card>
+        <p className="mt-4 text-xs leading-relaxed text-[#8A8A8A]">
+          Follow for new drops, styling ideas, and member-only discounts.
+        </p>
+      </div>
+    </div>
   );
 };
 

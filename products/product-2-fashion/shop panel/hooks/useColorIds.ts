@@ -16,16 +16,18 @@ function toId(v: unknown): number {
 }
 
 export function useColorIds(
-  colors: ReadonlySet<string>, 
+  colors: ReadonlySet<string>,
   debounceMs: number = 1000
 ): string {
   const { colors: allColors = [] } = useColor({ status: true });
   const [colorIds, setColorIds] = React.useState<string>("");
-  
+
   const debouncedColors = useDebounce(colors, debounceMs);
-  
+  // Clear immediately so "Clear all filters" does not wait on debounce
+  const effectiveColors = colors.size === 0 ? colors : debouncedColors;
+
   React.useEffect(() => {
-    if (!debouncedColors?.size) {
+    if (!effectiveColors?.size) {
       setColorIds("");
       return;
     }
@@ -35,7 +37,7 @@ export function useColorIds(
       return;
     }
 
-    const selectedColorIds = Array.from(debouncedColors)
+    const selectedColorIds = Array.from(effectiveColors)
       .map((colorName) => {
         const found = allColors.find((c) => norm(c?.name) === norm(colorName));
         return toId(found?.id);
@@ -43,7 +45,7 @@ export function useColorIds(
       .filter((id) => id > 0);
 
     setColorIds(selectedColorIds.join(","));
-  }, [debouncedColors, allColors]);
+  }, [effectiveColors, allColors]);
 
   return colorIds;
 }

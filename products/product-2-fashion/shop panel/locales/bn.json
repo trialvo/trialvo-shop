@@ -26,7 +26,10 @@
     "compare": "তুলনা",
     "offers": "অফার",
     "megaSale": "মেগা সেল",
-    "help": "সাহায্য"
+    "help": "সাহায্য",
+    "quickLinks": "দ্রুত লিংক",
+    "openQuickLinks": "দ্রুত লিংক খুলুন",
+    "closeQuickLinks": "দ্রুত লিংক বন্ধ করুন"
   }
  },
  "accountMenu": {

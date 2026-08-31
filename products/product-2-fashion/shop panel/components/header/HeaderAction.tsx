@@ -45,11 +45,25 @@ const CompactLangToggle: React.FC = () => {
       type="button"
       onClick={() => setLanguage(isBn ? "en" : "bn")}
       aria-label={isBn ? "Switch to English" : "বাংলায় দেখুন"}
-      className="flex items-center h-7 px-2 gap-1 border border-border bg-muted text-[10px] font-semibold tracking-wide cursor-pointer select-none transition-colors hover:bg-black hover:text-white hover:border-black"
-      style={{ borderRadius: 3 }}
+      className="inline-flex h-7 cursor-pointer items-center gap-0.5 rounded-full bg-[#F3F1ED] p-0.5 select-none"
     >
-      <span style={{ color: isBn ? "#fff" : undefined, background: isBn ? "#111" : undefined, borderRadius: 2, padding: "1px 5px", transition: "all .15s" }}>বা</span>
-      <span style={{ color: !isBn ? "#fff" : undefined, background: !isBn ? "#111" : undefined, borderRadius: 2, padding: "1px 5px", transition: "all .15s" }}>EN</span>
+      <span
+        className={cn(
+          "inline-flex h-6 min-w-[28px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold transition-colors",
+          isBn ? "bg-[#191919] text-white" : "text-[#6A6678]",
+        )}
+        style={{ fontFamily: "var(--font-hind-siliguri, sans-serif)" }}
+      >
+        বা
+      </span>
+      <span
+        className={cn(
+          "inline-flex h-6 min-w-[28px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tracking-wide transition-colors",
+          !isBn ? "bg-[#191919] text-white" : "text-[#6A6678]",
+        )}
+      >
+        EN
+      </span>
     </button>
   );
 };

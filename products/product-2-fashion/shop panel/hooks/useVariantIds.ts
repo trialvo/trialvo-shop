@@ -16,16 +16,18 @@ function toId(v: unknown): number {
 }
 
 export function useVariantIds(
-  sizes: ReadonlySet<string>, 
+  sizes: ReadonlySet<string>,
   debounceMs: number = 1000
 ): string {
   const { variants = [] } = useVariant({ status: true });
   const [variantIds, setVariantIds] = React.useState<string>("");
-  
+
   const debouncedSizes = useDebounce(sizes, debounceMs);
-  
+  // Clear immediately so "Clear all filters" does not wait on debounce
+  const effectiveSizes = sizes.size === 0 ? sizes : debouncedSizes;
+
   React.useEffect(() => {
-    if (!debouncedSizes?.size) {
+    if (!effectiveSizes?.size) {
       setVariantIds("");
       return;
     }
@@ -35,7 +37,7 @@ export function useVariantIds(
       return;
     }
 
-    const selectedVariantIds = Array.from(debouncedSizes)
+    const selectedVariantIds = Array.from(effectiveSizes)
       .map((sizeName) => {
         const found = variants.find((v) => norm(v?.name) === norm(sizeName));
         return toId(found?.id);
@@ -43,7 +45,7 @@ export function useVariantIds(
       .filter((id) => id > 0);
 
     setVariantIds(selectedVariantIds.join(","));
-  }, [debouncedSizes, variants]);
+  }, [effectiveSizes, variants]);
 
   return variantIds;
 }

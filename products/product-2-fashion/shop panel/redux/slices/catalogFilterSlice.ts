@@ -2,6 +2,12 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export type PriceRange = { min: number; max: number };
 
+export const DEFAULT_CATALOG_PRICE: PriceRange = { min: 0, max: 10000 };
+
+export function isDefaultCatalogPrice(price: PriceRange): boolean {
+  return price.min === DEFAULT_CATALOG_PRICE.min && price.max === DEFAULT_CATALOG_PRICE.max;
+}
+
 type CatalogFilterState = {
   price: PriceRange;
   sizeValues: string[];
@@ -9,7 +15,7 @@ type CatalogFilterState = {
 };
 
 const initialState: CatalogFilterState = {
-  price: { min: 0, max: 10000 },
+  price: { ...DEFAULT_CATALOG_PRICE },
   sizeValues: [],
   colorValues: [],
 };
@@ -30,7 +36,11 @@ const catalogFilterSlice = createSlice({
     toggleColor: (state, action: PayloadAction<string>) => {
       state.colorValues = toggle(state.colorValues, action.payload);
     },
-    clearFilters: () => initialState,
+    clearFilters: () => ({
+      price: { ...DEFAULT_CATALOG_PRICE },
+      sizeValues: [],
+      colorValues: [],
+    }),
   },
 });
 

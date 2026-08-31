@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
 import React from "react";
 import type { FAQCategory } from "./types";
 
@@ -14,31 +15,39 @@ type Props = {
 };
 
 const FAQAccordion: React.FC<Props> = ({ category }) => {
-  const defaultOpenId =
-    category.id === "payment" ? "q2" : category.items[0]?.id ?? "";
+  const defaultOpenId = category.items[0]?.id ?? "";
 
   return (
-    <div className="w-full col-span-12 sm:col-span-9">
-      <Accordion type="single" collapsible defaultValue={defaultOpenId}>
-        <div className="space-y-3">
-          {category.items.map((it) => (
-            <AccordionItem
-              key={it.id}
-              value={it.id}
-              className="rounded-none border-0 shadow-[0px_0px_12px_rgba(0,0,0,0.12)] gap-0 px-4"
-            >
-              <AccordionTrigger className="text-left text-base font-medium text-black hover:no-underline py-3 cursor-pointer">
-                {it.question}
-              </AccordionTrigger>
+    <Accordion
+      type="single"
+      collapsible
+      defaultValue={defaultOpenId}
+      className="overflow-hidden rounded-2xl border border-black/8 bg-white"
+    >
+      {category.items.map((it, index) => (
+        <AccordionItem
+          key={it.id}
+          value={it.id}
+          className={cn(
+            "border-0 px-4 min-[768px]:px-5",
+            index > 0 && "border-t border-black/6",
+          )}
+        >
+          <AccordionTrigger
+            className={cn(
+              "py-4 text-left text-[15px] font-semibold tracking-tight text-[#191919] hover:no-underline min-[768px]:text-base",
+              "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-[#8A8A8A]",
+            )}
+          >
+            {it.question}
+          </AccordionTrigger>
 
-              <AccordionContent className="pb-6 pt-0 text-sm font-normal leading-6 text-[#6E6B7B]">
-                {it.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </div>
-      </Accordion>
-    </div>
+          <AccordionContent className="pb-4 text-sm font-normal leading-6 text-[#5F5F5F] min-[768px]:pb-5">
+            {it.answer}
+          </AccordionContent>
+        </AccordionItem>
+      ))}
+    </Accordion>
   );
 };
 

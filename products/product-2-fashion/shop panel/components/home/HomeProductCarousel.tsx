@@ -110,8 +110,8 @@ export default function HomeProductCarousel({
   if (!isLoading && list.length === 0) return null;
 
   return (
-    <section className="w-full bg-background">
-      <div className="container mx-auto">
+    <section className="w-full bg-background max-[500px]:max-w-full max-[500px]:overflow-x-clip">
+      <div className="container mx-auto max-[500px]:min-w-0 max-[500px]:max-w-full">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#191919]">
@@ -129,13 +129,13 @@ export default function HomeProductCarousel({
           </Link>
         </div>
 
-        <div className="relative mt-6 min-[768px]:mt-8">
+        <div className="relative mt-6 min-[768px]:mt-8 max-[500px]:min-w-0">
           {canPrev ? (
             <button
               type="button"
               aria-label="Previous products"
               onClick={() => scrollByCard(-1)}
-              className="absolute left-0 top-[36%] z-10 grid h-10 w-10 -translate-x-1/2 cursor-pointer place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(0,0,0,0.16)] min-[992px]:h-11 min-[992px]:w-11"
+              className="absolute left-0 top-[36%] z-10 grid h-10 w-10 -translate-x-1/2 cursor-pointer place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(0,0,0,0.16)] max-[500px]:left-1 max-[500px]:h-9 max-[500px]:w-9 max-[500px]:translate-x-0 min-[992px]:h-11 min-[992px]:w-11"
             >
               <FiChevronLeft className="h-5 w-5" strokeWidth={2} />
             </button>
@@ -145,7 +145,7 @@ export default function HomeProductCarousel({
               type="button"
               aria-label="Next products"
               onClick={() => scrollByCard(1)}
-              className="absolute right-0 top-[36%] z-10 grid h-10 w-10 translate-x-1/2 cursor-pointer place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(0,0,0,0.16)] min-[992px]:h-11 min-[992px]:w-11"
+              className="absolute right-0 top-[36%] z-10 grid h-10 w-10 translate-x-1/2 cursor-pointer place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(0,0,0,0.16)] max-[500px]:right-1 max-[500px]:h-9 max-[500px]:w-9 max-[500px]:translate-x-0 min-[992px]:h-11 min-[992px]:w-11"
             >
               <FiChevronRight className="h-5 w-5" strokeWidth={2} />
             </button>

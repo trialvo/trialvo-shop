@@ -52,6 +52,14 @@ html {
   overflow-x: clip;
 }
 
+@media (max-width: 500px) {
+  html,
+  body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+}
+
 /* Thin scrollbar — hidden until the page or a panel is scrolling */
 * {
   scrollbar-width: thin;
@@ -479,8 +487,8 @@ html.is-scrolling .scrollbar-none,
    HTML content from the admin (h2, h3, ul, p, table, etc.)
 ──────────────────────────────────────────────────────────── */
 .policy-content {
-  color: #2e2e2e;
-  font-size: 0.9rem;
+  color: #3a3a3a;
+  font-size: 0.9375rem;
   line-height: 1.75;
   word-break: break-word;
 }
@@ -491,53 +499,61 @@ html.is-scrolling .scrollbar-none,
 .policy-content h4,
 .policy-content h5,
 .policy-content h6 {
-  color: #111111;
+  color: #191919;
   font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.35;
-  margin-top: 1.6em;
+  margin-top: 1.75em;
   margin-bottom: 0.55em;
 }
 
-.policy-content h1 { font-size: 1.5rem; }
-.policy-content h2 { font-size: 1.2rem; padding-bottom: 0.3em; border-bottom: 1px solid #eeeeee; }
-.policy-content h3 { font-size: 1.05rem; }
+.policy-content h1 { font-size: 1.375rem; }
+.policy-content h2 {
+  font-size: 1.125rem;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.policy-content h3 { font-size: 1.05rem; font-weight: 600; }
 .policy-content h4 { font-size: 0.95rem; }
 
 .policy-content p {
   margin-top: 0;
-  margin-bottom: 0.85em;
+  margin-bottom: 0.9em;
 }
 
 .policy-content ul,
 .policy-content ol {
-  padding-left: 1.6em;
-  margin-bottom: 0.85em;
+  padding-left: 1.35em;
+  margin-bottom: 0.9em;
 }
 
 .policy-content ul { list-style-type: disc; }
 .policy-content ol { list-style-type: decimal; }
 
 .policy-content li {
-  margin-bottom: 0.35em;
+  margin-bottom: 0.4em;
+  padding-left: 0.15em;
 }
 
 .policy-content li > ul,
 .policy-content li > ol {
-  margin-top: 0.25em;
+  margin-top: 0.3em;
   margin-bottom: 0;
 }
 
 .policy-content a {
-  color: #1d4ed8;
+  color: #191919;
+  font-weight: 600;
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }
-.policy-content a:hover { color: #1e40af; }
+.policy-content a:hover { color: #000; }
 
 .policy-content strong,
 .policy-content b {
   font-weight: 700;
-  color: #111111;
+  color: #191919;
 }
 
 .policy-content em,
@@ -546,31 +562,34 @@ html.is-scrolling .scrollbar-none,
 }
 
 .policy-content blockquote {
-  border-left: 3px solid #d1d5db;
-  margin-left: 0;
-  padding-left: 1em;
-  color: #6b7280;
-  font-style: italic;
+  border-left: 3px solid #191919;
+  margin: 1.25em 0;
+  padding: 0.35em 0 0.35em 1em;
+  color: #5f5f5f;
+  background: #f7f4ee;
+  border-radius: 0 10px 10px 0;
 }
 
 .policy-content hr {
   border: none;
-  border-top: 1px solid #e5e7eb;
-  margin: 1.5em 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  margin: 1.75em 0;
 }
 
 .policy-content code {
-  background: #f3f4f6;
-  border-radius: 4px;
-  padding: 0.15em 0.4em;
+  background: #f3f1ed;
+  border-radius: 6px;
+  padding: 0.15em 0.45em;
   font-size: 0.85em;
   font-family: var(--font-mono, monospace);
+  color: #191919;
 }
 
 .policy-content pre {
-  background: #f3f4f6;
-  border-radius: 8px;
-  padding: 1em 1.25em;
+  background: #f7f4ee;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 1em 1.15em;
   overflow-x: auto;
   margin-bottom: 1em;
 }
@@ -583,23 +602,26 @@ html.is-scrolling .scrollbar-none,
 .policy-content table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 1em;
+  margin-bottom: 1.15em;
   font-size: 0.875rem;
+  overflow: hidden;
+  border-radius: 12px;
 }
 .policy-content th {
-  background: #f9fafb;
+  background: #f3f1ed;
   font-weight: 600;
   text-align: left;
-  padding: 0.6em 0.85em;
-  border: 1px solid #e5e7eb;
+  padding: 0.7em 0.9em;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #191919;
 }
 .policy-content td {
-  padding: 0.55em 0.85em;
-  border: 1px solid #e5e7eb;
+  padding: 0.65em 0.9em;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   vertical-align: top;
 }
 .policy-content tr:nth-child(even) td {
-  background: #f9fafb;
+  background: #faf8f5;
 }
 
 /* First child no top margin */

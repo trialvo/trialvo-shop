@@ -23,6 +23,8 @@ export type ProductGridProps = {
     max_price?: number;
     variant_ids?: string;
     color_ids?: string;
+    variant_id?: string;
+    color_id?: string;
     sort_by?: string;
   };
   onClearFilters?: () => void;
@@ -39,11 +41,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   isLoading,
   isError = false,
   onRetry,
-  filterParams,
   onClearFilters,
-  totalProducts = 0,
   activeFilterCount = 0,
-  showLoadingMore = false,
   hasNextPage = false,
   isFetchingNextPage = false,
   onLoadMore,
@@ -91,17 +90,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
     );
   };
 
-  const hasActiveFilters = React.useMemo(() => {
-    if (!filterParams) return false;
-    return (
-      filterParams.min_price !== undefined ||
-      filterParams.max_price !== undefined ||
-      filterParams.variant_ids !== undefined ||
-      filterParams.color_ids !== undefined ||
-      filterParams.sort_by !== undefined ||
-      activeFilterCount > 0
-    );
-  }, [filterParams, activeFilterCount]);
+  const hasActiveFilters = activeFilterCount > 0;
 
   if (isLoading && products.length === 0) {
     return <CategorySkeleton />;
@@ -141,7 +130,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
           <button
             type="button"
             onClick={onClearFilters}
-            className="mt-4 border border-[#E5E5E5] px-4 py-2 text-sm text-black hover:border-black"
+            className="mt-4 inline-flex h-10 items-center justify-center rounded-lg border border-black/15 bg-white px-4 text-sm font-semibold text-[#191919] transition-colors hover:border-[#191919] hover:bg-[#FAF8F5]"
           >
             {t("catalog.clearFilters")}
           </button>
