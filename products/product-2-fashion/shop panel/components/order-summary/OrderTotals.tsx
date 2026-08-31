@@ -85,9 +85,9 @@ const OrderTotals: React.FC<Props> = ({ totals, hasCouponDiscount = false, class
         </div>
       ) : null}
 
-      <div className="flex items-center justify-between border-t border-[#E5E5E5] pt-3 text-[15px] font-semibold text-black">
+      <div className="flex items-center justify-between border-t border-black/8 pt-3 text-[15px] font-semibold text-[#191919]">
         <span>{t("orderSummary.totalAmount")}</span>
-        <span>BDT {totals.total.toLocaleString()}</span>
+        <span className="tabular-nums">BDT {totals.total.toLocaleString()}</span>
       </div>
     </div>
   );

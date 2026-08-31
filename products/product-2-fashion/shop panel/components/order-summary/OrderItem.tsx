@@ -23,8 +23,8 @@ const OrderedItem: React.FC<Props> = ({ item, onRemove }) => {
   const lineTotal = unitPrice * item.quantity;
 
   return (
-    <div className="flex items-start gap-3 border-b border-[#E5E5E5] py-4 last:border-b-0">
-      <div className="relative h-14 w-14 shrink-0 overflow-hidden border border-[#E5E5E5] bg-white">
+    <div className="flex items-start gap-3 border-b border-black/6 py-4 last:border-b-0">
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-black/8 bg-[#FAF8F5]">
         {item?.image ? (
           <ImageWithFallback
             src={toPublicUrl(item.image) || ""}

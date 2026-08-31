@@ -413,6 +413,7 @@
  },
  "orderSuccess": {
   "title": "Thank you for your purchase!",
+  "confirmed": "Order confirmed",
   "emailSentPrefix": "We sent an email to",
   "emailSentSuffix": "with your order confirmation",
   "noEmailProvided": "You did not provide an email address, so we could not send an order confirmation.",
@@ -422,7 +423,10 @@
   "orderNotFound": "Order not found or invalid order ID",
   "orderIdLabel": "Order ID:",
   "notProvided": "Not provided",
-  "viewAllOrders": "View All Orders"
+  "viewAllOrders": "View All Orders",
+  "helpTitle": "Need help with this order?",
+  "helpBody": "Questions about delivery, sizing, or changes — our team is here to help.",
+  "contactUs": "Contact us"
  },
  "paymentFallback": {
   "checkingStatus": "Checking payment status...",

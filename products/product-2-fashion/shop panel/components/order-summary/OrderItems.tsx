@@ -45,7 +45,7 @@ const OrderItems: React.FC<Props> = ({ items, className }) => {
 
   return (
     <div className={cn("pt-4", className)}>
-      <h3 className="text-xs font-medium tracking-wide text-black/45">
+      <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
         {buyNowId === null
           ? hasPath
             ? `Ordered ${items?.length === 1 ? "item" : "items"}`
