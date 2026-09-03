@@ -6,8 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrderTabs } from "@/hooks/useOrder";
 import { useTranslation } from "@/hooks/useTranslation";
 import { getDefaultAddress } from "@/lib/get-default-address";
+import { rememberReturnPath } from "@/lib/navigation/return-to";
 import { getDateRange } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import { FiSearch } from "react-icons/fi";
 import AccountLayout from "./AccountLayout";
@@ -21,6 +22,7 @@ import type { Address, RecentOrder } from "./types";
 const AccountDashboardClient: React.FC = () => {
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useTranslation();
 
   const dateRange = getDateRange(7);
@@ -54,15 +56,20 @@ const AccountDashboardClient: React.FC = () => {
     }));
   }, [orders]);
 
-  const defaultAddressId = user?.default_address ?? null;
   const address = getDefaultAddress<Address>(user);
 
   const handleProfileEdit = () => {
-    router.push("/account/profile-edit/");
+    rememberReturnPath(pathname || "/account");
+    router.push("/account/profile-edit");
   };
 
   const handleAddressEdit = () => {
-    router.push(`/account/address/${defaultAddressId}/edit`);
+    if (!address?.id) {
+      router.push("/account/address");
+      return;
+    }
+    rememberReturnPath(pathname || "/account");
+    router.push(`/account/address/${address.id}/edit`);
   };
 
   const isLoading = isAuthLoading || ordersLoading;

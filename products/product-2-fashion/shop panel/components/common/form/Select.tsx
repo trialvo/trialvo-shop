@@ -30,6 +30,7 @@ type SelectProps = {
   disabled?: boolean;
   isLoading?: boolean;
   className?: string;
+  triggerClassName?: string;
   menuClassName?: string;
   menuPlacement?: MenuPlacement;
   menuMaxHeight?: number;
@@ -109,6 +110,7 @@ export default function Select({
   disabled,
   isLoading,
   className,
+  triggerClassName,
   menuClassName,
   menuPlacement = "auto",
   menuMaxHeight = 280,
@@ -330,8 +332,8 @@ export default function Select({
         willChange: "opacity, transform",
       }}
       className={cn(
-        "z-[9999] overflow-hidden",
-        "border border-black/[0.08] bg-white",
+        "z-[9999] overflow-hidden rounded-[4px]",
+        "border border-border bg-background",
         "shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)]",
         "[&::-webkit-scrollbar]:hidden",
       )}
@@ -350,7 +352,7 @@ export default function Select({
           }}
           className="border-b border-black/[0.06] px-2.5 py-2"
         >
-          <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1.5">
+          <div className="flex items-center gap-2 rounded-[4px] bg-muted px-2.5 py-1.5">
             <Search
               size={13}
               className="shrink-0 text-gray-400"
@@ -437,7 +439,7 @@ export default function Select({
                 }}
                 className={cn(
                   "group relative mx-1 flex w-[calc(100%-8px)] items-center justify-between",
-                  "gap-3 px-3 py-2 text-left text-sm",
+                  "gap-3 rounded-[4px] px-3 py-2 text-left text-sm",
                   isActive
                     ? "bg-black/[0.04] font-semibold text-black"
                     : "text-gray-700 hover:bg-black/[0.02]",
@@ -493,12 +495,15 @@ export default function Select({
           else openMenu();
         }}
         className={cn(
-          "flex h-9 w-full items-center justify-between gap-2 border px-3",
-          "text-sm font-medium outline-none transition-colors",
-          "border-[#CBCBCB] bg-white text-black",
-          "hover:border-gray-400",
-          open && "border-black",
+          // Match shared shop Input chrome (height + radius + border)
+          "flex h-11 w-full items-center justify-between gap-2 rounded-[4px] border px-3",
+          "text-[14px] font-medium outline-none transition-[color,border-color,box-shadow]",
+          "border-border bg-background text-foreground shadow-none",
+          "hover:border-foreground/40",
+          "focus-visible:border-foreground focus-visible:ring-1 focus-visible:ring-foreground/20",
+          open && "border-foreground ring-1 ring-foreground/20",
           (disabled || isLoading) && "cursor-not-allowed opacity-50",
+          triggerClassName,
         )}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -507,7 +512,7 @@ export default function Select({
         <span
           className={cn(
             "flex min-w-0 items-center gap-2",
-            !selected && "text-[#999999]",
+            !selected && "text-muted-foreground",
           )}
         >
           {isLoading ? (

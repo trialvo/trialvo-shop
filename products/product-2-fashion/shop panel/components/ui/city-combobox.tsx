@@ -106,11 +106,13 @@ export function CityCombobox({
      }
     }}
     className={cn(
-     "flex h-9 w-full items-center justify-between border border-[#CBCBCB] bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow]",
-     "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-1 focus-visible:outline-ring/50",
+     "flex h-11 w-full items-center justify-between gap-2 rounded-[4px] border border-border bg-background px-3 text-[14px] shadow-none",
+     "transition-[color,border-color,box-shadow] outline-none",
+     "hover:border-foreground/40",
+     "focus-visible:border-foreground focus-visible:ring-1 focus-visible:ring-foreground/20",
      "disabled:cursor-not-allowed disabled:opacity-50",
      !value && "text-muted-foreground",
-     "rounded-none"
+     open && "border-foreground ring-1 ring-foreground/20",
     )}
    >
     <span className="truncate">
@@ -124,7 +126,7 @@ export function CityCombobox({
     <div
      className={cn(
       "absolute left-0 right-0 top-full z-20 mt-1",
-      "rounded-md border bg-white shadow-lg",
+      "overflow-hidden rounded-[4px] border border-border bg-background shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)]",
       "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2"
      )}
     >

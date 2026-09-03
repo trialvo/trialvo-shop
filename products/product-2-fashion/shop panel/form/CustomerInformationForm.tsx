@@ -78,6 +78,10 @@ type Props = {
    * When true, Cancel shows as a back-style action (edit flows).
    */
   cancelAsBack?: boolean;
+  /**
+   * Optional cancel handler. When set (and clearOnCancel is false), used instead of router.back().
+   */
+  onCancel?: () => void;
 };
 
 const EMPTY_VALUES: CustomerInformationValues = {
@@ -116,6 +120,7 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
       deferSubmit = false,
       clearOnCancel = false,
       cancelAsBack = false,
+      onCancel,
     },
     ref,
   ) => {
@@ -199,6 +204,10 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
     const handleCancel = () => {
       if (clearOnCancel) {
         form.reset({ ...EMPTY_VALUES });
+        return;
+      }
+      if (onCancel) {
+        onCancel();
         return;
       }
       router.back();

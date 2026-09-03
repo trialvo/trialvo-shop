@@ -7,10 +7,11 @@ import CustomerInformationForm, {
   type CustomerInformationValues,
 } from "@/form/CustomerInformationForm";
 import { useAddress } from "@/hooks/useAddress";
-import type { UpdateAddressPayload } from "@/lib/api/address/service";
-import { useParams, useRouter } from "next/navigation";
-import React from "react";
+import { useReturnTo } from "@/hooks/useReturnTo";
 import { useTranslation } from "@/hooks/useTranslation";
+import type { UpdateAddressPayload } from "@/lib/api/address/service";
+import { useParams } from "next/navigation";
+import React from "react";
 import AccountLayout from "../AccountLayout";
 import AccountSidebar from "../AccountSidebar";
 
@@ -27,6 +28,47 @@ function normalizeAddressType(v: unknown): "home" | "office" | "na" | undefined 
 function cleanText(v: unknown): string | undefined {
   const s = String(v ?? "").trim();
   return s.length ? s : undefined;
+}
+
+function normalizeComparable(v: unknown): string {
+  return String(v ?? "").trim();
+}
+
+function hasAddressChanges(
+  values: CustomerInformationValues,
+  defaults: Partial<CustomerInformationValues>,
+): boolean {
+  if ((values.addressType || "home") !== (defaults.addressType || "home")) {
+    return true;
+  }
+  if (normalizeComparable(values.fullName) !== normalizeComparable(defaults.fullName)) {
+    return true;
+  }
+  if (normalizeComparable(values.mobile) !== normalizeComparable(defaults.mobile)) {
+    return true;
+  }
+  if (normalizeComparable(values.city) !== normalizeComparable(defaults.city)) {
+    return true;
+  }
+  if (
+    normalizeComparable(values.area_name) !==
+    normalizeComparable(defaults.area_name)
+  ) {
+    return true;
+  }
+  if (
+    (values.location_mapping_id ?? null) !==
+    (defaults.location_mapping_id ?? null)
+  ) {
+    return true;
+  }
+  if (
+    normalizeComparable(values.deliveryAddress) !==
+    normalizeComparable(defaults.deliveryAddress)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 function EditAddressSkeleton() {
@@ -52,13 +94,19 @@ function EditAddressSkeleton() {
 
 const EditAddressClient: React.FC = () => {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const id = Number(params?.id);
   const safeId = Number.isFinite(id) ? id : 0;
   const { t } = useTranslation();
+  const { returnTo, navigateBack } = useReturnTo("/account/address");
 
   const { useAddressById, updateAddress, isUpdating } = useAddress();
   const { data: singleAddress, isLoading } = useAddressById(safeId);
+
+  const backLabel = returnTo.startsWith("/checkout")
+    ? t("back")
+    : returnTo === "/account" || returnTo.startsWith("/account?")
+      ? t("account.backToAccount")
+      : t("account.backToAddressBook");
 
   const defaultValues: Partial<CustomerInformationValues> = React.useMemo(() => {
     const addr = singleAddress?.address;
@@ -75,6 +123,12 @@ const EditAddressClient: React.FC = () => {
   }, [singleAddress]);
 
   const handleSubmit = async (values: CustomerInformationValues) => {
+    // Nothing edited → leave without an update API call
+    if (!hasAddressChanges(values, defaultValues)) {
+      navigateBack();
+      return;
+    }
+
     try {
       const payload: UpdateAddressPayload = {
         name: values.fullName.trim(),
@@ -87,7 +141,7 @@ const EditAddressClient: React.FC = () => {
 
       const res = await updateAddress(safeId, payload);
       if (res && !res.error) {
-        router.push("/account/address");
+        navigateBack();
       }
       return res;
     } catch {
@@ -116,8 +170,8 @@ const EditAddressClient: React.FC = () => {
                 eyebrow={t("account.addressBook.title")}
                 title={t("account.editAddress.editAddress")}
                 description={t("account.editAddress.description")}
-                backHref="/account/address"
-                backLabel={t("account.backToAddressBook")}
+                onBack={navigateBack}
+                backLabel={backLabel}
               />
 
               <div className="rounded-2xl border border-black/8 bg-white">
@@ -131,6 +185,7 @@ const EditAddressClient: React.FC = () => {
                   <CustomerInformationForm
                     defaultValues={defaultValues}
                     onSubmit={handleSubmit}
+                    onCancel={navigateBack}
                     isLoading={isUpdating}
                     deferSubmit
                     cancelAsBack

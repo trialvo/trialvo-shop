@@ -5,9 +5,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useOrder } from "@/hooks/useOrder";
 import { usePaymentSubmit } from "@/hooks/usePaymentSubmit";
 import { openConfirmDelete } from "@/lib/modal/confirm-delete";
+import { rememberReturnPath } from "@/lib/navigation/return-to";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppDispatch } from "@/redux/hooks";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import OrderRow, { OrderRowSkeleton } from "./OrderRow";
 import RecentOrdersTableMobile from "./recent-order/RecentOrdersTableMobile";
@@ -29,11 +30,17 @@ const OrdersTable: React.FC<Props> = ({
   onLoadMore,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
 
   const { cancelOrder } = useOrder();
   const { onSubmit } = usePaymentSubmit();
+
+  const openOrderDetail = (id: string | number) => {
+    rememberReturnPath(pathname || "/account/orders");
+    router.push(`/account/my-order/${id}`);
+  };
 
   const handleCancel = (id: string | number) => {
     const orderId = Number(id);
@@ -140,7 +147,7 @@ const OrdersTable: React.FC<Props> = ({
                       onSubmit(item?.id);
                     }}
                     onViewDetails={() => {
-                      router.push(`/account/my-order/${item?.id}`);
+                      openOrderDetail(item?.id);
                     }}
                     onTrack={() => {}}
                     onCancel={(id) => handleCancel(id)}
@@ -193,7 +200,7 @@ const OrdersTable: React.FC<Props> = ({
                   >
                     <RecentOrdersTableMobile
                       orders={[recentOrder]}
-                      onView={() => router.push(`/account/my-order/${item.id}`)}
+                      onView={() => openOrderDetail(item.id)}
                       onInvoice={() => handleCancel(String(item.id))}
                     />
                   </div>

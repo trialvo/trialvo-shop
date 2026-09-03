@@ -34,17 +34,14 @@ const CategorySelect: React.FC<Props> = React.memo(({ categories, value, onChang
         searchPlaceholder="Search category..."
         emptyText="No category found."
         disabled={false}
+        searchable
         triggerClassName={cn(
-          "h-full w-full border-0 bg-transparent px-3",
+          // Embedded in the header search shell — inherit height, drop outer border
+          "h-full min-h-11 rounded-none border-0 bg-transparent px-3 shadow-none",
           "text-[12px] font-normal tracking-[0.01em] text-black",
-          "hover:bg-transparent",
+          "hover:border-transparent hover:bg-transparent",
+          "focus-visible:border-transparent focus-visible:ring-0",
         )}
-        contentClassName="rounded-none border border-black/10 shadow-none w-50 sm:w-70"
-        side="bottom"
-        align="start"
-        sideOffset={6}
-        avoidCollisions={false}
-        listMaxHeightClassName="max-h-[260px]"
       />
     </div>
   );

@@ -41,6 +41,7 @@ export const productKeys = {
     params?.featured ?? null,
     params?.best_deal ?? null,
     params?.in_stock ?? null,
+    params?.is_favourite ?? null,
     params?.sizes ?? null,
     params?.colors ?? null,
     params?.brands ?? null,

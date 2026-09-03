@@ -20,10 +20,11 @@ import {
 import { useOrder } from "@/hooks/useOrder";
 import { usePaymentSubmit } from "@/hooks/usePaymentSubmit";
 import { openConfirmDelete } from "@/lib/modal/confirm-delete";
+import { rememberReturnPath } from "@/lib/navigation/return-to";
 import { toPublicUrl } from "@/lib/utils";
 import { useAppDispatch } from "@/redux/hooks";
 import { MoreVertical } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import { RecentOrder } from "../../types";
 import OrderStatusPill from "../OrderStatusPill";
@@ -47,6 +48,7 @@ const DesktopTableRow: React.FC<{
     onCancel?: (id: string) => void;
 }> = ({ order, onView, onCancel, onSubmit }) => {
     const router = useRouter();
+    const pathname = usePathname();
     const isPaid = (order.paymentStatus ?? "").toLowerCase() === "paid";
     const isConfirmed = (order.order_status ?? "").toLowerCase() === "approved";
 
@@ -97,6 +99,7 @@ const DesktopTableRow: React.FC<{
                         <DropdownMenuItem
                             onClick={() => {
                                 onView?.(order.id);
+                                rememberReturnPath(pathname || "/account");
                                 router.push(`/account/my-order/${order.id}`);
                             }}
                         >

@@ -12,10 +12,11 @@ import { UpdateGuestOrderPayload } from "@/lib/api/guest-order/service";
 import { CustomerInformationFormRef } from "@/form/CustomerInformationForm";
 import { openConfirmDelete } from "@/lib/modal/confirm-delete";
 import { openVerifyIdentity } from "@/lib/modal/verify-identity";
+import { rememberReturnPath } from "@/lib/navigation/return-to";
 import { useAppDispatch } from "@/redux/hooks";
 import { openModal } from "@/redux/slices/modalManagerSlice";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AddressListPanel from "../account/address-book/AddressListPanel";
 import CustomerInformation from "./CustomerInformation";
 import { FiPlus } from "react-icons/fi";
@@ -95,6 +96,7 @@ const CheckoutLeft: React.FC<Props> = ({
 }) => {
 
   const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
 
@@ -142,6 +144,7 @@ const CheckoutLeft: React.FC<Props> = ({
   };
 
   const handleEdit = (id: string | number) => {
+    rememberReturnPath(pathname || "/checkout");
     router.push(`/account/address/${id}/edit`);
   };
 

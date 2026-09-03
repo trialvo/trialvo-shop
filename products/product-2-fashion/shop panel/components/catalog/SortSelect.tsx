@@ -36,14 +36,7 @@ const SortSelect: React.FC<SortSelectProps> = ({ value, onChange }) => {
           onChange={onChange}
           options={sortOptions}
           placeholder={t("catalog.sort.featured")}
-          searchPlaceholder={t("catalog.sortBy")}
-          emptyText={t("catalog.noProducts")}
-          triggerClassName="h-9 w-full justify-between rounded-none border-[#E5E5E5] px-2.5 text-left text-sm font-medium shadow-none"
-          contentClassName="w-52"
-          listMaxHeightClassName="max-h-64"
-          side="bottom"
-          sideOffset={4}
-          closeOnSelect
+          searchable={false}
         />
       </div>
     </div>

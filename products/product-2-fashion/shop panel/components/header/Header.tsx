@@ -222,6 +222,11 @@ const Header: React.FC = () => {
     };
 
     const onScroll = () => {
+      // Modal body-scroll lock can fire scroll jitter and collapse the header.
+      if (document.documentElement.classList.contains("modal-scroll-lock")) {
+        return;
+      }
+
       const y = window.scrollY;
       const now = Date.now();
       const delta = y - lastScrollY.current;

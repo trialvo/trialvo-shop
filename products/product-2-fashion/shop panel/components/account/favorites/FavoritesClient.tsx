@@ -6,13 +6,17 @@ import Breadcrumbs from "@/components/breadcrumb/Breadcrumbs";
 import { SortValue } from "@/components/catalog/types";
 import type { QuickAddProduct } from "@/components/modals/quick-add/quickAdd.types";
 import ProductCard from "@/components/product/ProductCard";
-import { useFavorite } from "@/hooks/useFavorite";
-import { useProduct } from "@/hooks/useProduct";
+import { favoriteKeys, useFavorite } from "@/hooks/useFavorite";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { ProductDetail, ProductListParams } from "@/lib/api/product/service";
+import {
+  favoriteService,
+  pickFavouriteProducts,
+} from "@/lib/api/favorite/service";
+import type { ProductDetail } from "@/lib/api/product/service";
 import { getLocalName } from "@/lib/utils";
 import { useAppDispatch } from "@/redux/hooks";
 import { openModal } from "@/redux/slices/modalManagerSlice";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,28 +29,48 @@ const FavoritesClient: React.FC = () => {
   const [sort, setSort] = React.useState<SortValue>("date_desc");
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { t, language } = useTranslation();
 
   const debouncedSort = useDebouncedSort(sort, 300);
 
-  const queryParams: ProductListParams = React.useMemo(() => {
-    return {
+  const listParams = React.useMemo(
+    () => ({
       sort_by: debouncedSort.sort_by,
       sort_order: debouncedSort.sort_order,
-      featured: debouncedSort.featured,
-      status: true,
-    };
-  }, [debouncedSort]);
+      limit: 50,
+      offset: 0,
+    }),
+    [debouncedSort],
+  );
 
-  const { products, productsLoading } = useProduct(queryParams);
   const { toggleFavorite, isAuthenticated } = useFavorite();
 
-  const favoriteProducts = React.useMemo(() => {
-    const list = (products ?? []).filter((p) => p?.is_favourite === true);
-    return list;
-  }, [products]);
+  const favoritesQuery = useQuery({
+    queryKey: [...favoriteKeys.list(), listParams] as const,
+    enabled: isAuthenticated,
+    staleTime: 0,
+    refetchOnMount: "always",
+    queryFn: () => favoriteService.getFavoriteProducts(listParams),
+  });
 
-  const handleOpenQuickAdd = (p: (typeof products)[number]) => {
+  const favoriteProducts = React.useMemo(
+    () => pickFavouriteProducts(favoritesQuery.data?.products),
+    [favoritesQuery.data?.products],
+  );
+
+  // Header tooltip must mirror this page — push the real visible count into cache
+  React.useEffect(() => {
+    if (!isAuthenticated || favoritesQuery.isLoading) return;
+    queryClient.setQueryData(favoriteKeys.count(), favoriteProducts.length);
+  }, [
+    favoriteProducts.length,
+    favoritesQuery.isLoading,
+    isAuthenticated,
+    queryClient,
+  ]);
+
+  const handleOpenQuickAdd = (p: (typeof favoriteProducts)[number]) => {
     const firstVar = p?.variations?.[0];
     const productPayload: QuickAddProduct = {
       id: String(p.id),
@@ -97,7 +121,7 @@ const FavoritesClient: React.FC = () => {
 
       <div className="mt-2 min-[768px]:mb-14">
         <AccountLayout sidebar={<AccountSidebar activeKey="favorite-list" />}>
-          {productsLoading ? (
+          {favoritesQuery.isLoading ? (
             <FavoritesClientSkeleton />
           ) : (
             <div className="space-y-4">
@@ -137,12 +161,12 @@ const FavoritesClient: React.FC = () => {
                         (p) => p?.has_discount,
                       );
                       const defaultVariations = product?.variations[0];
-                      const hasDiscount = discountArray?.length > 0;
+                      const hasDiscount = (discountArray?.length ?? 0) > 0;
                       const finalPrice = hasDiscount
-                        ? discountArray[0]?.final_price
+                        ? discountArray?.[0]?.final_price
                         : defaultVariations?.final_price;
                       const sellingPrice = hasDiscount
-                        ? discountArray[0]?.selling_price
+                        ? discountArray?.[0]?.selling_price
                         : defaultVariations?.selling_price;
 
                       return (

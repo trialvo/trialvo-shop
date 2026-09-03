@@ -3,17 +3,17 @@
 import AccountEditPageHeader from "@/components/account/AccountEditPageHeader";
 import EditProfileForm, { EditProfileValues } from "@/form/EditProfileForm";
 import { useAuth } from "@/hooks/useAuth";
+import { useReturnTo } from "@/hooks/useReturnTo";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useRouter } from "next/navigation";
 import React from "react";
 import Breadcrumbs from "../breadcrumb/Breadcrumbs";
 import AccountLayout from "./AccountLayout";
 import AccountSidebar from "./AccountSidebar";
 
 const EditProfileClient = () => {
-  const router = useRouter();
   const { updateProfile } = useAuth();
   const { t } = useTranslation();
+  const { returnTo, navigateBack } = useReturnTo("/account");
 
   const handleSubmit = async (values: EditProfileValues) => {
     await updateProfile({
@@ -25,8 +25,15 @@ const EditProfileClient = () => {
       phone: values.phone || "",
       profile: values.profile ?? null,
     });
-    router.push("/account");
+    navigateBack();
   };
+
+  const backLabel =
+    returnTo.startsWith("/account/address")
+      ? t("account.backToAddressBook")
+      : returnTo.startsWith("/checkout")
+        ? t("back")
+        : t("account.backToAccount");
 
   return (
     <section className="container mx-auto px-3 pb-28 pt-2 min-[640px]:pb-14 min-[768px]:px-0 min-[768px]:pt-0">
@@ -45,8 +52,8 @@ const EditProfileClient = () => {
               eyebrow={t("account.myAccount")}
               title={t("account.editProfile")}
               description={t("account.profileEditDescription")}
-              backHref="/account"
-              backLabel={t("account.backToAccount")}
+              onBack={navigateBack}
+              backLabel={backLabel}
             />
 
             <div className="overflow-hidden rounded-2xl border border-black/8 bg-white">
@@ -58,7 +65,7 @@ const EditProfileClient = () => {
 
               <div className="px-4 py-5 min-[768px]:px-5 min-[768px]:py-6">
                 <EditProfileForm
-                  onCancel={() => router.push("/account")}
+                  onCancel={navigateBack}
                   onSubmit={handleSubmit}
                 />
               </div>

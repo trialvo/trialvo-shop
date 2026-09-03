@@ -8,8 +8,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React from "react";
+import { rememberReturnPath } from "@/lib/navigation/return-to";
 import { RecentOrder } from "../../types";
 
 type Props = {
@@ -21,11 +22,18 @@ type Props = {
 };
 
 const OrderActionsMenu: React.FC<Props> = ({ order, onView, onCancel, router, onSubmit }) => {
+    const pathname = usePathname();
     const paymentStatus = order.paymentStatus ?? "";
     const orderStatus = order.order_status ?? "";
 
     const isPaid = paymentStatus.toLowerCase() === "paid";
     const isConfirmed = orderStatus.toLowerCase() === "approved";
+
+    const openOrderDetail = () => {
+        onView?.(order.id);
+        rememberReturnPath(pathname || "/account");
+        router.push(`/account/my-order/${order.id}`);
+    };
 
     return (
         <DropdownMenu>
@@ -48,12 +56,7 @@ const OrderActionsMenu: React.FC<Props> = ({ order, onView, onCancel, router, on
                     </DropdownMenuItem>
                 ) : null}
 
-                <DropdownMenuItem
-                    onClick={() => {
-                        onView?.(order.id);
-                        router.push(`/account/my-order/${order.id}`);
-                    }}
-                >
+                <DropdownMenuItem onClick={openOrderDetail}>
                     View invoice
                 </DropdownMenuItem>
 

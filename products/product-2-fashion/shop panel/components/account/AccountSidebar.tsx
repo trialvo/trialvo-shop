@@ -77,14 +77,24 @@ const AccountSidebar: React.FC<Props> = ({ activeKey }) => {
   }, [activeKey, updateArrows]);
 
   React.useEffect(() => {
+    const scroller = scrollerRef.current;
     const el = activeItemRef.current;
-    if (!el) return;
+    if (!scroller || !el) return;
 
-    el.scrollIntoView({
-      behavior: "smooth",
-      inline: "center",
-      block: "nearest",
-    });
+    // Scroll only the tab strip — never use scrollIntoView (it can jump the page).
+    const scrollerRect = scroller.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const delta =
+      elRect.left -
+      scrollerRect.left -
+      (scroller.clientWidth - el.offsetWidth) / 2;
+    const next = clamp(
+      scroller.scrollLeft + delta,
+      0,
+      scroller.scrollWidth - scroller.clientWidth,
+    );
+
+    scroller.scrollTo({ left: next, behavior: "auto" });
   }, [activeKey]);
 
   const scrollByAmount = (dir: "left" | "right") => {

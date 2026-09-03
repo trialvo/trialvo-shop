@@ -28,11 +28,57 @@ import {
   getAxiosErrorMessage,
   getUnknownErrorMessage,
 } from "@/lib/api/errors";
+import { toDateString } from "@/lib/utils";
 
 export const authKeys = {
   all: ["auth"] as const,
   user: () => [...authKeys.all, "user"] as const,
 };
+
+type ProfileUpdateContext = {
+  previousUser?: User;
+  optimisticImageUrl?: string;
+};
+
+function applyProfileOptimisticUpdate(
+  current: User,
+  payload: UpdateProfilePayload,
+): { next: User; optimisticImageUrl?: string } {
+  let optimisticImageUrl: string | undefined;
+  let img_path = current.img_path;
+
+  if (payload.profile instanceof File) {
+    optimisticImageUrl = URL.createObjectURL(payload.profile);
+    img_path = optimisticImageUrl;
+  }
+
+  const nextGender =
+    payload.gender !== undefined && payload.gender !== ""
+      ? (payload.gender as User["gender"])
+      : current.gender;
+
+  let nextDob = current.dob;
+  if (payload.dob !== undefined) {
+    if (payload.dob === null || payload.dob === "") {
+      nextDob = null;
+    } else {
+      nextDob = toDateString(payload.dob);
+    }
+  }
+
+  return {
+    next: {
+      ...current,
+      first_name: payload.first_name ?? current.first_name,
+      last_name: payload.last_name ?? current.last_name,
+      email: payload.email ?? current.email,
+      gender: nextGender,
+      dob: nextDob,
+      img_path,
+    },
+    optimisticImageUrl,
+  };
+}
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null;
@@ -359,10 +405,24 @@ export const useAuth = () => {
   const updateProfileMutation = useMutation({
     mutationFn: (payload: UpdateProfilePayload) =>
       authService.updateProfile(payload),
-    onMutate: () => {
-      dispatch(setLoading(true));
+    onMutate: async (payload): Promise<ProfileUpdateContext> => {
+      // Do not toggle global auth loading — that unmounts the edit form into a skeleton (page jump).
       dispatch(setError(null));
       dispatch(setSuccess(null));
+
+      await queryClient.cancelQueries({ queryKey: authKeys.user() });
+      const previousUser = queryClient.getQueryData<User>(authKeys.user());
+
+      if (!previousUser) return { previousUser };
+
+      const { next, optimisticImageUrl } = applyProfileOptimisticUpdate(
+        previousUser,
+        payload,
+      );
+      queryClient.setQueryData<User>(authKeys.user(), next);
+      AuthCookies.setUser(next);
+
+      return { previousUser, optimisticImageUrl };
     },
     onSuccess: (res: ApiResponse<{ user: User }>) => {
       if (res?.error) {
@@ -370,17 +430,35 @@ export const useAuth = () => {
         return;
       }
 
+      const payload = pickPayload<{ user: User }>(res);
+      const user = payload?.user ?? res.data?.user;
+      if (user) {
+        AuthCookies.setUser(user);
+        queryClient.setQueryData<User>(authKeys.user(), user);
+      }
+
       if (res?.success) {
         dispatch(setSuccess(res.message || "Profile updated successfully!"));
       }
     },
-    onError: (error) => {
+    onError: (error, _payload, context) => {
+      if (context?.previousUser) {
+        AuthCookies.setUser(context.previousUser);
+        queryClient.setQueryData<User>(authKeys.user(), context.previousUser);
+      }
       dispatch(
         setError(getUnknownErrorMessage(error, "Profile update failed")),
       );
     },
-    onSettled: () => {
-      dispatch(setLoading(false));
+    onSettled: (_data, error, _payload, context) => {
+      if (context?.optimisticImageUrl) {
+        URL.revokeObjectURL(context.optimisticImageUrl);
+      }
+      // Cache already has the API user (or rolled-back user). Avoid a refetch
+      // flash/jump when navigating back to /account right after save.
+      if (error) {
+        void queryClient.invalidateQueries({ queryKey: authKeys.user() });
+      }
     },
   });
 

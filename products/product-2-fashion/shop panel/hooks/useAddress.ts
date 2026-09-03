@@ -4,10 +4,15 @@ import { authKeys } from "@/hooks/useAuth";
 import type { ApiResponse, User } from "@/lib/api/auth/service";
 import AuthCookies from "@/lib/auth/cookies";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios, { type AxiosError } from "axios";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
 import { useCallback } from "react";
 
+import type { Address } from "@/components/account/types";
 import { AddressItem } from "@/components/account/address-book/types";
 import {
   addressService,
@@ -24,11 +29,7 @@ import {
   setSuccess,
 } from "@/redux/slices/uiSlice";
 
-import {
-  type ApiErrorResponse,
-  getAxiosErrorMessage,
-  getUnknownErrorMessage,
-} from "@/lib/api/errors";
+import { getUnknownErrorMessage } from "@/lib/api/errors";
 
 export const addressKeys = {
   all: ["address"] as const,
@@ -40,6 +41,12 @@ export const addressKeys = {
       params?.offset ?? 0,
     ] as const,
   detail: (id: number) => [...addressKeys.all, "detail", id] as const,
+};
+
+type AddressCacheContext = {
+  previousLists: Array<[QueryKey, AddressItem[] | undefined]>;
+  previousUser?: User;
+  previousDetail?: SingleAddressResponse;
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
@@ -88,6 +95,26 @@ const extractUserIfAny = (res: unknown): User | null => {
   return null;
 };
 
+const normalizeAddressType = (
+  type?: string,
+  fallback: AddressItem["address_type"] = "home",
+): AddressItem["address_type"] => {
+  const s = String(type ?? "").trim().toLowerCase();
+  if (s === "home" || s === "office" || s === "n/a") return s;
+  if (s === "na") return "n/a";
+  return fallback;
+};
+
+const toDashboardAddress = (item: AddressItem): Address => ({
+  id: item.id,
+  phone_id: item.phone_id,
+  name: item.name,
+  address_type: item.address_type,
+  full_address: item.full_address,
+  city: item.city,
+  zip_code: item.zip_code,
+});
+
 export const useAddress = (params?: { limit?: number; offset?: number }) => {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
@@ -101,8 +128,46 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
 
   const clearUi = () => dispatch(resetAuthUi());
 
-  const revalidateUser = async () => {
-    await queryClient.invalidateQueries({ queryKey: authKeys.user() });
+  const snapshotAddressLists = (): AddressCacheContext["previousLists"] =>
+    queryClient.getQueriesData<AddressItem[]>({ queryKey: addressKeys.all });
+
+  const restoreAddressLists = (
+    previousLists: AddressCacheContext["previousLists"],
+  ) => {
+    for (const [key, data] of previousLists) {
+      queryClient.setQueryData(key, data);
+    }
+  };
+
+  const patchAddressLists = (
+    updater: (items: AddressItem[]) => AddressItem[],
+  ) => {
+    const lists = queryClient.getQueriesData<AddressItem[]>({
+      queryKey: [...addressKeys.all, "list"],
+    });
+    for (const [key, data] of lists) {
+      if (!Array.isArray(data)) continue;
+      queryClient.setQueryData(key, updater(data));
+    }
+  };
+
+  const syncUserFromAddressItems = (items: AddressItem[]) => {
+    const user = queryClient.getQueryData<User>(authKeys.user());
+    if (!user) return;
+
+    const addresses = items.map(toDashboardAddress);
+    const defaultItem = items.find((item) => item.is_default === 1);
+    const default_address = defaultItem
+      ? toDashboardAddress(defaultItem)
+      : user.default_address;
+
+    const next: User = {
+      ...user,
+      addresses,
+      default_address,
+    };
+    queryClient.setQueryData<User>(authKeys.user(), next);
+    AuthCookies.setUser(next);
   };
 
   const syncUserIfReturned = (res: unknown) => {
@@ -111,6 +176,13 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
 
     AuthCookies.setUser(u);
     queryClient.setQueryData<User>(authKeys.user(), u);
+  };
+
+  const revalidateCaches = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: addressKeys.all }),
+      queryClient.invalidateQueries({ queryKey: authKeys.user() }),
+    ]);
   };
 
   const addressesQuery = useQuery({
@@ -152,10 +224,39 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
   const createMutation = useMutation({
     mutationFn: (payload: CreateAddressPayload) =>
       addressService.createAddress(payload),
-    onMutate: () => {
+    onMutate: async (payload): Promise<AddressCacheContext> => {
       dispatch(setLoading(true));
       dispatch(setError(null));
       dispatch(setSuccess(null));
+
+      await queryClient.cancelQueries({ queryKey: addressKeys.all });
+      await queryClient.cancelQueries({ queryKey: authKeys.user() });
+
+      const previousLists = snapshotAddressLists();
+      const previousUser = queryClient.getQueryData<User>(authKeys.user());
+
+      const tempId = -Date.now();
+      const optimisticItem: AddressItem = {
+        id: tempId,
+        name: payload.name,
+        address_type: normalizeAddressType(payload.type),
+        full_address: payload.full_address,
+        city: payload.city ?? "",
+        zip_code: payload.zip_code ?? "",
+        created_at: new Date().toISOString(),
+        phone_id: 0,
+        phone_number: payload.phone ?? "",
+        is_verified: 0,
+        is_default: 0,
+      };
+
+      patchAddressLists((items) => [optimisticItem, ...items]);
+      const firstList = queryClient.getQueryData<AddressItem[]>(
+        addressKeys.list(params),
+      );
+      if (firstList) syncUserFromAddressItems(firstList);
+
+      return { previousLists, previousUser };
     },
     onSuccess: async (res: AddressMutationResponse) => {
       if (res?.error) {
@@ -164,12 +265,17 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
       }
 
       dispatch(setSuccess(res.message || "Address created successfully!"));
-
       syncUserIfReturned(res);
-      await queryClient.invalidateQueries({ queryKey: addressKeys.all });
-      await revalidateUser();
+      await revalidateCaches();
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, _payload, context) => {
+      if (context) {
+        restoreAddressLists(context.previousLists);
+        if (context.previousUser) {
+          queryClient.setQueryData(authKeys.user(), context.previousUser);
+          AuthCookies.setUser(context.previousUser);
+        }
+      }
       dispatch(setError(getUnknownErrorMessage(err, "Create address failed")));
     },
     onSettled: () => {
@@ -185,10 +291,78 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
       id: number;
       payload: UpdateAddressPayload;
     }) => addressService.updateAddress(id, payload),
-    onMutate: () => {
+    onMutate: async ({
+      id,
+      payload,
+    }): Promise<AddressCacheContext> => {
       dispatch(setLoading(true));
       dispatch(setError(null));
       dispatch(setSuccess(null));
+
+      await queryClient.cancelQueries({ queryKey: addressKeys.all });
+      await queryClient.cancelQueries({ queryKey: authKeys.user() });
+
+      const previousLists = snapshotAddressLists();
+      const previousUser = queryClient.getQueryData<User>(authKeys.user());
+      const previousDetail = queryClient.getQueryData<SingleAddressResponse>(
+        addressKeys.detail(id),
+      );
+
+      patchAddressLists((items) =>
+        items.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                name: payload.name ?? item.name,
+                full_address: payload.full_address ?? item.full_address,
+                city: payload.city ?? item.city,
+                zip_code: payload.zip_code ?? item.zip_code,
+                address_type: payload.type
+                  ? normalizeAddressType(payload.type, item.address_type)
+                  : item.address_type,
+                phone_number: payload.phone ?? item.phone_number,
+              }
+            : item,
+        ),
+      );
+
+      if (previousDetail?.address) {
+        queryClient.setQueryData<SingleAddressResponse>(addressKeys.detail(id), {
+          ...previousDetail,
+          address: {
+            ...previousDetail.address,
+            name: payload.name ?? previousDetail.address.name,
+            full_address:
+              payload.full_address ?? previousDetail.address.full_address,
+            city: payload.city ?? previousDetail.address.city,
+            zip_code: payload.zip_code ?? previousDetail.address.zip_code,
+            type: payload.type
+              ? normalizeAddressType(
+                  payload.type,
+                  previousDetail.address.type,
+                )
+              : previousDetail.address.type,
+            phone: previousDetail.address.phone
+              ? {
+                  ...previousDetail.address.phone,
+                  number:
+                    payload.phone ?? previousDetail.address.phone.number,
+                }
+              : previousDetail.address.phone,
+            location_mapping_id:
+              payload.location_mapping_id !== undefined
+                ? payload.location_mapping_id
+                : previousDetail.address.location_mapping_id,
+          },
+        });
+      }
+
+      const firstList = queryClient.getQueryData<AddressItem[]>(
+        addressKeys.list(params),
+      );
+      if (firstList) syncUserFromAddressItems(firstList);
+
+      return { previousLists, previousUser, previousDetail };
     },
     onSuccess: async (res: AddressMutationResponse) => {
       if (res?.error) {
@@ -197,12 +371,23 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
       }
 
       dispatch(setSuccess(res.message || "Address updated successfully!"));
-
       syncUserIfReturned(res);
-      await queryClient.invalidateQueries({ queryKey: addressKeys.all });
-      await revalidateUser();
+      await revalidateCaches();
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, variables, context) => {
+      if (context) {
+        restoreAddressLists(context.previousLists);
+        if (context.previousUser) {
+          queryClient.setQueryData(authKeys.user(), context.previousUser);
+          AuthCookies.setUser(context.previousUser);
+        }
+        if (context.previousDetail) {
+          queryClient.setQueryData(
+            addressKeys.detail(variables.id),
+            context.previousDetail,
+          );
+        }
+      }
       dispatch(setError(getUnknownErrorMessage(err, "Update address failed")));
     },
     onSettled: () => {
@@ -212,10 +397,24 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => addressService.deleteAddress(id),
-    onMutate: () => {
+    onMutate: async (id): Promise<AddressCacheContext> => {
       dispatch(setLoading(true));
       dispatch(setError(null));
       dispatch(setSuccess(null));
+
+      await queryClient.cancelQueries({ queryKey: addressKeys.all });
+      await queryClient.cancelQueries({ queryKey: authKeys.user() });
+
+      const previousLists = snapshotAddressLists();
+      const previousUser = queryClient.getQueryData<User>(authKeys.user());
+
+      patchAddressLists((items) => items.filter((item) => item.id !== id));
+      const firstList = queryClient.getQueryData<AddressItem[]>(
+        addressKeys.list(params),
+      );
+      if (firstList) syncUserFromAddressItems(firstList);
+
+      return { previousLists, previousUser };
     },
     onSuccess: async (res: AddressMutationResponse) => {
       if (res?.error) {
@@ -227,10 +426,16 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
         dispatch(setSuccess(res.message || "Address deleted successfully!"));
       }
 
-      await queryClient.invalidateQueries({ queryKey: addressKeys.all });
-      await revalidateUser();
+      await revalidateCaches();
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, _id, context) => {
+      if (context) {
+        restoreAddressLists(context.previousLists);
+        if (context.previousUser) {
+          queryClient.setQueryData(authKeys.user(), context.previousUser);
+          AuthCookies.setUser(context.previousUser);
+        }
+      }
       dispatch(setError(getUnknownErrorMessage(err, "Delete address failed")));
     },
     onSettled: () => {
@@ -240,10 +445,30 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
 
   const setDefaultMutation = useMutation({
     mutationFn: (id: number | string) => addressService.setDefaultAddress(id),
-    onMutate: () => {
+    onMutate: async (id): Promise<AddressCacheContext> => {
       dispatch(setLoading(true));
       dispatch(setError(null));
       dispatch(setSuccess(null));
+
+      await queryClient.cancelQueries({ queryKey: addressKeys.all });
+      await queryClient.cancelQueries({ queryKey: authKeys.user() });
+
+      const previousLists = snapshotAddressLists();
+      const previousUser = queryClient.getQueryData<User>(authKeys.user());
+      const numId = Number(id);
+
+      patchAddressLists((items) =>
+        items.map((item) => ({
+          ...item,
+          is_default: item.id === numId ? 1 : 0,
+        })),
+      );
+      const firstList = queryClient.getQueryData<AddressItem[]>(
+        addressKeys.list(params),
+      );
+      if (firstList) syncUserFromAddressItems(firstList);
+
+      return { previousLists, previousUser };
     },
     onSuccess: async (res: AddressMutationResponse) => {
       if (res?.error) {
@@ -252,12 +477,17 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
       }
 
       dispatch(setSuccess(res.message || "Default address updated!"));
-
       syncUserIfReturned(res);
-      await queryClient.invalidateQueries({ queryKey: addressKeys.all });
-      await revalidateUser();
+      await revalidateCaches();
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, _id, context) => {
+      if (context) {
+        restoreAddressLists(context.previousLists);
+        if (context.previousUser) {
+          queryClient.setQueryData(authKeys.user(), context.previousUser);
+          AuthCookies.setUser(context.previousUser);
+        }
+      }
       dispatch(setError(getUnknownErrorMessage(err, "Set default failed")));
     },
     onSettled: () => {
@@ -265,7 +495,6 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
     },
   });
 
-  // ---------------- Public APIs ----------------
   const createAddress = useCallback(
     (payload: CreateAddressPayload) => createMutation.mutateAsync(payload),
     [createMutation],
@@ -288,27 +517,22 @@ export const useAddress = (params?: { limit?: number; offset?: number }) => {
   );
 
   return {
-    // list
     addresses: addressesQuery.data ?? [],
     addressesLoading: addressesQuery.isLoading,
     addressesError: addressesQuery.error,
 
-    // detail hook
     useAddressById,
 
-    // actions
     createAddress,
     updateAddress,
     deleteAddress,
     setDefaultAddress,
 
-    // ui
     isLoading,
     error,
     success,
     clearUi,
 
-    // mutation states
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,

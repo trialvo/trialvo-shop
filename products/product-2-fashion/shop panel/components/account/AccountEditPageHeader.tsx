@@ -8,31 +8,46 @@ import { FiArrowLeft } from "react-icons/fi";
 type Props = {
   title: string;
   description?: string;
-  backHref: string;
+  backHref?: string;
+  /** Prefer this for edit flows so return path stays consistent (no Link remount jump). */
+  onBack?: () => void;
   backLabel: string;
   eyebrow?: string;
   className?: string;
 };
 
+const backClassName =
+  "inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-[13px] font-semibold text-[#191919] shadow-[0_1px_3px_rgba(20,16,12,0.06)] transition-colors hover:border-black/18 hover:bg-[#FAF8F5]";
+
 const AccountEditPageHeader: React.FC<Props> = ({
   title,
   description,
   backHref,
+  onBack,
   backLabel,
   eyebrow,
   className,
 }) => {
+  const backInner = (
+    <>
+      <span className="grid h-6 w-6 place-items-center rounded-full bg-[#F3F1ED]">
+        <FiArrowLeft className="h-3.5 w-3.5 shrink-0" />
+      </span>
+      {backLabel}
+    </>
+  );
+
   return (
     <div className={cn("space-y-4", className)}>
-      <Link
-        href={backHref}
-        className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-[13px] font-semibold text-[#191919] shadow-[0_1px_3px_rgba(20,16,12,0.06)] transition-colors hover:border-black/18 hover:bg-[#FAF8F5]"
-      >
-        <span className="grid h-6 w-6 place-items-center rounded-full bg-[#F3F1ED]">
-          <FiArrowLeft className="h-3.5 w-3.5 shrink-0" />
-        </span>
-        {backLabel}
-      </Link>
+      {onBack ? (
+        <button type="button" onClick={onBack} className={backClassName}>
+          {backInner}
+        </button>
+      ) : (
+        <Link href={backHref || "/account"} className={backClassName}>
+          {backInner}
+        </Link>
+      )}
 
       <div>
         {eyebrow ? (

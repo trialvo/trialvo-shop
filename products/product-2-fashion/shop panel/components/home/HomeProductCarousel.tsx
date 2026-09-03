@@ -215,8 +215,10 @@ export default function HomeProductCarousel({
                         >
                           <FiHeart
                             className={cn(
-                              "h-4 w-4",
-                              product.is_favourite && "fill-white",
+                              "h-4 w-4 drop-shadow-sm",
+                              product.is_favourite
+                                ? "fill-[#E52D2D] text-[#E52D2D]"
+                                : "text-white",
                             )}
                             strokeWidth={1.5}
                           />

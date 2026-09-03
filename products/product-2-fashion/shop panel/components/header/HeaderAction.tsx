@@ -5,6 +5,7 @@ import LangToggleButton from "@/components/header/LangToggleButton";
 import NotificationBell from "@/components/header/NotificationBell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
+import { useFavorite } from "@/hooks/useFavorite";
 import { useTranslation } from "@/hooks/useTranslation";
 import AuthCookies from "@/lib/auth/cookies";
 import { cn } from "@/lib/utils";
@@ -83,7 +84,18 @@ const HeaderAction: React.FC<HeaderActionProps> = ({
 }) => {
 
   const { isAuthenticated: isAuthed } = useAuth();
+  const { favoritesCount } = useFavorite();
   const { t } = useTranslation();
+
+  const favoritesTooltip =
+    favoritesCount <= 0
+      ? t("account.favorites.countEmpty")
+      : favoritesCount === 1
+        ? t("account.favorites.countOne")
+        : t("account.favorites.countMany").replace(
+            "{{count}}",
+            String(favoritesCount),
+          );
 
   const [cookieAuth, setCookieAuth] = React.useState<CookieAuthState>("unknown");
 
@@ -166,10 +178,36 @@ const HeaderAction: React.FC<HeaderActionProps> = ({
 
         <Link
           href="/account/favorites/"
-          aria-label="Wishlist"
-          className="hidden min-[768px]:grid min-[768px]:h-8 min-[768px]:w-8 min-[768px]:place-items-center min-[768px]:text-[#E8A090] min-[768px]:transition-opacity min-[768px]:hover:opacity-70"
+          aria-label={`${t("account.favorites.wishlist")}: ${favoritesTooltip}`}
+          className={cn(
+            "group relative hidden h-9 w-9 place-items-center rounded-full transition-colors min-[768px]:grid min-[992px]:h-10 min-[992px]:w-10",
+            favoritesCount > 0
+              ? "text-[#E52D2D] hover:bg-[#E52D2D]/8"
+              : "text-[#E52D2D]/75 hover:bg-black/[0.06] hover:text-[#E52D2D]",
+          )}
         >
-          <FiHeart className="h-5 w-5 fill-current min-[992px]:h-[22px] min-[992px]:w-[22px]" />
+          <FiHeart
+            className={cn(
+              "h-5 w-5 min-[992px]:h-[22px] min-[992px]:w-[22px]",
+              favoritesCount > 0 && "fill-current",
+            )}
+            strokeWidth={1.6}
+          />
+
+          {/* Count lives in tooltip only — keeps header calm like a polished wishlist control */}
+          <span
+            role="tooltip"
+            className={cn(
+              "pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-50 -translate-x-1/2",
+              "whitespace-nowrap rounded-md bg-[#191919] px-2.5 py-1 text-[11px] font-medium tracking-wide text-white shadow-md",
+              "opacity-0 transition-all duration-150",
+              "group-hover:opacity-100 group-focus-visible:opacity-100",
+              "after:absolute after:bottom-full after:left-1/2 after:-translate-x-1/2",
+              "after:border-4 after:border-transparent after:border-b-[#191919]",
+            )}
+          >
+            {favoritesTooltip}
+          </span>
         </Link>
 
         <button

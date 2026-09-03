@@ -35,13 +35,18 @@ const ProductCardActions: React.FC<ProductCardActionsProps> = ({
           onWishlist?.();
         }}
         className={cn(
-          "grid h-8 w-8 place-items-center rounded-[4px] border border-black/10 bg-white text-black shadow-sm transition-colors",
-          "hover:border-black",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/40",
+          "grid h-8 w-8 place-items-center rounded-[4px] border bg-white shadow-sm transition-colors",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E52D2D]/35",
+          isFavorite
+            ? "border-[#E52D2D]/25 text-[#E52D2D] hover:border-[#E52D2D]/40 hover:bg-[#E52D2D]/5"
+            : "border-black/10 text-[#E52D2D]/80 hover:border-[#E52D2D]/35 hover:bg-[#E52D2D]/5 hover:text-[#E52D2D]",
         )}
       >
         <FiHeart
-          className={cn("h-4 w-4", isFavorite && "fill-black")}
+          className={cn(
+            "h-4 w-4",
+            isFavorite ? "fill-[#E52D2D] text-[#E52D2D]" : "fill-transparent",
+          )}
           strokeWidth={1.5}
         />
       </button>

@@ -429,14 +429,8 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({
                       { value: "rating_ASC", label: "Lowest Rated" },
                     ]}
                     placeholder="Sort reviews"
-                    searchPlaceholder="Sort By:"
-                    emptyText="No options"
-                    triggerClassName="h-8 w-full justify-between rounded-none border-0 p-0 shadow-none text-left text-xs"
-                    contentClassName="w-44 z-[1000]"
-                    listMaxHeightClassName="max-h-52"
-                    side="bottom"
-                    sideOffset={-2}
-                    closeOnSelect={true}
+                    searchable={false}
+                    triggerClassName="h-9 text-xs"
                   />
                 </div>
               </div>

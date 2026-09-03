@@ -360,7 +360,13 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
   const buyDisabled = stock === 0 || guestIdLoading || isCreatingGuestOrder;
 
   const iconBtn =
-    "h-9 w-9 shrink-0 rounded-md border border-[#D0D0D0] bg-white p-0 text-[#191919] hover:border-[#191919]";
+    "h-9 w-9 shrink-0 rounded-md border bg-white p-0 transition-colors hover:bg-[#E52D2D]/5";
+
+  const heartClass = (isFav: boolean) =>
+    cn(
+      "h-4.5 w-4.5",
+      isFav ? "fill-[#E52D2D] text-[#E52D2D]" : "fill-transparent text-[#E52D2D]/80",
+    );
 
   return (
     <div className="relative col-span-12 sm:col-span-6 sm:pb-0">
@@ -480,14 +486,17 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
             type="button"
             variant="outline"
             onClick={() => handleFavoriteClick(product)}
-            className={iconBtn}
+            className={cn(
+              iconBtn,
+              product?.is_favourite
+                ? "border-[#E52D2D]/25 text-[#E52D2D]"
+                : "border-[#D0D0D0] text-[#E52D2D]/80 hover:border-[#E52D2D]/35",
+            )}
             aria-label={t("product.addToWishlist")}
+            aria-pressed={Boolean(product?.is_favourite)}
           >
             <FiHeart
-              className={cn(
-                "h-4.5 w-4.5",
-                product?.is_favourite ? "fill-[#E52D2D] text-[#E52D2D]" : "text-[#191919]",
-              )}
+              className={heartClass(Boolean(product?.is_favourite))}
               strokeWidth={1.75}
             />
           </Button>
@@ -499,14 +508,17 @@ const ProductInfoPanel: React.FC<Props> = ({ product, onColorChange, onVariantCh
             type="button"
             variant="outline"
             onClick={() => handleFavoriteClick(product)}
-            className={iconBtn}
+            className={cn(
+              iconBtn,
+              product?.is_favourite
+                ? "border-[#E52D2D]/25 text-[#E52D2D]"
+                : "border-[#D0D0D0] text-[#E52D2D]/80 hover:border-[#E52D2D]/35",
+            )}
             aria-label={t("product.addToWishlist")}
+            aria-pressed={Boolean(product?.is_favourite)}
           >
             <FiHeart
-              className={cn(
-                "h-4.5 w-4.5",
-                product?.is_favourite ? "fill-[#E52D2D] text-[#E52D2D]" : "text-[#191919]",
-              )}
+              className={heartClass(Boolean(product?.is_favourite))}
               strokeWidth={1.75}
             />
           </Button>

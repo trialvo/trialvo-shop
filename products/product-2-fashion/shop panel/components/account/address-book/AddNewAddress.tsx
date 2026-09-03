@@ -41,9 +41,18 @@ const AddNewDeliveryAddressForm: React.FC<Props> = ({ onOpenChange }) => {
 
   return (
     <section className="space-y-4">
-      <h3 className="text-[15px] font-semibold text-black">
-        {t("account.addressBook.addNewDeliveryAddress")}
-      </h3>
+      <div className="border-b border-[#F0F0F0] pb-3">
+        <p className="text-xs font-medium uppercase tracking-[0.08em] text-black/40">
+          {t("account.addressBook.addNewSectionLabel")}
+        </p>
+        <h3 className="mt-1 text-[15px] font-semibold text-[#191919]">
+          {t("account.addressBook.addNewDeliveryAddress")}
+        </h3>
+        <p className="mt-1 text-xs leading-relaxed text-black/50">
+          {t("account.addressBook.addNewDesc")}
+        </p>
+      </div>
+
       <CustomerInformationForm
         onSubmit={handleSubmit}
         isLoading={isCreating}

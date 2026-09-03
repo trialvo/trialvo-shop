@@ -208,6 +208,9 @@ export type ProductListParams = {
   best_deal?: boolean;
   in_stock?: boolean;
 
+  /** Authenticated-only: filter products in the user's favorites */
+  is_favourite?: boolean;
+
   // Direct filter strings
   sizes?: string;
   colors?: string;
@@ -506,6 +509,8 @@ class ProductService {
           featured: params?.featured,
           best_deal: params?.best_deal,
           in_stock: params?.in_stock,
+          status: params?.status,
+          is_favourite: params?.is_favourite,
           // q: params?.q,
           // category: params?.category,
           // sort: params?.sort,

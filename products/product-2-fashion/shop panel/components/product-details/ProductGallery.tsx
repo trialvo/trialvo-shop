@@ -432,7 +432,13 @@ const ProductGallery: React.FC<Props> = ({
             <button
               type="button"
               aria-label={t("product.addToWishlist")}
-              className={cn(floatBtn, "absolute right-3 top-3 z-20 min-[768px]:right-4 min-[768px]:top-4")}
+              className={cn(
+                floatBtn,
+                "absolute right-3 top-3 z-20 min-[768px]:right-4 min-[768px]:top-4",
+                isFavourite
+                  ? "border-[#E52D2D]/25 text-[#E52D2D]"
+                  : "text-[#E52D2D]/80 hover:text-[#E52D2D]",
+              )}
               onMouseEnter={() => setControlsHover(true)}
               onMouseLeave={() => setControlsHover(false)}
               onClick={(e) => {
@@ -445,7 +451,12 @@ const ProductGallery: React.FC<Props> = ({
               }}
             >
               <FiHeart
-                className={cn("h-[18px] w-[18px]", isFavourite && "fill-[#E52D2D] text-[#E52D2D]")}
+                className={cn(
+                  "h-[18px] w-[18px]",
+                  isFavourite
+                    ? "fill-[#E52D2D] text-[#E52D2D]"
+                    : "fill-transparent text-[#E52D2D]/80",
+                )}
                 strokeWidth={1.75}
               />
             </button>

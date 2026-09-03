@@ -8,14 +8,13 @@ import { useAddress } from "@/hooks/useAddress";
 import { usePhone } from "@/hooks/usePhone";
 import { openConfirmDelete } from "@/lib/modal/confirm-delete";
 import { openVerifyIdentity } from "@/lib/modal/verify-identity";
+import { rememberReturnPath } from "@/lib/navigation/return-to";
 import { useAppDispatch } from "@/redux/hooks";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import AddNewDeliveryAddressForm from "./AddNewAddress";
 import AddressListPanel from "./AddressListPanel";
-
-// ─── Skeletons ───────────────────────────────────────────────────────────────
 
 function BreadcrumbSkeleton() {
   return (
@@ -51,10 +50,9 @@ function ContentSkeleton() {
   );
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────────
-
 const AddressBookPageClient: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
   const { addresses, addressesLoading, deleteAddress, setDefaultAddress } = useAddress();
   const { verifyPhone, verifyPhoneOTP } = usePhone();
@@ -96,6 +94,7 @@ const AddressBookPageClient: React.FC = () => {
   };
 
   const handleEdit = (id: string | number) => {
+    rememberReturnPath(pathname || "/account/address");
     router.push(`/account/address/${id}/edit`);
   };
 
@@ -160,14 +159,20 @@ const AddressBookPageClient: React.FC = () => {
                 {t("account.addressBook.addressBookPage")}
               </h1>
 
-              <div className="rounded-md border border-[#E5E5E5] bg-white transition-shadow duration-200 ease-out hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                <div className="border-b border-[#E5E5E5] px-4 py-3.5">
-                  <h2 className="text-[15px] font-semibold text-black">
+              <div className="rounded-md border border-[#E5E5E5] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+                <div className="border-b border-[#E5E5E5] px-4 py-4 min-[768px]:px-5">
+                  <p className="text-xs font-medium uppercase tracking-[0.08em] text-black/40">
+                    {t("account.addressBook.deliverySectionLabel")}
+                  </p>
+                  <h2 className="mt-1 text-[15px] font-semibold text-[#191919]">
                     {t("account.addressBook.deliveryAddress")}
                   </h2>
+                  <p className="mt-1 text-xs leading-relaxed text-black/50">
+                    {t("account.addressBook.deliveryAddressDesc")}
+                  </p>
                 </div>
 
-                <div className="space-y-0 p-4">
+                <div className="space-y-0 px-4 py-4 min-[768px]:px-5 min-[768px]:py-5">
                   <AddressListPanel
                     isLoading={false}
                     items={addresses}
@@ -180,7 +185,7 @@ const AddressBookPageClient: React.FC = () => {
                     skeletonCount={3}
                   />
 
-                  <div className="mt-5 border-t border-[#E5E5E5] pt-5">
+                  <div className="mt-6 border-t border-[#E5E5E5] pt-6">
                     <AddNewDeliveryAddressForm />
                   </div>
                 </div>
