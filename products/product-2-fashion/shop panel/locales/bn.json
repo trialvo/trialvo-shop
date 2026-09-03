@@ -293,6 +293,9 @@
   "account": "অ্যাকাউন্ট",
   "profileEdit": "প্রোফাইল সম্পাদনা",
   "editProfile": "প্রোফাইল সম্পাদনা",
+  "profileEditDescription": "নাম, যোগাযোগের তথ্য ও প্রোফাইল ছবি আপডেট করুন।",
+  "backToAccount": "অ্যাকাউন্টে ফিরুন",
+  "backToAddressBook": "ঠিকানা বইতে ফিরুন",
   "errorLoadingOrders": "অর্ডার লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।",
   "noOrdersLast7Days": "গত ৭ দিনে কোনো অর্ডার পাওয়া যায়নি।",
   "sidebar": {
@@ -331,6 +334,12 @@
    "title": "ঠিকানা বই",
    "edit": "সম্পাদনা",
    "add": "যোগ করুন",
+   "default": "ডিফল্ট",
+   "setDefault": "ডিফল্ট সেট করুন",
+   "verified": "যাচাইকৃত",
+   "unverified": "অযাচাইকৃত",
+   "verify": "যাচাই করুন",
+   "remove": "মুছুন",
    "defaultAddress": "ডিফল্ট ঠিকানা",
    "noAddress": "কোনো ঠিকানা যোগ করা হয়নি",
    "noAddressDesc": "চেকআউট দ্রুত করতে একটি ডিফল্ট ঠিকানা যোগ করুন।",
@@ -386,7 +395,8 @@
    "address": "ঠিকানা",
    "edit": "সম্পাদনা",
    "editAddress": "ঠিকানা সম্পাদনা",
-   "deliveryAddress": "ডেলিভারি ঠিকানা"
+   "deliveryAddress": "ডেলিভারি ঠিকানা",
+   "description": "এই ঠিকানার নাম, ফোন, জোন ও স্ট্রিটের বিবরণ আপডেট করুন।"
   }
  },
  "customerInfo": {

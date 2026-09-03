@@ -160,7 +160,7 @@ const AddressBookPageClient: React.FC = () => {
                 {t("account.addressBook.addressBookPage")}
               </h1>
 
-              <div className="overflow-hidden rounded-md border border-[#E5E5E5] bg-white transition-shadow duration-200 ease-out hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+              <div className="rounded-md border border-[#E5E5E5] bg-white transition-shadow duration-200 ease-out hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
                 <div className="border-b border-[#E5E5E5] px-4 py-3.5">
                   <h2 className="text-[15px] font-semibold text-black">
                     {t("account.addressBook.deliveryAddress")}

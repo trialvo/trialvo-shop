@@ -1,14 +1,14 @@
 "use client";
 
+import AccountEditPageHeader from "@/components/account/AccountEditPageHeader";
 import Breadcrumbs from "@/components/breadcrumb/Breadcrumbs";
+import { Skeleton } from "@/components/ui/skeleton";
 import CustomerInformationForm, {
   type CustomerInformationValues,
 } from "@/form/CustomerInformationForm";
 import { useAddress } from "@/hooks/useAddress";
-import { usePhone } from "@/hooks/usePhone";
 import type { UpdateAddressPayload } from "@/lib/api/address/service";
-import { cn } from "@/lib/utils";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import AccountLayout from "../AccountLayout";
@@ -19,7 +19,6 @@ function normalizeAddressType(v: unknown): "home" | "office" | "na" | undefined 
 
   if (s === "home") return "home";
   if (s === "office") return "office";
-
   if (s === "n/a" || s === "na") return "na";
 
   return undefined;
@@ -30,15 +29,35 @@ function cleanText(v: unknown): string | undefined {
   return s.length ? s : undefined;
 }
 
+function EditAddressSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-9 w-40 rounded-lg" />
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-24 rounded" />
+        <Skeleton className="h-8 w-56 rounded" />
+        <Skeleton className="h-4 w-full max-w-md rounded" />
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-black/8 bg-white p-5">
+        <Skeleton className="h-5 w-36 rounded" />
+        <div className="mt-6 space-y-4">
+          <Skeleton className="h-11 w-full rounded-lg" />
+          <Skeleton className="h-11 w-full rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const EditAddressClient: React.FC = () => {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const id = Number(params?.id);
   const safeId = Number.isFinite(id) ? id : 0;
   const { t } = useTranslation();
 
-  const { phones } = usePhone();
   const { useAddressById, updateAddress, isUpdating } = useAddress();
-
   const { data: singleAddress, isLoading } = useAddressById(safeId);
 
   const defaultValues: Partial<CustomerInformationValues> = React.useMemo(() => {
@@ -67,6 +86,9 @@ const EditAddressClient: React.FC = () => {
       };
 
       const res = await updateAddress(safeId, payload);
+      if (res && !res.error) {
+        router.push("/account/address");
+      }
       return res;
     } catch {
       // handled in mutation
@@ -74,7 +96,7 @@ const EditAddressClient: React.FC = () => {
   };
 
   return (
-    <section className="container mx-auto px-3 pb-10 pt-2 min-[768px]:px-0 min-[768px]:pb-14 min-[768px]:pt-0">
+    <section className="container mx-auto px-3 pb-28 pt-2 min-[640px]:pb-14 min-[768px]:px-0 min-[768px]:pt-0">
       <Breadcrumbs
         items={[
           { label: t("breadcrumb.home"), href: "/" },
@@ -86,25 +108,37 @@ const EditAddressClient: React.FC = () => {
 
       <div className="mt-2 min-[768px]:mb-14">
         <AccountLayout sidebar={<AccountSidebar activeKey="address-book" />}>
-          <div className="space-y-4">
-            <h1 className="border-b border-[#E5E5E5] pb-3 text-xl font-semibold tracking-tight text-black min-[768px]:text-[22px]">
-              {t("account.editAddress.editAddress")}
-            </h1>
+          {isLoading ? (
+            <EditAddressSkeleton />
+          ) : (
+            <div className="space-y-6">
+              <AccountEditPageHeader
+                eyebrow={t("account.addressBook.title")}
+                title={t("account.editAddress.editAddress")}
+                description={t("account.editAddress.description")}
+                backHref="/account/address"
+                backLabel={t("account.backToAddressBook")}
+              />
 
-            <div className={cn("border-0 bg-white px-4 py-4 shadow-[0px_0px_10px_rgba(0,0,0,0.12)]")}>
-              <h2 className="text-lg font-semibold">{t("account.editAddress.deliveryAddress")}</h2>
+              <div className="rounded-2xl border border-black/8 bg-white">
+                <div className="border-b border-black/6 px-4 py-4 min-[768px]:px-5">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#8A8A8A]">
+                    {t("account.editAddress.deliveryAddress")}
+                  </p>
+                </div>
 
-              <div className="mt-4">
-                <CustomerInformationForm
-                  defaultValues={defaultValues}
-                  onSubmit={handleSubmit}
-                  isLoading={isLoading || isUpdating}
-                  deferSubmit
-                  clearOnCancel
-                />
+                <div className="px-4 py-5 min-[768px]:px-5 min-[768px]:py-6">
+                  <CustomerInformationForm
+                    defaultValues={defaultValues}
+                    onSubmit={handleSubmit}
+                    isLoading={isUpdating}
+                    deferSubmit
+                    cancelAsBack
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </AccountLayout>
       </div>
     </section>

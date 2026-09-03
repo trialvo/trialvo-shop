@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form";
 import { FiMail, FiPhone, FiUser } from "react-icons/fi";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { cn, toPublicUrl } from "@/lib/utils";
 
@@ -15,7 +14,9 @@ import AvatarUploadField from "@/components/common/form/AvatarUploadField";
 import FormDatePicker from "@/components/common/form/FormDatePicker";
 import SelectField from "@/components/common/form/SelectField";
 import TextInputField from "@/components/common/form/TextInputField";
+import AccountFormActions from "@/components/account/AccountFormActions";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const schema = z.object({
   first_name: z.string().min(1, "First name is required"),
@@ -49,6 +50,7 @@ const genderOptions = [
 
 const EditProfileForm: React.FC<Props> = ({ onSubmit, onCancel, className }) => {
   const { user, isLoading, isUpdatingProfile } = useAuth();
+  const { t } = useTranslation();
 
   const defaultPhoneId =
     typeof user?.default_phone === "number" ? user.default_phone : undefined;
@@ -84,7 +86,16 @@ const EditProfileForm: React.FC<Props> = ({ onSubmit, onCancel, className }) => 
   }, [user, form]);
 
   if (isLoading || !user) {
-    return <h1>Loading...</h1>;
+    return (
+      <div className="space-y-4">
+        <div className="h-24 animate-pulse rounded-xl bg-[#F3F1ED]" />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-11 animate-pulse rounded-lg bg-[#F3F1ED]" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const avatarUrl = toPublicUrl(user.img_path ?? null);
@@ -102,10 +113,11 @@ const EditProfileForm: React.FC<Props> = ({ onSubmit, onCancel, className }) => 
         className,
       )}
     >
-      <h2 className="text-lg font-semibold text-black">Personal Profile</h2>
-
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="mt-4 space-y-4">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className={cn("space-y-4 pb-[calc(env(safe-area-inset-bottom)+72px)] sm:pb-0", className)}
+        >
           <AvatarUploadField
             control={form.control}
             name="profile"
@@ -164,47 +176,14 @@ const EditProfileForm: React.FC<Props> = ({ onSubmit, onCancel, className }) => 
             />
           </div>
 
-          <div className="hidden items-center gap-4 pt-2 sm:flex">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              className="h-11 rounded-none border-[#999999] px-10 text-sm font-medium"
-            >
-              Cancel
-            </Button>
-
-            <Button
-              type="submit"
-              disabled={isUpdatingProfile}
-              className="h-11 rounded-none bg-black px-10 text-sm font-medium text-white hover:bg-black/90"
-            >
-              {isUpdatingProfile ? "Updating..." : "Save Changes"}
-            </Button>
-          </div>
-
-          <div className="fixed inset-x-0 bottom-0 z-50 bg-white sm:hidden">
-            <div className="border-t border-black/10">
-              <div className="mx-auto flex max-w-280 items-center gap-3 px-4 py-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onCancel}
-                  className="h-11 flex-1 rounded-none border-[#999999] text-sm font-medium"
-                >
-                  Cancel
-                </Button>
-
-                <Button
-                  type="submit"
-                  disabled={isUpdatingProfile}
-                  className="h-11 flex-1 rounded-none bg-black text-sm font-medium text-white hover:bg-black/90"
-                >
-                  {isUpdatingProfile ? "Updating..." : "Save Changes"}
-                </Button>
-              </div>
-            </div>
-          </div>
+          <AccountFormActions
+            onCancel={() => onCancel?.()}
+            isLoading={isUpdatingProfile}
+            submitLabel={t("customerInfo.saveChanges")}
+            loadingLabel={t("customerInfo.submitting")}
+            cancelLabel={t("back")}
+            cancelAsBack
+          />
         </form>
       </Form>
     </div>

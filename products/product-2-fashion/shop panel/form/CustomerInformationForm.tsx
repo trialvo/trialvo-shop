@@ -5,10 +5,10 @@ import * as React from "react";
 import { useForm, type FieldPath, type FieldErrors } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import DeliveryAreaSelector, { AreaSelection } from "@/components/delivery/DeliveryAreaSelector";
+import AccountFormActions from "@/components/account/AccountFormActions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
@@ -74,6 +74,10 @@ type Props = {
    * After a successful submit the form is also cleared.
    */
   clearOnCancel?: boolean;
+  /**
+   * When true, Cancel shows as a back-style action (edit flows).
+   */
+  cancelAsBack?: boolean;
 };
 
 const EMPTY_VALUES: CustomerInformationValues = {
@@ -111,6 +115,7 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
       emailRequired = false,
       deferSubmit = false,
       clearOnCancel = false,
+      cancelAsBack = false,
     },
     ref,
   ) => {
@@ -411,51 +416,14 @@ const CustomerInformationForm = React.forwardRef<CustomerInformationFormRef, Pro
 
           {/* ── Submit / Cancel ── */}
           {showFooter && (
-            <>
-              <div className="hidden items-center gap-4 pt-2 sm:flex">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 rounded-[4px] border-border"
-                  onClick={handleCancel}
-                  disabled={isLoading}
-                >
-                  {t("customerInfo.cancel")}
-                </Button>
-
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="h-11 rounded-[4px] bg-black text-white hover:bg-black/90"
-                >
-                  {isLoading ? t("customerInfo.submitting") : t("customerInfo.saveChanges")}
-                </Button>
-              </div>
-
-              <div className="fixed inset-x-0 bottom-0 z-50 bg-white sm:hidden">
-                <div className="border-t border-black/10 pb-[env(safe-area-inset-bottom)]">
-                  <div className="mx-auto flex max-w-[1120px] items-center gap-3 px-4 py-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-11 flex-1 rounded-[4px] border-border"
-                      onClick={handleCancel}
-                      disabled={isLoading}
-                    >
-                      {t("customerInfo.cancel")}
-                    </Button>
-
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      className="h-11 flex-1 rounded-[4px] bg-black text-white hover:bg-black/90"
-                    >
-                      {isLoading ? t("customerInfo.submitting") : t("customerInfo.saveChanges")}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </>
+            <AccountFormActions
+              onCancel={handleCancel}
+              isLoading={isLoading}
+              submitLabel={t("customerInfo.saveChanges")}
+              loadingLabel={t("customerInfo.submitting")}
+              cancelLabel={cancelAsBack ? t("back") : t("customerInfo.cancel")}
+              cancelAsBack={cancelAsBack}
+            />
           )}
         </form>
       </Form>

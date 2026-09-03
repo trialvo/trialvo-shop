@@ -10,30 +10,36 @@ type Props = {
 
 const AddressSelectableCardSkeleton: React.FC<Props> = ({ className }) => {
   return (
-    <div className={cn("relative", className)}>
-      <div className="flex items-center justify-between border border-[#EDEDED] px-4 py-4">
-        <div className="flex items-start gap-3">
-          <Skeleton className="mt-1 h-5 w-5 rounded-full" />
+    <div
+      className={cn(
+        "flex gap-3 rounded-md border border-[#E5E5E5] px-4 py-4",
+        className,
+      )}
+    >
+      <Skeleton className="mt-0.5 h-4 w-4 shrink-0 rounded-full" />
 
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-20 rounded-none" />
-
-            <Skeleton className="h-4 w-40 rounded" />
-
+      <div className="min-w-0 flex-1 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Skeleton className="h-4 w-28 rounded" />
-
-            <Skeleton className="h-3.5 w-64 rounded" />
+            <Skeleton className="h-5 w-12 rounded-full" />
           </div>
+          <Skeleton className="h-7 w-[88px] rounded-full" />
         </div>
-      </div>
 
-      <div className="absolute right-4 top-4 z-10">
-        <Skeleton className="h-5 w-24 rounded-none" />
-      </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-4 w-32 rounded" />
+          <Skeleton className="h-5 w-[76px] rounded-full" />
+          <Skeleton className="h-7 w-[58px] rounded-full" />
+        </div>
 
-      <div className="absolute bottom-2 right-4 z-10 flex items-center gap-3">
-        <Skeleton className="h-9 w-9 rounded-none" />
-        <Skeleton className="h-9 w-9 rounded-none" />
+        <Skeleton className="h-4 w-full max-w-md rounded" />
+        <Skeleton className="h-4 w-4/5 max-w-sm rounded" />
+
+        <div className="flex items-center gap-2 pt-1">
+          <Skeleton className="h-8 w-[52px] rounded-full" />
+          <Skeleton className="h-8 w-[68px] rounded-full" />
+        </div>
       </div>
     </div>
   );

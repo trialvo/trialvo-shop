@@ -293,6 +293,9 @@
   "account": "Account",
   "profileEdit": "Profile Edit",
   "editProfile": "Edit Profile",
+  "profileEditDescription": "Update your name, contact details, and profile photo.",
+  "backToAccount": "Back to account",
+  "backToAddressBook": "Back to address book",
   "errorLoadingOrders": "Error loading orders. Please try again.",
   "noOrdersLast7Days": "No orders found in the last 7 days.",
   "sidebar": {
@@ -331,6 +334,12 @@
    "title": "Address Book",
    "edit": "Edit",
    "add": "Add",
+   "default": "Default",
+   "setDefault": "Set default",
+   "verified": "Verified",
+   "unverified": "Unverified",
+   "verify": "Verify",
+   "remove": "Remove",
    "defaultAddress": "DEFAULT ADDRESS",
    "noAddress": "No address added yet",
    "noAddressDesc": "Add a default address to speed up checkout.",
@@ -386,7 +395,8 @@
    "address": "Address",
    "edit": "Edit",
    "editAddress": "Edit Address",
-   "deliveryAddress": "Delivery Address"
+   "deliveryAddress": "Delivery Address",
+   "description": "Update the name, phone, zone, and street details for this address."
   }
  },
  "customerInfo": {
