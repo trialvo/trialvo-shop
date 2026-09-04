@@ -13,7 +13,8 @@ const NotificationDrawerEntry: React.FC<DrawerEntryProps> = ({
     <NotificationDrawer
       open={open}
       isTop={isTop}
-      zIndex={60}
+      // Above the "Stay in the loop" push banner (z≈55)
+      zIndex={110}
       onOpenChange={onOpenChange}
     />
   );

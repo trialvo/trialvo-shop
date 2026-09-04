@@ -38,7 +38,7 @@ const DrawerShell: React.FC<Props> = ({
         ) : null}
 
         <DrawerContent
-          style={{ zIndex: zIndex ?? + 1 }}
+          style={{ zIndex: (zIndex ?? 50) + 1 }}
           className={cn(
             "mt-0 rounded-none border border-[#EDEDED] bg-white p-0",
             "shadow-[0_8px_40px_rgba(0,0,0,0.12)]",

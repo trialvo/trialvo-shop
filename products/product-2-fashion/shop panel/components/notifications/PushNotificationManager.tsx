@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { Bell, BellOff, X, Package, MessageSquare } from "lucide-react";
 import AuthCookies from "@/lib/auth/cookies";
@@ -30,9 +31,14 @@ const _recentPushes = new Map<string, number>();
 
 export default function PushNotificationManager() {
   const [showBanner, setShowBanner] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
   const tokenRef         = useRef<string | null>(null);
   const isAuthedRef      = useRef(AuthCookies.isAuthenticated());
   const isRegisteringRef = useRef(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
 
   // ── Watch auth changes + SW background push → bell badge ────────────────────
@@ -217,29 +223,42 @@ export default function PushNotificationManager() {
     setShowBanner(false);
   }
 
-  if (!showBanner) return null;
+  if (!showBanner || !portalReady) return null;
 
-  // ── Optional in-app notification permission banner ───────────────────────────
-  return (
+  // Below notification/cart drawers (z≥60–110) so drawers open over this card.
+  // Still above page chrome so it stays visible when no drawer is open.
+  return createPortal(
     <div
+      data-push-permission-banner=""
       style={{
         position: "fixed",
-        bottom: 24,
-        right: 24,
-        zIndex: 9999,
-        width: 320,
+        bottom: "max(24px, env(safe-area-inset-bottom))",
+        right: 16,
+        left: 16,
+        zIndex: 55,
+        width: "auto",
+        maxWidth: 320,
+        marginLeft: "auto",
         borderRadius: 18,
         background: "white",
         border: "1px solid #e5e7eb",
         boxShadow: "0 20px 60px rgba(0,0,0,0.14)",
         overflow: "hidden",
         animation: "slideUpIn 0.35s ease",
+        pointerEvents: "auto",
       }}
     >
       <style>{`
         @keyframes slideUpIn {
           from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (min-width: 480px) {
+          [data-push-permission-banner] {
+            left: auto !important;
+            right: 24px !important;
+            width: 320px !important;
+          }
         }
       `}</style>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "16px 16px 12px" }}>
@@ -252,7 +271,7 @@ export default function PushNotificationManager() {
         >
           <Bell size={18} />
         </div>
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#111827" }}>
             Stay in the loop
           </p>
@@ -261,23 +280,35 @@ export default function PushNotificationManager() {
           </p>
         </div>
         <button
+          type="button"
           onClick={handleDismiss}
-          style={{ flexShrink: 0, background: "none", border: "none", cursor: "pointer", color: "#9ca3af", marginTop: -2 }}
+          aria-label="Dismiss"
+          style={{
+            flexShrink: 0,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "#9ca3af",
+            marginTop: -2,
+          }}
         >
           <X size={15} />
         </button>
       </div>
       <div style={{ display: "flex", gap: 8, padding: "0 16px 16px" }}>
         <button
+          type="button"
           onClick={handleEnablePush}
           style={{
             flex: 1, padding: "8px 0", borderRadius: 10, border: "none",
-            background: "#16a34a", color: "white", fontWeight: 600, fontSize: 13, cursor: "pointer",
+            background: "#16a34a", color: "white", fontWeight: 600, fontSize: 13,
+            cursor: "pointer",
           }}
         >
           Enable Notifications
         </button>
         <button
+          type="button"
           onClick={handleDismiss}
           style={{
             display: "flex", alignItems: "center", gap: 4, padding: "8px 14px",
@@ -289,6 +320,7 @@ export default function PushNotificationManager() {
           Not now
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
