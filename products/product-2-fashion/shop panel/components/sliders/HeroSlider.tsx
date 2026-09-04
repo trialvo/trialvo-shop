@@ -65,8 +65,16 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
     const showNavUi = hasMultiple && !showLoader;
 
     const bindControls = React.useCallback((swiper: SwiperType) => {
+        // Swiper can expose params.navigation before the Navigation module instance exists
+        // (e.g. first paint with null button refs). Guard both before touching APIs.
         const nav = swiper.params.navigation;
-        if (nav && typeof nav !== "boolean") {
+        if (
+            nav &&
+            typeof nav !== "boolean" &&
+            prevRef.current &&
+            nextRef.current &&
+            swiper.navigation
+        ) {
             nav.prevEl = prevRef.current;
             nav.nextEl = nextRef.current;
             swiper.navigation.destroy();
@@ -75,7 +83,12 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
         }
 
         const pagination = swiper.params.pagination;
-        if (pagination && typeof pagination !== "boolean") {
+        if (
+            pagination &&
+            typeof pagination !== "boolean" &&
+            paginationRef.current &&
+            swiper.pagination
+        ) {
             pagination.el = paginationRef.current;
             swiper.pagination.destroy();
             swiper.pagination.init();
