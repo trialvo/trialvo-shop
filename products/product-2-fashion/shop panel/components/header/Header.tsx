@@ -3,7 +3,6 @@
 import HeaderAction from "@/components/header/HeaderAction";
 import HeaderLogo from "@/components/header/HeaderLogo";
 import LangToggleButton from "@/components/header/LangToggleButton";
-import NotificationBell from "@/components/header/NotificationBell";
 import NavigationMenuMain from "@/components/navigation/navigation-menu";
 import * as React from "react";
 import { CiSearch } from "react-icons/ci";
@@ -387,7 +386,6 @@ const Header: React.FC = () => {
               </span>
             </button>
             <LangToggleButton />
-            {localAuthed ? <NotificationBell /> : null}
           </div>
 
           <div className="absolute left-1/2 -translate-x-1/2 overflow-hidden">

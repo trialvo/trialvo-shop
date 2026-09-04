@@ -164,14 +164,15 @@ const HeaderAction: React.FC<HeaderActionProps> = ({
       {showSearch ? (
         <div className="hidden min-[768px]:flex min-[768px]:items-center min-[768px]:gap-4 min-[992px]:gap-5 min-[1200px]:gap-6">
           <LangToggleButton />
-          {isAuthed ? <NotificationBell /> : null}
         </div>
       ) : null}
 
       <div
-        className="flex items-center gap-4 min-[992px]:gap-5 min-[1200px]:gap-6"
+        className="flex items-center gap-3 min-[576px]:gap-4 min-[992px]:gap-5 min-[1200px]:gap-6"
         style={{ fontFamily: alibabaFont }}
       >
+        {isAuthed ? <NotificationBell /> : null}
+
         <div className="hidden min-[768px]:flex min-[768px]:items-center">
           {accountSlot}
         </div>

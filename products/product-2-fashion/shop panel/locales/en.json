@@ -14,6 +14,16 @@
   "backTo": "Back to",
   "or": "or"
  },
+ "notifications": {
+  "title": "Notifications",
+  "unreadCount": "{{count}} unread",
+  "allCaughtUp": "You're all caught up",
+  "markAllRead": "Mark all read",
+  "clearAll": "Clear all",
+  "emptyTitle": "No notifications yet",
+  "emptyDescription": "Order updates and important messages will show up here.",
+  "viewOrders": "View all orders"
+ },
   "header": {
   "chooseCategories": "Choose Categories",
   "signIn": "Sign In / Register",

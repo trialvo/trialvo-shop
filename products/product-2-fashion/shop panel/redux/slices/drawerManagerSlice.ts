@@ -4,7 +4,8 @@ export type DrawerKey =
   | "cart"
   | "menu"
   | "filters"
-  | "accountMenu";
+  | "accountMenu"
+  | "notifications";
 
 export type DrawerStackItem = {
   id: number;

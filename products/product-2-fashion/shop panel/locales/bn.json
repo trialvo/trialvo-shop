@@ -14,6 +14,16 @@
   "backTo": "ফিরে যান",
   "or": "অথবা"
  },
+ "notifications": {
+  "title": "নোটিফিকেশন",
+  "unreadCount": "{{count}}টি অপঠিত",
+  "allCaughtUp": "সব পড়ে ফেলেছেন",
+  "markAllRead": "সব পঠিত করুন",
+  "clearAll": "সব মুছুন",
+  "emptyTitle": "এখনো কোনো নোটিফিকেশন নেই",
+  "emptyDescription": "অর্ডার আপডেট ও গুরুত্বপূর্ণ মেসেজ এখানে দেখা যাবে।",
+  "viewOrders": "সব অর্ডার দেখুন"
+ },
  "header": {
   "chooseCategories": "ক্যাটাগরি বেছে নিন",
   "signIn": "সাইন ইন",
