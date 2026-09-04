@@ -65,9 +65,11 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
     const showNavUi = hasMultiple && !showLoader;
 
     const bindControls = React.useCallback((swiper: SwiperType) => {
-        // Swiper can expose params.navigation before the Navigation module instance exists
-        // (e.g. first paint with null button refs). Guard both before touching APIs.
-        const nav = swiper.params.navigation;
+        // Swiper can fire onSwiper before params (or nav/pagination modules) exist.
+        // Guard every hop so a half-initialized instance never crashes the home page.
+        if (!swiper?.params) return;
+
+        const nav = swiper.params?.navigation;
         if (
             nav &&
             typeof nav !== "boolean" &&
@@ -77,12 +79,16 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
         ) {
             nav.prevEl = prevRef.current;
             nav.nextEl = nextRef.current;
-            swiper.navigation.destroy();
-            swiper.navigation.init();
-            swiper.navigation.update();
+            try {
+                swiper.navigation.destroy();
+                swiper.navigation.init();
+                swiper.navigation.update();
+            } catch {
+                // Half-initialized Navigation module — skip until the next bind.
+            }
         }
 
-        const pagination = swiper.params.pagination;
+        const pagination = swiper.params?.pagination;
         if (
             pagination &&
             typeof pagination !== "boolean" &&
@@ -90,10 +96,14 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
             swiper.pagination
         ) {
             pagination.el = paginationRef.current;
-            swiper.pagination.destroy();
-            swiper.pagination.init();
-            swiper.pagination.render();
-            swiper.pagination.update();
+            try {
+                swiper.pagination.destroy();
+                swiper.pagination.init();
+                swiper.pagination.render();
+                swiper.pagination.update();
+            } catch {
+                // Half-initialized Pagination module — skip until the next bind.
+            }
         }
     }, []);
 

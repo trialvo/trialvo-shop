@@ -24,7 +24,12 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   async rewrites() {
-    const apiBase = (process.env.API_URL || "http://fashion-api:5000").replace(/\/+$/, "");
+    const apiBase = (
+      process.env.API_URL ||
+      (process.env.NODE_ENV === "development"
+        ? "http://127.0.0.1:7010"
+        : "http://fashion-api:5000")
+    ).replace(/\/+$/, "");
     return [
       { source: "/uploads/:path*", destination: `${apiBase}/uploads/:path*` },
     ];
