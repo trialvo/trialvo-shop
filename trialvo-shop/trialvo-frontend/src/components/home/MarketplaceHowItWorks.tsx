@@ -1,11 +1,10 @@
 import {
   Code2,
-  CreditCard,
-  Download,
+  Globe,
   Headphones,
-  Mail,
   Rocket,
   ShoppingBag,
+  Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,11 +15,11 @@ import type { HowItWorksStep, TrustItem } from "@/types/marketplace";
 const BENEFITS: TrustItem[] = [
   {
     id: "instant",
-    icon: Download,
-    title: { bn: "ইনস্ট্যান্ট ডেলিভারি", en: "Instant delivery" },
+    icon: Zap,
+    title: { bn: "ইনস্ট্যান্ট ডেমো অ্যাক্সেস", en: "Instant demo access" },
     description: {
-      bn: "ডিজিটাল অ্যাক্সেস লিংক অনুমোদনের পর দ্রুত পাবেন।",
-      en: "Digital access links arrive quickly after approval.",
+      bn: "অ্যাপ্রুভালের অপেক্ষা নেই — ফর্ম জমা দিলেই শপ ও অ্যাডমিনের লগইন হাতে।",
+      en: "No approval queue — submit the form and the shop and admin logins are yours.",
     },
   },
   {
@@ -55,33 +54,33 @@ const STEPS: HowItWorksStep[] = [
     },
   },
   {
-    id: "trial",
+    id: "demo",
     step: 2,
-    icon: CreditCard,
-    title: { bn: "ট্রায়াল বা কিনুন", en: "Trial or buy" },
+    icon: Zap,
+    title: { bn: "ইনস্ট্যান্ট ডেমো দেখুন", en: "Open the instant demo" },
     description: {
-      bn: "লাইভ ট্রায়াল চালান অথবা নিরাপদে অর্ডার করুন।",
-      en: "Start a live trial or complete a secure purchase.",
+      bn: "নাম-ইমেইল দিন, সাথে সাথে শপ ও অ্যাডমিন প্যানেলে ঢুকে দেখুন।",
+      en: "Enter name and email, then explore the shop and admin panel right away.",
     },
   },
   {
-    id: "access",
+    id: "domain",
     step: 3,
-    icon: Mail,
-    title: { bn: "অ্যাক্সেস পান", en: "Receive access" },
+    icon: Globe,
+    title: { bn: "নিজের ডোমেইনে ট্রায়াল নিন", en: "Trial it on your domain" },
     description: {
-      bn: "অ্যাডমিন/শপ লিংক ইমেইল ও স্ট্যাটাস পেজে পান।",
-      en: "Get admin/shop links by email and status page.",
+      bn: "পছন্দ হলে অনুরোধ করুন — আপনার VPS/cPanel-এ আমরা এক মাস ফ্রি বসিয়ে দেব।",
+      en: "Liked it? Request a trial — we deploy it free for a month on your VPS/cPanel.",
     },
   },
   {
     id: "launch",
     step: 4,
     icon: Rocket,
-    title: { bn: "লাইভ করুন", en: "Go live" },
+    title: { bn: "কিনুন ও লাইভ থাকুন", en: "Buy and stay live" },
     description: {
-      bn: "নিজের ব্র্যান্ডে কাস্টমাইজ করে স্টোর চালু করুন।",
-      en: "Customize with your brand and launch your store.",
+      bn: "এককালীন পেমেন্ট — ট্রায়াল ইনস্ট্যান্সটাই পারমানেন্ট হয়ে যায়, আবার সেটআপ লাগে না।",
+      en: "One payment — the trial instance becomes permanent, no second setup.",
     },
   },
 ];
@@ -138,11 +137,11 @@ export function MarketplaceHowItWorks() {
         <SectionIntro
           id="how-it-works-title"
           className="mb-8 md:mb-10"
-          eyebrow={language === "bn" ? "কিনুন যেভাবে" : "How buying works"}
+          eyebrow={language === "bn" ? "যেভাবে কাজ করে" : "How it works"}
           title={
             language === "bn"
-              ? "ডিজিটাল প্রোডাক্ট কেনার ধাপ"
-              : "Steps to get your digital product"
+              ? "ডেমো থেকে নিজের ডোমেইনে লাইভ — চার ধাপে"
+              : "From demo to live on your domain — in four steps"
           }
         />
 

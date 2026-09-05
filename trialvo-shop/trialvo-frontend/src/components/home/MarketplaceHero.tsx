@@ -5,10 +5,11 @@ import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  BadgeCheck,
   Banknote,
   Code2,
+  Globe,
   Headphones,
+  Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,18 +17,21 @@ import { useCategories } from "@/hooks/useCategories";
 import { localePath } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { HeroSearch } from "@/components/home/HeroSearch";
+import { useTrialLaunch } from "@/components/trial/TrialLaunchProvider";
+import { trialCopy } from "@/lib/trial/copy";
+import { monthsRangeLabel } from "@/lib/trial/months";
 import type { HeroContent, LocalizedString } from "@/types/marketplace";
 import { localize } from "@/lib/localize";
 
 const HERO_CONTENT: HeroContent = {
   brand: { bn: "Trialvo Shop", en: "Trialvo Shop" },
   headline: {
-    bn: "রেডিমেড ইকমার্স সলিউশন খুঁজুন",
-    en: "Find ready-made ecommerce solutions",
+    bn: "কেনার আগে নিজের ডোমেইনে চালিয়ে দেখুন",
+    en: "Run it on your own domain before you buy",
   },
   supporting: {
-    bn: "এডমিন ও শপ ট্রায়াল করুন—কাস্টমাইজেশন, DevOps, মেইনটেন্যান্স, অথবা প্রয়োজনমতো নতুন সফটওয়্যারও বানাই।",
-    en: "Trial admin and shop—plus customization, DevOps, maintenance, or custom software built for your needs.",
+    bn: "রেডিমেড ইকমার্স সলিউশন — ইনস্ট্যান্ট ডেমো এক মিনিটে, তারপর আপনার নিজের ডোমেইন ও হোস্টিংয়ে এক মাস ফ্রি ট্রায়াল। সম্পূর্ণ সোর্স কোড, এককালীন দাম।",
+    en: "Ready-made ecommerce solutions — an instant demo in a minute, then a month-long free trial on your own domain and hosting. Full source code, one-time price.",
   },
   primaryCta: { bn: "সব প্রোডাক্ট", en: "Browse all" },
   secondaryCta: { bn: "যোগাযোগ", en: "Contact" },
@@ -41,16 +45,16 @@ const HERO_CONTENT: HeroContent = {
 };
 
 const LIVE_BADGE: LocalizedString = {
-  bn: "কেনার আগে লাইভ ট্রায়াল",
-  en: "Live trial before you buy",
+  bn: "ইনস্ট্যান্ট ডেমো + নিজের ডোমেইনে ট্রায়াল",
+  en: "Instant demo + trial on your domain",
 };
 
 /** Qualitative proof points — the same promises the rest of the page makes. */
 const PROOF: { id: string; icon: typeof Code2; label: LocalizedString }[] = [
+  { id: "demo", icon: Zap, label: { bn: "১ মিনিটে লাইভ ডেমো", en: "Live demo in a minute" } },
   { id: "source", icon: Code2, label: { bn: "সম্পূর্ণ সোর্স কোড", en: "Full source code" } },
   { id: "once", icon: Banknote, label: { bn: "এককালীন পেমেন্ট", en: "One-time payment" } },
   { id: "support", icon: Headphones, label: { bn: "আজীবন সাপোর্ট", en: "Lifetime support" } },
-  { id: "trial", icon: BadgeCheck, label: { bn: "লাইভ ডেমো অ্যাকসেস", en: "Live demo access" } },
 ];
 
 export function MarketplaceHero() {
@@ -58,6 +62,9 @@ export function MarketplaceHero() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const { data: categories = [] } = useCategories();
+  const trial = useTrialLaunch();
+  const tc = trialCopy(language);
+  const monthsLabel = monthsRangeLabel(trial.config.domainMonths, language);
 
   const popular = categories.slice(0, 4);
 
@@ -170,37 +177,85 @@ export function MarketplaceHero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
+            {/*
+              The instant demo is the primary hero action: it is the fastest
+              way for a visitor to see real value. Browsing is secondary.
+            */}
+            {trial.demoAvailable ? (
+              <Button
+                type="button"
+                onClick={() => trial.openDemo()}
+                className="h-11 rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+              >
+                <Zap className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                {tc.demo.cta}
+              </Button>
+            ) : (
+              <Button
+                asChild
+                className="h-11 rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+              >
+                <LocalizedLink href="/products">
+                  {localize(HERO_CONTENT.primaryCta, language)}
+                  <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+                </LocalizedLink>
+              </Button>
+            )}
             <Button
               asChild
-              className="h-11 rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+              variant="outline"
+              className="h-11 rounded-lg border-white/25 bg-white/[0.06] px-6 text-white backdrop-blur-sm hover:border-white/40 hover:bg-white/15 hover:text-white"
             >
               <LocalizedLink href="/products">
                 {localize(HERO_CONTENT.primaryCta, language)}
                 <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
               </LocalizedLink>
             </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="h-11 rounded-lg border-white/25 bg-white/[0.06] px-6 text-white backdrop-blur-sm hover:border-white/40 hover:bg-white/15 hover:text-white"
-            >
-              <LocalizedLink href="/how-it-works">
-                {language === "bn" ? "কীভাবে কাজ করে" : "How it works"}
-              </LocalizedLink>
-            </Button>
             <LocalizedLink
-              href="/contact"
+              href="/how-it-works"
               className="inline-flex min-h-[2.75rem] items-center px-1 text-sm font-medium text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline"
             >
-              {localize(HERO_CONTENT.secondaryCta, language)}
+              {language === "bn" ? "কীভাবে কাজ করে" : "How it works"}
             </LocalizedLink>
           </motion.div>
 
+          {trial.domainAvailable ? (
+            <motion.button
+              type="button"
+              onClick={() => trial.openDomain()}
+              className="group mt-5 flex w-full max-w-xl items-center gap-3 rounded-xl border border-white/15 bg-white/[0.06] p-3.5 text-left backdrop-blur-sm transition-colors hover:border-accent/50 hover:bg-white/10"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.34 }}
+            >
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/20 text-accent ring-1 ring-inset ring-accent/30">
+                <Globe className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-white">
+                  {/* e.g. "1 month free on your own domain" — the duration comes from admin settings */}
+                  {language === "bn"
+                    ? `নিজের ডোমেইনে ${tc.domain.freeFor(monthsLabel)}`
+                    : `${tc.domain.freeFor(monthsLabel)} on your own domain`}
+                </span>
+                <span className="mt-0.5 block text-xs leading-5 text-white/65">
+                  {language === "bn"
+                    ? "আপনার VPS/cPanel-এ আমরা বসিয়ে দেব · হোস্টিং না থাকলে আমাদের থেকে নিন"
+                    : "We deploy on your VPS/cPanel · no hosting? get it from us"}
+                </span>
+              </span>
+              <ArrowRight
+                className="h-4 w-4 shrink-0 text-white/50 transition-transform group-hover:translate-x-0.5 group-hover:text-accent"
+                aria-hidden="true"
+              />
+            </motion.button>
+          ) : null}
+
           <motion.ul
-            className="mt-10 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-white/12 pt-6 sm:flex sm:flex-wrap sm:items-center sm:gap-x-7"
+            className="mt-8 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-white/12 pt-6 sm:flex sm:flex-wrap sm:items-center sm:gap-x-7"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.36 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
             {PROOF.map((item) => {
               const Icon = item.icon;

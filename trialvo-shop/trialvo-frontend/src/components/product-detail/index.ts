@@ -8,4 +8,5 @@ export { ProductDetailIntro } from "./ProductDetailIntro";
 export { ProductDetailRelated } from "./ProductDetailRelated";
 export { ProductDetailSpecs } from "./ProductDetailSpecs";
 export { ProductDetailStickyBar } from "./ProductDetailStickyBar";
+export { ProductDetailTrialPaths } from "./ProductDetailTrialPaths";
 export { ProductDetailVideo } from "./ProductDetailVideo";

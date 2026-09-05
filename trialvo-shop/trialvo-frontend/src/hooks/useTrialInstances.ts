@@ -6,6 +6,8 @@ export interface TrialInstanceRow {
   install_id: string;
   trial_type: string;
   instance_kind?: "trial" | "paid" | "unlicensed";
+  /** shared = instant demo login, agent = installer/agent stack, manual = staff-deployed on customer server */
+  provision_mode?: "shared" | "agent" | "manual" | null;
   status: string;
   domain?: string;
   subdomain?: string;

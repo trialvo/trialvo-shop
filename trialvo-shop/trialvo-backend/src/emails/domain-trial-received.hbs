@@ -1,0 +1,33 @@
+<p style="margin:0 0 16px;font-size:16px;">Hi {{name}},</p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">
+  We received your request to run <strong>{{productName}}</strong> on your own domain for <strong>{{months}} month{{#if plural}}s{{/if}}</strong>, free.
+</p>
+
+<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e5e7eb;border-radius:10px;margin:0 0 20px;">
+  <tr>
+    <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;">Domain</td>
+    <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;">{{#if domain}}{{domain}}{{else}}To be decided with hosting{{/if}}</td>
+  </tr>
+  <tr>
+    <td style="padding:12px 16px;font-size:13px;color:#6b7280;">Hosting</td>
+    <td style="padding:12px 16px;font-size:14px;">{{hostingLabel}}</td>
+  </tr>
+</table>
+
+{{#if buyingHosting}}
+<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#374151;">
+  <strong>Next step:</strong> our team will contact you about hosting options and pricing. Once hosting is confirmed we deploy the product there and send you the login.
+</p>
+{{else}}
+<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#374151;">
+  <strong>Next step:</strong> our team will reach out for server access details and deploy the product on your {{hostKindLabel}}. We usually finish within <strong>{{slaHours}} hours</strong>.
+</p>
+{{/if}}
+
+<p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Track progress any time:</p>
+<p style="margin:0 0 24px;">
+  <a href="{{statusUrl}}" style="display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 20px;border-radius:8px;">
+    View request status
+  </a>
+</p>
+<p style="margin:0;font-size:12px;color:#9ca3af;word-break:break-all;">{{statusUrl}}</p>

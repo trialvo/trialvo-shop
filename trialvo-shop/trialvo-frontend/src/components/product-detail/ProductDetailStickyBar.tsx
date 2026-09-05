@@ -15,6 +15,7 @@ export type ProductDetailStickyBarProps = {
   language: MarketplaceLanguage;
   currencyLabel: string;
   buyLabel: string;
+  /** Instant demo available — the bar shows a "Demo" button */
   canRequestTrial: boolean;
   onStartTrial: () => void;
   /** The inline buy card. The bar hides while that card is on screen. */
@@ -22,8 +23,8 @@ export type ProductDetailStickyBarProps = {
 };
 
 const COPY = {
-  bn: { license: "এককালীন পেমেন্ট", trial: "ট্রায়াল" },
-  en: { license: "One-time payment", trial: "Trial" },
+  bn: { license: "এককালীন পেমেন্ট", trial: "ডেমো" },
+  en: { license: "One-time payment", trial: "Demo" },
 } as const;
 
 /**

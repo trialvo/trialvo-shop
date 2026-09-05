@@ -1,15 +1,21 @@
 "use client";
 
 import LocalizedLink from "@/components/i18n/LocalizedLink";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Eyebrow, Section } from "@/components/section";
+import { useTrialLaunch } from "@/components/trial/TrialLaunchProvider";
+import { trialCopy } from "@/lib/trial/copy";
+import { monthsRangeLabel } from "@/lib/trial/months";
 
 /** Closing marketplace CTA before footer */
 export function MarketplaceCTA() {
   const { language } = useLanguage();
+  const trial = useTrialLaunch();
+  const tc = trialCopy(language);
+  const months = monthsRangeLabel(trial.config.domainMonths, language);
 
   return (
     <Section
@@ -49,37 +55,69 @@ export function MarketplaceCTA() {
               id="marketplace-cta-title"
               className="font-display text-[1.75rem] font-bold leading-[1.16] tracking-tight md:text-[2.25rem]"
             >
-              {language === "bn"
-                ? "রেডিমেড ডিজিটাল সলিউশন খুঁজুন"
-                : "Browse ready-made digital solutions"}
+              {trial.demoAvailable
+                ? language === "bn"
+                  ? "এক মিনিটে ডেমো দেখুন, তারপর নিজের ডোমেইনে চালান"
+                  : "See the demo in a minute, then run it on your domain"
+                : language === "bn"
+                  ? "রেডিমেড ডিজিটাল সলিউশন খুঁজুন"
+                  : "Browse ready-made digital solutions"}
             </h2>
             <p className="mt-3 text-[15px] leading-7 text-primary-foreground/70 md:text-base">
-              {language === "bn"
-                ? "ট্রায়াল করে কিনুন—অথবা কাস্টম সফটওয়্যার, DevOps ও মেইনটেন্যান্সের জন্য যোগাযোগ করুন।"
-                : "Trial then buy—or contact us for custom software, DevOps, and maintenance."}
+              {trial.domainAvailable
+                ? language === "bn"
+                  ? `কার্ড লাগবে না। পছন্দ হলে আপনার হোস্টিংয়ে ${months} ফ্রি — কেনার আগে আসল ব্যবসা চালিয়ে দেখুন।`
+                  : `No card needed. Liked it? ${months} free on your hosting — run real business on it before you pay.`
+                : language === "bn"
+                  ? "ট্রায়াল করে কিনুন—অথবা কাস্টম সফটওয়্যার, DevOps ও মেইনটেন্যান্সের জন্য যোগাযোগ করুন।"
+                  : "Trial then buy—or contact us for custom software, DevOps, and maintenance."}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              asChild
-              size="lg"
-              className="h-12 rounded-lg bg-accent px-7 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
-            >
-              <LocalizedLink href="/products">
-                {language === "bn" ? "মার্কেটপ্লেস খুলুন" : "Open marketplace"}
-                <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-              </LocalizedLink>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="h-12 rounded-lg border-primary-foreground/25 bg-primary-foreground/[0.06] px-6 text-primary-foreground hover:border-primary-foreground/40 hover:bg-primary-foreground/15 hover:text-primary-foreground"
-            >
-              <LocalizedLink href="/contact">
-                {language === "bn" ? "যোগাযোগ করুন" : "Talk to us"}
-              </LocalizedLink>
-            </Button>
+            {trial.demoAvailable ? (
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => trial.openDemo()}
+                className="h-12 rounded-lg bg-accent px-7 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+              >
+                <Zap className="mr-2 h-4 w-4" aria-hidden="true" />
+                {tc.demo.cta}
+              </Button>
+            ) : (
+              <Button
+                asChild
+                size="lg"
+                className="h-12 rounded-lg bg-accent px-7 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+              >
+                <LocalizedLink href="/products">
+                  {language === "bn" ? "মার্কেটপ্লেস খুলুন" : "Open marketplace"}
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                </LocalizedLink>
+              </Button>
+            )}
+            {trial.domainAvailable ? (
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                onClick={() => trial.openDomain()}
+                className="h-12 rounded-lg border-primary-foreground/25 bg-primary-foreground/[0.06] px-6 text-primary-foreground hover:border-primary-foreground/40 hover:bg-primary-foreground/15 hover:text-primary-foreground"
+              >
+                {tc.domain.cta}
+              </Button>
+            ) : (
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 rounded-lg border-primary-foreground/25 bg-primary-foreground/[0.06] px-6 text-primary-foreground hover:border-primary-foreground/40 hover:bg-primary-foreground/15 hover:text-primary-foreground"
+              >
+                <LocalizedLink href="/contact">
+                  {language === "bn" ? "যোগাযোগ করুন" : "Talk to us"}
+                </LocalizedLink>
+              </Button>
+            )}
           </div>
         </div>
       </motion.div>

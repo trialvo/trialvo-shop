@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCategories } from "@/hooks/useCategories";
-import { usePublicTrialConfig } from "@/hooks/useTrialSettings";
 import { resolveCategoryLabel } from "@/lib/digitalGoods";
 import {
   ProductCardActions,
@@ -12,7 +10,8 @@ import {
   ProductCardMedia,
   ProductCardPricing,
 } from "@/components/cards/product";
-import RequestTrialModal from "@/components/trial/RequestTrialModal";
+import { useTrialLaunch } from "@/components/trial/TrialLaunchProvider";
+import { productSupportsDemo } from "@/lib/trial/types";
 import { toProductCardViewModel } from "@/types/productCard";
 import type { ProductCardProps } from "@/types/marketplace";
 import { cn } from "@/lib/utils";
@@ -26,8 +25,9 @@ export function ProductCard({
 }: Readonly<ProductCardProps>) {
   const { language, t } = useLanguage();
   const { data: categories } = useCategories();
-  const { data: trialConfig } = usePublicTrialConfig();
-  const [trialOpen, setTrialOpen] = useState(false);
+  // One shared dialog host for the whole page — a grid of 20 cards must not
+  // mount 20 modals.
+  const trial = useTrialLaunch();
 
   const categoryLabel = resolveCategoryLabel(
     product.category,
@@ -40,7 +40,7 @@ export function ProductCard({
     (badge) => badge.id === "featured" || badge.id === "trial",
   );
   const canRequestTrial = Boolean(
-    card.isTrialable && trialConfig?.trialsEnabled !== false,
+    card.isTrialable && trial.demoAvailable && productSupportsDemo(product),
   );
   const priceHint = language === "bn" ? "আজীবন লাইসেন্স" : "Lifetime license";
 
@@ -123,21 +123,10 @@ export function ProductCard({
             language={language}
             showTrial={canRequestTrial}
             compact={compact}
-            onStartTrial={() => setTrialOpen(true)}
+            onStartTrial={() => trial.openDemo({ product })}
           />
         </div>
       </div>
-
-      {canRequestTrial ? (
-        <RequestTrialModal
-          open={trialOpen}
-          onOpenChange={setTrialOpen}
-          productSlug={product.slug}
-          productName={product.name[language] || product.name.en}
-          supportsOption1={product.deployConfig?.supports_option1 !== false}
-          supportsOption2={product.deployConfig?.supports_option2 !== false}
-        />
-      ) : null}
     </article>
   );
 }

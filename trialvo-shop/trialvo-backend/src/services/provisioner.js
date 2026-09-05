@@ -3,7 +3,8 @@ const { v4: uuidv4 } = require('uuid');
 const { encrypt, randomHex, randomToken } = require('../utils/crypto');
 const { sendMail } = require('./mailer');
 const { logEvent } = require('./trialEvents');
-const { trialReadyEmail, FRONTEND, API_PUBLIC } = require('./trialEmails');
+const { trialReadyEmail, demoReadyEmail, FRONTEND, API_PUBLIC } = require('./trialEmails');
+const { getTrialSettings } = require('./trialSettings');
 const { issueRegistryCredentials, parseDeployConfig } = require('./packager');
 const { supportsTrialOption } = require('./packager/productImages');
 const {
@@ -126,15 +127,19 @@ async function provisionFromRequest(requestRow, days = 14) {
     status = 'provisioning';
   }
 
+  // shared = ADMIN grant on the per-product demo stack; agent = installer + license agent.
+  // Staff-deployed domain trials never come through here (see adminTrialController.fulfill).
+  const provisionMode = isHosted ? 'shared' : 'agent';
+
   await pool.query(
     `INSERT INTO trial_instances (
-      id, install_id, request_id, product_id, trial_type, status,
+      id, install_id, request_id, product_id, trial_type, status, provision_mode,
       domain, subdomain, shop_url, admin_url, api_url,
       admin_email, admin_password_enc, agent_secret_enc, bootstrap_token_enc, backup_key_enc,
       started_at, expires_at, meta
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NULL,NULL,NULL,$9,$10,$11,$12,$13,NOW(),$14,$15)`,
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NULL,NULL,NULL,$10,$11,$12,$13,$14,NOW(),$15,$16)`,
     [
-      instanceId, installId, requestRow.id, requestRow.product_id, requestRow.trial_type, status,
+      instanceId, installId, requestRow.id, requestRow.product_id, requestRow.trial_type, status, provisionMode,
       domain, subdomain,
       adminEmail, encrypt(adminPassword), encrypt(agentSecret), encrypt(bootstrapToken), encrypt(backupKey),
       expiresAt,
@@ -197,17 +202,35 @@ async function provisionFromRequest(requestRow, days = 14) {
     ? `${API_PUBLIC}/api/trial/installer/${requestRow.public_token}`
     : null;
 
-  const mail = trialReadyEmail({
-    name: requestRow.customer_name,
-    days,
-    statusUrl,
-  });
-  await sendMail({ to: requestRow.email, ...mail });
+  // Email is a backup copy — the instant-demo response already carries the
+  // credentials, so a slow SMTP must never delay the customer. Fire and forget.
+  const productName = typeof product.name === 'object'
+    ? (product.name?.en || product.name?.bn)
+    : product.name;
+  const emailJob = (async () => {
+    if (isHosted) {
+      const settings = await getTrialSettings();
+      const maxMonths = settings.domainMonths[settings.domainMonths.length - 1];
+      const domainTrialUrl = `${FRONTEND}/products/${product.slug}?trial=domain&from=${requestRow.public_token}`;
+      const mail = demoReadyEmail({
+        name: requestRow.customer_name,
+        productName,
+        shopUrl, adminUrl, adminEmail, adminPassword,
+        statusUrl, days, maxMonths, domainTrialUrl,
+      });
+      await sendMail({ to: requestRow.email, ...mail });
+    } else {
+      const mail = trialReadyEmail({ name: requestRow.customer_name, days, statusUrl });
+      await sendMail({ to: requestRow.email, ...mail });
+    }
+  })();
+  emailJob.catch((e) => console.error(`[provisioner] ready email failed for ${requestRow.id}:`, e.message));
 
   return {
     instanceId, installId, adminEmail, adminPassword, bootstrapToken,
     shopUrl, adminUrl, apiUrl, expiresAt, installerUrl,
     meta: provisionMeta,
+    provisionMode,
   };
 }
 

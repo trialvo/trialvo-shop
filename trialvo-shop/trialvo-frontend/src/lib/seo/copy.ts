@@ -60,27 +60,31 @@ export type PageSeoKey =
 export const PAGE_SEO: Record<PageSeoKey, Record<Locale, PageSeoCopy>> = {
   home: {
     bn: {
-      title: "রেডিমেড ইকমার্স ওয়েবসাইট — আজীবন লাইসেন্স, সাপোর্ট ও সোর্স কোড",
+      title: "রেডিমেড ইকমার্স ওয়েবসাইট — ইনস্ট্যান্ট ডেমো, নিজের ডোমেইনে ফ্রি ট্রায়াল",
       description:
-        "Trialvo Shop থেকে সম্পূর্ণ রেডিমেড ইকমার্স ওয়েবসাইট কিনুন — অ্যাডমিন প্যানেল, শপ ফ্রন্টএন্ড ও সোর্স কোড একসাথে। এককালীন পেমেন্ট, আজীবন সাপোর্ট ও আপডেট। কেনার আগে ফ্রি লাইভ ট্রায়াল নিন।",
+        "Trialvo Shop থেকে সম্পূর্ণ রেডিমেড ইকমার্স ওয়েবসাইট কিনুন — অ্যাডমিন প্যানেল, শপ ফ্রন্টএন্ড ও সোর্স কোড একসাথে। এক মিনিটে ইনস্ট্যান্ট ডেমো, তারপর নিজের ডোমেইন ও হোস্টিংয়ে এক মাস ফ্রি ট্রায়াল। এককালীন পেমেন্ট, আজীবন সাপোর্ট।",
       keywords: [
         "রেডিমেড ইকমার্স সলিউশন",
         "ইকমার্স ওয়েবসাইট প্যাকেজ",
         "অনলাইন ব্যবসা শুরু করার ওয়েবসাইট",
         "ফ্রি ট্রায়াল ইকমার্স ওয়েবসাইট",
+        "নিজের ডোমেইনে ফ্রি ট্রায়াল",
+        "ইকমার্স ইনস্ট্যান্ট ডেমো",
         "সোর্স কোড সহ অনলাইন শপ",
         "ডিজিটাল প্রোডাক্ট মার্কেটপ্লেস",
       ],
     },
     en: {
-      title: "Ready-made ecommerce websites — lifetime license, support & source code",
+      title: "Ready-made ecommerce websites — instant demo, free trial on your own domain",
       description:
-        "Buy complete ready-made ecommerce websites from Trialvo Shop — admin panel, storefront, and full source code together. One-time payment with lifetime support and updates. Start a free live trial before you buy.",
+        "Buy complete ready-made ecommerce websites from Trialvo Shop — admin panel, storefront, and full source code together. Instant demo in a minute, then a full month's free trial on your own domain and hosting. One-time payment, lifetime support.",
       keywords: [
         "ready-made ecommerce solution",
         "ecommerce website package",
         "start an online business website",
         "free trial ecommerce website",
+        "free trial on your own domain",
+        "instant ecommerce demo",
         "online shop with source code",
         "digital product marketplace",
       ],
@@ -195,9 +199,9 @@ export const PAGE_SEO: Record<PageSeoKey, Record<Locale, PageSeoCopy>> = {
 
   howItWorks: {
     bn: {
-      title: "কীভাবে কাজ করে — ট্রায়াল থেকে লাইভ শপ পর্যন্ত ৪ ধাপ",
+      title: "কীভাবে কাজ করে — ডেমো থেকে নিজের ডোমেইনে লাইভ শপ, ৫ ধাপ",
       description:
-        "প্রোডাক্ট বাছাই, ফ্রি লাইভ ট্রায়াল, এককালীন পেমেন্ট এবং ডেলিভারি ও সেটআপ — Trialvo Shop-এ রেডিমেড ইকমার্স ওয়েবসাইট নেওয়ার পুরো প্রক্রিয়া ধাপে ধাপে জানুন।",
+        "প্রোডাক্ট বাছাই, ইনস্ট্যান্ট ডেমো, নিজের ডোমেইনে এক মাস ফ্রি ট্রায়াল, এককালীন পেমেন্ট এবং সোর্স কোড ডেলিভারি — Trialvo Shop-এ রেডিমেড ইকমার্স ওয়েবসাইট নেওয়ার পুরো প্রক্রিয়া ধাপে ধাপে জানুন।",
       keywords: [
         "ইকমার্স ওয়েবসাইট কেনার নিয়ম",
         "লাইভ ট্রায়াল প্রক্রিয়া",
@@ -206,9 +210,9 @@ export const PAGE_SEO: Record<PageSeoKey, Record<Locale, PageSeoCopy>> = {
       ],
     },
     en: {
-      title: "How it works — four steps from trial to a live shop",
+      title: "How it works — five steps from demo to a live shop on your domain",
       description:
-        "Pick a product, run a free live trial, pay once, then get delivery and setup. See the complete step-by-step process for getting a ready-made ecommerce website from Trialvo Shop.",
+        "Pick a product, open the instant demo, run a month-long free trial on your own domain, pay once, then receive the source code. See the complete step-by-step process for getting a ready-made ecommerce website from Trialvo Shop.",
       keywords: [
         "how to buy an ecommerce website",
         "live trial process",

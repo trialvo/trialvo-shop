@@ -65,9 +65,12 @@ const ROWS: Row[] = [
     id: "trial",
     label: { bn: "কেনার আগে যাচাই", en: "Verify before committing" },
     values: {
-      trialvo: { bn: "লাইভ ট্রায়াল", en: "Live trial" },
+      trialvo: {
+        bn: "ইনস্ট্যান্ট ডেমো + নিজের ডোমেইনে এক মাস ফ্রি ট্রায়াল",
+        en: "Instant demo + month-long free trial on your own domain",
+      },
       custom: { bn: "সম্ভব নয়", en: "Not possible" },
-      saas: { bn: "সীমিত ফ্রি ট্রায়াল", en: "Limited free trial" },
+      saas: { bn: "তাদের সাবডোমেইনে সীমিত ট্রায়াল", en: "Limited trial on their subdomain" },
     },
   },
   {

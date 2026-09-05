@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import LocalizedLink from '@/components/i18n/LocalizedLink';
 import Layout from '@/components/layout/Layout';
 import Redirect from '@/components/Redirect';
-import RequestTrialModal from '@/components/trial/RequestTrialModal';
+import { useTrialLaunch } from '@/components/trial/TrialLaunchProvider';
 import {
   ProductDetailBreadcrumb,
   ProductDetailBuyCard,
@@ -18,19 +18,19 @@ import {
   ProductDetailRelated,
   ProductDetailSpecs,
   ProductDetailStickyBar,
+  ProductDetailTrialPaths,
   ProductDetailVideo,
 } from '@/components/product-detail';
 import { Section } from '@/components/section';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useProduct, useRelatedProducts } from '@/hooks/useProducts';
-import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
 import { resolveMediaUrl } from '@/lib/mediaUrl';
+import { productSupportsDemo, productSupportsDomainTrial } from '@/lib/trial/types';
 
 const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const { language, t } = useLanguage();
-  const [trialOpen, setTrialOpen] = useState(false);
   const buyCardRef = useRef<HTMLDivElement>(null);
 
   const { data: product, isLoading, error } = useProduct(slug);
@@ -38,10 +38,16 @@ const ProductDetailPage: React.FC = () => {
     product?.id,
     product?.category,
   );
-  const { data: trialConfig } = usePublicTrialConfig();
-  const canRequestTrial = Boolean(
-    product?.isTrialable && trialConfig?.trialsEnabled !== false,
+
+  // The trial dialogs live in TrialLaunchProvider (mounted once in app
+  // providers); this page only decides which CTAs to show and opens them.
+  const trial = useTrialLaunch();
+  const canDemo = Boolean(product && trial.demoAvailable && productSupportsDemo(product));
+  const canDomainTrial = Boolean(
+    product && trial.domainAvailable && productSupportsDomainTrial(product),
   );
+  const openDemo = () => product && trial.openDemo({ product });
+  const openDomain = () => product && trial.openDomain({ product });
 
   if (isLoading) {
     return (
@@ -116,16 +122,21 @@ const ProductDetailPage: React.FC = () => {
                   language={language}
                   currencyLabel={t('common.bdt')}
                   buyLabel={t('product.buyNow')}
-                  canRequestTrial={canRequestTrial}
-                  onStartTrial={() => setTrialOpen(true)}
+                  canDemo={canDemo}
+                  canDomainTrial={canDomainTrial}
+                  domainMonths={trial.config.domainMonths}
+                  onStartDemo={openDemo}
+                  onStartDomainTrial={openDomain}
                 />
               </div>
+
+              <ProductDetailTrialPaths product={product} language={language} />
 
               <ProductDetailDemoPanel
                 product={product}
                 language={language}
-                canRequestTrial={canRequestTrial}
-                onStartTrial={() => setTrialOpen(true)}
+                canRequestTrial={canDemo}
+                onStartTrial={openDemo}
               />
 
               <ProductDetailHighlights language={language} />
@@ -174,21 +185,10 @@ const ProductDetailPage: React.FC = () => {
         language={language}
         currencyLabel={t('common.bdt')}
         buyLabel={t('product.buyNow')}
-        canRequestTrial={canRequestTrial}
-        onStartTrial={() => setTrialOpen(true)}
+        canRequestTrial={canDemo}
+        onStartTrial={openDemo}
         watch={buyCardRef}
       />
-
-      {canRequestTrial ? (
-        <RequestTrialModal
-          open={trialOpen}
-          onOpenChange={setTrialOpen}
-          productSlug={product.slug}
-          productName={title}
-          supportsOption1={product.deployConfig?.supports_option1 !== false}
-          supportsOption2={product.deployConfig?.supports_option2 !== false}
-        />
-      ) : null}
     </Layout>
   );
 };

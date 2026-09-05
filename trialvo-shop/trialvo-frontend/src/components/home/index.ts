@@ -2,6 +2,7 @@ export { MarketplaceHero } from "./MarketplaceHero";
 export { HeroSearch } from "./HeroSearch";
 export { CategoryBrowse } from "./CategoryBrowse";
 export { FeaturedMarketplace } from "./FeaturedMarketplace";
+export { TrialPathways } from "./TrialPathways";
 export { WhyTrialvo } from "./WhyTrialvo";
 export { WhatsIncluded } from "./WhatsIncluded";
 export { MarketplaceHowItWorks } from "./MarketplaceHowItWorks";

@@ -13,7 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import { Switch } from '@/components/ui/switch';
-import { useTrialSettings, useUpdateTrialSettings } from '@/hooks/useTrialSettings';
+import { TrialSettingsPanel } from '@/components/admin/trial/TrialSettingsPanel';
 
 const AdminSettingsPage: React.FC = () => {
  const { toast } = useToast();
@@ -59,21 +59,6 @@ const AdminSettingsPage: React.FC = () => {
  const [testLoading, setTestLoading] = useState(false);
  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
- // Trial settings
- const { data: trialSettings } = useTrialSettings();
- const updateTrialSettings = useUpdateTrialSettings();
- const [trialForm, setTrialForm] = useState({
-  autoApproveHosted: false,
-  hostedDays: 14,
-  selfHostedDays: 14,
-  paidExtendDays: 365,
-  extendDays: 30,
-  extendPriceBdt: 1500,
-  extendPriceUsd: 15,
-  trialsEnabled: true,
- });
- const [trialSaving, setTrialSaving] = useState(false);
-
  // SMTP settings
  const [smtpForm, setSmtpForm] = useState({
   enabled: false,
@@ -90,21 +75,6 @@ const AdminSettingsPage: React.FC = () => {
  const [smtpSaving, setSmtpSaving] = useState(false);
  const [smtpTestLoading, setSmtpTestLoading] = useState(false);
  const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
-
- useEffect(() => {
-  if (trialSettings) {
-   setTrialForm({
-    autoApproveHosted: trialSettings.autoApproveHosted,
-    hostedDays: trialSettings.hostedDays,
-    selfHostedDays: trialSettings.selfHostedDays,
-    paidExtendDays: trialSettings.paidExtendDays ?? 365,
-    extendDays: trialSettings.extendDays ?? 30,
-    extendPriceBdt: trialSettings.extendPriceBdt ?? 1500,
-    extendPriceUsd: trialSettings.extendPriceUsd ?? 15,
-    trialsEnabled: trialSettings.trialsEnabled !== false,
-   });
-  }
- }, [trialSettings]);
 
  useEffect(() => {
   const fetchSettings = async () => {
@@ -167,17 +137,6 @@ const AdminSettingsPage: React.FC = () => {
    toast({ title: 'Error', description: err.message, variant: 'destructive' });
   }
   setNameLoading(false);
- };
-
- const handleSaveTrialSettings = async () => {
-  setTrialSaving(true);
-  try {
-   await updateTrialSettings.mutateAsync(trialForm);
-   toast({ title: 'Trial settings saved' });
-  } catch (err: any) {
-   toast({ title: 'Error', description: err.message, variant: 'destructive' });
-  }
-  setTrialSaving(false);
  };
 
  const handleSaveSmtpSettings = async () => {
@@ -481,139 +440,7 @@ const AdminSettingsPage: React.FC = () => {
    )}
 
    {/* Trial Settings Tab */}
-   {activeTab === 'trial' && (
-    <div className="admin-card overflow-hidden">
-     <div className="hero-gradient-soft p-6 border-b border-border/50">
-      <div className="flex items-center gap-4">
-       <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center shadow-soft-sm ring-1 ring-primary/20">
-        <FlaskConical className="w-6 h-6 text-primary" />
-       </div>
-       <div>
-        <h3 className="text-lg font-bold text-foreground">Trial System</h3>
-        <p className="text-sm text-muted-foreground">Control auto-approve and default trial periods</p>
-       </div>
-      </div>
-     </div>
-
-     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/20">
-       <div>
-        <p className="text-sm font-semibold text-foreground">Enable public trial requests</p>
-        <p className="text-xs text-muted-foreground mt-1">
-         Kill switch (§16). When off, Request Trial CTA and API return disabled.
-        </p>
-       </div>
-       <Switch
-        checked={trialForm.trialsEnabled}
-        onCheckedChange={(v) => setTrialForm({ ...trialForm, trialsEnabled: v })}
-       />
-      </div>
-
-      <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-muted/20">
-       <div>
-        <p className="text-sm font-semibold text-foreground">Auto-approve Option 1 (Trialvo Hosted)</p>
-        <p className="text-xs text-muted-foreground mt-1">
-         When enabled, hosted trial requests are provisioned instantly without manual review.
-        </p>
-       </div>
-       <Switch
-        checked={trialForm.autoApproveHosted}
-        onCheckedChange={(v) => setTrialForm({ ...trialForm, autoApproveHosted: v })}
-       />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-       <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground font-medium">Option 1 trial period (days)</Label>
-        <AdminNumberInput
-         integer
-         min={1}
-         max={365}
-         emptyAs={1}
-         value={trialForm.hostedDays}
-         onValueChange={(n) => setTrialForm({ ...trialForm, hostedDays: Math.min(365, Math.max(1, Math.trunc(n) || 1)) })}
-         className={inputClass}
-        />
-        <p className="text-[10px] text-muted-foreground">Used for auto-approve and as default when approving hosted trials</p>
-       </div>
-       <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground font-medium">Option 2 trial period (days)</Label>
-        <AdminNumberInput
-         integer
-         min={1}
-         max={365}
-         emptyAs={1}
-         value={trialForm.selfHostedDays}
-         onValueChange={(n) => setTrialForm({ ...trialForm, selfHostedDays: Math.min(365, Math.max(1, Math.trunc(n) || 1)) })}
-         className={inputClass}
-        />
-        <p className="text-[10px] text-muted-foreground">Default when approving self-hosted (your domain) trials</p>
-       </div>
-       <div className="space-y-1.5 md:col-span-2 rounded-xl border border-border p-4 bg-muted/10 space-y-3">
-        <p className="text-sm font-semibold">Trial extend pack (paid, separate from product buy)</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground font-medium">Extend days</Label>
-          <AdminNumberInput
-           integer
-           min={1}
-           max={365}
-           emptyAs={1}
-           value={trialForm.extendDays}
-           onValueChange={(n) => setTrialForm({ ...trialForm, extendDays: Math.min(365, Math.max(1, Math.trunc(n) || 1)) })}
-           className={inputClass}
-          />
-         </div>
-         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground font-medium">Price (BDT) — Bangla shop</Label>
-          <AdminNumberInput
-           min={0}
-           step={1}
-           integer
-           value={trialForm.extendPriceBdt}
-           onValueChange={(n) => setTrialForm({ ...trialForm, extendPriceBdt: Math.max(0, Math.round(n)) })}
-           className={inputClass}
-          />
-         </div>
-         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground font-medium">Price (USD) — English shop</Label>
-          <AdminNumberInput
-           min={0}
-           step={0.01}
-           value={trialForm.extendPriceUsd}
-           onValueChange={(n) => setTrialForm({ ...trialForm, extendPriceUsd: Math.max(0, Math.round(n * 100) / 100) })}
-           className={inputClass}
-          />
-         </div>
-        </div>
-        <p className="text-[10px] text-muted-foreground">
-          Status page “Extend trial” uses this pack. Full product checkout stays at product catalog price.
-        </p>
-       </div>
-       <div className="space-y-1.5 md:col-span-2">
-        <Label className="text-xs text-muted-foreground font-medium">Product purchase convert (days)</Label>
-        <AdminNumberInput
-         integer
-         min={1}
-         max={3650}
-         emptyAs={365}
-         value={trialForm.paidExtendDays}
-         onValueChange={(n) => setTrialForm({ ...trialForm, paidExtendDays: Math.min(3650, Math.max(1, Math.trunc(n) || 1)) })}
-         className={inputClass}
-        />
-        <p className="text-[10px] text-muted-foreground">
-          When customer buys the full product linked to a trial, extend/convert by this many days (default 365).
-        </p>
-       </div>
-      </div>
-
-      <Button onClick={handleSaveTrialSettings} disabled={trialSaving} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm">
-       {trialSaving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
-       Save Trial Settings
-      </Button>
-     </div>
-    </div>
-   )}
+   {activeTab === 'trial' && <TrialSettingsPanel inputClass={inputClass} />}
 
    {/* SMTP / Email Tab */}
    {activeTab === 'email' && (

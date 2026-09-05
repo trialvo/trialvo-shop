@@ -1,0 +1,41 @@
+<p style="margin:0 0 16px;font-size:16px;">Hi {{name}},</p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">
+  Your live demo of <strong>{{productName}}</strong> is ready. The storefront and the admin panel are running right now — log in with the details below.{{#if days}} Access stays open for <strong>{{days}} days</strong>.{{/if}}
+</p>
+
+<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e5e7eb;border-radius:10px;margin:0 0 20px;">
+  <tr>
+    <td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;">Storefront</td>
+    <td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;"><a href="{{shopUrl}}" style="color:#0f766e;font-weight:600;">{{shopUrl}}</a></td>
+  </tr>
+  <tr>
+    <td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;">Admin panel</td>
+    <td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;"><a href="{{adminUrl}}" style="color:#0f766e;font-weight:600;">{{adminUrl}}</a></td>
+  </tr>
+  <tr>
+    <td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;">Login email</td>
+    <td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;font-family:ui-monospace,Menlo,monospace;">{{adminEmail}}</td>
+  </tr>
+  <tr>
+    <td style="padding:14px 16px;font-size:13px;color:#6b7280;">Password</td>
+    <td style="padding:14px 16px;font-size:14px;font-family:ui-monospace,Menlo,monospace;">{{adminPassword}}</td>
+  </tr>
+</table>
+
+<p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Everything above is also on your access page, which you can bookmark:</p>
+<p style="margin:0 0 24px;">
+  <a href="{{statusUrl}}" style="display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 20px;border-radius:8px;">
+    Open access page
+  </a>
+</p>
+
+<p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#374151;">
+  <strong>Like what you see?</strong> Run it on your own domain and hosting for up to {{maxMonths}} months, free. We set it up for you — VPS or cPanel.
+</p>
+<p style="margin:0 0 20px;">
+  <a href="{{domainTrialUrl}}" style="color:#0f766e;font-weight:600;font-size:14px;">Request an own-domain trial →</a>
+</p>
+
+<p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">
+  This is a shared demo environment: other people evaluating the same product may see the data you enter, and demo data is reset periodically. Please do not enter real customer information.
+</p>

@@ -77,6 +77,21 @@ async function activatePaidInstance(instanceId, { orderId, days, source = 'payme
     );
   }
 
+  // Own-domain trial bought → stays on the customer's server as-is. Nothing to
+  // unfreeze remotely (no agent); just mark the pipeline converted.
+  const manual = instance.provision_mode === 'manual' || meta.provisionMode === 'manual';
+  if (manual) {
+    if (instance.request_id) {
+      const { STAGES, setStage } = require('./trialFulfillment');
+      await setStage(instance.request_id, STAGES.CONVERTED, { by: null, note: `order ${orderId || ''}`.trim(), force: true })
+        .catch((e) => console.error('[trialActivation] converted stage failed', e.message));
+    }
+    await logEvent(instanceId, 'paid_activate_manual', {
+      orderId, days: extendDays, source, previousStatus: instance.status, promotedToPaid: promoteToPaid,
+    });
+    return { ok: true, instanceId, days: extendDays, previousStatus: instance.status, manual: true };
+  }
+
   if (isSharedDemoInstance(instance)) {
     const password = instance.admin_password_enc ? decrypt(instance.admin_password_enc) : null;
     await reactivateTrialAdmin({ email: instance.admin_email, password, instance });

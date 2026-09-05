@@ -1,364 +1,524 @@
 "use client";
 
-import React, { useState } from 'react';
-import LocalizedLink from '@/components/i18n/LocalizedLink';
-import { useParams } from 'next/navigation';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Loader2, CheckCircle2, Clock, XCircle, Copy, ExternalLink, KeyRound, Mail, Download, Package } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
-import { useTrialStatus } from '@/hooks/useTrialRequests';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
-import { usePublicTrialConfig } from '@/hooks/useTrialSettings';
-import { api } from '@/lib/api';
+import React, { useState } from "react";
+import { useParams } from "next/navigation";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarClock,
+  CheckCircle2,
+  Clock,
+  Download,
+  Globe,
+  Loader2,
+  Package,
+  ShoppingCart,
+  Sparkles,
+  XCircle,
+  Zap,
+} from "lucide-react";
+import LocalizedLink from "@/components/i18n/LocalizedLink";
+import Layout from "@/components/layout/Layout";
+import { Eyebrow, IconTile, Section, Surface } from "@/components/section";
+import { CredentialsCard } from "@/components/trial/shared/CredentialsCard";
+import { TrialTimeline } from "@/components/trial/shared/TrialTimeline";
+import { useTrialLaunch } from "@/components/trial/TrialLaunchProvider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useTrialStatus, type TrialStatusResponse } from "@/hooks/useTrialRequests";
+import { api } from "@/lib/api";
+import { trialCopy } from "@/lib/trial/copy";
+import {
+  daysLeftLabel,
+  formatDate,
+  localizeNumber,
+  monthsLabel,
+  upToMonthsLabel,
+} from "@/lib/trial/months";
+import type { MarketplaceLanguage } from "@/types/marketplace";
+import { cn } from "@/lib/utils";
 
+const COPY = {
+  bn: {
+    eyebrow: "ট্রায়াল হাব",
+    titleDemo: "আপনার ইনস্ট্যান্ট ডেমো",
+    titleDomain: "আপনার ডোমেইন ট্রায়াল",
+    notFound: "অনুরোধ পাওয়া যায়নি",
+    notFoundBody: "এই লিংকটি মেয়াদোত্তীর্ণ, মুছে ফেলা হয়েছে, বা ভুল। নতুন ডেমো নিলে ইমেইলে নতুন লিংক আসবে।",
+    browse: "প্রোডাক্ট দেখুন",
+    product: "প্রোডাক্ট",
+    requested: "অনুরোধ",
+    expires: "শেষ হবে",
+    duration: "মেয়াদ",
+    domain: "ডোমেইন",
+    hosting: "হোস্টিং",
+    days: (n: string) => `${n} দিন`,
+    statusPending: "তৈরি হচ্ছে",
+    statusActive: "চালু",
+    statusRejected: "অনুমোদিত নয়",
+    statusExpired: "মেয়াদ শেষ",
+    statusGone: "বন্ধ",
+    provisioningLead: "আপনার ডেমো তৈরি হচ্ছে — এই পেজ নিজে থেকেই আপডেট হবে।",
+    goneLead: "এই ট্রায়াল আর চালু নেই। কিনলে বা নতুন ডেমো নিলে আবার অ্যাক্সেস পাবেন।",
+    expiredLead: "ট্রায়ালের মেয়াদ শেষ। কিনে নিলে সব ডেটা ও সেটআপ একই থাকে।",
+    rejectedLead: "এই অনুরোধ অনুমোদিত হয়নি। বিস্তারিত ইমেইলে পাঠানো হয়েছে।",
+    nextStepsTitle: "পরের ধাপ",
+    domainOfferTitle: (max: string) => `${max} ফ্রি — আপনার নিজের ডোমেইনে`,
+    domainOfferBody: "ডেমো পছন্দ হয়েছে? আপনার VPS বা cPanel হোস্টিংয়ে আমরা নিজেরা বসিয়ে দেব। হোস্টিং না থাকলে আমাদের থেকে নিতে পারবেন। কার্ড লাগবে না।",
+    domainOfferUnique: "এই সুবিধা অন্য কেউ দেয় না",
+    linkedTitle: "ডোমেইন ট্রায়াল রিকোয়েস্ট পাঠানো আছে",
+    linkedBody: "এই ডেমো থেকে আপনি ইতিমধ্যে নিজের ডোমেইনে ট্রায়াল চেয়েছেন।",
+    viewLinked: "রিকোয়েস্ট দেখুন",
+    sourceTitle: "এই রিকোয়েস্ট আপনার ডেমো থেকে",
+    sourceBody: "ডোমেইনে লাইভ হওয়ার আগ পর্যন্ত ডেমো চালিয়ে যেতে পারেন।",
+    viewSource: "ডেমো খুলুন",
+    liveTitle: "আপনার ডোমেইনে লাইভ",
+    liveBody: "নিচের লিংক ও লগইন ব্যবহার করুন। ট্রায়াল শেষে কিনলে সব একই থাকে।",
+    buyTitle: "রাখতে চান?",
+    buyBody: "এককালীন পেমেন্ট — এই ইনস্ট্যান্সটাই পারমানেন্ট হয়ে যায়। ডেটা, সেটআপ, ডোমেইন — কিছু বদলায় না।",
+    buy: "প্রোডাক্ট কিনুন",
+    extendBody: (price: string, days: string) => `আরও সময় লাগলে ${price}-এ ${days} দিন বাড়াতে পারবেন।`,
+    extend: (price: string) => `এক্সটেন্ড (${price})`,
+    installer: "ইনস্টলার ডাউনলোড",
+    installerLead: "আপনার সার্ভারে ইনস্টলার চালানোর পর ট্রায়াল Active হবে।",
+    downloadStarted: "ডাউনলোড শুরু হয়েছে",
+    shared: "শেয়ার্ড ডেমো — অন্যরাও একই স্টোর দেখছে; ডেটা নিয়মিত রিসেট হয়। আসল গ্রাহকের তথ্য দেবেন না।",
+    slaNote: (h: string) => `সাধারণত ${h} ঘণ্টার মধ্যে লাইভ করি।`,
+    needHelp: "সমস্যা হলে",
+    contact: "যোগাযোগ করুন",
+  },
+  en: {
+    eyebrow: "Trial hub",
+    titleDemo: "Your instant demo",
+    titleDomain: "Your own-domain trial",
+    notFound: "Request not found",
+    notFoundBody: "This link is expired, was cleared, or is invalid. Start a new demo and a fresh link arrives by email.",
+    browse: "Browse products",
+    product: "Product",
+    requested: "Requested",
+    expires: "Expires",
+    duration: "Duration",
+    domain: "Domain",
+    hosting: "Hosting",
+    days: (n: string) => `${n} days`,
+    statusPending: "Setting up",
+    statusActive: "Active",
+    statusRejected: "Not approved",
+    statusExpired: "Expired",
+    statusGone: "Closed",
+    provisioningLead: "Your demo is being prepared — this page updates on its own.",
+    goneLead: "This trial is no longer running. Buy the product or start a new demo to get access again.",
+    expiredLead: "The trial period is over. Buying keeps all data and setup exactly as it is.",
+    rejectedLead: "This request was not approved. Details were sent by email.",
+    nextStepsTitle: "Next steps",
+    domainOfferTitle: (max: string) => `${max} free — on your own domain`,
+    domainOfferBody: "Liked the demo? We deploy it ourselves on your VPS or cPanel hosting. No hosting yet? Get it from us. No card needed.",
+    domainOfferUnique: "Nobody else offers this",
+    linkedTitle: "Domain trial request on file",
+    linkedBody: "You already requested an own-domain trial from this demo.",
+    viewLinked: "View request",
+    sourceTitle: "This request came from your demo",
+    sourceBody: "Keep using the demo until your domain goes live.",
+    viewSource: "Open demo",
+    liveTitle: "Live on your domain",
+    liveBody: "Use the links and login below. Buy at the end of the trial and everything stays as is.",
+    buyTitle: "Want to keep it?",
+    buyBody: "One payment — this very instance becomes permanent. Data, setup, domain — nothing changes.",
+    buy: "Buy product",
+    extendBody: (price: string, days: string) => `Need more time? Add ${days} days for ${price}.`,
+    extend: (price: string) => `Extend (${price})`,
+    installer: "Download installer",
+    installerLead: "The trial becomes active once you run the installer on your server.",
+    downloadStarted: "Download started",
+    shared: "Shared demo — others see the same store and data resets regularly. Do not enter real customer data.",
+    slaNote: (h: string) => `We usually go live within ${h} hours.`,
+    needHelp: "Need help?",
+    contact: "Contact us",
+  },
+} as const;
+
+type Tone = "neutral" | "good" | "warn" | "bad";
+
+/** Collapse instance + request status into one badge the customer understands. */
+function summarise(data: TrialStatusResponse, language: MarketplaceLanguage) {
+  const copy = COPY[language];
+  const tc = trialCopy(language);
+  const inst = String(data.instanceStatus || "");
+  const gone = ["destroyed", "destroying"].includes(inst);
+
+  if (data.path === "domain") {
+    const stage = data.fulfillmentStage || "received";
+    const s = tc.stages[stage] || tc.stages.received;
+    const tone: Tone = stage === "live" || stage === "converted"
+      ? "good"
+      : stage === "rejected" || stage === "expired"
+        ? "bad"
+        : stage === "expiring"
+          ? "warn"
+          : "neutral";
+    return { label: s.label, lead: s.body, tone, gone: false };
+  }
+
+  if (data.status === "rejected") return { label: copy.statusRejected, lead: copy.rejectedLead, tone: "bad" as Tone, gone: false };
+  if (gone) return { label: copy.statusGone, lead: copy.goneLead, tone: "bad" as Tone, gone: true };
+  if (inst === "expired" || (data.daysLeft !== null && data.daysLeft !== undefined && data.daysLeft <= 0 && data.expiresAt)) {
+    return { label: copy.statusExpired, lead: copy.expiredLead, tone: "warn" as Tone, gone: false };
+  }
+  if (data.credentials) return { label: copy.statusActive, lead: tc.demo.readyLead, tone: "good" as Tone, gone: false };
+  return { label: copy.statusPending, lead: copy.provisioningLead, tone: "neutral" as Tone, gone: false };
+}
+
+const TONE_BADGE: Record<Tone, string> = {
+  neutral: "bg-muted text-foreground",
+  good: "bg-accent/15 text-accent-strong",
+  warn: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  bad: "bg-destructive/10 text-destructive",
+};
+
+const TONE_ICON: Record<Tone, typeof Clock> = {
+  neutral: Clock,
+  good: CheckCircle2,
+  warn: AlertTriangle,
+  bad: XCircle,
+};
+
+/**
+ * Trial Hub — one token-gated page for both paths. A demo shows credentials
+ * plus the own-domain upsell; a domain request shows the fulfilment timeline
+ * and, once live, the credentials for the customer's own server.
+ */
 const TrialStatusPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
-  const { data, isLoading, error } = useTrialStatus(token);
-  const { data: trialConfig } = usePublicTrialConfig();
-  const { toast } = useToast();
   const { language } = useLanguage();
-  const [showPassword, setShowPassword] = useState(false);
-  const [downloadingInstaller, setDownloadingInstaller] = useState(false);
+  const { data, isLoading, error } = useTrialStatus(token);
+  const { toast } = useToast();
+  const trial = useTrialLaunch();
+  const copy = COPY[language];
+  const tc = trialCopy(language);
+  const [downloading, setDownloading] = useState(false);
 
-  const copy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: language === 'bn' ? 'কপি হয়েছে' : 'Copied', description: label });
+  const downloadInstaller = async () => {
+    if (!token) return;
+    setDownloading(true);
+    try {
+      const res = await api.downloadBlob(`/trial/installer/${token}`, `trialvo-installer-${token.slice(0, 8)}.zip`);
+      toast({ title: copy.downloadStarted, description: res.filename });
+    } catch (e: unknown) {
+      toast({ title: tc.common.errorTitle, description: e instanceof Error ? e.message : tc.common.errorGeneric, variant: "destructive" });
+    } finally {
+      setDownloading(false);
+    }
   };
-
-  const t = (bn: string, en: string) => (language === 'bn' ? bn : en);
-
-  const displayStatus = data?.instanceStatus && data.instanceStatus !== 'active'
-    ? data.instanceStatus
-    : data?.status;
-
-  const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ReactNode }> = {
-    pending: { label: t('পর্যালোচনায়', 'Pending review'), variant: 'secondary', icon: <Clock className="w-3.5 h-3.5" /> },
-    active: { label: t('ট্রায়াল চালু', 'Trial active'), variant: 'default', icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
-    rejected: { label: t('অনুমোদিত নয়', 'Not approved'), variant: 'destructive', icon: <XCircle className="w-3.5 h-3.5" /> },
-    provisioning: {
-      label: t('ইনস্টলের অপেক্ষায়', 'Awaiting install'),
-      variant: 'outline',
-      icon: <Package className="w-3.5 h-3.5" />,
-    },
-  };
-
-  const cfg = data
-    ? (statusConfig[displayStatus || ''] || {
-        label: displayStatus || data.status,
-        variant: 'outline' as const,
-        icon: <Clock className="w-3.5 h-3.5" />,
-      })
-    : null;
-  const productLabel = data?.productName?.[language] || data?.productName?.en || data?.productSlug;
-  const isGranted = !!data?.credentials;
-  const awaitingInstall = data?.trialType === 'self_hosted' && data?.instanceStatus === 'provisioning';
-  const instanceGone = ['destroyed', 'destroying'].includes(String(data?.instanceStatus || ''));
-  const canPurchase = Boolean(
-    data?.instanceId
-    && data.productSlug
-    && data.status !== 'pending'
-    && data.status !== 'rejected'
-    && !instanceGone
-  );
-  const emailQs = data?.email ? `&email=${encodeURIComponent(data.email)}` : '';
-  const nameQs = data?.customerName ? `&name=${encodeURIComponent(data.customerName)}` : '';
-  const extendHref = canPurchase
-    ? `/checkout?extend=1&trialInstance=${encodeURIComponent(data!.instanceId!)}&product=${encodeURIComponent(data!.productSlug!)}${emailQs}${nameQs}`
-    : null;
-  const buyHref = canPurchase
-    ? `/checkout?product=${encodeURIComponent(data!.productSlug!)}&trialInstance=${encodeURIComponent(data!.instanceId!)}${emailQs}${nameQs}`
-    : null;
-  const extendDays = trialConfig?.extendDays ?? 30;
-  const extendPriceBdt = trialConfig?.extendPriceBdt ?? 1500;
-  const extendPriceUsd = trialConfig?.extendPriceUsd ?? 15;
-  const extendPriceLabel = `৳${Number(extendPriceBdt).toLocaleString()}`;
-  const extendUsdLabel = Number(extendPriceUsd) > 0
-    ? `$${Number(extendPriceUsd).toLocaleString('en-US', { minimumFractionDigits: Number(extendPriceUsd) % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 })}`
-    : '';
 
   return (
     <Layout>
-      <div className="section-padding container-custom max-w-xl mx-auto">
-        <h1 className="text-2xl font-bold mb-2">
-          {language === 'bn' ? 'ট্রায়াল স্ট্যাটাস' : 'Trial Request Status'}
-        </h1>
-        <p className="text-muted-foreground text-sm mb-6">
-          {language === 'bn'
-            ? 'এই পেজে আপনার অনুরোধের অবস্থা ও লগইন তথ্য দেখতে পাবেন।'
-            : 'Track your request and access login details here.'}
-        </p>
-
-        {isLoading && (
-          <div className="flex justify-center py-12"><Loader2 className="animate-spin w-8 h-8 text-primary" /></div>
-        )}
-        {error && (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 space-y-3">
-            <p className="text-destructive font-medium">
-              {language === 'bn' ? 'অনুরোধ পাওয়া যায়নি' : 'Request not found'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {language === 'bn'
-                ? 'এই লিংকটি মেয়াদোত্তীর্ণ, মুছে ফেলা হয়েছে, বা ভুল। নতুন ট্রায়াল অনুরোধ পাঠান — ইমেইলে নতুন status লিংক আসবে।'
-                : 'This link is expired, was cleared, or is invalid. Submit a new trial request — you will get a fresh status link by email.'}
-            </p>
-            <Button asChild variant="outline">
-              <LocalizedLink href="/products">{language === 'bn' ? 'প্রোডাক্টে যান' : 'Browse products'}</LocalizedLink>
-            </Button>
-          </div>
-        )}
-
-        {data && cfg && (
-          <div className="space-y-4">
-            {data.sharedDemo && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
-                {language === 'bn'
-                  ? 'শেয়ার্ড ডেমো: অন্য ট্রায়াল ইউজারের সাথে একই স্টোর। ডেটা মিশতে পারে। আলাদা স্ট্যাক চাইলে Option 2 বেছে নিন।'
-                  : (data.disclaimer || 'Shared demo — other trial users share this store. Choose Option 2 for an isolated stack.')}
-              </div>
-            )}
-            <div className="border rounded-xl p-6 space-y-4 bg-card">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm">Status</span>
-                <Badge variant={cfg.variant} className="gap-1.5">
-                  {cfg.icon}
-                  {cfg.label}
-                </Badge>
-              </div>
-              <div className="grid gap-2 text-sm">
-                <div><span className="text-muted-foreground">Product: </span>{productLabel}</div>
-                <div>
-                  <span className="text-muted-foreground">Type: </span>
-                  {data.trialType === 'hosted'
-                    ? (language === 'bn' ? 'Option 1 — Trialvo হোস্টেড' : 'Option 1 — Trialvo Hosted')
-                    : (language === 'bn' ? 'Option 2 — আপনার ডোমেইন' : 'Option 2 — Your Domain')}
-                </div>
-                {data.trialDays && (
-                  <div><span className="text-muted-foreground">Trial period: </span>{data.trialDays} days</div>
-                )}
-                {data.approvedAt && (
-                  <div><span className="text-muted-foreground">Approved: </span>{new Date(data.approvedAt).toLocaleString()}</div>
-                )}
-                {data.expiresAt && (
-                  <div><span className="text-muted-foreground">Expires: </span>{new Date(data.expiresAt).toLocaleString()}</div>
-                )}
-              </div>
-
-              {instanceGone && (
-                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive">
-                  {language === 'bn'
-                    ? 'এই ট্রায়াল আর চালু নেই — এক্সটেন্ড বা কেনা এই ইনস্ট্যান্সে করা যাবে না।'
-                    : 'This trial is no longer available, so extend and purchase are disabled for this instance.'}
-                </div>
-              )}
-
-              {data.status === 'pending' && (
-                <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-700 dark:text-amber-400">
-                  {language === 'bn'
-                    ? 'আপনার অনুরোধ পর্যালোচনায় আছে। অনুমোদিত হলে এই পেজে credentials দেখা যাবে এবং ইমেইল পাঠানো হবে।'
-                    : 'Your request is under review. Once approved, credentials will appear here and we will email you.'}
-                </div>
-              )}
-
-              {awaitingInstall && (
-                <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-4 text-sm text-amber-700 dark:text-amber-400 space-y-2">
-                  <p className="font-medium">
-                    {t('অনুরোধ অনুমোদিত — এখন ইনস্টল করুন', 'Approved — install on your server next')}
-                  </p>
-                  <p>
-                    {t(
-                      'Option 2 ট্রায়াল আপনার সার্ভারে installer চালানোর পর Active হবে। নিচের credentials ও installer ডাউনলোড ব্যবহার করুন।',
-                      'This Option 2 trial stays “Awaiting install” until you run the installer on your server and the license agent registers. Use the credentials and installer download below.',
-                    )}
-                  </p>
-                </div>
-              )}
-
-              {(data.shopUrl || data.adminUrl) && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {data.shopUrl && (
-                    <Button asChild size="sm" variant="outline">
-                      <a href={data.shopUrl} target="_blank" rel="noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-1.5" />
-                        {language === 'bn' ? 'শপ খুলুন' : 'Open Shop'}
-                      </a>
-                    </Button>
-                  )}
-                  {data.adminUrl && (
-                    <Button asChild size="sm">
-                      <a href={data.adminUrl} target="_blank" rel="noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-1.5" />
-                        {language === 'bn' ? 'অ্যাডমিন প্যানেল' : 'Open Admin'}
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              )}
+      <Section size="sm" tone="muted" pattern="mesh" divider="bottom" labelledBy="trial-hub-title">
+        <div className="mx-auto max-w-3xl">
+          {isLoading ? (
+            <div className="flex justify-center py-20" role="status" aria-live="polite">
+              <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
             </div>
+          ) : null}
 
-            {isGranted && data.credentials && (
-              <div className="border rounded-xl p-6 space-y-4 bg-emerald-500/5 border-emerald-500/20">
-                <div className="flex items-center gap-2">
-                  <KeyRound className="w-5 h-5 text-emerald-600" />
-                  <h2 className="font-semibold">
-                    {language === 'bn' ? 'আপনার লগইন তথ্য' : 'Your login credentials'}
-                  </h2>
-                </div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5" />
-                  {language === 'bn'
-                    ? 'এই তথ্য আপনার ইমেইলেও পাঠানো হয়েছে।'
-                    : 'These were also sent to your email.'}
-                </p>
-
-                <div className="space-y-3">
-                  {data.credentials.adminEmail && (
-                    <CredentialRow
-                      label="Admin email"
-                      value={data.credentials.adminEmail}
-                      onCopy={() => copy(data.credentials!.adminEmail!, 'Email')}
-                    />
-                  )}
-                  {data.credentials.adminPassword && (
-                    <CredentialRow
-                      label="Admin password"
-                      value={data.credentials.adminPassword}
-                      secret={!showPassword}
-                      onToggle={() => setShowPassword(!showPassword)}
-                      onCopy={() => copy(data.credentials!.adminPassword!, 'Password')}
-                    />
-                  )}
-                  {data.credentials.installId && (
-                    <CredentialRow
-                      label="Install ID"
-                      value={data.credentials.installId}
-                      mono
-                      onCopy={() => copy(data.credentials!.installId!, 'Install ID')}
-                    />
-                  )}
-                  {data.credentials.bootstrapToken && (
-                    <CredentialRow
-                      label="Bootstrap token"
-                      value={data.credentials.bootstrapToken}
-                      mono
-                      onCopy={() => copy(data.credentials!.bootstrapToken!, 'Bootstrap token')}
-                    />
-                  )}
-                </div>
-
-                {data.installerUrl && token && (
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    disabled={downloadingInstaller}
-                    onClick={async () => {
-                      setDownloadingInstaller(true);
-                      try {
-                        const res = await api.downloadBlob(
-                          `/trial/installer/${token}`,
-                          `trialvo-installer-${token.slice(0, 8)}.zip`,
-                        );
-                        toast({
-                          title: t('ডাউনলোড শুরু হয়েছে', 'Download started'),
-                          description: res.filename,
-                        });
-                      } catch (e: unknown) {
-                        const message = e instanceof Error ? e.message : 'Download failed';
-                        toast({ title: 'Error', description: message, variant: 'destructive' });
-                      } finally {
-                        setDownloadingInstaller(false);
-                      }
-                    }}
-                  >
-                    {downloadingInstaller ? (
-                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                    ) : (
-                      <Download className="w-4 h-4 mr-1.5" />
-                    )}
-                    {language === 'bn' ? 'Installer ডাউনলোড' : 'Download installer package'}
+          {error ? (
+            <Surface className="p-6 sm:p-8">
+              <IconTile icon={XCircle} tone="neutral" className="mb-4" />
+              <h1 id="trial-hub-title" className="font-display text-xl font-bold tracking-tight">{copy.notFound}</h1>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{copy.notFoundBody}</p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                {trial.demoAvailable ? (
+                  <Button type="button" onClick={() => trial.openDemo()} className="h-11 bg-accent text-accent-foreground hover:bg-accent/90">
+                    <Zap className="mr-2 h-4 w-4" aria-hidden="true" />
+                    {tc.demo.cta}
                   </Button>
-                )}
+                ) : null}
+                <Button asChild variant="outline" className="h-11">
+                  <LocalizedLink href="/products">{copy.browse}</LocalizedLink>
+                </Button>
               </div>
-            )}
+            </Surface>
+          ) : null}
 
-            {(extendHref || buyHref) && (
-              <div className="border rounded-xl p-6 space-y-4 bg-card">
-                <h2 className="font-semibold text-sm">
-                  {language === 'bn' ? 'পরবর্তী ধাপ' : 'Next steps'}
-                </h2>
-                {extendHref && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      {language === 'bn'
-                        ? `ট্রায়াল মেয়াদ বাড়াতে আলাদা এক্সটেন্ড প্যাক কিনুন — ${extendPriceLabel}${extendUsdLabel ? ` (${extendUsdLabel})` : ''} / +${extendDays} দিন। একই ইমেইল ব্যবহার করুন।`
-                        : `Buy a separate extend pack to add more trial days — ${extendPriceLabel}${extendUsdLabel ? ` (${extendUsdLabel})` : ''} for +${extendDays} days. Use the same email as this trial.`}
-                    </p>
-                    <Button asChild className="w-full" variant="default">
-                      <LocalizedLink href={extendHref}>
-                        {language === 'bn'
-                          ? `ট্রায়াল এক্সটেন্ড (${extendPriceLabel})`
-                          : `Extend trial (${extendPriceLabel})`}
-                      </LocalizedLink>
-                    </Button>
-                  </div>
-                )}
-                {buyHref && (
-                  <div className="space-y-2 pt-2 border-t border-border/60">
-                    <p className="text-xs text-muted-foreground">
-                      {language === 'bn'
-                        ? 'পুরো প্রোডাক্ট কিনলে লাইসেন্স/কনভার্শন — এক্সটেন্ড প্যাক নয়।'
-                        : 'Buy the full product for license/conversion — not the extend pack.'}
-                    </p>
-                    <Button asChild className="w-full" variant="outline">
-                      <LocalizedLink href={buyHref}>
-                        {language === 'bn' ? 'প্রোডাক্ট কিনুন' : 'Buy product'}
-                      </LocalizedLink>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <Button asChild variant="outline" className="w-full">
-              <LocalizedLink href="/products">{language === 'bn' ? 'প্রোডাক্টে ফিরুন' : 'Back to products'}</LocalizedLink>
-            </Button>
-          </div>
-        )}
-      </div>
+          {data ? <HubBody data={data} token={token} language={language} downloading={downloading} onDownload={downloadInstaller} /> : null}
+        </div>
+      </Section>
     </Layout>
   );
 };
 
-function CredentialRow({
-  label, value, secret, mono, onCopy, onToggle,
-}: {
-  label: string;
-  value: string;
-  secret?: boolean;
-  mono?: boolean;
-  onCopy: () => void;
-  onToggle?: () => void;
-}) {
+function HubBody({
+  data,
+  token,
+  language,
+  downloading,
+  onDownload,
+}: Readonly<{
+  data: TrialStatusResponse;
+  token: string;
+  language: MarketplaceLanguage;
+  downloading: boolean;
+  onDownload: () => void;
+}>) {
+  const copy = COPY[language];
+  const tc = trialCopy(language);
+  const trial = useTrialLaunch();
+  const summary = summarise(data, language);
+  const Icon = TONE_ICON[summary.tone];
+  const isDomain = data.path === "domain";
+  const productLabel = data.productName?.[language] || data.productName?.en || data.productSlug || "";
+  const inst = String(data.instanceStatus || "");
+  const gone = summary.gone;
+
+  const canPurchase = Boolean(
+    data.instanceId && data.productSlug && data.status !== "pending" && data.status !== "rejected" && !gone,
+  );
+  const qs = [
+    data.email ? `&email=${encodeURIComponent(data.email)}` : "",
+    data.customerName ? `&name=${encodeURIComponent(data.customerName)}` : "",
+  ].join("");
+  const buyHref = canPurchase
+    ? `/checkout?product=${encodeURIComponent(data.productSlug!)}&trialInstance=${encodeURIComponent(data.instanceId!)}${qs}`
+    : null;
+  // Extend packs are a demo-path feature; domain trials are extended by staff.
+  const extendHref = canPurchase && !isDomain
+    ? `/checkout?extend=1&trialInstance=${encodeURIComponent(data.instanceId!)}&product=${encodeURIComponent(data.productSlug!)}${qs}`
+    : null;
+  const extendDays = localizeNumber(trial.config.extendDays ?? 30, language);
+  const extendPrice = `৳${Number(trial.config.extendPriceBdt ?? 1500).toLocaleString()}`;
+
+  const awaitingInstall = isDomain && data.provisionMode === "agent" && inst === "provisioning";
+  const showCredentials = Boolean(data.credentials) && !gone && (!isDomain || ["live", "expiring", "converted"].includes(data.fulfillmentStage || "") || awaitingInstall);
+
+  const offer = data.domainTrialOffer;
+  const showDomainOffer = !isDomain && offer && trial.domainAvailable && !data.linkedDomainRequest && data.status !== "rejected";
+
+  const openDomainFromDemo = () =>
+    trial.openDomain({
+      productSlug: data.productSlug,
+      sourceRequestId: token,
+      prefill: { name: data.customerName || undefined, email: data.email || undefined },
+    });
+
   return (
-    <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-background border">
-      <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{label}</p>
-        <p className={`text-sm truncate ${mono ? 'font-mono' : ''}`}>
-          {secret ? '••••••••' : value}
-        </p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div>
+        <Eyebrow className="mb-3">{copy.eyebrow}</Eyebrow>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 id="trial-hub-title" className="font-display text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+              {isDomain ? copy.titleDomain : copy.titleDemo}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">{productLabel}</p>
+          </div>
+          <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold", TONE_BADGE[summary.tone])}>
+            <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+            {summary.label}
+          </span>
+        </div>
+        <p className="mt-3 text-[15px] leading-7 text-muted-foreground">{summary.lead}</p>
       </div>
-      <div className="flex gap-1 shrink-0">
-        {onToggle && (
-          <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={onToggle}>
-            {secret ? 'Show' : 'Hide'}
-          </Button>
+
+      {/* Facts strip */}
+      <Surface className="grid grid-cols-2 gap-x-6 gap-y-4 p-5 sm:grid-cols-4">
+        <Fact label={copy.requested} value={data.requestedAt ? formatDate(data.requestedAt, language) : "—"} />
+        {isDomain ? (
+          <>
+            <Fact label={copy.duration} value={data.requestedMonths ? monthsLabel(data.requestedMonths, language) : "—"} />
+            <Fact label={copy.hosting} value={[data.hostingSource ? tc.hostingSource[data.hostingSource] : null, data.hostKind ? tc.hostKind[data.hostKind] : null].filter(Boolean).join(" · ") || "—"} />
+            <Fact label={copy.domain} value={data.desiredDomain || "—"} mono />
+          </>
+        ) : (
+          <>
+            <Fact label={copy.duration} value={data.trialDays ? copy.days(localizeNumber(data.trialDays, language)) : "—"} />
+            <Fact label={copy.expires} value={data.expiresAt ? formatDate(data.expiresAt, language) : "—"} />
+            <Fact
+              label={language === "bn" ? "বাকি" : "Left"}
+              value={data.daysLeft !== null && data.daysLeft !== undefined ? daysLeftLabel(data.daysLeft, language) : "—"}
+            />
+          </>
         )}
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onCopy}>
-          <Copy className="w-4 h-4" />
-        </Button>
-      </div>
+      </Surface>
+
+      {/* Domain pipeline */}
+      {isDomain ? (
+        <Surface className="p-5 sm:p-6">
+          <TrialTimeline
+            stage={data.fulfillmentStage}
+            history={data.stageHistory}
+            hostingSource={data.hostingSource}
+            language={language}
+            slaHours={data.slaHours}
+          />
+          {["received", "hosting_pending", "deploying"].includes(data.fulfillmentStage || "") && data.slaHours ? (
+            <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+              <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+              {copy.slaNote(localizeNumber(data.slaHours, language))}
+            </p>
+          ) : null}
+        </Surface>
+      ) : null}
+
+      {/* Demo still provisioning */}
+      {!isDomain && !data.credentials && data.status !== "rejected" && !gone ? (
+        <Surface className="flex items-center gap-4 p-5">
+          <Loader2 className="h-5 w-5 shrink-0 animate-spin text-accent" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground">{copy.provisioningLead}</p>
+        </Surface>
+      ) : null}
+
+      {/* Credentials */}
+      {showCredentials ? (
+        <div>
+          {isDomain ? (
+            <div className="mb-3">
+              <h2 className="font-display text-lg font-bold tracking-tight">{copy.liveTitle}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{copy.liveBody}</p>
+            </div>
+          ) : null}
+          <CredentialsCard
+            shopUrl={data.shopUrl}
+            adminUrl={data.adminUrl}
+            credentials={data.credentials}
+            language={language}
+          />
+          {data.sharedDemo ? (
+            <p className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-xs leading-5 text-amber-900 dark:text-amber-100">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              {copy.shared}
+            </p>
+          ) : null}
+          {awaitingInstall && data.installerUrl ? (
+            <Surface className="mt-3 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Package className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                {copy.installerLead}
+              </p>
+              <Button type="button" variant="secondary" disabled={downloading} onClick={onDownload} className="h-10 shrink-0">
+                {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                {copy.installer}
+              </Button>
+            </Surface>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Own-domain upsell (demo path) */}
+      {/* Own-domain upsell — inverted card using primary / primary-foreground tokens only, so it flips correctly with the theme. */}
+      {showDomainOffer ? (
+        <div className="relative isolate overflow-hidden rounded-3xl bg-primary p-6 text-primary-foreground shadow-soft-xl ring-1 ring-inset ring-primary-foreground/10 sm:p-8">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_70%_at_90%_10%,hsl(var(--accent)/0.32),transparent_65%)]" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Eyebrow tone="inverted">{copy.nextStepsTitle}</Eyebrow>
+            <span className="rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-bold text-accent-foreground shadow-accent-glow">{copy.domainOfferUnique}</span>
+          </div>
+          <div className="mt-4 flex items-start gap-4">
+            <IconTile icon={Globe} tone="inverted" />
+            <div className="min-w-0 flex-1">
+              <h2 className="font-display text-xl font-bold leading-tight tracking-tight text-primary-foreground">
+                {copy.domainOfferTitle(upToMonthsLabel(offer!.maxMonths, language))}
+              </h2>
+              <p className="mt-2 text-[15px] leading-7 text-primary-foreground/75">{copy.domainOfferBody}</p>
+            </div>
+          </div>
+          <Button type="button" size="lg" onClick={openDomainFromDemo} className="mt-6 h-12 w-full rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-accent-glow hover:bg-accent/90 sm:w-auto">
+            {tc.domain.cta}
+            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
+      ) : null}
+
+      {/* Cross links */}
+      {data.linkedDomainRequest ? (
+        <CrossLink
+          icon={Globe}
+          title={copy.linkedTitle}
+          body={`${copy.linkedBody} ${tc.stages[data.linkedDomainRequest.fulfillmentStage || "received"]?.label || ""}`}
+          href={`/trial-status/${data.linkedDomainRequest.statusToken}`}
+          cta={copy.viewLinked}
+        />
+      ) : null}
+      {data.sourceDemo ? (
+        <CrossLink
+          icon={Zap}
+          title={copy.sourceTitle}
+          body={copy.sourceBody}
+          href={`/trial-status/${data.sourceDemo.statusToken}`}
+          cta={copy.viewSource}
+        />
+      ) : null}
+
+      {/* Purchase / extend */}
+      {buyHref ? (
+        <Surface sheen className="p-5 sm:p-6">
+          <div className="flex items-start gap-4">
+            <IconTile icon={Sparkles} size="sm" />
+            <div className="min-w-0 flex-1">
+              <h2 className="font-display text-base font-bold tracking-tight">{copy.buyTitle}</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{copy.buyBody}</p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Button asChild className="h-11 rounded-lg bg-accent px-5 font-semibold text-accent-foreground shadow-accent-glow hover:bg-accent/90">
+                  <LocalizedLink href={buyHref}>
+                    <ShoppingCart className="mr-2 h-4 w-4" aria-hidden="true" />
+                    {copy.buy}
+                  </LocalizedLink>
+                </Button>
+                {extendHref ? (
+                  <Button asChild variant="outline" className="h-11 rounded-lg bg-background">
+                    <LocalizedLink href={extendHref}>{copy.extend(extendPrice)}</LocalizedLink>
+                  </Button>
+                ) : null}
+              </div>
+              {extendHref ? (
+                <p className="mt-2 text-xs text-muted-foreground">{copy.extendBody(extendPrice, extendDays)}</p>
+              ) : null}
+            </div>
+          </div>
+        </Surface>
+      ) : null}
+
+      <p className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-muted-foreground">
+        <span>{copy.needHelp}</span>
+        <LocalizedLink href="/contact" className="font-medium text-foreground underline decoration-border underline-offset-4 hover:text-accent-strong">
+          {copy.contact}
+        </LocalizedLink>
+      </p>
     </div>
+  );
+}
+
+function Fact({ label, value, mono }: Readonly<{ label: string; value: string; mono?: boolean }>) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+      <p className={cn("mt-1 truncate text-sm font-semibold text-foreground", mono && "font-mono")}>{value}</p>
+    </div>
+  );
+}
+
+function CrossLink({
+  icon,
+  title,
+  body,
+  href,
+  cta,
+}: Readonly<{ icon: typeof Zap; title: string; body: string; href: string; cta: string }>) {
+  return (
+    <Surface className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+      <IconTile icon={icon} size="sm" tone="neutral" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{body}</p>
+      </div>
+      <Button asChild size="sm" variant="outline" className="h-9 shrink-0 bg-background">
+        <LocalizedLink href={href}>
+          {cta}
+          <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+        </LocalizedLink>
+      </Button>
+    </Surface>
   );
 }
 

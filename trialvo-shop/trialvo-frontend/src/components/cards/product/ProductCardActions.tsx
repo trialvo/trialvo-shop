@@ -1,6 +1,6 @@
 import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, FlaskConical } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 
 export type ProductCardActionsProps = {
@@ -19,7 +19,9 @@ export function ProductCardActions({
   onStartTrial,
   compact = false,
 }: Readonly<ProductCardActionsProps>) {
-  const trialLabel = language === "bn" ? "ফ্রি ট্রায়াল" : "Start free trial";
+  // The card CTA is the instant demo — the fastest path in. The own-domain
+  // trial is offered on the product page and after the demo is ready.
+  const trialLabel = language === "bn" ? "ইনস্ট্যান্ট ডেমো" : "Instant demo";
   const detailsLabel = language === "bn" ? "বিস্তারিত" : "View details";
 
   return (
@@ -31,7 +33,7 @@ export function ProductCardActions({
           className="h-9 flex-1 rounded-lg bg-foreground text-background shadow-none hover:bg-foreground/90"
           onClick={onStartTrial}
         >
-          <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
+          <Zap className="h-3.5 w-3.5" aria-hidden="true" />
           {trialLabel}
         </Button>
       ) : null}
