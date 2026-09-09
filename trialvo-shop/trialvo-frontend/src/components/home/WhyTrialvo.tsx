@@ -43,10 +43,10 @@ const REASONS: Reason[] = [
   {
     id: "trial",
     icon: BadgeCheck,
-    title: { bn: "কেনার আগে লাইভ ট্রায়াল", en: "Live trial before you buy" },
+    title: { bn: "ইনস্ট্যান্ট ডেমো, তারপর নিজের ডোমেইনে ট্রায়াল", en: "Instant demo, then a trial on your own domain" },
     description: {
-      bn: "স্ক্রিনশট দেখে অনুমান করতে হবে না। আসল চালু প্রোডাক্টে নিজে ঢুকে ফিচার, অ্যাডমিন প্যানেল ও গতি পরীক্ষা করে তারপর সিদ্ধান্ত নিন।",
-      en: "No guessing from screenshots. Log into a real running instance, test the features, admin panel, and speed, then decide.",
+      bn: "এক মিনিটে ডেমোতে ঢুকুন। পছন্দ হলে আপনার নিজের ডোমেইন ও হোস্টিংয়ে এক মাস ফ্রি চালান — কেনার আগে আসল ক্রেতা নিয়ে যাচাই। এই সুবিধা অন্য কেউ দেয় না।",
+      en: "Get into the demo in a minute. Like it? Run it free for a month on your own domain and hosting — verify with real customers before buying. Nobody else offers this.",
     },
   },
   {

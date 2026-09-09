@@ -120,10 +120,16 @@ module.exports = {
       const {
         autoApproveHosted, hostedDays, selfHostedDays, paidExtendDays,
         extendDays, extendPriceBdt, extendPriceUsd, trialsEnabled,
+        demoEnabled, domainEnabled, domainMonths, defaultMonths,
+        hostingPurchaseEnabled, fulfillmentSlaHours, demoResetEnabled,
+        demoMaxPerEmailDay, demoMaxPerIpHour,
       } = req.body || {};
       const settings = await updateTrialSettings({
         autoApproveHosted, hostedDays, selfHostedDays, paidExtendDays,
         extendDays, extendPriceBdt, extendPriceUsd, trialsEnabled,
+        demoEnabled, domainEnabled, domainMonths, defaultMonths,
+        hostingPurchaseEnabled, fulfillmentSlaHours, demoResetEnabled,
+        demoMaxPerEmailDay, demoMaxPerIpHour,
       });
       res.json({ message: 'Trial settings updated', ...settings });
     } catch (error) {

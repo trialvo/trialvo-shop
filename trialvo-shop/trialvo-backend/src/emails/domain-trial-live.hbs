@@ -1,0 +1,35 @@
+<p style="margin:0 0 16px;font-size:16px;">Hi {{name}},</p>
+<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">
+  <strong>{{productName}}</strong> is now live on your domain. Your free trial runs until <strong>{{expiresOn}}</strong>.
+</p>
+
+<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e5e7eb;border-radius:10px;margin:0 0 20px;">
+  <tr>
+    <td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;">Storefront</td>
+    <td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-size:14px;"><a href="{{shopUrl}}" style="color:#0f766e;font-weight:600;">{{shopUrl}}</a></td>
+  </tr>
+  <tr>
+    <td style="padding:14px 16px;{{#if adminEmail}}border-bottom:1px solid #e5e7eb;{{/if}}font-size:13px;color:#6b7280;">Admin panel</td>
+    <td style="padding:14px 16px;{{#if adminEmail}}border-bottom:1px solid #e5e7eb;{{/if}}font-size:14px;"><a href="{{adminUrl}}" style="color:#0f766e;font-weight:600;">{{adminUrl}}</a></td>
+  </tr>
+  {{#if adminEmail}}
+  <tr>
+    <td style="padding:14px 16px;font-size:13px;color:#6b7280;">Admin login</td>
+    <td style="padding:14px 16px;font-size:14px;font-family:ui-monospace,Menlo,monospace;">{{adminEmail}}<br/><span style="color:#6b7280;font-size:12px;">Password is on your status page</span></td>
+  </tr>
+  {{/if}}
+</table>
+
+{{#if notes}}
+<p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#374151;"><strong>From our team:</strong> {{notes}}</p>
+{{/if}}
+
+<p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Your status page has the login and a one-click purchase when you are ready to keep it:</p>
+<p style="margin:0 0 24px;">
+  <a href="{{statusUrl}}" style="display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 20px;border-radius:8px;">
+    Open status page
+  </a>
+</p>
+<p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">
+  Buying before the trial ends keeps everything exactly where it is — same server, same data, no migration.
+</p>

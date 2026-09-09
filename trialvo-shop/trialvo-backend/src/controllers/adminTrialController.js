@@ -1,10 +1,16 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
-const { decrypt } = require('../utils/crypto');
+const { decrypt, encrypt } = require('../utils/crypto');
 const { sendMail } = require('../services/mailer');
 const { provisionFromRequest } = require('../services/provisioner');
 const { logEvent } = require('../services/trialEvents');
-const { getTrialSettings, defaultDaysForType, clampDays } = require('../services/trialSettings');
+const {
+    getTrialSettings, defaultDaysForType, clampDays, clampMonths, monthsToDays, expiresAtForMonths,
+} = require('../services/trialSettings');
+const {
+    STAGES, HOST_KINDS, setStage, parseHistory, normaliseDomain,
+} = require('../services/trialFulfillment');
+const { domainTrialLiveEmail, FRONTEND } = require('../services/trialEmails');
 const { listBackups, getBackupForInstance, openStoredBackup, backupKeepCount } = require('../services/backupService');
 const { buildMigrationZip } = require('../services/trialBackupCodec');
 const { buildInstallerZip, buildTrialInstallerZip } = require('../services/packager');
@@ -38,22 +44,235 @@ function sanitizeInstanceForAdminList(row) {
     return out;
 }
 
+/**
+ * GET /api/admin/trial-requests?type=hosted|self_hosted&stage=&status=&product=&q=
+ * Joins the latest instance + source demo so the queue can render hosting chips,
+ * aging and "came from demo" without N+1 calls.
+ */
 async function listTrialRequests(req, res, next) {
     try {
-        const { status, product, q } = req.query;
-        let sql = `SELECT tr.*, p.slug AS product_slug, p.name AS product_name
-                   FROM trial_requests tr JOIN products p ON p.id = tr.product_id WHERE 1=1`;
+        const { status, product, q, type, stage } = req.query;
+        let sql = `SELECT tr.*, p.slug AS product_slug, p.name AS product_name,
+                          ti.id AS instance_id, ti.status AS instance_status, ti.expires_at AS instance_expires,
+                          ti.shop_url AS instance_shop_url, ti.provision_mode,
+                          src.created_at AS source_demo_started_at,
+                          TIMESTAMPDIFF(HOUR, tr.created_at, NOW()) AS age_hours,
+                          a.full_name AS assigned_admin_name
+                   FROM trial_requests tr
+                   JOIN products p ON p.id = tr.product_id
+                   LEFT JOIN trial_instances ti ON ti.id = (
+                       SELECT id FROM trial_instances WHERE request_id = tr.id ORDER BY created_at DESC LIMIT 1
+                   )
+                   LEFT JOIN trial_requests src ON src.id = tr.source_request_id
+                   LEFT JOIN admin_profiles a ON a.id = tr.assigned_admin_id
+                   WHERE 1=1`;
         const params = [];
         if (status) { params.push(status); sql += ` AND tr.status = $${params.length}`; }
+        if (type && ['hosted', 'self_hosted'].includes(type)) { params.push(type); sql += ` AND tr.trial_type = $${params.length}`; }
+        if (stage) { params.push(stage); sql += ` AND tr.fulfillment_stage = $${params.length}`; }
         if (product) { params.push(product); sql += ` AND p.slug = $${params.length}`; }
         if (q) {
             params.push(`%${q}%`);
-            sql += ` AND (LOWER(tr.customer_name) LIKE LOWER($${params.length}) OR LOWER(tr.email) LIKE LOWER($${params.length}))`;
+            sql += ` AND (LOWER(tr.customer_name) LIKE LOWER($${params.length}) OR LOWER(tr.email) LIKE LOWER($${params.length}) OR LOWER(COALESCE(tr.desired_domain,'')) LIKE LOWER($${params.length}))`;
         }
-        sql += ' ORDER BY tr.created_at DESC LIMIT 200';
+        sql += ' ORDER BY tr.created_at DESC LIMIT 300';
         const { rows } = await pool.query(sql, params);
-        res.json(rows);
+        res.json(rows.map((r) => ({ ...r, stage_history: parseHistory(r.stage_history) })));
     } catch (err) { next(err); }
+}
+
+/** Counts per stage / type for the queue header badges. */
+async function getTrialRequestCounts(req, res, next) {
+    try {
+        const { rows } = await pool.query(`
+            SELECT trial_type, status, fulfillment_stage, COUNT(*) AS n,
+                   SUM(TIMESTAMPDIFF(HOUR, created_at, NOW()) >= 24
+                       AND status = 'pending') AS overdue
+              FROM trial_requests
+             GROUP BY trial_type, status, fulfillment_stage
+        `);
+        const out = { demo: { total: 0, pending: 0, active: 0 }, domain: { total: 0, byStage: {}, overdue: 0 } };
+        for (const r of rows) {
+            const n = Number(r.n || 0);
+            if (r.trial_type === 'hosted') {
+                out.demo.total += n;
+                if (r.status === 'pending') out.demo.pending += n;
+                if (r.status === 'active') out.demo.active += n;
+            } else {
+                out.domain.total += n;
+                const key = r.fulfillment_stage || 'received';
+                out.domain.byStage[key] = (out.domain.byStage[key] || 0) + n;
+                out.domain.overdue += Number(r.overdue || 0);
+            }
+        }
+        res.json(out);
+    } catch (err) { next(err); }
+}
+
+async function loadRequestWithProduct(id) {
+    const { rows } = await pool.query(
+        `SELECT tr.*, p.slug AS product_slug, p.name AS product_name
+           FROM trial_requests tr JOIN products p ON p.id = tr.product_id WHERE tr.id = $1`,
+        [id]
+    );
+    return rows[0] || null;
+}
+
+function stageError(res, err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    throw err;
+}
+
+/** Staff takes ownership: received|hosting_pending → deploying. */
+async function pickupTrialRequest(req, res, next) {
+    try {
+        const request = await loadRequestWithProduct(req.params.id);
+        if (!request) return res.status(404).json({ error: 'Not found' });
+        if (request.trial_type !== 'self_hosted') return res.status(400).json({ error: 'Only own-domain trials use the fulfillment pipeline' });
+
+        await pool.query('UPDATE trial_requests SET assigned_admin_id = $1 WHERE id = $2', [req.admin?.id || null, request.id]);
+        const updated = await setStage(request.id, STAGES.DEPLOYING, { by: req.admin?.id || null, note: req.body?.note || 'picked up' });
+        res.json({ ok: true, request: { ...updated, stage_history: parseHistory(updated.stage_history) } });
+    } catch (err) {
+        try { stageError(res, err); } catch (e) { next(e); }
+    }
+}
+
+/** Hosting sold/ready for buy_from_trialvo requests. Staff may record host kind now. */
+async function confirmTrialHosting(req, res, next) {
+    try {
+        const request = await loadRequestWithProduct(req.params.id);
+        if (!request) return res.status(404).json({ error: 'Not found' });
+        if (request.hosting_source !== 'buy_from_trialvo') {
+            return res.status(400).json({ error: 'This request already has its own hosting' });
+        }
+        const kind = String(req.body?.hostKind || '').toLowerCase();
+        if (!HOST_KINDS.includes(kind)) return res.status(400).json({ error: 'hostKind must be vps or cpanel' });
+        const domain = req.body?.domain ? normaliseDomain(req.body.domain) : request.desired_domain;
+
+        await pool.query(
+            `UPDATE trial_requests
+                SET host_kind = $1, has_hosting = 1, desired_domain = COALESCE($2, desired_domain),
+                    assigned_admin_id = COALESCE(assigned_admin_id, $3), updated_at = NOW()
+              WHERE id = $4`,
+            [kind, domain, req.admin?.id || null, request.id]
+        );
+        const updated = await setStage(request.id, STAGES.DEPLOYING, { by: req.admin?.id || null, note: req.body?.note || 'hosting confirmed' });
+        res.json({ ok: true, request: { ...updated, stage_history: parseHistory(updated.stage_history) } });
+    } catch (err) {
+        try { stageError(res, err); } catch (e) { next(e); }
+    }
+}
+
+/** Something went wrong mid-deploy — push it back to the queue. */
+async function reopenTrialRequest(req, res, next) {
+    try {
+        const request = await loadRequestWithProduct(req.params.id);
+        if (!request) return res.status(404).json({ error: 'Not found' });
+        const updated = await setStage(request.id, STAGES.RECEIVED, { by: req.admin?.id || null, note: req.body?.note || 'reopened' });
+        res.json({ ok: true, request: { ...updated, stage_history: parseHistory(updated.stage_history) } });
+    } catch (err) {
+        try { stageError(res, err); } catch (e) { next(e); }
+    }
+}
+
+/**
+ * POST /api/admin/trial-requests/:id/fulfill
+ * Staff finished deploying on the customer's server. Creates a `manual`
+ * instance (no agent, no remote commands), activates the request, emails the
+ * customer. Body: { shopUrl, adminUrl, adminEmail?, adminPassword?, months?, notes? }
+ */
+async function fulfillTrialRequest(req, res, next) {
+    try {
+        const request = await loadRequestWithProduct(req.params.id);
+        if (!request) return res.status(404).json({ error: 'Not found' });
+        if (request.trial_type !== 'self_hosted') return res.status(400).json({ error: 'Only own-domain trials can be fulfilled manually' });
+        if (request.status === 'rejected') return res.status(400).json({ error: 'Request was rejected' });
+
+        const existingInst = await pool.query(
+            'SELECT id FROM trial_instances WHERE request_id = $1 AND status NOT IN (\'destroyed\', \'failed\') LIMIT 1',
+            [request.id]
+        );
+        if (existingInst.rows.length) return res.status(409).json({ error: 'This request already has a live instance' });
+
+        const shopUrl = String(req.body?.shopUrl || '').trim();
+        const adminUrl = String(req.body?.adminUrl || '').trim();
+        if (!/^https?:\/\/\S+/.test(shopUrl) || !/^https?:\/\/\S+/.test(adminUrl)) {
+            return res.status(400).json({ error: 'shopUrl and adminUrl must be full URLs (https://...)' });
+        }
+        if (request.hosting_source === 'buy_from_trialvo' && !request.has_hosting && !req.body?.hostKind) {
+            return res.status(400).json({ error: 'Confirm hosting (VPS/cPanel) before fulfilling', code: 'HOSTING_NOT_CONFIRMED' });
+        }
+
+        const settings = await getTrialSettings();
+        const months = clampMonths(req.body?.months, request.requested_months || settings.defaultMonths);
+        const expiresAt = expiresAtForMonths(months);
+        const adminEmail = String(req.body?.adminEmail || request.email).trim().toLowerCase();
+        const adminPassword = req.body?.adminPassword ? String(req.body.adminPassword) : null;
+        const notes = req.body?.notes ? String(req.body.notes).slice(0, 2000) : null;
+        const hostKind = req.body?.hostKind ? String(req.body.hostKind).toLowerCase() : request.host_kind;
+
+        const instanceId = uuidv4();
+        const installId = uuidv4().replace(/-/g, '');
+        let domain = null;
+        try { domain = new URL(shopUrl).hostname.replace(/^www\./, ''); } catch { domain = request.desired_domain; }
+
+        const meta = {
+            note: 'Staff-deployed own-domain trial (no agent)',
+            provisionMode: 'manual',
+            hostKind,
+            hostingSource: request.hosting_source,
+            months,
+            fulfilledBy: req.admin?.id || null,
+            staffNotes: notes,
+        };
+
+        await pool.query(
+            `INSERT INTO trial_instances (
+               id, install_id, request_id, product_id, trial_type, status, provision_mode,
+               domain, shop_url, admin_url, admin_email, admin_password_enc,
+               started_at, expires_at, meta
+             ) VALUES ($1,$2,$3,$4,'self_hosted','active','manual',$5,$6,$7,$8,$9,NOW(),$10,$11)`,
+            [
+                instanceId, installId, request.id, request.product_id,
+                domain, shopUrl, adminUrl, adminEmail, adminPassword ? encrypt(adminPassword) : null,
+                expiresAt, JSON.stringify(meta),
+            ]
+        );
+
+        await pool.query(
+            `UPDATE trial_requests
+                SET status = 'active', approved_at = COALESCE(approved_at, NOW()), requested_months = $1,
+                    requested_days = $2, host_kind = COALESCE($3, host_kind), has_hosting = 1,
+                    admin_notes = CASE WHEN $4 IS NULL THEN admin_notes ELSE CONCAT(COALESCE(admin_notes,''), '\n[fulfill] ', $4) END,
+                    assigned_admin_id = COALESCE(assigned_admin_id, $5), updated_at = NOW()
+              WHERE id = $6`,
+            [months, monthsToDays(months), hostKind, notes, req.admin?.id || null, request.id]
+        );
+        const updated = await setStage(request.id, STAGES.LIVE, { by: req.admin?.id || null, note: notes || 'deployed', force: true });
+
+        await logEvent(instanceId, 'manual_fulfilled', { by: req.admin?.id, months, shopUrl, adminUrl, hostKind });
+
+        const statusUrl = `${FRONTEND}/trial-status/${request.public_token}`;
+        const productName = typeof request.product_name === 'object'
+            ? (request.product_name?.en || request.product_name?.bn)
+            : request.product_name;
+        const mail = domainTrialLiveEmail({
+            name: request.customer_name, productName, shopUrl, adminUrl,
+            adminEmail: adminPassword ? adminEmail : null, expiresAt, notes, statusUrl,
+        });
+        sendMail({ to: request.email, ...mail }).catch((e) => console.error('[fulfill] live email failed:', e.message));
+
+        res.json({
+            ok: true,
+            instanceId,
+            expiresAt,
+            months,
+            request: { ...updated, stage_history: parseHistory(updated.stage_history) },
+        });
+    } catch (err) {
+        try { stageError(res, err); } catch (e) { next(e); }
+    }
 }
 
 async function getTrialRequest(req, res, next) {
@@ -64,7 +283,7 @@ async function getTrialRequest(req, res, next) {
             [req.params.id]
         );
         if (!rows.length) return res.status(404).json({ error: 'Not found' });
-        res.json(rows[0]);
+        res.json({ ...rows[0], stage_history: parseHistory(rows[0].stage_history) });
     } catch (err) { next(err); }
 }
 
@@ -99,6 +318,9 @@ async function rejectTrialRequest(req, res, next) {
             "UPDATE trial_requests SET status = 'rejected', admin_notes = COALESCE($1, admin_notes), updated_at = NOW() WHERE id = $2",
             [reason || null, req.params.id]
         );
+        if (rows[0].trial_type === 'self_hosted') {
+            await setStage(req.params.id, STAGES.REJECTED, { by: req.admin?.id || null, note: reason || null, force: true });
+        }
         const { trialRejectedEmail } = require('../services/trialEmails');
         const mail = trialRejectedEmail({
             name: rows[0].customer_name,
@@ -192,14 +414,32 @@ async function setInstanceStatus(id, status) {
     await pool.query(`UPDATE trial_instances SET status = $1, updated_at = NOW()${extra} WHERE id = $2`, [status, id]);
 }
 
+/**
+ * Staff-deployed instances have no agent: remote commands would sit in the
+ * queue forever. For them, admin actions only record intent + status; the
+ * actual server work happens by hand.
+ */
+function isManualInstance(inst) {
+    if (!inst) return false;
+    if (inst.provision_mode === 'manual') return true;
+    const { parseInstanceMeta } = require('../services/sharedDemoProvisioner');
+    return parseInstanceMeta(inst.meta).provisionMode === 'manual';
+}
+
 async function freezeInstance(req, res, next) {
     try {
         const { rows } = await pool.query(
-            'SELECT admin_email, meta, trial_type FROM trial_instances WHERE id = $1',
+            'SELECT admin_email, meta, trial_type, provision_mode FROM trial_instances WHERE id = $1',
             [req.params.id]
         );
         const inst = rows[0];
         const { isSharedDemoInstance, revokeTrialAdmin } = require('../services/sharedDemoProvisioner');
+
+        if (isManualInstance(inst)) {
+            await setInstanceStatus(req.params.id, 'frozen');
+            await logEvent(req.params.id, 'manual_frozen', { by: req.admin?.id, note: 'staff must disable on server' });
+            return res.json({ ok: true, status: 'frozen', manual: true, message: 'Marked frozen. Disable the deployment on the customer server by hand.' });
+        }
 
         if (inst && isSharedDemoInstance(inst)) {
             // Per-product demo: freeze = revoke ADMIN login on that product's demo DB
@@ -219,11 +459,17 @@ async function freezeInstance(req, res, next) {
 async function unfreezeInstance(req, res, next) {
     try {
         const { rows } = await pool.query(
-            'SELECT admin_email, admin_password_enc, meta, trial_type FROM trial_instances WHERE id = $1',
+            'SELECT admin_email, admin_password_enc, meta, trial_type, provision_mode FROM trial_instances WHERE id = $1',
             [req.params.id]
         );
         const inst = rows[0];
         const { isSharedDemoInstance, reactivateTrialAdmin } = require('../services/sharedDemoProvisioner');
+
+        if (isManualInstance(inst)) {
+            await setInstanceStatus(req.params.id, 'active');
+            await logEvent(req.params.id, 'manual_unfrozen', { by: req.admin?.id });
+            return res.json({ ok: true, status: 'active', manual: true });
+        }
 
         if (inst && isSharedDemoInstance(inst)) {
             const password = inst.admin_password_enc ? decrypt(inst.admin_password_enc) : null;
@@ -244,7 +490,7 @@ async function extendInstance(req, res, next) {
     try {
         const days = parseInt(req.body?.days, 10) || 7;
         const { rows } = await pool.query(
-            'SELECT admin_email, admin_password_enc, meta, status FROM trial_instances WHERE id = $1',
+            'SELECT admin_email, admin_password_enc, meta, status, provision_mode, request_id FROM trial_instances WHERE id = $1',
             [req.params.id]
         );
         const inst = rows[0];
@@ -254,6 +500,15 @@ async function extendInstance(req, res, next) {
             'UPDATE trial_instances SET expires_at = DATE_ADD(COALESCE(expires_at, NOW()), INTERVAL ? DAY), status = \'active\', updated_at = NOW() WHERE id = ?',
             [days, req.params.id]
         );
+
+        if (isManualInstance(inst)) {
+            // Extending a live domain trial pulls it back out of "expiring"/"expired".
+            if (inst.request_id) {
+                await setStage(inst.request_id, STAGES.LIVE, { by: req.admin?.id || null, note: `extended ${days}d`, force: true });
+            }
+            await logEvent(req.params.id, 'manual_extended', { days, by: req.admin?.id });
+            return res.json({ ok: true, days, manual: true });
+        }
 
         if (inst && isSharedDemoInstance(inst)) {
             const password = inst.admin_password_enc ? decrypt(inst.admin_password_enc) : null;
@@ -275,11 +530,17 @@ async function destroyInstance(req, res, next) {
         const hard = req.body?.mode === 'hard';
 
         const { rows } = await pool.query(
-            'SELECT admin_email, meta, trial_type FROM trial_instances WHERE id = $1',
+            'SELECT admin_email, meta, trial_type, provision_mode FROM trial_instances WHERE id = $1',
             [instanceId]
         );
         const inst = rows[0];
         const { isSharedDemoInstance, revokeTrialAdmin } = require('../services/sharedDemoProvisioner');
+
+        if (isManualInstance(inst)) {
+            await setInstanceStatus(instanceId, 'destroyed');
+            await logEvent(instanceId, 'manual_destroyed', { mode, by: req.admin?.id, note: 'staff removed deployment by hand' });
+            return res.json({ ok: true, status: 'destroyed', mode, manual: true, message: 'Marked destroyed. Remove the deployment from the customer server by hand.' });
+        }
 
         // Shared demo Option 1: revoke ADMIN only — never compose down
         if (inst && isSharedDemoInstance(inst)) {
@@ -621,6 +882,7 @@ async function getDeploymentAnalytics(req, res, next) {
 
 module.exports = {
     listTrialRequests, getTrialRequest, approveTrialRequest, rejectTrialRequest, patchTrialRequest,
+    getTrialRequestCounts, pickupTrialRequest, confirmTrialHosting, reopenTrialRequest, fulfillTrialRequest,
     listInstances, getInstance, getInstanceEvents,
     freezeInstance, unfreezeInstance, extendInstance, destroyInstance,
     backupInstance, restoreInstance, listInstanceBackups, getInstanceCredentials,

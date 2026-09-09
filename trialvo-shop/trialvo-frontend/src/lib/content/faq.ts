@@ -59,20 +59,32 @@ const FAQ: Record<Locale, FaqGroup[]> = {
     },
     {
       id: "trial",
-      title: "লাইভ ট্রায়াল",
-      description: "কেনার আগে প্রোডাক্ট চালিয়ে দেখার প্রক্রিয়া।",
+      title: "ডেমো ও ফ্রি ট্রায়াল",
+      description: "ইনস্ট্যান্ট ডেমো এবং নিজের ডোমেইনে ট্রায়াল — দুটো পথ কীভাবে কাজ করে।",
       entries: [
         {
           id: "how-trial-works",
-          question: "লাইভ ট্রায়াল কীভাবে কাজ করে?",
+          question: "ইনস্ট্যান্ট ডেমো কীভাবে কাজ করে?",
           answer:
-            "প্রোডাক্ট পেজ থেকে ট্রায়ালের অনুরোধ করুন — নাম, ইমেইল ও ব্যবহারের উদ্দেশ্য দিলেই হয়। অনুমোদনের পর আপনি একটি সীমিত মেয়াদের চালু ইনস্ট্যান্স পাবেন, যেখানে শপ ও অ্যাডমিন প্যানেল দুটোই আসল প্রোডাক্টের মতো কাজ করবে। স্ট্যাটাস লিংক ইমেইলে পাঠানো হয়।",
+            "যেকোনো প্রোডাক্টে \"ইনস্ট্যান্ট ডেমো\" চাপুন, নাম ও ইমেইল দিন — সাথে সাথে স্টোরফ্রন্ট ও অ্যাডমিন প্যানেলের লগইন পাবেন। কোনো অ্যাপ্রুভালের অপেক্ষা নেই। ডেমোটি শেয়ার্ড — অন্য মূল্যায়নকারীরাও একই স্টোর দেখেন এবং ডেটা নিয়মিত রিসেট হয়, তাই আসল গ্রাহকের তথ্য দেবেন না।",
+        },
+        {
+          id: "own-domain-trial",
+          question: "নিজের ডোমেইনে ফ্রি ট্রায়াল কী?",
+          answer:
+            "ডেমো পছন্দ হলে আপনি আপনার নিজের ডোমেইন ও হোস্টিংয়ে (VPS বা cPanel) পুরো সিস্টেমটি পূর্ণ এক মাস ফ্রি চালাতে পারবেন। আমাদের টিম আপনার সার্ভারে নিজে বসিয়ে দেয় — আপনাকে ইনস্টল করতে হয় না। আসল গ্রাহক নিয়ে ব্যবসা চালিয়ে যাচাই করুন, তারপর কিনুন। এই সুবিধা অন্য কেউ দেয় না।",
+        },
+        {
+          id: "trial-hosting",
+          question: "আমার হোস্টিং নেই — তাহলে ডোমেইন ট্রায়াল নিতে পারব?",
+          answer:
+            "হ্যাঁ। ট্রায়াল ফর্মে \"Trialvo থেকে হোস্টিং নেব\" বেছে নিন। আমাদের টিম হোস্টিং প্ল্যান ও দাম নিয়ে যোগাযোগ করবে; হোস্টিং কনফার্ম হলে সেখানেই ট্রায়াল বসানো হবে। নিজের হোস্টিং থাকলে VPS না cPanel তা জানালেই যথেষ্ট।",
         },
         {
           id: "trial-cost",
-          question: "ট্রায়ালের জন্য টাকা লাগে?",
+          question: "ডেমো বা ট্রায়ালের জন্য টাকা লাগে?",
           answer:
-            "না, ট্রায়াল শুরু করতে কোনো পেমেন্ট লাগে না এবং কার্ডের তথ্যও দিতে হয় না। শুধু মেয়াদ বাড়াতে চাইলে আলাদা এক্সটেন্ড প্যাক প্রযোজ্য হয়।",
+            "না। ইনস্ট্যান্ট ডেমো ও নিজের ডোমেইনে ট্রায়াল — দুটোই ফ্রি, কার্ডের তথ্যও লাগে না। শুধু ডেমোর মেয়াদ বাড়াতে চাইলে আলাদা এক্সটেন্ড প্যাক প্রযোজ্য। ট্রায়াল শেষে কিনলে একই ইনস্ট্যান্স পারমানেন্ট হয় — ডেটা বা সেটআপ কিছু হারায় না।",
         },
         {
           id: "trial-vs-purchase",
@@ -84,7 +96,7 @@ const FAQ: Record<Locale, FaqGroup[]> = {
           id: "trial-data",
           question: "ট্রায়ালে যোগ করা ডেটা কি থেকে যাবে?",
           answer:
-            "ট্রায়াল মূল্যায়নের জন্য, ব্যবসা পরিচালনার জন্য নয়। মেয়াদ শেষ হওয়ার পর ট্রায়াল পরিবেশের ডেমো ডেটা মুছে ফেলা হতে পারে, তাই গুরুত্বপূর্ণ তথ্য ট্রায়ালে রাখবেন না।",
+            "ইনস্ট্যান্ট ডেমো শেয়ার্ড ও নিয়মিত রিসেট হয় — সেখানে গুরুত্বপূর্ণ কিছু রাখবেন না। নিজের ডোমেইনে ট্রায়াল আপনার সার্ভারে চলে, তাই ডেটা আপনারই থাকে; ট্রায়াল শেষে কিনলে সবকিছু অক্ষত থেকে যায়।",
         },
       ],
     },
@@ -229,20 +241,32 @@ const FAQ: Record<Locale, FaqGroup[]> = {
     },
     {
       id: "trial",
-      title: "Live trial",
-      description: "How to run a product before you buy it.",
+      title: "Demo & free trial",
+      description: "How the instant demo and the own-domain trial work.",
       entries: [
         {
           id: "how-trial-works",
-          question: "How does the live trial work?",
+          question: "How does the instant demo work?",
           answer:
-            "Request a trial from the product page with your name, email, and intended use. Once approved you get a time-limited running instance where both the shop and admin panel behave like the real product. The status link is emailed to you.",
+            "Click “Instant demo” on any product, enter your name and email, and you get storefront and admin panel logins immediately — no approval queue. The demo is shared: other evaluators see the same store and data resets regularly, so do not enter real customer data.",
+        },
+        {
+          id: "own-domain-trial",
+          question: "What is the free trial on my own domain?",
+          answer:
+            "If you like the demo, you can run the full system on your own domain and hosting (VPS or cPanel) free for a full month. Our team deploys it on your server — you do not install anything. Run real business with real customers, then buy. Nobody else offers this.",
+        },
+        {
+          id: "trial-hosting",
+          question: "I have no hosting — can I still get the domain trial?",
+          answer:
+            "Yes. Pick “Get hosting from Trialvo” in the trial form. Our team contacts you about hosting plans and pricing; once hosting is confirmed we deploy the trial there. If you have your own hosting, just tell us whether it is VPS or cPanel.",
         },
         {
           id: "trial-cost",
-          question: "Does the trial cost anything?",
+          question: "Does the demo or trial cost anything?",
           answer:
-            "No. Starting a trial requires no payment and no card details. A separate extend pack applies only if you want to extend the trial period.",
+            "No. Both the instant demo and the own-domain trial are free and need no card details. A separate extend pack applies only if you want more demo days. When you buy at the end of a trial, the same instance becomes permanent — no data or setup is lost.",
         },
         {
           id: "trial-vs-purchase",
@@ -254,7 +278,7 @@ const FAQ: Record<Locale, FaqGroup[]> = {
           id: "trial-data",
           question: "Will the data I add during a trial be kept?",
           answer:
-            "A trial is for evaluation, not for running a business. Demo data in the trial environment may be deleted after the trial ends, so do not keep anything important there.",
+            "The instant demo is shared and resets regularly — keep nothing important there. The own-domain trial runs on your server, so the data is yours; buy at the end of the trial and everything stays intact.",
         },
       ],
     },
@@ -372,12 +396,12 @@ export function faqFlat(locale: Locale): FaqEntry[] {
 /** The highest-intent questions, for the home page teaser section. */
 export function faqHighlights(locale: Locale): FaqEntry[] {
   const wanted = [
+    "how-trial-works",
+    "own-domain-trial",
+    "trial-hosting",
     "what-is-included",
     "one-time-payment",
-    "how-trial-works",
     "lifetime-meaning",
-    "hosting-needed",
-    "support-scope",
   ];
   const all = faqFlat(locale);
   return wanted

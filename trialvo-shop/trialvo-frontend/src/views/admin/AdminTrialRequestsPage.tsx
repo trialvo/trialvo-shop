@@ -1,181 +1,148 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Check, X, Loader2, ClipboardList, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
-import { AdminNumberInput } from '@/components/admin/AdminNumberInput';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
-import { useToast } from '@/components/ui/use-toast';
-import { useAdminTrialRequests, useTrialRequestMutations } from '@/hooks/useTrialRequests';
-import { useTrialSettings, defaultDaysForType } from '@/hooks/useTrialSettings';
-import { TrialStatusBadge } from '@/components/admin/TrialStatusBadge';
-import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
-import { QueryError } from '@/components/admin/QueryError';
+import React, { useMemo, useState } from "react";
+import { Globe, Search, Zap } from "lucide-react";
+import { QueryError } from "@/components/admin/QueryError";
+import { DemoRequestsTable } from "@/components/admin/trial/DemoRequestsTable";
+import { DomainTrialQueue } from "@/components/admin/trial/DomainTrialQueue";
+import { TrialFunnelCard } from "@/components/admin/trial/TrialFunnelCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useAdminTrialRequests, useTrialRequestCounts } from "@/hooks/useTrialRequests";
+import { useTrialSettings } from "@/hooks/useTrialSettings";
+import type { FulfillmentStage } from "@/lib/trial/types";
+import { cn } from "@/lib/utils";
 
+type Tab = "domain" | "demo";
+
+const DOMAIN_FILTERS: { id: string; label: string; stages?: FulfillmentStage[] }[] = [
+  { id: "open", label: "Open", stages: ["received", "hosting_pending", "deploying"] },
+  { id: "received", label: "Received", stages: ["received"] },
+  { id: "hosting_pending", label: "Hosting", stages: ["hosting_pending"] },
+  { id: "deploying", label: "Deploying", stages: ["deploying"] },
+  { id: "live", label: "Live", stages: ["live", "expiring"] },
+  { id: "done", label: "Ended", stages: ["expired", "converted", "rejected"] },
+  { id: "all", label: "All" },
+];
+
+const DEMO_FILTERS = [
+  { id: "pending", label: "Needs attention" },
+  { id: "active", label: "Active" },
+  { id: "rejected", label: "Rejected" },
+  { id: "all", label: "All" },
+];
+
+/**
+ * Trial Requests — two queues in one page. The own-domain queue is where staff
+ * actually work (manual fulfilment); the demo tab is an audit trail with
+ * repair actions for the few requests that did not auto-provision.
+ */
 const AdminTrialRequestsPage: React.FC = () => {
-  const { toast } = useToast();
-  const { data, isLoading, isError, error, refetch } = useAdminTrialRequests();
-  const { data: trialSettings } = useTrialSettings();
-  const { approve, reject } = useTrialRequestMutations();
-  const [filter, setFilter] = useState('pending');
-  const [approveTarget, setApproveTarget] = useState<{ id: string; trialType: string } | null>(null);
-  const [approveDays, setApproveDays] = useState(14);
-  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("domain");
+  const [domainFilter, setDomainFilter] = useState("open");
+  const [demoFilter, setDemoFilter] = useState("pending");
+  const [q, setQ] = useState("");
 
-  const rows = data?.filter((r) => filter === 'all' || r.status === filter) || [];
+  const { data: settings } = useTrialSettings();
+  const { data: counts } = useTrialRequestCounts();
+  const listArgs = tab === "domain"
+    ? { type: "self_hosted" as const, q: q || undefined }
+    : { type: "hosted" as const, q: q || undefined, status: demoFilter === "all" ? undefined : demoFilter };
+  const { data, isLoading, isError, error, refetch } = useAdminTrialRequests(listArgs);
 
-  const openApprove = (id: string, trialType: string) => {
-    setApproveTarget({ id, trialType });
-    setApproveDays(defaultDaysForType(trialSettings, trialType));
-  };
+  const domainRows = useMemo(() => {
+    if (tab !== "domain") return [];
+    const f = DOMAIN_FILTERS.find((x) => x.id === domainFilter);
+    const rows = data || [];
+    const filtered = f?.stages ? rows.filter((r) => f.stages!.includes(r.fulfillment_stage || "received")) : rows;
+    // Oldest open request first — that is the one about to breach SLA.
+    return [...filtered].sort((a, b) => (b.age_hours ?? 0) - (a.age_hours ?? 0));
+  }, [data, tab, domainFilter]);
 
-  const onApprove = async () => {
-    if (!approveTarget) return;
-    try {
-      await approve.mutateAsync({ id: approveTarget.id, days: approveDays });
-      toast({ title: 'Approved', description: `Provisioned for ${approveDays} days. Status link emailed to customer.` });
-      setApproveTarget(null);
-    } catch (e: any) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
-    }
-  };
-
-  const onReject = async () => {
-    if (!rejectTarget) return;
-    try {
-      await reject.mutateAsync({ id: rejectTarget, reason: 'Not approved at this time' });
-      toast({ title: 'Rejected' });
-      setRejectTarget(null);
-    } catch (e: any) {
-      toast({ title: 'Error', description: e.message, variant: 'destructive' });
-    }
-  };
-
-  const typeLabel = (t: string) => (t === 'hosted' ? 'Option 1 (Hosted)' : 'Option 2 (Self-hosted)');
+  const openDomain = counts
+    ? (counts.domain.byStage.received || 0) + (counts.domain.byStage.hosting_pending || 0) + (counts.domain.byStage.deploying || 0)
+    : 0;
 
   return (
     <div className="space-y-5">
       <div className="admin-page-header">
         <h1>Trial Requests</h1>
-        <p>Approve or reject customer trial requests</p>
+        <p>Own-domain trials are fulfilled by hand here. Instant demos provision themselves.</p>
       </div>
 
-      {trialSettings && (
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50 border border-border">
-            <Clock className="w-3.5 h-3.5" />
-            Option 1 default: {trialSettings.hostedDays}d
-            {trialSettings.autoApproveHosted && ' · auto-approve ON'}
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50 border border-border">
-            Option 2 default: {trialSettings.selfHostedDays}d
-          </span>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Kpi label="Open domain requests" value={openDomain} tone={counts?.domain.overdue ? "warn" : "default"} hint={counts?.domain.overdue ? `${counts.domain.overdue} past SLA` : `SLA ${settings?.fulfillmentSlaHours ?? 24}h`} />
+          <Kpi label="Domain trials live" value={counts?.domain.byStage.live || 0} hint={`${counts?.domain.byStage.converted || 0} converted`} />
+          <Kpi label="Active demos" value={counts?.demo.active || 0} hint={counts?.demo.pending ? `${counts.demo.pending} need attention` : "all auto-provisioned"} tone={counts?.demo.pending ? "warn" : "default"} />
         </div>
-      )}
+        <TrialFunnelCard className="lg:row-span-2" />
 
-      <div className="flex gap-2">
-        {['pending', 'active', 'rejected', 'all'].map((s) => (
-          <Button key={s} size="sm" variant={filter === s ? 'default' : 'outline'} onClick={() => setFilter(s)}>{s}</Button>
-        ))}
-      </div>
-
-      {isError && (
-        <QueryError what="trial requests" error={error} onRetry={() => refetch()} className="m-1" />
-      )}
-
-      <div className="admin-card overflow-x-auto">
-        {isLoading ? <Skeleton className="h-40 m-4" /> : (
-          <table className="w-full">
-            <thead>
-              <tr className="admin-table-header">
-                <th>Customer</th><th>Product</th><th>Type</th><th>Days</th><th>Status</th><th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id} className="admin-table-row">
-                  <td>
-                    <div className="text-sm font-medium">{r.customer_name}</div>
-                    <div className="text-xs text-muted-foreground">{r.email}</div>
-                  </td>
-                  <td>{r.product_name?.en || r.product_slug}</td>
-                  <td className="text-xs">{typeLabel(r.trial_type)}</td>
-                  <td className="text-xs">{r.requested_days}d</td>
-                  <td><TrialStatusBadge status={r.status} /></td>
-                  <td className="text-right space-x-1">
-                    {r.status === 'pending' && (
-                      <>
-                        <Button size="sm" onClick={() => openApprove(r.id, r.trial_type)} disabled={approve.isPending}>
-                          <Check className="w-3 h-3 mr-1" /> Approve
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => setRejectTarget(r.id)} disabled={reject.isPending} aria-label="Reject request">
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        {!isLoading && rows.length === 0 && (
-          <div className="admin-empty"><ClipboardList /><p>No requests</p></div>
-        )}
-      </div>
-
-      <Dialog open={!!approveTarget} onOpenChange={(open) => !open && setApproveTarget(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Approve trial request</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">
-              {approveTarget?.trialType === 'hosted'
-                ? 'Option 1 — grants ADMIN access on the shared Lifestyle demo (not a private Docker stack).'
-                : 'Option 2 — customer installs on their own domain (installer + license agent).'}
-            </p>
-            <div className="space-y-1.5">
-              <Label>Trial period (days)</Label>
-              <AdminNumberInput
-                integer
-                min={1}
-                max={365}
-                emptyAs={1}
-                value={approveDays}
-                onValueChange={(n) => setApproveDays(Math.min(365, Math.max(1, Math.trunc(n) || 1)))}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Default for this option: {defaultDaysForType(trialSettings, approveTarget?.trialType || 'hosted')} days
-              </p>
+        <div className="admin-card overflow-hidden">
+          <div className="flex flex-col gap-3 border-b border-border p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-1 rounded-lg bg-muted p-1" role="tablist">
+              <TabButton active={tab === "domain"} onClick={() => setTab("domain")} icon={Globe} label="Own-domain queue" count={openDomain} />
+              <TabButton active={tab === "demo"} onClick={() => setTab("demo")} icon={Zap} label="Instant demos" count={counts?.demo.pending || 0} />
+            </div>
+            <div className="relative sm:w-64">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email, domain" className="h-9 pl-8" aria-label="Search requests" />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setApproveTarget(null)}>Cancel</Button>
-            <Button onClick={onApprove} disabled={approve.isPending}>
-              {approve.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Approve & provision
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      <ConfirmDialog
-        open={!!rejectTarget}
-        onOpenChange={(open) => !open && setRejectTarget(null)}
-        title="Reject trial request"
-        destructive
-        confirmLabel="Reject"
-        busy={reject.isPending}
-        onConfirm={onReject}
-        description="The customer will see this request as not approved. You can still approve a future request from them."
-      />
+          <div className="flex flex-wrap gap-2 border-b border-border p-3">
+            {(tab === "domain" ? DOMAIN_FILTERS : DEMO_FILTERS).map((f) => {
+              const active = tab === "domain" ? domainFilter === f.id : demoFilter === f.id;
+              return (
+                <Button key={f.id} size="sm" variant={active ? "default" : "outline"} onClick={() => (tab === "domain" ? setDomainFilter(f.id) : setDemoFilter(f.id))}>
+                  {f.label}
+                </Button>
+              );
+            })}
+          </div>
+
+          {isError ? <QueryError what="trial requests" error={error} onRetry={() => refetch()} className="m-3" /> : null}
+
+          <div className="overflow-x-auto">
+            {tab === "domain" ? (
+              <DomainTrialQueue rows={domainRows} loading={isLoading} slaHours={settings?.fulfillmentSlaHours ?? 24} />
+            ) : (
+              <DemoRequestsTable rows={data || []} loading={isLoading} demoDays={settings?.hostedDays ?? 14} />
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
+
+function Kpi({ label, value, hint, tone = "default" }: Readonly<{ label: string; value: number; hint?: string; tone?: "default" | "warn" }>) {
+  return (
+    <div className="admin-card p-4">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className={cn("mt-1 text-2xl font-bold tabular-nums", tone === "warn" ? "text-amber-600 dark:text-amber-400" : "text-foreground")}>{value}</p>
+      {hint ? <p className="mt-0.5 text-[11px] text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+
+function TabButton({ active, onClick, icon: Icon, label, count }: Readonly<{ active: boolean; onClick: () => void; icon: typeof Zap; label: string; count: number }>) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors",
+        active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      <Icon className="h-4 w-4" aria-hidden="true" />
+      {label}
+      {count > 0 ? <span className="rounded-full bg-primary/10 px-1.5 text-[11px] font-semibold text-primary">{count}</span> : null}
+    </button>
+  );
+}
 
 export default AdminTrialRequestsPage;

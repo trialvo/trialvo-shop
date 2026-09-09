@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Snowflake, Sun, Trash2, Key, Loader2, Server, HardDrive, RotateCcw, AlertTriangle, Package, Download,
+  Snowflake, Sun, Trash2, Key, Loader2, Server, HardDrive, RotateCcw, AlertTriangle, Package, Download, ExternalLink,
 } from 'lucide-react';
+import { useQueryString } from '@/hooks/useQueryString';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -33,6 +34,18 @@ const AdminTrialInstancesPage: React.FC = () => {
   const [credsLoading, setCredsLoading] = useState(false);
   const [credsData, setCredsData] = useState<InstanceCredentials | null>(null);
   const [credsInstance, setCredsInstance] = useState<TrialInstanceRow | null>(null);
+
+  // Deep link from the Trial Requests queue: /admin/trial-instances?instance=<id>
+  const { searchParams } = useQueryString();
+  const deepLinkId = searchParams.get('instance');
+  useEffect(() => {
+    if (!deepLinkId || !data) return;
+    const row = data.find((x) => x.id === deepLinkId);
+    if (row) {
+      setSelected(row);
+      setDrawerOpen(true);
+    }
+  }, [deepLinkId, data]);
 
   const showCreds = async (id: string) => {
     const row = data?.find((x) => x.id === id) || (selected?.id === id ? selected : null);
@@ -146,7 +159,7 @@ const AdminTrialInstancesPage: React.FC = () => {
     <div className="space-y-5">
       <div className="admin-page-header">
         <h1>Trial Instances</h1>
-        <p>Access grants &amp; stacks — shared demo revoke, Option 2 agent control</p>
+        <p>Instant demo logins, agent-managed stacks, and staff-deployed own-domain trials</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -185,6 +198,10 @@ const AdminTrialInstancesPage: React.FC = () => {
                 const outdated = Boolean(i.meta?.agent_outdated);
                 const canDestroy = !['destroyed', 'destroying'].includes(i.status);
                 const isShared = Boolean(i.meta?.sharedDemo);
+                // Staff-deployed on the customer's own server: no agent, no
+                // backups, no installer — the only levers are expiry and status.
+                const isManual = i.provision_mode === 'manual';
+                const noAgent = isShared || isManual;
                 return (
                   <tr
                     key={i.id}
@@ -201,15 +218,24 @@ const AdminTrialInstancesPage: React.FC = () => {
                     <td>{i.product_name?.en || i.product_slug}</td>
                     <td>
                       <div className="flex flex-col gap-1">
-                        <span className="text-xs">{i.trial_type === 'hosted' ? 'Option 1' : 'Option 2'}</span>
+                        <span className="text-xs">{i.trial_type === 'hosted' ? 'Instant demo' : 'Own domain'}</span>
                         {isShared && (
                           <Badge variant="outline" className="w-fit text-[10px]">Shared demo</Badge>
+                        )}
+                        {isManual && (
+                          <Badge variant="outline" className="w-fit text-[10px] border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">Staff-deployed</Badge>
+                        )}
+                        {isManual && i.shop_url && (
+                          <a href={i.shop_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-mono text-[10px] text-muted-foreground hover:text-foreground" onClick={(e) => e.stopPropagation()}>
+                            {i.shop_url.replace(/^https?:\/\//, '')}
+                            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                          </a>
                         )}
                       </div>
                     </td>
                     <td><TrialStatusBadge status={i.status} /></td>
                     <td className="text-xs">
-                      {isShared ? (
+                      {noAgent ? (
                         <span className="text-muted-foreground">n/a</span>
                       ) : outdated ? (
                         <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
@@ -220,16 +246,16 @@ const AdminTrialInstancesPage: React.FC = () => {
                     </td>
                     <td className="text-xs">{i.expires_at ? new Date(i.expires_at).toLocaleDateString() : '—'}</td>
                     <td className="text-xs">
-                      {isShared
+                      {noAgent
                         ? <span className="text-muted-foreground">n/a</span>
                         : (i.last_heartbeat_at ? new Date(i.last_heartbeat_at).toLocaleString() : '—')}
                     </td>
                     <td className="text-right space-x-1" onClick={(e) => e.stopPropagation()}>
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => showCreds(i.id)} title="Credentials" aria-label="Show credentials"><Key className="w-4 h-4" /></Button>
-                      {i.trial_type === 'self_hosted' && (
+                      {i.trial_type === 'self_hosted' && !isManual && (
                         <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => downloadInstaller(i.id)} title="Download installer" aria-label="Download installer"><Package className="w-4 h-4" /></Button>
                       )}
-                      {!isShared && (
+                      {!noAgent && (
                         <>
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => requestBackup(i.id)} title="Backup now" aria-label="Backup now" disabled={backup.isPending}><HardDrive className="w-4 h-4" /></Button>
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => restoreLatest(i.id)} title="Restore latest" aria-label="Restore latest backup" disabled={restore.isPending || listBackups.isPending}><RotateCcw className="w-4 h-4" /></Button>

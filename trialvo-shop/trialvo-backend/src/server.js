@@ -29,6 +29,7 @@ const { ensureKeyPair } = require('./services/leaseIssuer');
 const { startTrialLifecycleCron } = require('./cron/trialLifecycle');
 const { startEventsRetentionCron } = require('./cron/eventsRetention');
 const { startTrialMaintenanceCron } = require('./cron/trialMaintenance');
+const { startDemoResetCron } = require('./cron/demoReset');
 
 
 const app = express();
@@ -116,6 +117,7 @@ async function startServer() {
  startTrialLifecycleCron();
  startEventsRetentionCron();
  startTrialMaintenanceCron();
+ startDemoResetCron();
 
  // 4. Start listening
  server = app.listen(PORT, () => {

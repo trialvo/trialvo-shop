@@ -10,6 +10,16 @@ router.use(roleAuth(['super_admin', 'admin']));
 router.get('/', c.listInstances);
 router.get('/analytics', require('../../controllers/trialAnalyticsController').getTrialAnalytics);
 router.get('/deployment-analytics', c.getDeploymentAnalytics);
+router.get('/funnel', require('../../controllers/trialAnalyticsController').getTrialFunnel);
+// Manual shared-demo reset (same job the nightly cron runs). Super admin only —
+// it wipes demo data for everyone currently evaluating.
+router.post('/demo-reset', roleAuth(['super_admin']), async (req, res, next) => {
+    try {
+        const { runDemoReset } = require('../../cron/demoReset');
+        const result = await runDemoReset({ force: true, only: req.body?.db || null });
+        res.json(result);
+    } catch (err) { next(err); }
+});
 router.get('/:id/events', c.getInstanceEvents);
 router.get('/:id/credentials', roleAuth(['super_admin']), c.getInstanceCredentials);
 router.get('/:id', c.getInstance);

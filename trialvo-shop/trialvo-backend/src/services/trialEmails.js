@@ -73,6 +73,118 @@ function trialReadyEmail({ name, statusUrl, days }) {
   return { subject, text, html };
 }
 
+/** Instant demo: credentials go straight into the mail — no approval step to wait for. */
+function demoReadyEmail({ name, productName, shopUrl, adminUrl, adminEmail, adminPassword, statusUrl, days, maxMonths, domainTrialUrl }) {
+  const subject = `Your live demo is ready — ${productName || 'Trialvo'}`;
+  const text = [
+    `Hi ${name},`,
+    '',
+    `Your live demo of ${productName || 'the product'} is ready.${days ? ` Access stays open for ${days} days.` : ''}`,
+    '',
+    `Storefront: ${shopUrl}`,
+    `Admin panel: ${adminUrl}`,
+    `Login email: ${adminEmail}`,
+    `Password: ${adminPassword}`,
+    '',
+    `Access page: ${statusUrl}`,
+    '',
+    `Like it? Run it on your own domain for up to ${maxMonths || 3} months, free: ${domainTrialUrl}`,
+    '',
+    'Shared demo: other evaluators may see data you enter; demo data resets periodically.',
+    '— Trialvo',
+  ].join('\n');
+
+  const html = renderEmail('demo-ready.hbs', {
+    subject,
+    preheader: 'Shop + admin login inside',
+    name,
+    productName: productName || 'the product',
+    shopUrl,
+    adminUrl,
+    adminEmail,
+    adminPassword,
+    statusUrl,
+    days,
+    maxMonths: maxMonths || 3,
+    domainTrialUrl,
+  });
+  return { subject, text, html };
+}
+
+/** Own-domain trial: acknowledge + set expectations (SLA, hosting follow-up). */
+function domainTrialReceivedEmail({ name, productName, months, domain, hostingSource, hostKind, slaHours, statusUrl }) {
+  const buyingHosting = hostingSource === 'buy_from_trialvo';
+  const hostKindLabel = hostKind === 'cpanel' ? 'cPanel hosting' : 'VPS';
+  const hostingLabel = buyingHosting ? 'Hosting from Trialvo (we will contact you)' : `Your own ${hostKindLabel}`;
+  const subject = `Own-domain trial request received — ${productName || 'Trialvo'}`;
+  const text = [
+    `Hi ${name},`,
+    '',
+    `We received your request to run ${productName || 'the product'} on your own domain for ${months} month(s), free.`,
+    `Domain: ${domain || 'to be decided with hosting'}`,
+    `Hosting: ${hostingLabel}`,
+    '',
+    buyingHosting
+      ? 'Next: our team will contact you about hosting options. Once confirmed we deploy and send your login.'
+      : `Next: our team will reach out for server access and deploy on your ${hostKindLabel}. Usually within ${slaHours || 24} hours.`,
+    '',
+    `Track progress: ${statusUrl}`,
+    '— Trialvo',
+  ].join('\n');
+
+  const html = renderEmail('domain-trial-received.hbs', {
+    subject,
+    preheader: buyingHosting ? 'We will contact you about hosting' : `Deploying within ${slaHours || 24}h`,
+    name,
+    productName: productName || 'the product',
+    months,
+    plural: Number(months) !== 1,
+    domain,
+    hostingLabel,
+    hostKindLabel,
+    buyingHosting,
+    slaHours: slaHours || 24,
+    statusUrl,
+  });
+  return { subject, text, html };
+}
+
+/** Staff fulfilled the domain trial: product is live on the customer's server. */
+function domainTrialLiveEmail({ name, productName, shopUrl, adminUrl, adminEmail, expiresAt, notes, statusUrl }) {
+  const expiresOn = expiresAt
+    ? new Date(expiresAt).toLocaleDateString('en-US', { dateStyle: 'long' })
+    : 'the end of your trial';
+  const subject = `${productName || 'Your product'} is live on your domain`;
+  const text = [
+    `Hi ${name},`,
+    '',
+    `${productName || 'Your product'} is now live on your domain. Your free trial runs until ${expiresOn}.`,
+    '',
+    `Storefront: ${shopUrl}`,
+    `Admin panel: ${adminUrl}`,
+    adminEmail ? `Admin login: ${adminEmail} (password on your status page)` : '',
+    notes ? `\nFrom our team: ${notes}` : '',
+    '',
+    `Status page: ${statusUrl}`,
+    'Buying before the trial ends keeps everything where it is — same server, same data.',
+    '— Trialvo',
+  ].filter((l) => l !== '').join('\n');
+
+  const html = renderEmail('domain-trial-live.hbs', {
+    subject,
+    preheader: 'Your own-domain trial is live',
+    name,
+    productName: productName || 'Your product',
+    shopUrl,
+    adminUrl,
+    adminEmail,
+    expiresOn,
+    notes,
+    statusUrl,
+  });
+  return { subject, text, html };
+}
+
 function trialExpiryReminderEmail({ name, daysLeft, productName, statusUrl, expiresAt }) {
   const urgent = daysLeft <= 1;
   const subject = urgent
@@ -179,6 +291,9 @@ function escapeHtml(s) {
 module.exports = {
   trialRequestReceivedEmail,
   trialReadyEmail,
+  demoReadyEmail,
+  domainTrialReceivedEmail,
+  domainTrialLiveEmail,
   trialExpiryReminderEmail,
   trialRejectedEmail,
   paidLicensePackEmail,

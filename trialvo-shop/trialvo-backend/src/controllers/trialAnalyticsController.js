@@ -126,4 +126,66 @@ async function getTrialAnalytics(req, res, next) {
   }
 }
 
-module.exports = { getTrialAnalytics };
+/**
+ * GET /api/admin/trial-instances/funnel?days=30
+ * demo requested → demo provisioned → own-domain requested → live → converted.
+ * `linkedDomain` counts domain requests that reference a demo, i.e. the path we
+ * actually market; `domainTotal` includes people who skipped the demo.
+ */
+async function getTrialFunnel(req, res, next) {
+  try {
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
+    const { rows } = await pool.query(
+      `SELECT
+         SUM(trial_type = 'hosted') AS demo_requested,
+         SUM(trial_type = 'hosted' AND status = 'active') AS demo_provisioned,
+         SUM(trial_type = 'self_hosted') AS domain_total,
+         SUM(trial_type = 'self_hosted' AND source_request_id IS NOT NULL) AS domain_from_demo,
+         SUM(trial_type = 'self_hosted' AND fulfillment_stage IN ('live','expiring','expired','converted')) AS domain_live,
+         SUM(trial_type = 'self_hosted' AND fulfillment_stage = 'converted') AS domain_converted,
+         SUM(trial_type = 'self_hosted' AND hosting_source = 'buy_from_trialvo') AS domain_buy_hosting,
+         SUM(trial_type = 'self_hosted' AND host_kind = 'vps') AS domain_vps,
+         SUM(trial_type = 'self_hosted' AND host_kind = 'cpanel') AS domain_cpanel,
+         SUM(trial_type = 'self_hosted' AND status = 'pending'
+             AND TIMESTAMPDIFF(HOUR, created_at, NOW()) >= 24) AS domain_overdue,
+         AVG(CASE WHEN trial_type = 'self_hosted' AND fulfilled_at IS NOT NULL
+                  THEN TIMESTAMPDIFF(HOUR, created_at, fulfilled_at) END) AS avg_fulfill_hours
+       FROM trial_requests
+       WHERE created_at > DATE_SUB(NOW(), INTERVAL ? DAY)`,
+      [days]
+    );
+    const r = rows[0] || {};
+    const n = (v) => Number(v || 0);
+    const pct = (a, b) => (b > 0 ? Math.round((a / b) * 1000) / 10 : 0);
+
+    const demoRequested = n(r.demo_requested);
+    const demoProvisioned = n(r.demo_provisioned);
+    const domainFromDemo = n(r.domain_from_demo);
+    const domainLive = n(r.domain_live);
+    const domainConverted = n(r.domain_converted);
+
+    res.json({
+      windowDays: days,
+      steps: [
+        { id: 'demo_requested', count: demoRequested },
+        { id: 'demo_provisioned', count: demoProvisioned, pctOfPrev: pct(demoProvisioned, demoRequested) },
+        { id: 'domain_requested', count: domainFromDemo, pctOfPrev: pct(domainFromDemo, demoProvisioned) },
+        { id: 'domain_live', count: domainLive, pctOfPrev: pct(domainLive, n(r.domain_total)) },
+        { id: 'converted', count: domainConverted, pctOfPrev: pct(domainConverted, domainLive) },
+      ],
+      domain: {
+        total: n(r.domain_total),
+        fromDemo: domainFromDemo,
+        buyHosting: n(r.domain_buy_hosting),
+        vps: n(r.domain_vps),
+        cpanel: n(r.domain_cpanel),
+        overdue: n(r.domain_overdue),
+        avgFulfillHours: r.avg_fulfill_hours != null ? Math.round(Number(r.avg_fulfill_hours) * 10) / 10 : null,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getTrialAnalytics, getTrialFunnel };

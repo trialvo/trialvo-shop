@@ -6,6 +6,7 @@ import {
   ClipboardList,
   RefreshCw,
   Route,
+  Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
@@ -13,19 +14,21 @@ import Layout from "@/components/layout/Layout";
 import Breadcrumb from "@/components/navigation/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Eyebrow, IconTile, Section, Surface } from "@/components/section";
+import { useTrialLaunch } from "@/components/trial/TrialLaunchProvider";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { howItWorks } from "@/lib/content/howItWorks";
+import { trialCopy } from "@/lib/trial/copy";
 
 const UI = {
   bn: {
     eyebrow: "প্রক্রিয়া",
     title: "কীভাবে কাজ করে",
-    lead: "প্রোডাক্ট বাছাই থেকে নিজের ব্র্যান্ডে লাইভ শপ — পুরো পথটা পাঁচ ধাপে সাজানো। কোনো ধাপে অনুমান করতে হবে না, কারণ কেনার আগেই আপনি আসল প্রোডাক্ট চালিয়ে দেখতে পারবেন।",
+    lead: "প্রোডাক্ট বাছাই থেকে নিজের ব্র্যান্ডে লাইভ শপ — পুরো পথটা পাঁচ ধাপে সাজানো। এক মিনিটে ইনস্ট্যান্ট ডেমো, তারপর নিজের ডোমেইনে এক মাস ফ্রি ট্রায়াল — কেনার আগে কোথাও অনুমান করতে হবে না।",
     home: "হোম",
     steps: "ধাপগুলো",
-    ctaTitle: "প্রোডাক্ট দেখে ট্রায়াল শুরু করুন",
+    ctaTitle: "এক মিনিটে ডেমো দেখুন",
     ctaBody:
-      "ক্যাটালগ ঘুরে দেখুন, পছন্দের প্রোডাক্টে ফ্রি ট্রায়াল নিন, তারপর সিদ্ধান্ত নিন। কোনো পেমেন্ট বা কার্ড লাগবে না।",
+      "নাম আর ইমেইল দিন, সাথে সাথে শপ ও অ্যাডমিনে ঢুকুন। পছন্দ হলে নিজের ডোমেইনে ফ্রি ট্রায়াল নিন। কোনো পেমেন্ট বা কার্ড লাগবে না।",
     browse: "সব প্রোডাক্ট",
     faq: "প্রশ্নোত্তর পড়ুন",
     contact: "যোগাযোগ করুন",
@@ -33,12 +36,12 @@ const UI = {
   en: {
     eyebrow: "The process",
     title: "How it works",
-    lead: "From picking a product to a live shop under your own brand, the whole path is five steps. Nothing needs guessing, because you can run the real product before you buy it.",
+    lead: "From picking a product to a live shop under your own brand, the whole path is five steps. An instant demo in a minute, then a month-long free trial on your own domain — nothing needs guessing before you buy.",
     home: "Home",
     steps: "The steps",
-    ctaTitle: "Browse the products and start a trial",
+    ctaTitle: "See the demo in a minute",
     ctaBody:
-      "Look through the catalog, start a free trial on the one you like, then decide. No payment and no card required.",
+      "Enter your name and email and step straight into the shop and admin. Like it? Take a free trial on your own domain. No payment and no card required.",
     browse: "All products",
     faq: "Read the FAQ",
     contact: "Contact us",
@@ -50,6 +53,7 @@ export default function HowItWorksPage() {
   const { language } = useLanguage();
   const ui = UI[language];
   const content = howItWorks(language);
+  const trial = useTrialLaunch();
 
   return (
     <Layout>
@@ -191,9 +195,24 @@ export default function HowItWorksPage() {
             {ui.ctaBody}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
+            {trial.demoAvailable ? (
+              <Button
+                type="button"
+                onClick={() => trial.openDemo()}
+                className="h-11 rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+              >
+                <Zap className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                {trialCopy(language).demo.cta}
+              </Button>
+            ) : null}
             <Button
               asChild
-              className="h-11 rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+              variant={trial.demoAvailable ? "outline" : "default"}
+              className={
+                trial.demoAvailable
+                  ? "h-11 rounded-lg bg-background shadow-card"
+                  : "h-11 rounded-lg bg-accent px-6 font-semibold text-accent-foreground shadow-accent-glow transition-transform hover:bg-accent/90 hover:-translate-y-0.5"
+              }
             >
               <LocalizedLink href="/products">
                 {ui.browse}

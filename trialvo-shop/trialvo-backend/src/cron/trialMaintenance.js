@@ -3,20 +3,9 @@ const { v4: uuidv4 } = require('uuid');
 const { logEvent } = require('../services/trialEvents');
 const { sendMail } = require('../services/mailer');
 const { FRONTEND } = require('../services/trialEmails');
+const { resolveAlertEmail } = require('../services/staffAlerts');
 
 const STALE_HOURS = parseInt(process.env.TRIAL_HEARTBEAT_STALE_HOURS || '6', 10);
-
-async function resolveAlertEmail() {
-  if (process.env.ADMIN_ALERT_EMAIL) return process.env.ADMIN_ALERT_EMAIL;
-  try {
-    const { rows } = await pool.query(
-      "SELECT email FROM admin_profiles WHERE role IN ('SUPER_ADMIN','ADMIN') ORDER BY created_at ASC LIMIT 1"
-    );
-    return rows[0]?.email || null;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * Enqueue daily backup_now for active self_hosted instances (plan §11 schedule).
@@ -26,6 +15,7 @@ async function enqueueScheduledBackups() {
     `SELECT id FROM trial_instances
      WHERE trial_type = 'self_hosted'
        AND status = 'active'
+       AND COALESCE(provision_mode, 'agent') <> 'manual'
        AND NOT EXISTS (
          SELECT 1 FROM remote_commands rc
          WHERE rc.instance_id = trial_instances.id
@@ -60,6 +50,7 @@ async function alertStaleHeartbeats() {
      JOIN products p ON p.id = ti.product_id
      WHERE ti.status IN ('active', 'frozen', 'provisioning')
        AND ti.trial_type = 'self_hosted'
+       AND COALESCE(ti.provision_mode, 'agent') <> 'manual'
        AND (
          ti.last_heartbeat_at IS NULL
          OR ti.last_heartbeat_at < DATE_SUB(NOW(), INTERVAL ? HOUR)

@@ -69,7 +69,7 @@ export function GET() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
-          {["Live trial before you buy", "Full source code", "Lifetime support"].map(
+          {["Free trial on your own domain", "Full source code", "Lifetime support"].map(
             (item) => (
               <div
                 key={item}

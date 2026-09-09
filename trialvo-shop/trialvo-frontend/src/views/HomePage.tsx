@@ -5,6 +5,7 @@ import {
   MarketplaceHero,
   CategoryBrowse,
   FeaturedMarketplace,
+  TrialPathways,
   WhyTrialvo,
   WhatsIncluded,
   MarketplaceHowItWorks,
@@ -22,6 +23,9 @@ export default function HomePage() {
   return (
     <Layout>
       <MarketplaceHero />
+      {/* The two-step trial is the differentiator — it sits right after the
+          hero so a visitor understands the offer before browsing products. */}
+      <TrialPathways />
       <CategoryBrowse />
       <FeaturedMarketplace />
       <WhyTrialvo />

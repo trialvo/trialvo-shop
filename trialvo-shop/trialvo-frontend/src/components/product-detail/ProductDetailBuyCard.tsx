@@ -1,11 +1,13 @@
 "use client";
 
-import { FlaskConical, ShieldCheck, ShoppingCart } from "lucide-react";
+import { Globe, ShieldCheck, ShoppingCart, Zap } from "lucide-react";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { ShopUsdHint } from "@/components/pricing/ShopUsdHint";
 import { Surface } from "@/components/section";
 import { Button } from "@/components/ui/button";
 import { quoteProductPrice, shopDisplayPrice } from "@/lib/productPricing";
+import { trialCopy } from "@/lib/trial/copy";
+import { monthsRangeLabel } from "@/lib/trial/months";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 import type { Product } from "@/types/product";
 
@@ -14,24 +16,30 @@ export type ProductDetailBuyCardProps = {
   language: MarketplaceLanguage;
   currencyLabel: string;
   buyLabel: string;
-  canRequestTrial: boolean;
-  onStartTrial: () => void;
+  /** Instant demo available for this product */
+  canDemo: boolean;
+  /** Own-domain trial available for this product */
+  canDomainTrial: boolean;
+  /** Month presets from public config — drives the "1–3 months free" label */
+  domainMonths: number[];
+  onStartDemo: () => void;
+  onStartDomainTrial: () => void;
 };
 
 const COPY = {
   bn: {
     license: "এককালীন পেমেন্ট • আজীবন লাইসেন্স",
-    trial: "ফ্রি ট্রায়াল শুরু করুন",
     trialHint: "পেমেন্ট বা কার্ড লাগবে না",
     guarantee: "সোর্স কোড, আজীবন আপডেট ও সাপোর্ট অন্তর্ভুক্ত",
     save: "সেভ",
+    or: "অথবা",
   },
   en: {
     license: "One-time payment • Lifetime license",
-    trial: "Start free trial",
     trialHint: "No payment or card required",
     guarantee: "Source code, lifetime updates and support included",
     save: "Save",
+    or: "or",
   },
 } as const;
 
@@ -41,12 +49,17 @@ export function ProductDetailBuyCard({
   language,
   currencyLabel,
   buyLabel,
-  canRequestTrial,
-  onStartTrial,
+  canDemo,
+  canDomainTrial,
+  domainMonths,
+  onStartDemo,
+  onStartDomainTrial,
 }: Readonly<ProductDetailBuyCardProps>) {
   const quote = quoteProductPrice(product);
   const display = shopDisplayPrice(quote, language, currencyLabel);
   const copy = COPY[language];
+  const tc = trialCopy(language);
+  const anyTrial = canDemo || canDomainTrial;
 
   return (
     <Surface
@@ -97,18 +110,31 @@ export function ProductDetailBuyCard({
           </LocalizedLink>
         </Button>
 
-        {canRequestTrial ? (
+        {anyTrial ? (
           <div>
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              className="h-12 w-full rounded-lg bg-background font-semibold shadow-card hover:bg-muted/60"
-              onClick={onStartTrial}
-            >
-              <FlaskConical className="mr-2 h-4 w-4" aria-hidden="true" />
-              {copy.trial}
-            </Button>
+            {canDemo ? (
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                className="h-12 w-full rounded-lg bg-background font-semibold shadow-card hover:bg-muted/60"
+                onClick={onStartDemo}
+              >
+                <Zap className="mr-2 h-4 w-4 text-accent-strong" aria-hidden="true" />
+                {tc.demo.cta}
+              </Button>
+            ) : null}
+            {canDomainTrial ? (
+              <button
+                type="button"
+                onClick={onStartDomainTrial}
+                className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent-strong hover:decoration-accent/50"
+              >
+                <Globe className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                {canDemo ? `${copy.or} ` : ""}
+                {tc.domain.freeFor(monthsRangeLabel(domainMonths, language))} — {tc.domain.ctaShort}
+              </button>
+            ) : null}
             <p className="mt-2 text-center text-xs text-muted-foreground">
               {copy.trialHint}
             </p>

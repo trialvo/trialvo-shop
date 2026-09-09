@@ -11,8 +11,11 @@ export {
   type ContactSchemaValues,
 } from "./contactSchema";
 export {
-  createTrialRequestSchema,
-  type TrialRequestSchemaValues,
+  createInstantDemoSchema,
+  createDomainTrialSchema,
+  DOMAIN_TRIAL_STEP_FIELDS,
+  type InstantDemoValues,
+  type DomainTrialValues,
 } from "./trialRequestSchema";
 export {
   adminLoginSchema,
