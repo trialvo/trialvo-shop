@@ -1,7 +1,7 @@
 "use client";
 
 import LocalizedLink from "@/components/i18n/LocalizedLink";
-import { Mail, MapPin, Phone, Rss } from "lucide-react";
+import { Mail, MapPin, MessageCircle, Phone, Rss } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { BrandLogo } from "@/components/brand";
 import type { LocalizedString } from "@/types/marketplace";
@@ -21,6 +21,7 @@ const MARKETPLACE_LINKS: FooterLink[] = [
 const COMPANY_LINKS: FooterLink[] = [
   { href: "/about", label: { bn: "আমাদের সম্পর্কে", en: "About us" } },
   { href: "/how-it-works", label: { bn: "কীভাবে কাজ করে", en: "How it works" } },
+  { href: "/docs/install", label: { bn: "ইনস্টল গাইড", en: "Installation guide" } },
   { href: "/faq", label: { bn: "প্রশ্নোত্তর", en: "FAQ" } },
   { href: "/contact", label: { bn: "যোগাযোগ", en: "Contact" } },
 ];
@@ -117,6 +118,17 @@ export default function Footer() {
                   className="inline-flex min-h-[2rem] items-center py-1 hover:text-foreground"
                 >
                   {BRAND.contactPhone}
+                </a>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <MessageCircle className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+                <a
+                  href={BRAND.social.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-[2rem] items-center py-1 hover:text-foreground"
+                >
+                  {language === "bn" ? BRAND.contactWhatsAppLabel.bn : BRAND.contactWhatsAppLabel.en}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">

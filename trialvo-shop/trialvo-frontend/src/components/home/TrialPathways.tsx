@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, Globe, Server, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Check, Globe, Sparkles, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import LocalizedLink from "@/components/i18n/LocalizedLink";
 import { Eyebrow, IconTile, Section, SectionIntro, Surface } from "@/components/section";
@@ -15,37 +15,33 @@ const COPY = {
   bn: {
     eyebrow: "ট্রায়ালের দুইটি পথ",
     title: "ডেমো এক মিনিটে। তারপর নিজের ডোমেইনে এক মাস ফ্রি।",
-    lead: "স্ক্রিনশট দেখে সিদ্ধান্ত নিতে হবে না। প্রথমে ইনস্ট্যান্ট ডেমোতে ঢুকে দেখুন, পছন্দ হলে আমরা আপনার নিজের ডোমেইন ও হোস্টিংয়ে পুরো সিস্টেম বসিয়ে দেব — কেনার আগেই আসল ব্যবসা চালিয়ে যাচাই করুন।",
+    lead: "স্ক্রিনশট দেখে সিদ্ধান্ত নিতে হবে না। প্রথমে ইনস্ট্যান্ট ডেমোতে ঢুকে দেখুন, পছন্দ হলে নিজের VPS বা cPanel-এ এক-কমান্ড ইনস্টলার চালিয়ে আসল ব্যবসা যাচাই করুন — আমরা আপনার সার্ভারে লগইন করি না।",
     step1: "ধাপ ১ · এখনই",
     step2: "ধাপ ২ · নিজের ডোমেইনে",
     demoTitle: "ইনস্ট্যান্ট লাইভ ডেমো",
     demoBody: "নাম ও ইমেইল দিন — সাথে সাথে শপ ও অ্যাডমিন প্যানেলের লগইন পাবেন। অ্যাপ্রুভালের অপেক্ষা নেই।",
     demoPoints: ["শপ + অ্যাডমিন দুটোই", "কার্ড লাগবে না", (d: string) => `${d} দিন অ্যাক্সেস`],
     domainTitle: (m: string) => `${m} ফ্রি ট্রায়াল — আপনার ডোমেইনে`,
-    domainBody: "ডেমো পছন্দ হলে অনুরোধ করুন। আপনার VPS বা cPanel হোস্টিংয়ে আমরা নিজেরা ডিপ্লয় করে দেব। হোস্টিং না থাকলে আমাদের থেকে নিতে পারবেন।",
-    domainPoints: ["আপনার ডোমেইন, আপনার ডেটা", "VPS বা cPanel — দুটোই চলে", (h: string) => `${h} ঘণ্টায় লাইভ`],
+    domainBody: "ডেমো পছন্দ হলে অনুরোধ করুন। অ্যাডমিন অনুমোদনের পর আপনার VPS বা cPanel-এ চালানোর জন্য এক-কমান্ড ইনস্টলার পাবেন।",
+    domainPoints: ["আপনার ডোমেইন, আপনার ডেটা", "VPS বা cPanel — দুটোই চলে", (h: string) => `${h} ঘণ্টায় ইনস্টলার`],
     unique: "এই সুবিধা অন্য কেউ দেয় না",
     uniqueBody: "ডেমো তো অনেকেই দেয়। কিন্তু কেনার আগে নিজের ডোমেইনে, নিজের হোস্টিংয়ে, আসল ক্রেতা নিয়ে পুরো এক মাস চালানোর সুযোগ — এটা শুধু Trialvo-তে।",
-    hosting: "হোস্টিং নেই?",
-    hostingBody: "ট্রায়াল ফর্মেই \"Trialvo থেকে হোস্টিং নিতে চাই\" বেছে নিন। আমরা সেটআপসহ কোটেশন পাঠাব।",
     howLink: "পুরো প্রক্রিয়া দেখুন",
   },
   en: {
     eyebrow: "Two ways to try",
     title: "Demo in a minute. Then a month free on your own domain.",
-    lead: "Stop deciding from screenshots. Start with an instant demo, and if you like it we deploy the full system on your own domain and hosting — run real business on it before you pay.",
+    lead: "Stop deciding from screenshots. Start with an instant demo, and if you like it run a one-command installer on your own VPS or cPanel — we never log into your server.",
     step1: "Step 1 · Right now",
     step2: "Step 2 · On your domain",
     demoTitle: "Instant live demo",
     demoBody: "Enter your name and email — shop and admin logins arrive immediately. No approval queue.",
     demoPoints: ["Shop + admin, both", "No card needed", (d: string) => `${d} days of access`],
     domainTitle: (m: string) => `${m} free trial — on your domain`,
-    domainBody: "Liked the demo? Request a domain trial. We deploy it on your VPS or cPanel hosting ourselves. No hosting yet? Get it from us.",
-    domainPoints: ["Your domain, your data", "VPS or cPanel — both work", (h: string) => `Live within ${h}h`],
+    domainBody: "Liked the demo? Request a domain trial. After an admin approves, you download a one-command installer for your VPS or cPanel.",
+    domainPoints: ["Your domain, your data", "VPS or cPanel — both work", (h: string) => `Installer within ${h}h`],
     unique: "Nobody else offers this",
     uniqueBody: "Plenty of vendors give demos. Running the product for a full month on your own domain, your own hosting, with real customers, before buying — only at Trialvo.",
-    hosting: "No hosting?",
-    hostingBody: "Pick \"I want hosting from Trialvo\" in the trial form. We send a quote with setup included.",
     howLink: "See the full process",
   },
 } as const;
@@ -107,17 +103,6 @@ export function TrialPathways() {
             cta={tc.domain.cta}
             onClick={() => openDomain()}
             delay={0.08}
-            aside={
-              config.hostingPurchaseEnabled ? (
-                <div className="mt-6 flex items-start gap-3 rounded-xl border border-primary-foreground/15 bg-primary-foreground/[0.07] p-4">
-                  <Server className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-                  <div>
-                    <p className="text-sm font-semibold text-primary-foreground">{copy.hosting}</p>
-                    <p className="mt-0.5 text-[13px] leading-6 text-primary-foreground/75">{copy.hostingBody}</p>
-                  </div>
-                </div>
-              ) : null
-            }
           />
         ) : null}
       </div>

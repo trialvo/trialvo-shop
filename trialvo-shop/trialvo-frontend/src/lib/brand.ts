@@ -21,8 +21,12 @@ export const BRAND = {
   },
   siteUrl: "https://shop.trialvo.com",
   contactEmail: "trialvo3@gmail.com",
-  contactPhone: "01629-615314",
-  contactPhoneHref: "tel:+8801629615314",
+  contactPhone: "01880-508860",
+  contactPhoneHref: "tel:+8801880508860",
+  contactWhatsAppLabel: {
+    bn: "হোয়াটসঅ্যাপ",
+    en: "WhatsApp",
+  },
   address: {
     bn: "জামগড়া, সাভার, ঢাকা, বাংলাদেশ",
     en: "Jamgora, Savar, Dhaka, Bangladesh",
@@ -31,7 +35,7 @@ export const BRAND = {
     facebook: "https://facebook.com/trialvo",
     youtube: "https://youtube.com/@trialvo",
     twitter: "@trialvo",
-    whatsapp: "https://wa.me/8801629615314",
+    whatsapp: "https://wa.me/8801880508860",
   },
 } as const;
 

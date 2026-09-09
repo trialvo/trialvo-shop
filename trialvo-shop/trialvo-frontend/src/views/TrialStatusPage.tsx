@@ -66,7 +66,7 @@ const COPY = {
     rejectedLead: "এই অনুরোধ অনুমোদিত হয়নি। বিস্তারিত ইমেইলে পাঠানো হয়েছে।",
     nextStepsTitle: "পরের ধাপ",
     domainOfferTitle: (max: string) => `${max} ফ্রি — আপনার নিজের ডোমেইনে`,
-    domainOfferBody: "ডেমো পছন্দ হয়েছে? আপনার VPS বা cPanel হোস্টিংয়ে আমরা নিজেরা বসিয়ে দেব। হোস্টিং না থাকলে আমাদের থেকে নিতে পারবেন। কার্ড লাগবে না।",
+    domainOfferBody: "ডেমো পছন্দ হয়েছে? অনুমোদনের পর আপনার VPS বা cPanel-এ চালানোর জন্য এক-কমান্ড ইনস্টলার পাবেন। আমরা আপনার সার্ভারে লগইন করি না।",
     domainOfferUnique: "এই সুবিধা অন্য কেউ দেয় না",
     linkedTitle: "ডোমেইন ট্রায়াল রিকোয়েস্ট পাঠানো আছে",
     linkedBody: "এই ডেমো থেকে আপনি ইতিমধ্যে নিজের ডোমেইনে ট্রায়াল চেয়েছেন।",
@@ -78,11 +78,13 @@ const COPY = {
     liveBody: "নিচের লিংক ও লগইন ব্যবহার করুন। ট্রায়াল শেষে কিনলে সব একই থাকে।",
     buyTitle: "রাখতে চান?",
     buyBody: "এককালীন পেমেন্ট — এই ইনস্ট্যান্সটাই পারমানেন্ট হয়ে যায়। ডেটা, সেটআপ, ডোমেইন — কিছু বদলায় না।",
+    buyBodyShared: "এককালীন পেমেন্ট — আপনি লাইসেন্স ও নিজের সার্ভারের জন্য ইনস্টল প্যাক পাবেন। এই শেয়ার্ড ডেমো ডেমোই থাকবে এবং রিসেট হতে থাকবে।",
     buy: "প্রোডাক্ট কিনুন",
     extendBody: (price: string, days: string) => `আরও সময় লাগলে ${price}-এ ${days} দিন বাড়াতে পারবেন।`,
     extend: (price: string) => `এক্সটেন্ড (${price})`,
     installer: "ইনস্টলার ডাউনলোড",
-    installerLead: "আপনার সার্ভারে ইনস্টলার চালানোর পর ট্রায়াল Active হবে।",
+    installerLead: "ZIP-টি আপনার VPS বা cPanel-এ নামিয়ে এক কমান্ড চালান — আমরা সার্ভারে লগইন করি না। চালানোর পর ট্রায়াল Active হবে।",
+    installerGuide: "ইনস্টল গাইড",
     downloadStarted: "ডাউনলোড শুরু হয়েছে",
     shared: "শেয়ার্ড ডেমো — অন্যরাও একই স্টোর দেখছে; ডেটা নিয়মিত রিসেট হয়। আসল গ্রাহকের তথ্য দেবেন না।",
     slaNote: (h: string) => `সাধারণত ${h} ঘণ্টার মধ্যে লাইভ করি।`,
@@ -114,7 +116,7 @@ const COPY = {
     rejectedLead: "This request was not approved. Details were sent by email.",
     nextStepsTitle: "Next steps",
     domainOfferTitle: (max: string) => `${max} free — on your own domain`,
-    domainOfferBody: "Liked the demo? We deploy it ourselves on your VPS or cPanel hosting. No hosting yet? Get it from us. No card needed.",
+    domainOfferBody: "Liked the demo? After approval you get a one-command installer for your VPS or cPanel. We do not log into your server.",
     domainOfferUnique: "Nobody else offers this",
     linkedTitle: "Domain trial request on file",
     linkedBody: "You already requested an own-domain trial from this demo.",
@@ -126,11 +128,13 @@ const COPY = {
     liveBody: "Use the links and login below. Buy at the end of the trial and everything stays as is.",
     buyTitle: "Want to keep it?",
     buyBody: "One payment — this very instance becomes permanent. Data, setup, domain — nothing changes.",
+    buyBodyShared: "One payment — you get a license and an install pack for your own server. This shared demo stays a demo and will keep resetting.",
     buy: "Buy product",
     extendBody: (price: string, days: string) => `Need more time? Add ${days} days for ${price}.`,
     extend: (price: string) => `Extend (${price})`,
     installer: "Download installer",
-    installerLead: "The trial becomes active once you run the installer on your server.",
+    installerLead: "Download the ZIP and run one command on your VPS or cPanel — we never log into your server. The trial becomes active after you run it.",
+    installerGuide: "Installation guide",
     downloadStarted: "Download started",
     shared: "Shared demo — others see the same store and data resets regularly. Do not enter real customer data.",
     slaNote: (h: string) => `We usually go live within ${h} hours.`,
@@ -149,9 +153,12 @@ function summarise(data: TrialStatusResponse, language: MarketplaceLanguage) {
   const gone = ["destroyed", "destroying"].includes(inst);
 
   if (data.path === "domain") {
-    const stage = data.fulfillmentStage || "received";
+    const rawStage = data.fulfillmentStage || "received";
+    // Agent already registered (instance active) even if stage bookkeeping lags.
+    const running = rawStage === "live" || rawStage === "converted" || inst === "active";
+    const stage = inst === "active" && rawStage === "deploying" ? "live" : rawStage;
     const s = tc.stages[stage] || tc.stages.received;
-    const tone: Tone = stage === "live" || stage === "converted"
+    const tone: Tone = running || stage === "live" || stage === "converted"
       ? "good"
       : stage === "rejected" || stage === "expired"
         ? "bad"
@@ -167,6 +174,9 @@ function summarise(data: TrialStatusResponse, language: MarketplaceLanguage) {
     return { label: copy.statusExpired, lead: copy.expiredLead, tone: "warn" as Tone, gone: false };
   }
   if (data.credentials) return { label: copy.statusActive, lead: tc.demo.readyLead, tone: "good" as Tone, gone: false };
+  if (data.status === "pending" && !data.instanceId) {
+    return { label: tc.demo.awaitingTitle, lead: tc.demo.awaitingLead, tone: "neutral" as Tone, gone: false };
+  }
   return { label: copy.statusPending, lead: copy.provisioningLead, tone: "neutral" as Tone, gone: false };
 }
 
@@ -289,7 +299,13 @@ function HubBody({
   const extendPrice = `৳${Number(trial.config.extendPriceBdt ?? 1500).toLocaleString()}`;
 
   const awaitingInstall = isDomain && data.provisionMode === "agent" && inst === "provisioning";
-  const showCredentials = Boolean(data.credentials) && !gone && (!isDomain || ["live", "expiring", "converted"].includes(data.fulfillmentStage || "") || awaitingInstall);
+  const credStage = data.fulfillmentStage || "";
+  const showDomainCreds =
+    ["live", "expiring", "converted", "deploying"].includes(credStage)
+    || ["provisioning", "active"].includes(inst)
+    || awaitingInstall;
+  const showCredentials = Boolean(data.credentials) && !gone && (!isDomain || showDomainCreds);
+  const isShared = Boolean(data.sharedDemo) || data.provisionMode === "shared";
 
   const offer = data.domainTrialOffer;
   const showDomainOffer = !isDomain && offer && trial.domainAvailable && !data.linkedDomainRequest && data.status !== "rejected";
@@ -327,7 +343,7 @@ function HubBody({
         {isDomain ? (
           <>
             <Fact label={copy.duration} value={data.requestedMonths ? monthsLabel(data.requestedMonths, language) : "—"} />
-            <Fact label={copy.hosting} value={[data.hostingSource ? tc.hostingSource[data.hostingSource] : null, data.hostKind ? tc.hostKind[data.hostKind] : null].filter(Boolean).join(" · ") || "—"} />
+            <Fact label={copy.hosting} value={data.hostKind ? tc.hostKind[data.hostKind] : "—"} />
             <Fact label={copy.domain} value={data.desiredDomain || "—"} mono />
           </>
         ) : (
@@ -348,7 +364,6 @@ function HubBody({
           <TrialTimeline
             stage={data.fulfillmentStage}
             history={data.stageHistory}
-            hostingSource={data.hostingSource}
             language={language}
             slaHours={data.slaHours}
           />
@@ -361,8 +376,20 @@ function HubBody({
         </Surface>
       ) : null}
 
+      {/* Demo awaiting admin approval — no instance yet */}
+      {!isDomain && data.status === "pending" && !data.instanceId && !gone ? (
+        <Surface className="space-y-2 p-5">
+          <p className="font-display text-[15px] font-bold tracking-tight text-foreground">{tc.demo.awaitingTitle}</p>
+          <p className="text-sm leading-6 text-muted-foreground">{tc.demo.awaitingLead}</p>
+          {data.email ? (
+            <p className="text-xs text-muted-foreground">{tc.demo.awaitingAt(data.email)}</p>
+          ) : null}
+          <p className="text-xs text-muted-foreground">{tc.demo.awaitingHint}</p>
+        </Surface>
+      ) : null}
+
       {/* Demo still provisioning */}
-      {!isDomain && !data.credentials && data.status !== "rejected" && !gone ? (
+      {!isDomain && !data.credentials && data.status !== "rejected" && !gone && Boolean(data.instanceId) ? (
         <Surface className="flex items-center gap-4 p-5">
           <Loader2 className="h-5 w-5 shrink-0 animate-spin text-accent" aria-hidden="true" />
           <p className="text-sm text-muted-foreground">{copy.provisioningLead}</p>
@@ -390,19 +417,28 @@ function HubBody({
               {copy.shared}
             </p>
           ) : null}
-          {awaitingInstall && data.installerUrl ? (
-            <Surface className="mt-3 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Package className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                {copy.installerLead}
-              </p>
-              <Button type="button" variant="secondary" disabled={downloading} onClick={onDownload} className="h-10 shrink-0">
-                {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                {copy.installer}
-              </Button>
-            </Surface>
-          ) : null}
         </div>
+      ) : null}
+
+      {isDomain && data.provisionMode === "agent" && data.installerUrl && !gone ? (
+        <Surface className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-start gap-2 text-sm text-muted-foreground">
+            <Package className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            {copy.installerLead}
+          </p>
+          <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+            <Button type="button" variant="secondary" disabled={downloading} onClick={onDownload} className="h-10">
+              {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+              {copy.installer}
+            </Button>
+            <LocalizedLink
+              href="/docs/install"
+              className="inline-flex min-h-[2rem] items-center text-sm font-medium text-accent-strong underline decoration-border underline-offset-4 hover:decoration-accent/50"
+            >
+              {copy.installerGuide}
+            </LocalizedLink>
+          </div>
+        </Surface>
       ) : null}
 
       {/* Own-domain upsell (demo path) */}
@@ -457,7 +493,7 @@ function HubBody({
             <IconTile icon={Sparkles} size="sm" />
             <div className="min-w-0 flex-1">
               <h2 className="font-display text-base font-bold tracking-tight">{copy.buyTitle}</h2>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">{copy.buyBody}</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">{isShared ? copy.buyBodyShared : copy.buyBody}</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Button asChild className="h-11 rounded-lg bg-accent px-5 font-semibold text-accent-foreground shadow-accent-glow hover:bg-accent/90">
                   <LocalizedLink href={buyHref}>

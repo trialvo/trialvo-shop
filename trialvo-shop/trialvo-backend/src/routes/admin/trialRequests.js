@@ -12,9 +12,8 @@ router.patch('/:id', c.patchTrialRequest);
 router.post('/:id/approve', c.approveTrialRequest);
 router.post('/:id/reject', c.rejectTrialRequest);
 
-// Own-domain fulfillment pipeline: received → (hosting confirmed) → deploying → live
+// Own-domain fulfillment pipeline: received → deploying → live
 router.post('/:id/pickup', c.pickupTrialRequest);
-router.post('/:id/hosting-confirmed', c.confirmTrialHosting);
 router.post('/:id/reopen', c.reopenTrialRequest);
 router.post('/:id/fulfill', c.fulfillTrialRequest);
 

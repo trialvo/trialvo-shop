@@ -4,9 +4,10 @@ const errors = require("../helpers/errors"); // adjust path
 const { getConfig } = require("../config/ApplicationSettingsDB"); // adjust path
 const { BRAND_NAME ,SHOP_URL,BRAND_ADDRESS} = require("../config/ApplicationSettings"); // adjust path
 const { resolveFrom } = require("../helpers/mailFrom");
+const { getEmailLogoMailParts } = require("../helpers/emailLogo");
 
 exports.sendEmailVerification = async (connection, mailObj) => {
-  const { name, email, otp } = mailObj;
+  const { name, email, otp, subject } = mailObj;
 
   // 1. Load email config from DB
   const configs = await getConfig(connection, false, "email");
@@ -63,12 +64,17 @@ exports.sendEmailVerification = async (connection, mailObj) => {
 
  
   try {
-    await transporter.sendMail({
+    const logo = await getEmailLogoMailParts();
+    const info = await transporter.sendMail({
       from: resolveFrom(cfg, BRAND_NAME),
       to: email,
-      subject: "Verify Your Email",
+      subject: subject || "Verify Your Email",
       template: "emailverify",
+      attachments: logo.attachments,
       context: {
+        hasEmailLogo: logo.hasEmailLogo,
+        EMAIL_LOGO_CID: logo.EMAIL_LOGO_CID,
+        EMAIL_LOGO_SRC: logo.EMAIL_LOGO_SRC,
         name: name || "User",
         BRAND_NAME,
         BRAND_ADDRESS,
@@ -78,6 +84,7 @@ exports.sendEmailVerification = async (connection, mailObj) => {
         year: new Date().getFullYear()
       },
     });
+    return info;
   } catch (err) {
     throw new errors.SERVICE_UNAVAILABLE(`Email service err :${err}`)
   }

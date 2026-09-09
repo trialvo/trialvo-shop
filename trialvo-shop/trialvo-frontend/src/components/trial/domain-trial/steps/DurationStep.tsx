@@ -21,7 +21,6 @@ export function DurationStep({
   presets: number[];
 }>) {
   const copy = trialCopy(language).domain;
-  const buying = form.watch("hostingSource") === "buy_from_trialvo";
 
   const single = presets.length === 1;
 
@@ -54,9 +53,8 @@ export function DurationStep({
         label={copy.domainLabel}
         placeholder={copy.domainPlaceholder}
         autoComplete="url"
-        requiredMark={!buying}
+        requiredMark
         startAdornment={<Globe className="h-4 w-4" aria-hidden="true" />}
-        description={buying ? copy.domainOptionalHint : undefined}
         inputClassName="font-mono h-11 rounded-lg border-border bg-card"
       />
     </div>

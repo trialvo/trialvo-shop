@@ -21,9 +21,7 @@ export function ContactStep({
   const copy = trialCopy(language);
   const v = form.watch();
   const rows: [string, string][] = [
-    [copy.domain.stepHosting, v.hostingSource === "own"
-      ? `${copy.hostingSource.own} · ${v.hostKind ? copy.hostKind[v.hostKind] : ""}`
-      : copy.hostingSource.buy_from_trialvo],
+    [copy.domain.stepHosting, v.hostKind ? copy.hostKind[v.hostKind] : "—"],
     [copy.domain.stepDuration, v.months ? `${monthsLabel(v.months, language)} · ${copy.domain.endsOn(formatDate(endDateForMonths(v.months), language))}` : "—"],
     [copy.domain.domainLabel, v.domain || "—"],
   ];

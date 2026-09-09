@@ -14,6 +14,7 @@ export type ChildCategory = {
   featured?: boolean;
   priority?: number;
   total_stock?: number;
+  product_count?: number;
 };
 
 export type SubCategory = {
@@ -27,6 +28,7 @@ export type SubCategory = {
   featured?: boolean;
   priority?: number;
   total_stock?: number;
+  product_count?: number;
   child_categories?: ChildCategory[];
   children?: ChildCategory[];
 };
@@ -44,6 +46,7 @@ export type Category = {
   priority?: number;
   featured?: boolean;
   total_stock?: number;
+  product_count?: number;
   /** Sub-categories (mapped from API sub_categories) */
   children?: SubCategory[];
   sub_categories?: SubCategory[];

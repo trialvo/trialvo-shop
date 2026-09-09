@@ -291,8 +291,9 @@
                 <!-- Header -->
                 <tr>
                   <td align="center" class="px" style="padding: 22px 22px 14px">
-                    <img class="logoImg logoLight" src="https://cdn.graduatefashionbd.com/logo/my_dark_logo.png" width="160" alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: block" />
-                    <img class="logoImg logoDark" src="https://cdn.graduatefashionbd.com/logo/my_light_logo.png" width="160" alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: none" />
+                    {{#if hasEmailLogo}}
+                    <img class="logoImg" src="{{EMAIL_LOGO_SRC}}" width="160" alt="{{BRAND_NAME}}" style="width:160px;height:auto;display:block;border:0;" />
+                    {{/if}}
                   </td>
                 </tr>
 

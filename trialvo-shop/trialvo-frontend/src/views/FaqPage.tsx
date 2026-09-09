@@ -4,6 +4,7 @@ import {
   ChevronRight,
   LifeBuoy,
   Mail,
+  MessageCircle,
   MessageCircleQuestion,
   Phone,
   ScrollText,
@@ -149,6 +150,15 @@ export default function FaqPage() {
               >
                 <Phone className="h-4 w-4 text-accent" aria-hidden="true" />
                 {BRAND.contactPhone}
+              </a>
+              <a
+                href={BRAND.social.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[2.25rem] items-center gap-2 py-1 text-muted-foreground transition-colors hover:text-accent-strong"
+              >
+                <MessageCircle className="h-4 w-4 text-accent" aria-hidden="true" />
+                {language === "bn" ? BRAND.contactWhatsAppLabel.bn : BRAND.contactWhatsAppLabel.en}
               </a>
             </div>
           </Surface>

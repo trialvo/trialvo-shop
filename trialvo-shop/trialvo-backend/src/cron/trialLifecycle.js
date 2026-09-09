@@ -76,7 +76,7 @@ async function expireActiveTrials() {
 
     // Paid/unlicensed: freeze only — never auto-destroy unless PAID_DESTROY_AFTER_DAYS > 0 later
     const paidExpired = await pool.query(
-        `SELECT id, instance_kind FROM trial_instances
+        `SELECT id, instance_kind, provision_mode, meta, trial_type, admin_email FROM trial_instances
          WHERE status = 'active'
            AND expires_at IS NOT NULL AND expires_at < NOW()
            AND ${PAID_KIND_SQL}`
@@ -86,6 +86,16 @@ async function expireActiveTrials() {
             `UPDATE trial_instances SET status = 'frozen', frozen_at = COALESCE(frozen_at, NOW()), updated_at = NOW() WHERE id = $1`,
             [row.id]
         );
+        // Manual seats have no agent; shared demos must revoke ADMIN, not enqueue freeze.
+        if (isManual(row)) {
+            await logEvent(row.id, 'paid_seat_expired_frozen', { kind: row.instance_kind, mode: 'manual' });
+            continue;
+        }
+        if (isSharedDemoInstance(row)) {
+            await revokeTrialAdmin({ email: row.admin_email, instance: row });
+            await logEvent(row.id, 'paid_seat_expired_frozen', { kind: row.instance_kind, mode: 'shared' });
+            continue;
+        }
         await pool.query(
             'INSERT INTO remote_commands (id, instance_id, command, status) VALUES ($1,$2,$3,$4)',
             [uuidv4(), row.id, 'freeze', 'pending']

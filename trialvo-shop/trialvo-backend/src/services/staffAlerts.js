@@ -5,9 +5,10 @@ const { FRONTEND } = require('./trialEmails');
 /**
  * Staff-facing notifications for work that a human must do.
  *
- * Own-domain trials are fulfilled manually, so a request nobody sees is a
- * customer nobody serves. Every alert here is best-effort: failures are
- * logged, never thrown, so a broken SMTP cannot fail the customer's request.
+ * Own-domain trials wait for admin approval before an installer is issued,
+ * so a request nobody sees is a customer nobody serves. Every alert here
+ * is best-effort: failures are logged, never thrown, so a broken SMTP
+ * cannot fail the customer's request.
  */
 
 async function resolveAlertEmail() {
@@ -30,11 +31,6 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-function labelHosting(request) {
-  if (request.hosting_source === 'buy_from_trialvo') return 'Needs hosting from Trialvo';
-  return `Own hosting — ${String(request.host_kind || '').toUpperCase() || 'unspecified'}`;
-}
-
 /** New own-domain trial request landed in the queue. */
 async function notifyStaffNewDomainTrial(request, product, { slaHours = 24, sourceDemo = null } = {}) {
   const to = await resolveAlertEmail();
@@ -50,8 +46,8 @@ async function notifyStaffNewDomainTrial(request, product, { slaHours = 24, sour
     '',
     `Product: ${productName}`,
     `Customer: ${request.customer_name} <${request.email}> ${request.phone || ''}`,
-    `Domain: ${request.desired_domain || '— (buying hosting, domain TBD)'}`,
-    `Hosting: ${labelHosting(request)}`,
+    `Domain: ${request.desired_domain || '—'}`,
+    `Hosting: ${request.host_kind === 'cpanel' ? 'cPanel' : 'VPS'}`,
     `Duration: ${request.requested_months || Math.round((request.requested_days || 30) / 30)} month(s)`,
     sourceDemo ? `Came from instant demo started ${new Date(sourceDemo.created_at).toISOString().slice(0, 10)}` : 'No prior demo on record',
     request.use_case ? `Notes: ${request.use_case}` : '',

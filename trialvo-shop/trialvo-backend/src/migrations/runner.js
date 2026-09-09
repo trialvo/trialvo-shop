@@ -73,6 +73,7 @@ async function runMigrations() {
       require('./024_license_deployments'),
       require('./025_product_discount'),
       require('./026_trial_paths'),
+      require('./027_trial_verification_and_process'),
     ];
 
     let count = 0;

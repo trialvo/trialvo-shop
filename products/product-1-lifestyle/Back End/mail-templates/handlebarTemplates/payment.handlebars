@@ -460,10 +460,9 @@
                 <!-- Header -->
                 <tr>
                   <td align="center" class="px" style="padding: 22px 22px 14px">
-                    <!-- Light logo (DEFAULT) -->
-                    <img class="logoImg logoLight" src="https://cdn.graduatefashionbd.com/logo/my_dark_logo.png" width="160" alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: block" />
-                    <!-- Dark logo (HIDDEN by default) -->
-                    <img class="logoImg logoDark" src="https://cdn.graduatefashionbd.com/logo/my_light_logo.png" width="160" alt="{{BRAND_NAME}}" style="width: 160px; height: auto; display: none" />
+                    {{#if hasEmailLogo}}
+                    <img class="logoImg" src="{{EMAIL_LOGO_SRC}}" width="160" alt="{{BRAND_NAME}}" style="width:160px;height:auto;display:block;border:0;" />
+                    {{/if}}
                   </td>
                 </tr>
 
@@ -477,21 +476,6 @@
                 <tr>
                   <td class="cardPad px" style="padding: 24px 22px 6px">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <!-- Icon -->
-                      <tr>
-                        <td align="center" style="padding-bottom: 10px">
-                          {{!-- {{#if (eq attempt_status "success")}}
-                          <img src="https://cdn.graduatefashionbd.com/icon/payment_success.png" width="84" alt="Payment Successful" style="width: 84px; height: auto" />
-                          {{else if (eq attempt_status "partial")}}
-                          <img src="https://cdn.graduatefashionbd.com/icon/payment_partial.png" width="84" alt="Partial Payment" style="width: 84px; height: auto" />
-                          {{else if (eq attempt_status "failed")}}
-                          <img src="https://cdn.graduatefashionbd.com/icon/payment_failed.png" width="84" alt="Payment Failed" style="width: 84px; height: auto" />
-                          {{else}}
-                          <img src="https://cdn.graduatefashionbd.com/icon/payment_cancelled.png" width="84" alt="Payment Cancelled" style="width: 84px; height: auto" />
-                          {{/if}} --}}
-                        </td>
-                      </tr>
-
                       <!-- Title -->
                       <tr>
                         <td align="center" style="padding: 6px 0 4px">

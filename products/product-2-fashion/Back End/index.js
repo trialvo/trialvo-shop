@@ -44,6 +44,10 @@ const { getSystemConfig,
   patchPermissionConfig,
   updateSystemConfig,
   updateEmailConfig,
+  getEmailLogoStatus,
+  getEmailLogoFile,
+  uploadEmailLogo,
+  deleteEmailLogo,
   // updateSmsConfig,
   getSmsBalance,
   testSmsConfig,
@@ -785,6 +789,10 @@ app.get(`${BASE_URL}/config/getPermissionConfig`, getPermissionConfig);
 app.patch(`${BASE_URL}/config/patchPermissionConfig`, patchPermissionConfig);
 app.put(`${BASE_URL}/config/updateSystemConfig`, updateSystemConfig);
 app.put(`${BASE_URL}/config/updateEmailConfig`, updateEmailConfig);
+app.get(`${BASE_URL}/config/emailLogo`, getEmailLogoStatus);
+app.get(`${BASE_URL}/config/emailLogo/file`, getEmailLogoFile);
+app.post(`${BASE_URL}/config/emailLogo`, uploadEmailLogo);
+app.delete(`${BASE_URL}/config/emailLogo`, deleteEmailLogo);
 // app.put(`${BASE_URL}/config/updateSmsConfig`, updateSmsConfig);
 app.get(`${BASE_URL}/config/getSmsBalance`, getSmsBalance);
 app.post(`${BASE_URL}/config/testSms`, testSmsConfig);

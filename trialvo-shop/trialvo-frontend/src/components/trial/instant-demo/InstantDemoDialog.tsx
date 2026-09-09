@@ -10,7 +10,7 @@ import { Form } from "@/components/ui/form";
 import { FormTextField } from "@/components/form";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProduct } from "@/hooks/useProducts";
-import { useSubmitInstantDemo } from "@/hooks/useTrialRequests";
+import { useStartEmailVerification, useSubmitInstantDemo } from "@/hooks/useTrialRequests";
 import { ApiError } from "@/lib/api";
 import { trialCopy, trialErrorMessage } from "@/lib/trial/copy";
 import { localizeNumber } from "@/lib/trial/months";
@@ -22,14 +22,16 @@ import {
 } from "@/lib/trial/types";
 import { createInstantDemoSchema, type InstantDemoValues } from "@/lib/validation";
 import { useTrialLaunch, type TrialLaunchOptions } from "../TrialLaunchProvider";
+import { EmailVerifyStep } from "../shared/EmailVerifyStep";
 import { HoneypotField } from "../shared/HoneypotField";
 import { ProductChip } from "../shared/ProductChip";
 import { ProductPickerStep } from "../shared/ProductPickerStep";
 import { TrialModalFacts, TrialModalShell } from "../shared/TrialModalShell";
+import { DemoPendingApproval } from "./DemoPendingApproval";
 import { ProvisioningSteps } from "./ProvisioningSteps";
 import { InstantDemoSuccess } from "./InstantDemoSuccess";
 
-type Phase = "pick" | "form" | "provisioning" | "done" | "error";
+type Phase = "pick" | "form" | "verify" | "provisioning" | "done" | "awaiting" | "error";
 
 export type InstantDemoDialogProps = {
   open: boolean;
@@ -42,9 +44,9 @@ export type InstantDemoDialogProps = {
 const FIELD = "h-11 rounded-lg border-border bg-card";
 
 /**
- * Instant demo: pick product (if needed) → 3-field form → provisioning
- * animation → credentials. The request provisions synchronously, so in the
- * common case the customer never leaves this dialog before they have a login.
+ * Instant demo: pick product (if needed) → 3-field form → email OTP →
+ * provisioning animation → credentials, or a waiting-for-approval screen
+ * when auto-approve is off.
  */
 export function InstantDemoDialog({
   open,
@@ -57,24 +59,17 @@ export function InstantDemoDialog({
   const copy = trialCopy(language);
   const { config, demoAvailable } = useTrialLaunch();
   const submit = useSubmitInstantDemo();
+  const startVerify = useStartEmailVerification();
 
+  const [phase, setPhase] = useState<Phase>("pick");
   const [picked, setPicked] = useState<TrialProductRef | null>(null);
   const [result, setResult] = useState<DemoSubmitResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [errorToken, setErrorToken] = useState<string | null>(null);
+  const [resendAfterSeconds, setResendAfterSeconds] = useState(60);
 
   const { data: fetched, isLoading: fetching } = useProduct(!productProp && productSlug ? productSlug : undefined);
   const product = productProp ?? picked ?? fetched ?? null;
-
-  const phase: Phase = errorMsg
-    ? "error"
-    : result
-      ? "done"
-      : submit.isPending
-        ? "provisioning"
-        : product
-          ? "form"
-          : "pick";
 
   const schema = useMemo(() => createInstantDemoSchema(language), [language]);
   const form = useForm<InstantDemoValues>({
@@ -84,21 +79,36 @@ export function InstantDemoDialog({
   });
 
   useEffect(() => {
+    if (!open) return;
+    setPhase((current) => {
+      if (current === "verify" || current === "provisioning" || current === "done" || current === "awaiting" || current === "error") {
+        return current;
+      }
+      return product ? "form" : "pick";
+    });
+  }, [open, product]);
+
+  useEffect(() => {
     if (open) return;
     const t = setTimeout(() => {
       setPicked(null);
       setResult(null);
       setErrorMsg(null);
       setErrorToken(null);
+      setResendAfterSeconds(60);
+      setPhase("pick");
       submit.reset();
+      startVerify.reset();
       form.reset();
     }, 200);
     return () => clearTimeout(t);
   }, [open]);
 
-  const onSubmit = async (values: InstantDemoValues) => {
+  const submitTrial = async (verificationToken?: string) => {
     if (!product) return;
+    setPhase("provisioning");
     setErrorMsg(null);
+    const values = form.getValues();
     try {
       const res = await submit.mutateAsync({
         productSlug: product.slug,
@@ -107,13 +117,40 @@ export function InstantDemoDialog({
         email: values.email,
         phone: values.phone,
         website: honeypotValue(values.website, values.email),
+        verificationToken,
       });
       setResult(res);
+      setPhase(res.awaitingApproval ? "awaiting" : "done");
     } catch (err) {
       if (err instanceof ApiError) {
         setErrorMsg(trialErrorMessage(language, err.code, err.message));
         const tok = err.body?.statusToken;
         if (typeof tok === "string") setErrorToken(tok);
+      } else {
+        setErrorMsg(trialErrorMessage(language, undefined, err instanceof Error ? err.message : undefined));
+      }
+      setPhase("error");
+    }
+  };
+
+  const onSubmit = async (values: InstantDemoValues) => {
+    if (!product) return;
+    setErrorMsg(null);
+    try {
+      const started = await startVerify.mutateAsync({
+        email: values.email,
+        name: values.name,
+        website: honeypotValue(values.website, values.email),
+      });
+      if (started.skipped) {
+        await submitTrial();
+        return;
+      }
+      setResendAfterSeconds(started.resendAfterSeconds ?? 60);
+      setPhase("verify");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setErrorMsg(trialErrorMessage(language, err.code, err.message));
       } else {
         setErrorMsg(trialErrorMessage(language, undefined, err instanceof Error ? err.message : undefined));
       }
@@ -131,6 +168,7 @@ export function InstantDemoDialog({
 
   const unsupported = product ? !productSupportsDemo(product) : false;
   const showFormFooter = phase === "form" && demoAvailable && !unsupported;
+  const headingDone = (phase === "done" || phase === "awaiting") && product;
 
   return (
     <TrialModalShell
@@ -138,9 +176,9 @@ export function InstantDemoDialog({
       onOpenChange={onOpenChange}
       icon={Zap}
       eyebrow={copy.demo.eyebrow}
-      title={phase === "done" && product ? productDisplayName(product, language) : copy.demo.title}
+      title={headingDone ? productDisplayName(product, language) : copy.demo.title}
       description={
-        phase === "done" ? undefined : (
+        phase === "done" || phase === "awaiting" || phase === "verify" ? undefined : (
           <TrialModalFacts
             items={[
               copy.demo.accessDays(localizeNumber(config.demoAccessDays, language)),
@@ -156,10 +194,20 @@ export function InstantDemoDialog({
             type="submit"
             form="instant-demo-form"
             size="lg"
+            disabled={startVerify.isPending}
             className="h-12 w-full rounded-lg bg-accent font-semibold text-accent-foreground shadow-accent-glow hover:bg-accent/90"
           >
-            <Zap className="mr-2 h-4 w-4" aria-hidden="true" />
-            {copy.demo.submit}
+            {startVerify.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                {copy.demo.submitting}
+              </>
+            ) : (
+              <>
+                <Zap className="mr-2 h-4 w-4" aria-hidden="true" />
+                {copy.demo.submit}
+              </>
+            )}
           </Button>
         ) : undefined
       }
@@ -199,6 +247,25 @@ export function InstantDemoDialog({
                 </form>
               </Form>
             )}
+            {errorMsg ? <div className="mt-4"><Notice tone="error">{errorMsg}</Notice></div> : null}
+          </motion.div>
+        ) : null}
+
+        {phase === "verify" ? (
+          <motion.div key="verify" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} className="space-y-4">
+            <EmailVerifyStep
+              email={form.getValues("email")}
+              language={language}
+              resendAfterSeconds={resendAfterSeconds}
+              onVerified={(token) => void submitTrial(token)}
+            />
+            <button
+              type="button"
+              onClick={() => { setErrorMsg(null); setPhase("form"); }}
+              className="w-full text-center text-sm font-medium text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
+            >
+              {copy.verify.wrongEmail}
+            </button>
           </motion.div>
         ) : null}
 
@@ -220,11 +287,17 @@ export function InstantDemoDialog({
           </motion.div>
         ) : null}
 
+        {phase === "awaiting" && result ? (
+          <motion.div key="awaiting" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <DemoPendingApproval result={result} language={language} email={form.getValues("email")} />
+          </motion.div>
+        ) : null}
+
         {phase === "error" ? (
           <motion.div key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <Notice tone="error">{errorMsg}</Notice>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button type="button" variant="outline" className="h-11 flex-1 rounded-lg" onClick={() => { setErrorMsg(null); submit.reset(); }}>
+              <Button type="button" variant="outline" className="h-11 flex-1 rounded-lg" onClick={() => { setErrorMsg(null); submit.reset(); setPhase(product ? "form" : "pick"); }}>
                 {copy.common.retry}
               </Button>
               {errorToken ? (

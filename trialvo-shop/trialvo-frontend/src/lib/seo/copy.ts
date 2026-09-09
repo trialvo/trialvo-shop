@@ -44,6 +44,7 @@ export type PageSeoKey =
   | "contact"
   | "faq"
   | "howItWorks"
+  | "installGuide"
   | "terms"
   | "privacy"
   | "refund"
@@ -218,6 +219,31 @@ export const PAGE_SEO: Record<PageSeoKey, Record<Locale, PageSeoCopy>> = {
         "live trial process",
         "website delivery process",
         "online shop setup steps",
+      ],
+    },
+  },
+
+  installGuide: {
+    bn: {
+      title: "ইনস্টল গাইড — নিজের VPS বা cPanel-এ Option-2 ইনস্টলার",
+      description:
+        "Trialvo Shop ইনস্টলার ZIP নিজের হোস্টে চালানোর ধাপ — Docker VPS, .env, agent.env, DNS, আর cPanel নোট। আমরা আপনার সার্ভারে লগইন করি না।",
+      keywords: [
+        "ইকমার্স ওয়েবসাইট ইনস্টল",
+        "VPS ইনস্টলার",
+        "cPanel ইনস্টল",
+        "ডোমেইন ট্রায়াল সেটআপ",
+      ],
+    },
+    en: {
+      title: "Installation guide — run the Option-2 installer on your VPS or cPanel",
+      description:
+        "How to run the Trialvo Shop installer ZIP on your own host — Docker VPS, .env, agent.env, DNS, and a short cPanel note. We never log into your server.",
+      keywords: [
+        "install ecommerce website",
+        "VPS installer",
+        "cPanel install",
+        "own-domain trial setup",
       ],
     },
   },

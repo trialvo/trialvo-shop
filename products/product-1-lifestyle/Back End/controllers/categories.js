@@ -285,7 +285,8 @@ exports.getMainCategories = api({
             (SELECT COALESCE(SUM(ps.stock), 0) 
              FROM products p 
              JOIN product_skus ps ON p.id = ps.product_id 
-             WHERE p.main_category_id = m.id AND ps.status = 1) as total_stock
+             WHERE p.main_category_id = m.id AND ps.status = 1) as total_stock,
+            (SELECT COUNT(DISTINCT p.id) FROM products p WHERE p.main_category_id = m.id AND p.status = 1) as product_count
         FROM main_categories m 
         ${whereClause} 
         ORDER BY m.priority DESC, m.created_at DESC LIMIT ? OFFSET ?`,
@@ -302,7 +303,8 @@ exports.getMainCategories = api({
             (SELECT COALESCE(SUM(ps.stock), 0) 
              FROM products p 
              JOIN product_skus ps ON p.id = ps.product_id 
-             WHERE p.sub_category_id = s.id AND ps.status = 1) as total_stock
+             WHERE p.sub_category_id = s.id AND ps.status = 1) as total_stock,
+            (SELECT COUNT(DISTINCT p.id) FROM products p WHERE p.sub_category_id = s.id AND p.status = 1) as product_count
         FROM sub_categories s 
         WHERE s.main_category_id IN (?) 
         ORDER BY s.priority DESC`,
@@ -318,7 +320,8 @@ exports.getMainCategories = api({
                 (SELECT COALESCE(SUM(ps.stock), 0) 
                  FROM products p 
                  JOIN product_skus ps ON p.id = ps.product_id 
-                 WHERE p.child_category_id = c.id AND ps.status = 1) as total_stock
+                 WHERE p.child_category_id = c.id AND ps.status = 1) as total_stock,
+                (SELECT COUNT(DISTINCT p.id) FROM products p WHERE p.child_category_id = c.id AND p.status = 1) as product_count
             FROM child_categories c 
             WHERE c.sub_category_id IN (?) 
             ORDER BY c.priority DESC`,
@@ -335,12 +338,14 @@ exports.getMainCategories = api({
                 status: !!sub.status,
                 featured: !!sub.featured,
                 total_stock: Number(sub.total_stock), // Ensure it's a number
+                product_count: Number(sub.product_count),
                 child_categories: childs.filter(c => c.sub_category_id === sub.id).map(c => ({
                     ...c,
                     name_bd: c.name_bd,
                     status: !!c.status,
                     featured: !!c.featured,
-                    total_stock: Number(c.total_stock)
+                    total_stock: Number(c.total_stock),
+                    product_count: Number(c.product_count)
                 }))
             };
         });
@@ -351,6 +356,7 @@ exports.getMainCategories = api({
             status: !!main.status,
             featured: !!main.featured,
             total_stock: Number(main.total_stock),
+            product_count: Number(main.product_count),
             sub_categories: mainSubs
         };
     });

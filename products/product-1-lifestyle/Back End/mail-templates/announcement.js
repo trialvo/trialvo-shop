@@ -4,6 +4,7 @@ const errors = require("../helpers/errors"); // adjust path
 const { getConfig } = require("../config/ApplicationSettingsDB"); // adjust path
 const { BRAND_NAME, SHOP_URL, BRAND_ADDRESS, unsubscribeSecret } = require("../config/ApplicationSettings"); // adjust path
 const { resolveFrom } = require("../helpers/mailFrom");
+const { getEmailLogoMailParts } = require("../helpers/emailLogo");
  
 const hbsPackage = require("handlebars"); // Import the base handlebars package
 
@@ -100,12 +101,17 @@ exports.sendAnnouncementMail = async (connection, mailObj) => {
     }
 
     try {
+        const logo = await getEmailLogoMailParts();
         await transporter.sendMail({
             from: resolveFrom(cfg, BRAND_NAME),
             to: email,
             subject: headline,
             template: "announcement", // name of the template file i.e., announcement.handlebars
+            attachments: logo.attachments,
             context: {
+                hasEmailLogo: logo.hasEmailLogo,
+                EMAIL_LOGO_CID: logo.EMAIL_LOGO_CID,
+                EMAIL_LOGO_SRC: logo.EMAIL_LOGO_SRC,
                 BRAND_NAME,
                 BRAND_ADDRESS,
                 SHOP_URL,

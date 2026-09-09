@@ -4,9 +4,10 @@ const { pool } = require('../config/db');
  * Single source of truth for every trial knob the admin can turn.
  *
  * Two public paths read from here:
- *   - Instant demo  (hosted)      → demoEnabled, hostedDays, abuse limits
+ *   - Instant demo  (hosted)      → demoEnabled, hostedDays, abuse limits,
+ *                                   emailVerificationRequired, autoApproveHosted
  *   - Own-domain    (self_hosted) → domainEnabled, domainMonths, defaultMonths,
- *                                   hostingPurchaseEnabled, fulfillmentSlaHours
+ *                                   fulfillmentSlaHours
  *
  * Marketing copy on the home/product pages reads the same values through
  * GET /api/trial/config, so "1 month free on your domain" can never drift from what
@@ -25,7 +26,7 @@ const TRIAL_KEYS = [
   'trial_domain_enabled',
   'trial_domain_months',
   'trial_domain_default_months',
-  'trial_hosting_purchase_enabled',
+  'trial_email_verification_required',
   'trial_fulfillment_sla_hours',
   'trial_demo_reset_enabled',
   'trial_demo_max_per_email_day',
@@ -45,7 +46,7 @@ const DEFAULTS = {
   trial_domain_enabled: 'true',
   trial_domain_months: '1',
   trial_domain_default_months: '1',
-  trial_hosting_purchase_enabled: 'true',
+  trial_email_verification_required: 'true',
   trial_fulfillment_sla_hours: '24',
   trial_demo_reset_enabled: 'false',
   trial_demo_max_per_email_day: '3',
@@ -102,7 +103,7 @@ async function getTrialSettings() {
     domainMonths,
     // Only advertise a default that is actually offered.
     defaultMonths: domainMonths.includes(defaultMonths) ? defaultMonths : domainMonths[0],
-    hostingPurchaseEnabled: map.trial_hosting_purchase_enabled !== 'false',
+    emailVerificationRequired: map.trial_email_verification_required !== 'false',
     fulfillmentSlaHours: clampInt(map.trial_fulfillment_sla_hours, 24, 1, 168),
   };
 }
@@ -167,7 +168,7 @@ async function updateTrialSettings({
   autoApproveHosted, hostedDays, selfHostedDays, paidExtendDays,
   extendDays, extendPriceBdt, extendPriceUsd, trialsEnabled,
   demoEnabled, domainEnabled, domainMonths, defaultMonths,
-  hostingPurchaseEnabled, fulfillmentSlaHours, demoResetEnabled,
+  emailVerificationRequired, fulfillmentSlaHours, demoResetEnabled,
   demoMaxPerEmailDay, demoMaxPerIpHour,
 }) {
   await ensureTrialConfigRows();
@@ -190,7 +191,7 @@ async function updateTrialSettings({
     updates.push(['trial_domain_months', parseMonthsList(list).join(',')]);
   }
   if (defaultMonths !== undefined) updates.push(['trial_domain_default_months', String(clampMonths(defaultMonths))]);
-  if (hostingPurchaseEnabled !== undefined) updates.push(['trial_hosting_purchase_enabled', bool(hostingPurchaseEnabled)]);
+  if (emailVerificationRequired !== undefined) updates.push(['trial_email_verification_required', bool(emailVerificationRequired)]);
   if (fulfillmentSlaHours !== undefined) updates.push(['trial_fulfillment_sla_hours', String(clampInt(fulfillmentSlaHours, 24, 1, 168))]);
   if (demoResetEnabled !== undefined) updates.push(['trial_demo_reset_enabled', bool(demoResetEnabled)]);
   if (demoMaxPerEmailDay !== undefined) updates.push(['trial_demo_max_per_email_day', String(clampInt(demoMaxPerEmailDay, 3, 1, 50))]);
@@ -225,7 +226,7 @@ function toPublicConfig(settings) {
     domainMonths: settings.domainMonths,
     defaultMonths: settings.defaultMonths,
     maxMonths: settings.domainMonths[settings.domainMonths.length - 1],
-    hostingPurchaseEnabled: settings.hostingPurchaseEnabled,
+    emailVerificationRequired: settings.emailVerificationRequired,
     fulfillmentSlaHours: settings.fulfillmentSlaHours,
     // Legacy fields still read by the status page / checkout
     hostedDays: settings.hostedDays,

@@ -19,7 +19,7 @@ function toFeaturedFromSub(sub: SubCategory): FeaturedCategoryViewModel {
     name: sub.name,
     slug,
     image: resolveMediaUrl(sub.img_path),
-    productCount: typeof sub.total_stock === "number" ? sub.total_stock : 0,
+    productCount: typeof sub.product_count === "number" ? sub.product_count : 0,
     href: buildShopCategoryHref(slug),
   };
 }
@@ -31,7 +31,7 @@ function toFeaturedFromMain(main: MainCategory): FeaturedCategoryViewModel {
     name: main.name,
     slug,
     image: resolveMediaUrl(main.img_path),
-    productCount: 0,
+    productCount: typeof main.product_count === "number" ? main.product_count : 0,
     href: buildShopCategoryHref(slug),
   };
 }

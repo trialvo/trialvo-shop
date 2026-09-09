@@ -31,6 +31,7 @@ const UI = {
       "নাম আর ইমেইল দিন, সাথে সাথে শপ ও অ্যাডমিনে ঢুকুন। পছন্দ হলে নিজের ডোমেইনে ফ্রি ট্রায়াল নিন। কোনো পেমেন্ট বা কার্ড লাগবে না।",
     browse: "সব প্রোডাক্ট",
     faq: "প্রশ্নোত্তর পড়ুন",
+    installGuide: "ইনস্টল গাইড",
     contact: "যোগাযোগ করুন",
   },
   en: {
@@ -44,6 +45,7 @@ const UI = {
       "Enter your name and email and step straight into the shop and admin. Like it? Take a free trial on your own domain. No payment and no card required.",
     browse: "All products",
     faq: "Read the FAQ",
+    installGuide: "Installation guide",
     contact: "Contact us",
   },
 } as const;
@@ -218,6 +220,13 @@ export default function HowItWorksPage() {
                 {ui.browse}
                 <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
               </LocalizedLink>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 rounded-lg bg-background shadow-card"
+            >
+              <LocalizedLink href="/docs/install">{ui.installGuide}</LocalizedLink>
             </Button>
             <Button
               asChild

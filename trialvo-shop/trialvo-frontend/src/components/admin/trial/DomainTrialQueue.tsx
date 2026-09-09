@@ -3,12 +3,11 @@
 import { Fragment, useState } from "react";
 import {
   AlertTriangle,
+  Check,
   ChevronDown,
   ChevronUp,
   ExternalLink,
   Globe,
-  Hand,
-  Loader2,
   RotateCcw,
   Rocket,
   Server,
@@ -17,20 +16,9 @@ import {
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { useTrialRequestMutations, type TrialRequestRow } from "@/hooks/useTrialRequests";
-import type { HostKind } from "@/lib/trial/types";
 import { formatDate } from "@/lib/trial/months";
 import { cn } from "@/lib/utils";
 import { FulfillDialog } from "./FulfillDialog";
@@ -44,8 +32,9 @@ function ageLabel(hours: number | undefined) {
 }
 
 /**
- * Own-domain fulfilment queue. Each row exposes exactly the action that moves
- * the request to its next stage, so staff never have to remember the pipeline.
+ * Own-domain fulfilment queue. Primary path: Approve → installer ZIP →
+ * customer runs it → agent register marks LIVE. Mark live is a manual
+ * escape hatch only (legacy hosting_pending or staff override).
  */
 export function DomainTrialQueue({
   rows,
@@ -53,10 +42,9 @@ export function DomainTrialQueue({
   slaHours,
 }: Readonly<{ rows: TrialRequestRow[]; loading: boolean; slaHours: number }>) {
   const { toast } = useToast();
-  const { pickup, confirmHosting, reopen, reject } = useTrialRequestMutations();
+  const { approve, reopen, reject } = useTrialRequestMutations();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [fulfillTarget, setFulfillTarget] = useState<TrialRequestRow | null>(null);
-  const [hostingTarget, setHostingTarget] = useState<TrialRequestRow | null>(null);
   const [rejectTarget, setRejectTarget] = useState<TrialRequestRow | null>(null);
 
   const run = async (label: string, fn: () => Promise<unknown>) => {
@@ -97,7 +85,7 @@ export function DomainTrialQueue({
             const stage = r.fulfillment_stage || "received";
             const open = expanded === r.id;
             const overdue = ["received", "hosting_pending", "deploying"].includes(stage) && (r.age_hours ?? 0) >= slaHours;
-            const busy = pickup.isPending || confirmHosting.isPending || reopen.isPending || reject.isPending;
+            const busy = approve.isPending || reopen.isPending || reject.isPending;
             return (
               <Fragment key={r.id}>
                 <tr className={cn("admin-table-row", open && "bg-muted/30")}>
@@ -119,8 +107,7 @@ export function DomainTrialQueue({
                   <td className="text-xs">
                     <span className="flex items-center gap-1.5">
                       <Server className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                      {r.hosting_source === "buy_from_trialvo" ? "Buy from Trialvo" : "Own"}
-                      {r.host_kind ? <span className="rounded bg-muted px-1.5 py-0.5 font-mono uppercase">{r.host_kind}</span> : null}
+                      {r.host_kind ? <span className="rounded bg-muted px-1.5 py-0.5 font-mono uppercase">{r.host_kind}</span> : "—"}
                     </span>
                     {r.desired_domain ? <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">{r.desired_domain}</span> : null}
                   </td>
@@ -136,20 +123,43 @@ export function DomainTrialQueue({
                     </span>
                   </td>
                   <td className="space-x-1 whitespace-nowrap text-right">
-                    {stage === "received" ? (
-                      <Button size="sm" disabled={busy} onClick={() => run("Picked up", () => pickup.mutateAsync({ id: r.id }))}>
-                        <Hand className="mr-1 h-3 w-3" /> Pick up
+                    {stage === "received" && !r.instance_id ? (
+                      <Button
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => run("Installer issued — customer can download from their status page", () => approve.mutateAsync({ id: r.id }))}
+                      >
+                        <Check className="mr-1 h-3 w-3" /> Approve & issue installer
+                      </Button>
+                    ) : null}
+                    {stage === "received" && r.instance_id ? (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={`/admin/trial-instances?instance=${r.instance_id}`}>
+                          <ExternalLink className="mr-1 h-3 w-3" /> Instance
+                        </a>
                       </Button>
                     ) : null}
                     {stage === "hosting_pending" ? (
-                      <Button size="sm" disabled={busy} onClick={() => setHostingTarget(r)}>
-                        <Server className="mr-1 h-3 w-3" /> Hosting ready
-                      </Button>
-                    ) : null}
-                    {stage === "deploying" ? (
                       <>
                         <Button size="sm" disabled={busy} onClick={() => setFulfillTarget(r)}>
                           <Rocket className="mr-1 h-3 w-3" /> Mark live
+                        </Button>
+                        <Button size="sm" variant="outline" disabled={busy} aria-label="Reopen" onClick={() => run("Reopened", () => reopen.mutateAsync({ id: r.id }))}>
+                          <RotateCcw className="h-3 w-3" />
+                        </Button>
+                      </>
+                    ) : null}
+                    {stage === "deploying" ? (
+                      <>
+                        {r.instance_id ? (
+                          <Button asChild size="sm" variant="outline">
+                            <a href={`/admin/trial-instances?instance=${r.instance_id}`}>
+                              <ExternalLink className="mr-1 h-3 w-3" /> Instance
+                            </a>
+                          </Button>
+                        ) : null}
+                        <Button size="sm" variant="outline" disabled={busy} onClick={() => setFulfillTarget(r)}>
+                          <Rocket className="mr-1 h-3 w-3" /> Mark live manually
                         </Button>
                         <Button size="sm" variant="outline" disabled={busy} aria-label="Reopen" onClick={() => run("Reopened", () => reopen.mutateAsync({ id: r.id }))}>
                           <RotateCcw className="h-3 w-3" />
@@ -184,19 +194,6 @@ export function DomainTrialQueue({
       </table>
 
       <FulfillDialog request={fulfillTarget} onOpenChange={(o) => !o && setFulfillTarget(null)} />
-
-      <HostingConfirmDialog
-        request={hostingTarget}
-        busy={confirmHosting.isPending}
-        onOpenChange={(o) => !o && setHostingTarget(null)}
-        onConfirm={async (hostKind, domain) => {
-          if (!hostingTarget) return;
-          await run("Hosting confirmed — now deploying", () =>
-            confirmHosting.mutateAsync({ id: hostingTarget.id, hostKind, domain: domain || undefined }),
-          );
-          setHostingTarget(null);
-        }}
-      />
 
       <ConfirmDialog
         open={Boolean(rejectTarget)}
@@ -245,63 +242,6 @@ function RequestDetails({ row }: Readonly<{ row: TrialRequestRow }>) {
         </ol>
       </div>
     </div>
-  );
-}
-
-function HostingConfirmDialog({
-  request,
-  busy,
-  onOpenChange,
-  onConfirm,
-}: Readonly<{
-  request: TrialRequestRow | null;
-  busy: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: (hostKind: HostKind, domain: string) => Promise<void>;
-}>) {
-  const [hostKind, setHostKind] = useState<HostKind>("vps");
-  const [domain, setDomain] = useState("");
-  return (
-    <Dialog open={Boolean(request)} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Hosting confirmed</DialogTitle>
-          <DialogDescription>Record the hosting Trialvo provided for {request?.customer_name}. The request moves to “Deploying”.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-1">
-          <div className="space-y-1.5">
-            <Label>Host type</Label>
-            <div className="flex gap-2">
-              {(["vps", "cpanel"] as HostKind[]).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setHostKind(k)}
-                  aria-pressed={hostKind === k}
-                  className={cn(
-                    "h-9 rounded-lg border px-3 text-sm font-semibold uppercase",
-                    hostKind === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-muted",
-                  )}
-                >
-                  {k}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="hosting-domain">Domain (optional)</Label>
-            <Input id="hosting-domain" placeholder={request?.desired_domain || "myshop.com"} value={domain} onChange={(e) => setDomain(e.target.value)} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button disabled={busy} onClick={() => onConfirm(hostKind, domain.trim())}>
-            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Server className="mr-2 h-4 w-4" />}
-            Confirm
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 

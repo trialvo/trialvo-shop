@@ -140,22 +140,28 @@ function buildInstallerZip(ctx) {
   const readme = [
     `# Trialvo ${title} Trial (Option 2)`,
     '',
-    '1. Edit `.env` (copy from `.env.example`) — set DOMAIN, DB password, PUBLIC_* origins,',
+    'Full walkthrough: open INSTALL.md in this folder (VPS / Docker).',
+    'cPanel / Node packs: see INSTALL-CPANEL.md instead.',
+    '',
+    '1. Unzip on your VPS. Prerequisites: Docker + Compose, DNS A record, ports 80/443.',
+    '2. Copy `.env.example` → `.env` — set DOMAIN, DB password, PUBLIC_* origins,',
     '   and TRIAL_ADMIN_EMAIL / TRIAL_ADMIN_PASSWORD from your Trialvo status email.',
-    '2. Run `chmod +x setup.sh && ./setup.sh` (Linux/macOS) or `./setup.ps1` (Windows).',
-    '3. Point DNS for your domain to this host; open the firewall ports from `.env`.',
-    '4. First boot seeds the demo data automatically, then the license agent',
-    '   registers with Trialvo using the secrets in `agent.env` (one-time bootstrap).',
+    '3. Keep `agent.env` as shipped. Do not share it.',
+    '4. Run `chmod +x setup.sh && ./setup.sh` (Linux/macOS) or `./setup.ps1` (Windows).',
+    '5. First run may only create `.env` — edit it, then re-run setup.',
+    '6. Point DNS at this host; wait for containers; open shop + admin URLs.',
+    '7. The license agent registers with Trialvo; the status page becomes Active.',
+    '',
+    'If something fails: `docker compose ps` / `docker compose logs`.',
+    'The VPS must reach CONTROL_PLANE_URL. Installer links are single-use.',
     '',
     'Services: api, admin, shop, db (mysql:8.0), license-agent (Go lease gate).',
-    'The Go license-agent enforces the lease; the API stays locked without it.',
-    'Do not share agent.env. Public installer links are single-use and time-limited.',
     '',
     `Product: ${ctx.productSlug || images.prefix}`,
     `Install ID: ${ctx.installId}`,
     `Control plane: ${ctx.controlPlaneUrl || CP_URL}`,
     '',
-    'See TRIAL_TERMS.md.',
+    'See INSTALL.md and TRIAL_TERMS.md.',
     '',
   ].join('\n');
 
@@ -165,6 +171,8 @@ function buildInstallerZip(ctx) {
     { name: `${root}/setup.ps1`, data: readTemplate('setup.ps1') },
     { name: `${root}/.env.example`, data: envExampleForMode('trial') },
     { name: `${root}/TRIAL_TERMS.md`, data: readTemplate('TRIAL_TERMS.md') },
+    { name: `${root}/INSTALL.md`, data: readTemplate('INSTALL.md') },
+    { name: `${root}/INSTALL-CPANEL.md`, data: readTemplate('INSTALL-CPANEL.md') },
     { name: `${root}/agent.env`, data: agentEnv },
     { name: `${root}/license_public.pem`, data: ctx.licensePublicKey || loadLicensePublicKey() },
     { name: `${root}/README.md`, data: readme },
@@ -201,11 +209,13 @@ function buildPaidDockerZip(ctx) {
     '',
     'This pack is bound to your purchase. Do not share agent.env.',
     'Copying to another domain without a domain transfer will freeze the license.',
+    'Full walkthrough: INSTALL.md in this folder.',
     '',
-    '1. Copy `.env.example` → `.env` and set DOMAIN / PUBLIC_* origins / DB password.',
+    '1. Copy `.env.example` → `.env` — DOMAIN, passwords, PUBLIC_* URLs, admin email/password.',
     '2. Keep `agent.env` as shipped (LICENSE_ENFORCE=1, TRIAL_MODE=0).',
-    '3. `docker compose up -d` (or setup.sh / setup.ps1).',
-    '4. Point DNS at this host. The API registers with Trialvo on first boot.',
+    '3. `chmod +x setup.sh && ./setup.sh` (or setup.ps1). First run may only create `.env`.',
+    '4. Point DNS at this host. Wait for containers; open shop + admin.',
+    '5. The agent registers with Trialvo on first boot.',
     '',
     `Product: ${ctx.productSlug || images.prefix}`,
     `Install ID: ${ctx.installId}`,
@@ -218,6 +228,7 @@ function buildPaidDockerZip(ctx) {
     { name: `${root}/setup.sh`, data: readTemplate('setup.sh').replace(/\r\n/g, '\n') },
     { name: `${root}/setup.ps1`, data: readTemplate('setup.ps1') },
     { name: `${root}/.env.example`, data: envExampleForMode('paid') },
+    { name: `${root}/INSTALL.md`, data: readTemplate('INSTALL.md') },
     { name: `${root}/agent.env`, data: agentEnv },
     { name: `${root}/license_public.pem`, data: ctx.licensePublicKey || loadLicensePublicKey() },
     { name: `${root}/README.md`, data: readme },
@@ -268,6 +279,8 @@ function buildPaidCpanelZip(ctx) {
     '',
     'Admin / Shop frontends: build statically and point API_ORIGIN at this API.',
     '',
+    'See INSTALL-CPANEL.md for the full cPanel / Node checklist.',
+    '',
   ].join('\n');
 
   const passengerNote = [
@@ -282,6 +295,7 @@ function buildPaidCpanelZip(ctx) {
     { name: `${root}/license.env`, data: licenseEnv },
     { name: `${root}/license_public.pem`, data: ctx.licensePublicKey || loadLicensePublicKey() },
     { name: `${root}/passenger-startup.example.js`, data: passengerNote },
+    { name: `${root}/INSTALL-CPANEL.md`, data: readTemplate('INSTALL-CPANEL.md') },
     { name: `${root}/README.md`, data: readme },
   ];
 
@@ -323,11 +337,14 @@ function buildTrialCpanelZip(ctx) {
     `Install ID: ${ctx.installId}`,
     `Control plane: ${ctx.controlPlaneUrl || CP_URL}`,
     '',
+    'See INSTALL-CPANEL.md for the full cPanel / Node checklist.',
+    '',
   ].join('\n');
 
   const entries = [
     { name: `${root}/license.env`, data: licenseEnv },
     { name: `${root}/license_public.pem`, data: ctx.licensePublicKey || loadLicensePublicKey() },
+    { name: `${root}/INSTALL-CPANEL.md`, data: readTemplate('INSTALL-CPANEL.md') },
     { name: `${root}/README.md`, data: readme },
   ];
 
@@ -341,7 +358,7 @@ function buildTrialCpanelZip(ctx) {
  */
 function buildTrialInstallerZip(ctx) {
   const dc = parseDeployConfig(ctx.deployConfig);
-  if (dc.installer_mode === 'node_only') {
+  if (ctx.hostKind === 'cpanel' || dc.installer_mode === 'node_only') {
     return buildTrialCpanelZip(ctx);
   }
   return buildInstallerZip(ctx);

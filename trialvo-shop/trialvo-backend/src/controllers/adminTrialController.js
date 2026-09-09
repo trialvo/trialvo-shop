@@ -8,7 +8,7 @@ const {
     getTrialSettings, defaultDaysForType, clampDays, clampMonths, monthsToDays, expiresAtForMonths,
 } = require('../services/trialSettings');
 const {
-    STAGES, HOST_KINDS, setStage, parseHistory, normaliseDomain,
+    STAGES, setStage, parseHistory,
 } = require('../services/trialFulfillment');
 const { domainTrialLiveEmail, FRONTEND } = require('../services/trialEmails');
 const { listBackups, getBackupForInstance, openStoredBackup, backupKeepCount } = require('../services/backupService');
@@ -138,32 +138,6 @@ async function pickupTrialRequest(req, res, next) {
     }
 }
 
-/** Hosting sold/ready for buy_from_trialvo requests. Staff may record host kind now. */
-async function confirmTrialHosting(req, res, next) {
-    try {
-        const request = await loadRequestWithProduct(req.params.id);
-        if (!request) return res.status(404).json({ error: 'Not found' });
-        if (request.hosting_source !== 'buy_from_trialvo') {
-            return res.status(400).json({ error: 'This request already has its own hosting' });
-        }
-        const kind = String(req.body?.hostKind || '').toLowerCase();
-        if (!HOST_KINDS.includes(kind)) return res.status(400).json({ error: 'hostKind must be vps or cpanel' });
-        const domain = req.body?.domain ? normaliseDomain(req.body.domain) : request.desired_domain;
-
-        await pool.query(
-            `UPDATE trial_requests
-                SET host_kind = $1, has_hosting = 1, desired_domain = COALESCE($2, desired_domain),
-                    assigned_admin_id = COALESCE(assigned_admin_id, $3), updated_at = NOW()
-              WHERE id = $4`,
-            [kind, domain, req.admin?.id || null, request.id]
-        );
-        const updated = await setStage(request.id, STAGES.DEPLOYING, { by: req.admin?.id || null, note: req.body?.note || 'hosting confirmed' });
-        res.json({ ok: true, request: { ...updated, stage_history: parseHistory(updated.stage_history) } });
-    } catch (err) {
-        try { stageError(res, err); } catch (e) { next(e); }
-    }
-}
-
 /** Something went wrong mid-deploy — push it back to the queue. */
 async function reopenTrialRequest(req, res, next) {
     try {
@@ -200,10 +174,6 @@ async function fulfillTrialRequest(req, res, next) {
         if (!/^https?:\/\/\S+/.test(shopUrl) || !/^https?:\/\/\S+/.test(adminUrl)) {
             return res.status(400).json({ error: 'shopUrl and adminUrl must be full URLs (https://...)' });
         }
-        if (request.hosting_source === 'buy_from_trialvo' && !request.has_hosting && !req.body?.hostKind) {
-            return res.status(400).json({ error: 'Confirm hosting (VPS/cPanel) before fulfilling', code: 'HOSTING_NOT_CONFIRMED' });
-        }
-
         const settings = await getTrialSettings();
         const months = clampMonths(req.body?.months, request.requested_months || settings.defaultMonths);
         const expiresAt = expiresAtForMonths(months);
@@ -221,7 +191,6 @@ async function fulfillTrialRequest(req, res, next) {
             note: 'Staff-deployed own-domain trial (no agent)',
             provisionMode: 'manual',
             hostKind,
-            hostingSource: request.hosting_source,
             months,
             fulfilledBy: req.admin?.id || null,
             staffNotes: notes,
@@ -302,9 +271,27 @@ async function approveTrialRequest(req, res, next) {
 
         const settings = await getTrialSettings();
         const defaultDays = defaultDaysForType(settings, request.trial_type);
-        const trialDays = days ? clampDays(days, defaultDays) : clampDays(request.requested_days, defaultDays);
+        let trialDays;
+        if (days) {
+            trialDays = clampDays(days, defaultDays);
+        } else if (request.trial_type === 'self_hosted' && request.requested_months) {
+            trialDays = monthsToDays(clampMonths(request.requested_months, settings.defaultMonths));
+        } else {
+            trialDays = clampDays(request.requested_days, defaultDays);
+        }
 
         const result = await provisionFromRequest(request, trialDays);
+        if (request.trial_type === 'self_hosted') {
+            try {
+                await setStage(request.id, STAGES.DEPLOYING, {
+                    by: req.admin?.id || null,
+                    note: 'installer issued',
+                    force: true,
+                });
+            } catch (e) {
+                console.error(`[approve] stage bookkeeping failed for ${request.id}:`, e.message || e);
+            }
+        }
         res.json({ ok: true, trialDays, ...result });
     } catch (err) { next(err); }
 }
@@ -612,7 +599,7 @@ async function tearDownHostedDocker(instanceId, hard) {
 async function downloadInstaller(req, res, next) {
     try {
         const { rows } = await pool.query(
-            `SELECT ti.*, tr.desired_domain, p.slug AS product_slug, p.deploy_config
+            `SELECT ti.*, tr.desired_domain, tr.host_kind, p.slug AS product_slug, p.deploy_config
              FROM trial_instances ti
              LEFT JOIN trial_requests tr ON tr.id = ti.request_id
              LEFT JOIN products p ON p.id = ti.product_id
@@ -654,6 +641,7 @@ async function downloadInstaller(req, res, next) {
             adminPassword: inst.admin_password_enc ? decrypt(inst.admin_password_enc) : '',
             productSlug: inst.product_slug || 'lifestyle-ecommerce',
             deployConfig: inst.deploy_config,
+            hostKind: inst.host_kind,
         });
 
         await logEvent(inst.id, 'installer_downloaded', { by: req.admin?.id, admin: true });
@@ -882,7 +870,7 @@ async function getDeploymentAnalytics(req, res, next) {
 
 module.exports = {
     listTrialRequests, getTrialRequest, approveTrialRequest, rejectTrialRequest, patchTrialRequest,
-    getTrialRequestCounts, pickupTrialRequest, confirmTrialHosting, reopenTrialRequest, fulfillTrialRequest,
+    getTrialRequestCounts, pickupTrialRequest, reopenTrialRequest, fulfillTrialRequest,
     listInstances, getInstance, getInstanceEvents,
     freezeInstance, unfreezeInstance, extendInstance, destroyInstance,
     backupInstance, restoreInstance, listInstanceBackups, getInstanceCredentials,

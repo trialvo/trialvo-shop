@@ -4,6 +4,7 @@ const errors = require("../helpers/errors"); // adjust path
 const { getConfig } = require("../config/ApplicationSettingsDB"); // adjust path
 const { BRAND_NAME ,SHOP_URL,BRAND_ADDRESS} = require("../config/ApplicationSettings"); // adjust path
 const { resolveFrom } = require("../helpers/mailFrom");
+const { getEmailLogoMailParts } = require("../helpers/emailLogo");
 
 const hbsPackage = require("handlebars"); // Import the base handlebars package
 
@@ -77,12 +78,17 @@ exports. sendOrdermail = async (connection, mailObj) => {
   try {
  
 
+    const logo = await getEmailLogoMailParts();
     await transporter.sendMail({
       from: resolveFrom(cfg, BRAND_NAME),
       to: email,
       subject: `${BRAND_NAME} Order ${order.status === 'approved' ? 'Approved' : order.status === 'cancelled' ? 'Cancelled' : 'Confirmation'}`,
       template: "order",
+      attachments: logo.attachments,
       context: {
+        hasEmailLogo: logo.hasEmailLogo,
+        EMAIL_LOGO_CID: logo.EMAIL_LOGO_CID,
+        EMAIL_LOGO_SRC: logo.EMAIL_LOGO_SRC,
         name: name || "User",
         BRAND_NAME,
       BRAND_ADDRESS,

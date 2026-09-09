@@ -55,9 +55,8 @@ export function TrialFunnelCard({ days = 30, className }: Readonly<{ days?: numb
         ))}
       </ol>
 
-      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 text-xs sm:grid-cols-4">
+      <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-border pt-4 text-xs sm:grid-cols-3">
         <Stat label="From demo" value={`${data.domain.fromDemo}/${data.domain.total}`} />
-        <Stat label="Buy hosting" value={String(data.domain.buyHosting)} />
         <Stat label="VPS / cPanel" value={`${data.domain.vps} / ${data.domain.cpanel}`} />
         <Stat label="Avg. fulfil" value={data.domain.avgFulfillHours !== null ? `${Math.round(data.domain.avgFulfillHours)}h` : "—"} />
       </dl>

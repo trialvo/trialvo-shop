@@ -7,9 +7,9 @@ import { useCallback, useReducer } from "react";
  * owns those). A reducer rather than three useStates so "back", "next" and
  * "jump to submitted" are explicit, testable transitions.
  */
-export type WizardStep = "pick" | "hosting" | "duration" | "contact" | "submitted";
+export type WizardStep = "pick" | "hosting" | "duration" | "contact" | "verify" | "submitted";
 
-export const ORDERED_STEPS: WizardStep[] = ["hosting", "duration", "contact"];
+export const ORDERED_STEPS: WizardStep[] = ["hosting", "duration", "contact", "verify"];
 
 type State = {
   step: WizardStep;

@@ -5,7 +5,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "sync:demo-uploads": "node scripts/sync-demo-uploads-to-volumes.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1087.0",
