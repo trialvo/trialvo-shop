@@ -17,6 +17,7 @@ type FormState = Required<
   Pick<
     TrialSettings,
     | "trialsEnabled"
+    | "autoApproveHosted"
     | "demoEnabled"
     | "hostedDays"
     | "demoMaxPerEmailDay"
@@ -25,7 +26,7 @@ type FormState = Required<
     | "domainEnabled"
     | "domainMonths"
     | "defaultMonths"
-    | "hostingPurchaseEnabled"
+    | "emailVerificationRequired"
     | "fulfillmentSlaHours"
     | "paidExtendDays"
     | "extendDays"
@@ -36,6 +37,7 @@ type FormState = Required<
 
 const DEFAULTS: FormState = {
   trialsEnabled: true,
+  autoApproveHosted: true,
   demoEnabled: true,
   hostedDays: 14,
   demoMaxPerEmailDay: 3,
@@ -44,7 +46,7 @@ const DEFAULTS: FormState = {
   domainEnabled: true,
   domainMonths: [1],
   defaultMonths: 1,
-  hostingPurchaseEnabled: true,
+  emailVerificationRequired: true,
   fulfillmentSlaHours: 24,
   paidExtendDays: 365,
   extendDays: 30,
@@ -55,6 +57,7 @@ const DEFAULTS: FormState = {
 function fromSettings(s: TrialSettings): FormState {
   return {
     trialsEnabled: s.trialsEnabled !== false,
+    autoApproveHosted: s.autoApproveHosted !== false,
     demoEnabled: s.demoEnabled !== false,
     hostedDays: s.hostedDays ?? DEFAULTS.hostedDays,
     demoMaxPerEmailDay: s.demoMaxPerEmailDay ?? DEFAULTS.demoMaxPerEmailDay,
@@ -63,7 +66,7 @@ function fromSettings(s: TrialSettings): FormState {
     domainEnabled: s.domainEnabled !== false,
     domainMonths: s.domainMonths?.length ? s.domainMonths : DEFAULTS.domainMonths,
     defaultMonths: s.defaultMonths ?? DEFAULTS.defaultMonths,
-    hostingPurchaseEnabled: s.hostingPurchaseEnabled !== false,
+    emailVerificationRequired: s.emailVerificationRequired !== false,
     fulfillmentSlaHours: s.fulfillmentSlaHours ?? DEFAULTS.fulfillmentSlaHours,
     paidExtendDays: s.paidExtendDays ?? DEFAULTS.paidExtendDays,
     extendDays: s.extendDays ?? DEFAULTS.extendDays,
@@ -162,6 +165,18 @@ export function TrialSettingsPanel({ inputClass }: Readonly<{ inputClass?: strin
             checked={form.demoEnabled}
             onChange={(v) => patch({ demoEnabled: v })}
           />
+          <ToggleRow
+            title="Auto-approve instant demo"
+            body="When off, every demo waits for an admin — the customer sees a pending screen instead of login credentials."
+            checked={form.autoApproveHosted}
+            onChange={(v) => patch({ autoApproveHosted: v })}
+          />
+          <ToggleRow
+            title="Email verification required"
+            body="Send a 6-digit OTP before any trial request is accepted. Leave on unless you have a reason to skip it."
+            checked={form.emailVerificationRequired}
+            onChange={(v) => patch({ emailVerificationRequired: v })}
+          />
           <div className="grid gap-4 md:grid-cols-3">
             <Field label="Demo access (days)" hint="How long the demo admin login stays active.">
               <AdminNumberInput
@@ -209,7 +224,7 @@ export function TrialSettingsPanel({ inputClass }: Readonly<{ inputClass?: strin
         </Group>
 
         {/* Own-domain */}
-        <Group icon={Globe} title="Own-domain trial" body="Customer picks months + hosting; staff deploy by hand from the Trial Requests queue.">
+        <Group icon={Globe} title="Own-domain trial" body="Customer picks months and their VPS or cPanel; after approval they run a one-command installer.">
           <ToggleRow
             title="Own-domain trial enabled"
             body="Turn off to hide the domain-trial CTAs and the upsell on the demo hub."
@@ -268,13 +283,6 @@ export function TrialSettingsPanel({ inputClass }: Readonly<{ inputClass?: strin
                 className={inputClass}
               />
             </Field>
-            <ToggleRow
-              compact
-              title="Offer “buy hosting from Trialvo”"
-              body="Adds the second option in the hosting gate for customers without a server."
-              checked={form.hostingPurchaseEnabled}
-              onChange={(v) => patch({ hostingPurchaseEnabled: v })}
-            />
           </div>
         </Group>
 

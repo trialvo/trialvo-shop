@@ -28,6 +28,33 @@ function renderEmail(partialName, data) {
   return html;
 }
 
+function trialVerifyCodeEmail({ name, code, minutes }) {
+  const subject = 'Your Trialvo verification code';
+  const text = [
+    `Hi ${name},`,
+    '',
+    'Use this code to confirm your email before we open your Trialvo trial.',
+    '',
+    String(code),
+    '',
+    `This code expires in ${minutes} minutes.`,
+    '',
+    'If you did not request a Trialvo trial, you can ignore this email.',
+    '',
+    '— Trialvo',
+  ].join('\n');
+
+  const html = renderEmail('trial-verify-code.hbs', {
+    subject,
+    preheader: 'Your Trialvo verification code',
+    name,
+    code,
+    minutes,
+  });
+
+  return { subject, text, html };
+}
+
 function trialRequestReceivedEmail({ name, statusUrl }) {
   const subject = 'Trial request received — Trialvo';
   const text = [
@@ -88,7 +115,7 @@ function demoReadyEmail({ name, productName, shopUrl, adminUrl, adminEmail, admi
     '',
     `Access page: ${statusUrl}`,
     '',
-    `Like it? Run it on your own domain for up to ${maxMonths || 3} months, free: ${domainTrialUrl}`,
+    `Like it? Run it on your own domain for up to ${maxMonths || 3} months, free — you get a one-command installer for your VPS or cPanel: ${domainTrialUrl}`,
     '',
     'Shared demo: other evaluators may see data you enter; demo data resets periodically.',
     '— Trialvo',
@@ -111,22 +138,18 @@ function demoReadyEmail({ name, productName, shopUrl, adminUrl, adminEmail, admi
   return { subject, text, html };
 }
 
-/** Own-domain trial: acknowledge + set expectations (SLA, hosting follow-up). */
-function domainTrialReceivedEmail({ name, productName, months, domain, hostingSource, hostKind, slaHours, statusUrl }) {
-  const buyingHosting = hostingSource === 'buy_from_trialvo';
+/** Own-domain trial: acknowledge + set expectations (approval, then installer). */
+function domainTrialReceivedEmail({ name, productName, months, domain, hostKind, slaHours, statusUrl }) {
   const hostKindLabel = hostKind === 'cpanel' ? 'cPanel hosting' : 'VPS';
-  const hostingLabel = buyingHosting ? 'Hosting from Trialvo (we will contact you)' : `Your own ${hostKindLabel}`;
   const subject = `Own-domain trial request received — ${productName || 'Trialvo'}`;
   const text = [
     `Hi ${name},`,
     '',
-    `We received your request to run ${productName || 'the product'} on your own domain for ${months} month(s), free.`,
-    `Domain: ${domain || 'to be decided with hosting'}`,
-    `Hosting: ${hostingLabel}`,
+    `We received your request to run ${productName || 'the product'} on your own ${hostKindLabel} for ${months} month(s), free.`,
+    `Domain: ${domain || '—'}`,
+    `Hosting: Your own ${hostKindLabel}`,
     '',
-    buyingHosting
-      ? 'Next: our team will contact you about hosting options. Once confirmed we deploy and send your login.'
-      : `Next: our team will reach out for server access and deploy on your ${hostKindLabel}. Usually within ${slaHours || 24} hours.`,
+    `Next: once an admin approves, you will get a one-command installer to run on your ${hostKindLabel}. Usually within ${slaHours || 24} hours.`,
     '',
     `Track progress: ${statusUrl}`,
     '— Trialvo',
@@ -134,15 +157,13 @@ function domainTrialReceivedEmail({ name, productName, months, domain, hostingSo
 
   const html = renderEmail('domain-trial-received.hbs', {
     subject,
-    preheader: buyingHosting ? 'We will contact you about hosting' : `Deploying within ${slaHours || 24}h`,
+    preheader: `Installer after approval, usually within ${slaHours || 24}h`,
     name,
     productName: productName || 'the product',
     months,
     plural: Number(months) !== 1,
     domain,
-    hostingLabel,
     hostKindLabel,
-    buyingHosting,
     slaHours: slaHours || 24,
     statusUrl,
   });
@@ -289,6 +310,7 @@ function escapeHtml(s) {
 }
 
 module.exports = {
+  trialVerifyCodeEmail,
   trialRequestReceivedEmail,
   trialReadyEmail,
   demoReadyEmail,

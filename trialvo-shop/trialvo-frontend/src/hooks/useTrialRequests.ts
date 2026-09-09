@@ -5,9 +5,10 @@ import type {
   DomainSubmitResponse,
   FulfillmentStage,
   HostKind,
-  HostingSource,
   StageHistoryEntry,
   TrialCredentials,
+  VerifyConfirmResponse,
+  VerifyStartResponse,
 } from "@/lib/trial/types";
 
 /** Admin list row — trial_requests joined with product, latest instance and source demo. */
@@ -26,7 +27,6 @@ export interface TrialRequestRow {
   use_case?: string | null;
   requested_days: number;
   requested_months?: number | null;
-  hosting_source?: HostingSource | null;
   host_kind?: HostKind | null;
   has_hosting?: number | boolean;
   fulfillment_stage?: FulfillmentStage | null;
@@ -117,11 +117,6 @@ export function useTrialRequestMutations() {
       api.post(`/admin/trial-requests/${id}/pickup`, { note }),
     onSuccess: invalidate,
   });
-  const confirmHosting = useMutation({
-    mutationFn: ({ id, hostKind, domain, note }: { id: string; hostKind: HostKind; domain?: string; note?: string }) =>
-      api.post(`/admin/trial-requests/${id}/hosting-confirmed`, { hostKind, domain, note }),
-    onSuccess: invalidate,
-  });
   const reopen = useMutation({
     mutationFn: ({ id, note }: { id: string; note?: string }) =>
       api.post(`/admin/trial-requests/${id}/reopen`, { note }),
@@ -140,7 +135,7 @@ export function useTrialRequestMutations() {
       api.patch(`/admin/trial-requests/${id}`, { admin_notes }),
     onSuccess: invalidate,
   });
-  return { approve, reject, pickup, confirmHosting, reopen, fulfill, saveNotes };
+  return { approve, reject, pickup, reopen, fulfill, saveNotes };
 }
 
 export type SubmitTrialBody = {
@@ -155,10 +150,10 @@ export type SubmitTrialBody = {
   // domain path
   desiredDomain?: string;
   requestedMonths?: number;
-  hostingSource?: HostingSource;
   hostKind?: HostKind;
   hasHosting?: boolean;
   sourceRequestId?: string;
+  verificationToken?: string;
 };
 
 export function useSubmitInstantDemo() {
@@ -175,6 +170,20 @@ export function useSubmitDomainTrial() {
   });
 }
 
+export function useStartEmailVerification() {
+  return useMutation({
+    mutationFn: (body: { email: string; name?: string; website?: string }) =>
+      api.post<VerifyStartResponse>("/trial/verify/start", body),
+  });
+}
+
+export function useConfirmEmailVerification() {
+  return useMutation({
+    mutationFn: (body: { email: string; code: string }) =>
+      api.post<VerifyConfirmResponse>("/trial/verify/confirm", body),
+  });
+}
+
 /** @deprecated use useSubmitInstantDemo / useSubmitDomainTrial */
 export function useTrialStatus(token: string | undefined) {
   return useQuery({
@@ -188,7 +197,7 @@ export function useTrialStatus(token: string | undefined) {
       if (d.path === "demo" && d.status === "pending") return 3000;
       if (d.instanceStatus === "provisioning") return 10000;
       // Domain pipeline: staff moves it by hand; a slow poll keeps the timeline honest.
-      if (d.path === "domain" && ["received", "hosting_pending", "deploying"].includes(d.fulfillmentStage || "")) {
+      if (d.path === "domain" && ["received", "deploying"].includes(d.fulfillmentStage || "")) {
         return 30000;
       }
       return false;
@@ -224,7 +233,6 @@ export interface TrialStatusResponse {
 
   fulfillmentStage?: FulfillmentStage | null;
   stageHistory?: StageHistoryEntry[];
-  hostingSource?: HostingSource | null;
   hostKind?: HostKind | null;
   desiredDomain?: string | null;
   slaHours?: number;
@@ -247,7 +255,6 @@ export interface TrialFunnel {
   domain: {
     total: number;
     fromDemo: number;
-    buyHosting: number;
     vps: number;
     cpanel: number;
     overdue: number;

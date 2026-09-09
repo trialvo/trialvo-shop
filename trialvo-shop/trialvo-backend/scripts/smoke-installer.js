@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 
 (async () => {
-  const required = ['docker-compose.yml', 'setup.sh', 'setup.ps1', '.env.example', 'TRIAL_TERMS.md'];
+  const required = ['docker-compose.yml', 'setup.sh', 'setup.ps1', '.env.example', 'TRIAL_TERMS.md', 'INSTALL.md', 'INSTALL-CPANEL.md'];
   for (const f of required) {
     const p = path.join(TEMPLATE_DIR, f);
     if (!fs.existsSync(p)) {

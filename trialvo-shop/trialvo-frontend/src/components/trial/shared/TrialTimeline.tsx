@@ -3,32 +3,32 @@
 import { Check, Clock, Loader2, X } from "lucide-react";
 import { trialCopy } from "@/lib/trial/copy";
 import { formatDate } from "@/lib/trial/months";
-import type { FulfillmentStage, HostingSource, StageHistoryEntry } from "@/lib/trial/types";
+import type { FulfillmentStage, StageHistoryEntry } from "@/lib/trial/types";
 import type { MarketplaceLanguage } from "@/types/marketplace";
 import { cn } from "@/lib/utils";
 
 /**
- * Vertical progress for the own-domain pipeline. Steps are derived from the
- * hosting source (the "hosting" step only exists when we sell the hosting) and
- * coloured from the current stage, with timestamps from stage_history.
+ * Vertical progress for the own-domain pipeline. New requests skip
+ * hosting_pending; that step is only inserted for historical rows that
+ * still carry it.
  */
 export function TrialTimeline({
   stage,
   history = [],
-  hostingSource,
   language,
   slaHours,
   className,
 }: Readonly<{
   stage: FulfillmentStage | null | undefined;
   history?: StageHistoryEntry[];
-  hostingSource?: HostingSource | null;
   language: MarketplaceLanguage;
   slaHours?: number;
   className?: string;
 }>) {
   const copy = trialCopy(language);
-  const steps: FulfillmentStage[] = hostingSource === "buy_from_trialvo"
+  const includeHostingPending =
+    stage === "hosting_pending" || history.some((h) => h.stage === "hosting_pending");
+  const steps: FulfillmentStage[] = includeHostingPending
     ? ["received", "hosting_pending", "deploying", "live"]
     : ["received", "deploying", "live"];
 

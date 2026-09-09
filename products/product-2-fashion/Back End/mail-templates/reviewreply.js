@@ -4,6 +4,7 @@ const errors = require("../helpers/errors");
 const { getConfig } = require("../config/ApplicationSettingsDB");
 const { BRAND_NAME, SHOP_URL, BRAND_ADDRESS } = require("../config/ApplicationSettings");
 const { resolveFrom } = require("../helpers/mailFrom");
+const { getEmailLogoMailParts } = require("../helpers/emailLogo");
 
 const hbsPackage = require("handlebars");
 
@@ -70,12 +71,17 @@ exports.sendReviewReplyMail = async (connection, mailObj) => {
 
     // 6. Send mail
     try {
+        const logo = await getEmailLogoMailParts();
         await transporter.sendMail({
             from: resolveFrom(cfg, BRAND_NAME),
             to: email,
             subject: `Response to Your Review of "${product_name}" — ${BRAND_NAME}`,
             template: "reviewreply",
+            attachments: logo.attachments,
             context: {
+                hasEmailLogo: logo.hasEmailLogo,
+                EMAIL_LOGO_CID: logo.EMAIL_LOGO_CID,
+                EMAIL_LOGO_SRC: logo.EMAIL_LOGO_SRC,
                 name: name || "Customer",
                 BRAND_NAME,
                 BRAND_ADDRESS,

@@ -7,14 +7,17 @@ const {
     getTrialSettings, toPublicConfig, clampMonths, monthsToDays,
 } = require('../services/trialSettings');
 const {
-    trialRequestReceivedEmail, domainTrialReceivedEmail, FRONTEND, API_PUBLIC,
+    trialRequestReceivedEmail, domainTrialReceivedEmail, trialVerifyCodeEmail, FRONTEND, API_PUBLIC,
 } = require('../services/trialEmails');
 const { buildTrialInstallerZip, issueRegistryCredentials, parseDeployConfig } = require('../services/packager');
 const { supportsTrialOption } = require('../services/packager/productImages');
 const { logEvent } = require('../services/trialEvents');
 const {
-    STAGES, initialStageFor, validateHostingGate, parseHistory,
+    STAGES, validateHostingGate, parseHistory,
 } = require('../services/trialFulfillment');
+const {
+    startVerification, confirmVerification, verifyVerificationToken,
+} = require('../services/trialEmailVerification');
 const {
     isDisposableEmail, isValidEmail, honeypotTripped, checkRateLimits,
 } = require('../services/trialAbuseGuard');
@@ -69,8 +72,8 @@ async function loadDemoAccess(requestId) {
  * POST /api/trial/requests
  *
  * Two very different paths share one endpoint so old clients keep working:
- *   hosted      → instant demo. Provision synchronously, return credentials.
- *   self_hosted → own-domain trial. Validate hosting gate, queue for staff.
+ *   hosted      → instant demo. Verify email, then provision or wait for admin.
+ *   self_hosted → own-domain trial. Validate hosting gate, queue for approval + installer.
  */
 async function createTrialRequest(req, res, next) {
     try {
@@ -87,7 +90,7 @@ async function createTrialRequest(req, res, next) {
 
         const {
             productSlug, name, email, phone, company, useCase,
-            desiredDomain, requestedMonths, hostingSource, hostKind, hasHosting,
+            desiredDomain, requestedMonths, hostKind, hasHosting,
             sourceRequestId,
         } = req.body || {};
         const trialType = TRIAL_TYPE_ALIASES[String(req.body?.trialType || '').trim()];
@@ -104,6 +107,18 @@ async function createTrialRequest(req, res, next) {
                 error: 'Temporary email addresses are not accepted — we send your login there.',
                 code: 'EMAIL_DISPOSABLE',
             });
+        }
+
+        // Gate everything behind a confirmed email: the dedupe branch below hands back
+        // an existing demo's admin password, so an unverified caller must never reach it.
+        if (settings.emailVerificationRequired) {
+            const verifyToken = req.body?.verificationToken;
+            if (!verifyToken || !verifyVerificationToken(verifyToken, normalizedEmail)) {
+                return res.status(403).json({
+                    error: 'Please confirm your email with the code we sent.',
+                    code: 'EMAIL_NOT_VERIFIED',
+                });
+            }
         }
 
         const isDemo = trialType === 'hosted';
@@ -201,6 +216,30 @@ async function createTrialRequest(req, res, next) {
                 company, requested_days: trialDays,
             };
 
+            if (!settings.autoApproveHosted) {
+                setImmediate(() => {
+                    (async () => {
+                        try {
+                            const mail = trialRequestReceivedEmail({ name: cleanName, statusUrl });
+                            await sendMail({ to: normalizedEmail, ...mail });
+                        } catch (e) {
+                            console.error(`[trial] hosted pending-approval email failed for ${id}:`, e.message || e);
+                        }
+                    })();
+                });
+                return res.status(202).json({
+                    ok: true,
+                    path: 'demo',
+                    requestId: id,
+                    statusToken: publicToken,
+                    statusUrl,
+                    status: 'pending',
+                    awaitingApproval: true,
+                    trialDays,
+                    message: 'Request received. We will email your demo access once an admin approves it.',
+                });
+            }
+
             // Provision inline: the whole point of the instant demo is that the
             // response carries the login. If the demo DB is slow we fall back to
             // "provisioning" and let the status page poll.
@@ -254,10 +293,7 @@ async function createTrialRequest(req, res, next) {
         }
 
         // ── Path B: own-domain trial ─────────────────────────────────────────
-        const gate = validateHostingGate(
-            { hostingSource, hostKind, hasHosting, desiredDomain },
-            { hostingPurchaseEnabled: settings.hostingPurchaseEnabled }
-        );
+        const gate = validateHostingGate({ hostKind, hasHosting, desiredDomain });
         if (!gate.ok) {
             return res.status(400).json({ error: gate.error, code: gate.code });
         }
@@ -292,20 +328,20 @@ async function createTrialRequest(req, res, next) {
             }
         }
 
-        const stage = initialStageFor(gate.value.hostingSource);
+        const stage = STAGES.RECEIVED;
         const history = [{ stage, at: new Date().toISOString(), by: null, note: 'customer request' }];
 
         await pool.query(
             `INSERT INTO trial_requests (
                id, public_token, product_id, trial_type, customer_name, email, phone,
                company, desired_domain, use_case, requested_days, requested_months,
-               hosting_source, host_kind, has_hosting, fulfillment_stage, stage_history,
+               host_kind, has_hosting, fulfillment_stage, stage_history,
                source_request_id, ip_address
-             ) VALUES ($1,$2,$3,'self_hosted',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+             ) VALUES ($1,$2,$3,'self_hosted',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
             [
                 id, publicToken, product.id, cleanName, normalizedEmail, cleanPhone,
                 company || null, gate.value.desiredDomain, useCase || null, trialDays, months,
-                gate.value.hostingSource, gate.value.hostKind, gate.value.hasHosting, stage, JSON.stringify(history),
+                gate.value.hostKind, gate.value.hasHosting, stage, JSON.stringify(history),
                 sourceId, ip,
             ]
         );
@@ -320,13 +356,10 @@ async function createTrialRequest(req, res, next) {
             fulfillmentStage: stage,
             requestedMonths: months,
             trialDays,
-            hostingSource: gate.value.hostingSource,
             hostKind: gate.value.hostKind,
             desiredDomain: gate.value.desiredDomain,
             slaHours: settings.fulfillmentSlaHours,
-            message: gate.value.hostingSource === 'buy_from_trialvo'
-                ? 'Request received. We will contact you about hosting, then deploy.'
-                : `Request received. We usually deploy within ${settings.fulfillmentSlaHours} hours.`,
+            message: `Request received. We usually deploy within ${settings.fulfillmentSlaHours} hours.`,
         });
 
         // Customer ack + staff alert off the request path.
@@ -334,13 +367,13 @@ async function createTrialRequest(req, res, next) {
             (async () => {
                 const requestRow = {
                     id, customer_name: cleanName, email: normalizedEmail, phone: cleanPhone,
-                    desired_domain: gate.value.desiredDomain, hosting_source: gate.value.hostingSource,
+                    desired_domain: gate.value.desiredDomain,
                     host_kind: gate.value.hostKind, requested_months: months, requested_days: trialDays, use_case: useCase,
                 };
                 try {
                     const mail = domainTrialReceivedEmail({
                         name: cleanName, productName, months,
-                        domain: gate.value.desiredDomain, hostingSource: gate.value.hostingSource,
+                        domain: gate.value.desiredDomain,
                         hostKind: gate.value.hostKind, slaHours: settings.fulfillmentSlaHours, statusUrl,
                     });
                     await sendMail({ to: normalizedEmail, ...mail });
@@ -449,7 +482,6 @@ async function getTrialStatus(req, res, next) {
             // Own-domain pipeline
             fulfillmentStage: r.fulfillment_stage || null,
             stageHistory: parseHistory(r.stage_history),
-            hostingSource: r.hosting_source || null,
             hostKind: r.host_kind || null,
             desiredDomain: r.desired_domain || null,
             slaHours: settings.fulfillmentSlaHours,
@@ -495,7 +527,7 @@ async function downloadPublicInstaller(req, res, next) {
     try {
         const { token } = req.params;
         const { rows } = await pool.query(
-            `SELECT ti.*, tr.public_token, tr.desired_domain, tr.trial_type AS request_trial_type,
+            `SELECT ti.*, tr.public_token, tr.desired_domain, tr.host_kind, tr.trial_type AS request_trial_type,
                     p.slug AS product_slug, p.deploy_config
              FROM trial_requests tr
              JOIN trial_instances ti ON ti.request_id = tr.id
@@ -551,6 +583,7 @@ async function downloadPublicInstaller(req, res, next) {
             adminPassword: '',
             productSlug: inst.product_slug || 'lifestyle-ecommerce',
             deployConfig: inst.deploy_config,
+            hostKind: inst.host_kind,
         });
 
         meta.installer_consumed_at = new Date().toISOString();
@@ -571,4 +604,104 @@ async function downloadPublicInstaller(req, res, next) {
     }
 }
 
-module.exports = { createTrialRequest, getTrialStatus, getPublicTrialConfig, downloadPublicInstaller };
+async function startEmailVerification(req, res, next) {
+    try {
+        if (honeypotTripped(req.body)) {
+            return res.status(400).json({ error: 'Invalid request' });
+        }
+
+        const settings = await getTrialSettings();
+        if (!settings.trialsEnabled) {
+            return res.status(403).json({ error: 'Trial requests are temporarily disabled', code: 'TRIALS_DISABLED' });
+        }
+
+        const email = String(req.body?.email || '').trim().toLowerCase();
+        if (!isValidEmail(email)) {
+            return res.status(400).json({ error: 'Enter a valid email address', code: 'EMAIL_INVALID' });
+        }
+        if (isDisposableEmail(email)) {
+            return res.status(400).json({
+                error: 'Temporary email addresses are not accepted — we send your login there.',
+                code: 'EMAIL_DISPOSABLE',
+            });
+        }
+
+        if (!settings.emailVerificationRequired) {
+            return res.status(200).json({ ok: true, skipped: true });
+        }
+
+        const started = await startVerification({ email, ip: clientIp(req) });
+        if (started.ok === false) {
+            res.setHeader('Retry-After', String(started.retryAfterSeconds || 60));
+            return res.status(429).json({ code: started.code, error: started.error });
+        }
+
+        // Logged before the send so local development still works without SMTP.
+        // Double-gated so the flag alone cannot print OTPs on a live server.
+        if (process.env.NODE_ENV !== 'production' && process.env.TRIAL_VERIFY_DEBUG === '1') {
+            console.log(`[trial-verify] code for ${email}: ${started.code}`);
+        }
+
+        const name = String(req.body?.name || '').trim().slice(0, 150) || email.split('@')[0];
+        const minutes = Math.round(started.expiresInSeconds / 60);
+        const mail = trialVerifyCodeEmail({ name, code: started.code, minutes });
+        try {
+            await withTimeout(sendMail({ to: email, ...mail }), 12000);
+        } catch (err) {
+            if (err.code === 'PROVISION_TIMEOUT') {
+                console.error(`[trial] verify email send timed out for ${email}`);
+            } else {
+                console.error(`[trial] verify email send failed for ${email}:`, err.message || err);
+                return res.status(502).json({
+                    code: 'VERIFY_EMAIL_FAILED',
+                    error: 'We could not send the code. Please try again.',
+                });
+            }
+        }
+
+        return res.status(200).json({
+            ok: true,
+            expiresInSeconds: started.expiresInSeconds,
+            resendAfterSeconds: started.resendAfterSeconds,
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+async function confirmEmailVerification(req, res, next) {
+    try {
+        const email = String(req.body?.email || '').trim().toLowerCase();
+        const code = String(req.body?.code || '').trim();
+        if (!email || !code) {
+            return res.status(400).json({ error: 'email and code are required', code: 'VERIFY_FIELDS_REQUIRED' });
+        }
+
+        const result = await confirmVerification({ email, code });
+        if (!result.ok) {
+            const status = result.code === 'VERIFY_TOO_MANY_ATTEMPTS' ? 429 : 400;
+            return res.status(status).json({
+                code: result.code,
+                error: result.error,
+                ...(result.attemptsLeft !== undefined ? { attemptsLeft: result.attemptsLeft } : {}),
+            });
+        }
+
+        return res.status(200).json({
+            ok: true,
+            verificationToken: result.token,
+            expiresInSeconds: result.expiresInSeconds,
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+module.exports = {
+    createTrialRequest,
+    getTrialStatus,
+    getPublicTrialConfig,
+    downloadPublicInstaller,
+    startEmailVerification,
+    confirmEmailVerification,
+};

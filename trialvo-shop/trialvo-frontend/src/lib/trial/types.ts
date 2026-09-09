@@ -12,13 +12,12 @@ export const TRIAL_TYPE_FOR_PATH: Record<TrialPath, TrialType> = {
   domain: "self_hosted",
 };
 
-export type HostingSource = "own" | "buy_from_trialvo";
 export type HostKind = "vps" | "cpanel";
 
 /** Own-domain fulfillment pipeline — mirrors trialFulfillment.js STAGES. */
 export type FulfillmentStage =
   | "received"
-  | "hosting_pending"
+  | "hosting_pending" // retained for historical rows; new requests never get this stage
   | "deploying"
   | "live"
   | "expiring"
@@ -64,7 +63,21 @@ export type DemoSubmitResponse = {
   expiresAt?: string | null;
   trialDays?: number;
   credentials?: TrialCredentials;
+  awaitingApproval?: boolean;
   message?: string;
+};
+
+export type VerifyStartResponse = {
+  ok: boolean;
+  skipped?: boolean;
+  expiresInSeconds?: number;
+  resendAfterSeconds?: number;
+};
+
+export type VerifyConfirmResponse = {
+  ok: boolean;
+  verificationToken: string;
+  expiresInSeconds: number;
 };
 
 export type DomainSubmitResponse = {
@@ -77,7 +90,6 @@ export type DomainSubmitResponse = {
   status: string;
   fulfillmentStage?: FulfillmentStage;
   requestedMonths?: number;
-  hostingSource?: HostingSource;
   hostKind?: HostKind | null;
   desiredDomain?: string | null;
   slaHours?: number;

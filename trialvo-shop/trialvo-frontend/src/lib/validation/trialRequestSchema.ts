@@ -30,23 +30,15 @@ export type InstantDemoValues = z.infer<ReturnType<typeof createInstantDemoSchem
  * Own-domain trial wizard. Validated as a whole on submit, and per-step by
  * the wizard hook using the step field lists exported below.
  *
- * Rules mirror trialFulfillment.validateHostingGate on the backend:
- *   own  → hasHosting must be true, hostKind required, domain required
- *   buy  → domain optional (may not exist yet), hostKind decided by staff
+ * The customer always brings their own VPS or cPanel: hasHosting must be
+ * true, hostKind and a valid domain are required.
  */
 export function createDomainTrialSchema(
   language: MarketplaceLanguage,
-  { allowedMonths, hostingPurchaseEnabled }: { allowedMonths: number[]; hostingPurchaseEnabled: boolean },
+  { allowedMonths }: { allowedMonths: number[] },
 ) {
-  const hostingSourceValues = hostingPurchaseEnabled
-    ? (["own", "buy_from_trialvo"] as const)
-    : (["own"] as const);
-
   return z
     .object({
-      hostingSource: z.enum(hostingSourceValues, {
-        message: msg({ bn: "হোস্টিং আছে কি না বলুন", en: "Tell us whether you have hosting" }, language),
-      }),
       hostKind: z.enum(["vps", "cpanel"]).optional(),
       hasHosting: z.boolean().optional(),
       months: z.number().int(),
@@ -57,6 +49,8 @@ export function createDomainTrialSchema(
       company: optionalString(120),
       notes: optionalString(500),
       website: z.string().optional(),
+      // Owned by the verify step so the wizard can trigger() it in isolation.
+      code: z.string().optional(),
     })
     .superRefine((values, ctx) => {
       if (!allowedMonths.includes(values.months)) {
@@ -67,42 +61,47 @@ export function createDomainTrialSchema(
         });
       }
 
-      if (values.hostingSource === "own") {
-        if (values.hasHosting !== true) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["hasHosting"],
-            message: msg(
-              { bn: "ডোমেইন ও হোস্টিং রেডি আছে — এটা টিক দিন", en: "Please confirm your domain and hosting are ready" },
-              language,
-            ),
-          });
-        }
-        if (!values.hostKind) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ["hostKind"],
-            message: msg({ bn: "VPS বা cPanel বেছে নিন", en: "Select VPS or cPanel" }, language),
-          });
-        }
-        const parsed = domainField(language).safeParse(values.domain || "");
-        if (!parsed.success) {
-          parsed.error.issues.forEach((issue) => ctx.addIssue({ ...issue, path: ["domain"] }));
-        }
-      } else if (values.domain) {
-        // Buying hosting: domain is optional but must be valid when given.
-        const parsed = domainField(language).safeParse(values.domain);
-        if (!parsed.success) {
-          parsed.error.issues.forEach((issue) => ctx.addIssue({ ...issue, path: ["domain"] }));
-        }
+      if (values.hasHosting !== true) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["hasHosting"],
+          message: msg(
+            { bn: "ডোমেইন ও হোস্টিং রেডি আছে — এটা টিক দিন", en: "Please confirm your domain and hosting are ready" },
+            language,
+          ),
+        });
+      }
+      if (!values.hostKind) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["hostKind"],
+          message: msg({ bn: "VPS বা cPanel বেছে নিন", en: "Select VPS or cPanel" }, language),
+        });
+      }
+      const parsed = domainField(language).safeParse(values.domain || "");
+      if (!parsed.success) {
+        parsed.error.issues.forEach((issue) => ctx.addIssue({ ...issue, path: ["domain"] }));
       }
     });
 }
 export type DomainTrialValues = z.infer<ReturnType<typeof createDomainTrialSchema>>;
 
 /** Which fields each wizard step owns — used to validate one step at a time. */
-export const DOMAIN_TRIAL_STEP_FIELDS: Record<"hosting" | "duration" | "contact", (keyof DomainTrialValues)[]> = {
-  hosting: ["hostingSource", "hostKind", "hasHosting"],
+export const DOMAIN_TRIAL_STEP_FIELDS: Record<
+  "hosting" | "duration" | "contact" | "verify",
+  (keyof DomainTrialValues)[]
+> = {
+  hosting: ["hostKind", "hasHosting"],
   duration: ["months", "domain"],
   contact: ["name", "email", "phone", "company", "notes"],
+  verify: ["code"],
 };
+
+export function createVerifyCodeSchema(language: MarketplaceLanguage) {
+  return z.object({
+    code: z.string().regex(/^\d{6}$/, {
+      message: msg({ bn: "৬ সংখ্যার কোড দিন", en: "Enter the 6-digit code" }, language),
+    }),
+  });
+}
+export type VerifyCodeValues = z.infer<ReturnType<typeof createVerifyCodeSchema>>;

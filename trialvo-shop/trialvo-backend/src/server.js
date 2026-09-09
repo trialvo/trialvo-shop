@@ -40,8 +40,17 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet({
  crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
+// Comma-separated origins so local CP can bind an alternate port when 8000 is blocked.
+const corsOrigins = String(process.env.CORS_ORIGIN || 'http://localhost:8000')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 app.use(cors({
- origin: process.env.CORS_ORIGIN || 'http://localhost:8000',
+ origin(origin, cb) {
+  // Non-browser clients (curl, server-side) send no Origin — allow them.
+  if (!origin || corsOrigins.includes(origin)) return cb(null, true);
+  return cb(new Error(`CORS blocked for origin: ${origin}`));
+ },
  credentials: true,
 }));
 app.use(morgan('dev'));

@@ -22,6 +22,7 @@ export type ChildCategory = {
   name_bd?: string | null;
   img_path: string | null;
   total_stock: number;
+  product_count?: number;
 
   status: boolean;
   featured: boolean;
@@ -38,6 +39,7 @@ export type SubCategory = {
   name_bd?: string | null;
   img_path: string | null;
   total_stock?: number;
+  product_count?: number;
 
   status: boolean;
   featured: boolean;
@@ -55,6 +57,7 @@ export type MainCategory = {
   name_bd?: string | null;
   img_path: string | null;
   total_stock?: number;
+  product_count?: number;
 
   status: boolean;
   featured: boolean;

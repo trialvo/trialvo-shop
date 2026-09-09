@@ -3,17 +3,19 @@ const { pool } = require('../config/db');
 /**
  * Fulfillment pipeline for own-domain trials.
  *
- * Staff deploy these by hand, so the request needs a visible "where are we"
- * that both the customer timeline and the admin queue read. `status` keeps its
- * legacy meaning (pending / active / rejected) for every existing query;
- * `fulfillment_stage` is the finer-grained progress marker layered on top.
+ * After admin approval the customer downloads an installer (Docker for VPS,
+ * Node-only for cPanel). `status` keeps its legacy meaning (pending / active /
+ * rejected) for every existing query; `fulfillment_stage` is the finer-grained
+ * progress marker layered on top.
  *
- *   received ─┬─> hosting_pending ─> deploying ─> live ─> expiring ─┬─> converted
- *             └─> deploying ────────────────────┘                   └─> expired
+ *   received ─> deploying ─> live ─> expiring ─┬─> converted
+ *                                              └─> expired
  *   (any pre-live stage) ─> rejected
+ *   hosting_pending is retained so historical rows still validate.
  */
 const STAGES = Object.freeze({
   RECEIVED: 'received',
+  // Retained for legacy rows only — nothing assigns this stage any more.
   HOSTING_PENDING: 'hosting_pending',
   DEPLOYING: 'deploying',
   LIVE: 'live',
@@ -23,7 +25,6 @@ const STAGES = Object.freeze({
   REJECTED: 'rejected',
 });
 
-const HOSTING_SOURCES = Object.freeze({ OWN: 'own', BUY: 'buy_from_trialvo' });
 const HOST_KINDS = Object.freeze(['vps', 'cpanel']);
 
 /** Legal transitions. Anything not listed is refused so the queue can't be corrupted by a double click. */
@@ -37,11 +38,6 @@ const TRANSITIONS = Object.freeze({
   [STAGES.CONVERTED]: [],
   [STAGES.REJECTED]: [],
 });
-
-/** Stage a brand-new domain request starts in, based on who supplies the server. */
-function initialStageFor(hostingSource) {
-  return hostingSource === HOSTING_SOURCES.BUY ? STAGES.HOSTING_PENDING : STAGES.RECEIVED;
-}
 
 function canTransition(from, to) {
   if (!from) return true; // legacy rows without a stage
@@ -100,41 +96,23 @@ async function setStage(requestId, stage, { by = null, note = null, force = fals
 }
 
 /**
- * Validate the hosting gate for an own-domain request body.
+ * Validate the own-domain gate: customer must already have hosting, say
+ * which kind, and give a usable domain. Buy-from-Trialvo is not a trial path.
  * Returns { ok, error, code, value } where value is the normalised subset to store.
  */
-function validateHostingGate({ hostingSource, hostKind, hasHosting, desiredDomain }, { hostingPurchaseEnabled = true } = {}) {
-  const source = String(hostingSource || '').trim();
-  if (![HOSTING_SOURCES.OWN, HOSTING_SOURCES.BUY].includes(source)) {
-    return { ok: false, code: 'HOSTING_SOURCE_REQUIRED', error: 'Tell us whether you have hosting or want to buy it from Trialvo' };
+function validateHostingGate({ hostKind, hasHosting, desiredDomain }) {
+  if (hasHosting !== true && hasHosting !== 1 && hasHosting !== 'true') {
+    return { ok: false, code: 'HOSTING_CONFIRMATION_REQUIRED', error: 'Please confirm your domain and hosting are ready' };
   }
-  if (source === HOSTING_SOURCES.BUY && !hostingPurchaseEnabled) {
-    return { ok: false, code: 'HOSTING_PURCHASE_DISABLED', error: 'Buying hosting from Trialvo is not available right now' };
+  const kind = String(hostKind || '').trim().toLowerCase();
+  if (!HOST_KINDS.includes(kind)) {
+    return { ok: false, code: 'HOST_KIND_REQUIRED', error: 'Select VPS or cPanel' };
   }
-
-  if (source === HOSTING_SOURCES.OWN) {
-    // Own path: the customer must confirm they actually have a server and say which kind,
-    // otherwise staff cannot deploy and the request just rots in the queue.
-    if (hasHosting !== true && hasHosting !== 1 && hasHosting !== 'true') {
-      return { ok: false, code: 'HOSTING_CONFIRMATION_REQUIRED', error: 'Please confirm your domain and hosting are ready' };
-    }
-    const kind = String(hostKind || '').trim().toLowerCase();
-    if (!HOST_KINDS.includes(kind)) {
-      return { ok: false, code: 'HOST_KIND_REQUIRED', error: 'Select VPS or cPanel' };
-    }
-    const domain = normaliseDomain(desiredDomain);
-    if (!domain) {
-      return { ok: false, code: 'DOMAIN_REQUIRED', error: 'A valid domain is required for an own-domain trial' };
-    }
-    return { ok: true, value: { hostingSource: source, hostKind: kind, hasHosting: 1, desiredDomain: domain } };
+  const domain = normaliseDomain(desiredDomain);
+  if (!domain) {
+    return { ok: false, code: 'DOMAIN_REQUIRED', error: 'A valid domain is required for an own-domain trial' };
   }
-
-  // Buy path: domain optional (they may not own one yet); host kind decided by staff later.
-  const domain = desiredDomain ? normaliseDomain(desiredDomain) : null;
-  if (desiredDomain && !domain) {
-    return { ok: false, code: 'DOMAIN_INVALID', error: 'Domain looks invalid' };
-  }
-  return { ok: true, value: { hostingSource: source, hostKind: null, hasHosting: 0, desiredDomain: domain } };
+  return { ok: true, value: { hostKind: kind, hasHosting: 1, desiredDomain: domain } };
 }
 
 /** Lowercase, strip scheme/path, basic RFC-ish check. Returns null when unusable. */
@@ -148,10 +126,8 @@ function normaliseDomain(raw) {
 
 module.exports = {
   STAGES,
-  HOSTING_SOURCES,
   HOST_KINDS,
   TRANSITIONS,
-  initialStageFor,
   canTransition,
   setStage,
   parseHistory,

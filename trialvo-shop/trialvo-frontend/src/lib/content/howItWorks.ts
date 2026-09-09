@@ -52,11 +52,11 @@ const CONTENT: Record<Locale, HowItWorksContent> = {
         eyebrow: "ধাপ ০৩",
         title: "নিজের ডোমেইনে এক মাস ফ্রি চালান",
         summary:
-          "ডেমো পছন্দ হলে অনুরোধ করুন — আপনার নিজের ডোমেইন ও হোস্টিংয়ে আমরা নিজে বসিয়ে দেব, পূর্ণ এক মাস ফ্রি। এই সুবিধা অন্য কেউ দেয় না।",
+          "ডেমো পছন্দ হলে অনুরোধ করুন — অনুমোদনের পর আপনার VPS বা cPanel-এ চালানোর জন্য এক-কমান্ড ইনস্টলার পাবেন, পূর্ণ এক মাস ফ্রি। এই সুবিধা অন্য কেউ দেয় না।",
         details: [
-          "হোস্টিং আছে কি না বলুন: নিজের VPS বা cPanel, অথবা Trialvo থেকে হোস্টিং নিন।",
+          "আপনার সার্ভার কোন ধরনের — VPS না cPanel — তা বলুন।",
           "ট্রায়ালের মেয়াদ নিশ্চিত করুন এবং আপনার ডোমেইন দিন।",
-          "আমাদের টিম সার্ভার অ্যাকসেস নিয়ে যোগাযোগ করে সাধারণত ২৪ ঘণ্টার মধ্যে লাইভ করে দেয়।",
+          "অ্যাডমিন অনুমোদন করলে ইনস্টলার ZIP ইমেইলে যায়; ইনস্টল গাইড (/docs/install) দেখে নিজের সার্ভারে এক কমান্ডে চালালেই লাইভ।",
           "স্ট্যাটাস পেজে ধাপে ধাপে অগ্রগতি দেখুন — পেয়েছি, সেটআপ চলছে, লাইভ।",
           "আসল ক্রেতা নিয়ে ব্যবসা চালান; ডেটা আপনার সার্ভারেই থাকে।",
         ],
@@ -144,11 +144,11 @@ const CONTENT: Record<Locale, HowItWorksContent> = {
         eyebrow: "Step 03",
         title: "Run it free for a month on your own domain",
         summary:
-          "Liked the demo? Request a trial — we deploy it ourselves on your own domain and hosting, free for a full month. Nobody else offers this.",
+          "Liked the demo? Request a trial — after approval you get a one-command installer for your own VPS or cPanel, free for a full month. Nobody else offers this.",
         details: [
-          "Tell us about hosting: your own VPS or cPanel, or get hosting from Trialvo.",
+          "Tell us what kind of server you have — VPS or cPanel.",
           "Confirm the trial length and give your domain.",
-          "Our team contacts you for server access and usually has it live within 24 hours.",
+          "Once an admin approves, the installer ZIP arrives by email; follow the installation guide (/docs/install), run one command on your server, and it is live.",
           "Follow progress on your status page — received, setting up, live.",
           "Run real business with real customers; the data stays on your server.",
         ],

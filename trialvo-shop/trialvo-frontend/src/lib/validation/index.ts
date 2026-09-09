@@ -13,9 +13,11 @@ export {
 export {
   createInstantDemoSchema,
   createDomainTrialSchema,
+  createVerifyCodeSchema,
   DOMAIN_TRIAL_STEP_FIELDS,
   type InstantDemoValues,
   type DomainTrialValues,
+  type VerifyCodeValues,
 } from "./trialRequestSchema";
 export {
   adminLoginSchema,

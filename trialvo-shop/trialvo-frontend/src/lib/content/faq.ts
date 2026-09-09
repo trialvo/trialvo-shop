@@ -66,19 +66,19 @@ const FAQ: Record<Locale, FaqGroup[]> = {
           id: "how-trial-works",
           question: "ইনস্ট্যান্ট ডেমো কীভাবে কাজ করে?",
           answer:
-            "যেকোনো প্রোডাক্টে \"ইনস্ট্যান্ট ডেমো\" চাপুন, নাম ও ইমেইল দিন — সাথে সাথে স্টোরফ্রন্ট ও অ্যাডমিন প্যানেলের লগইন পাবেন। কোনো অ্যাপ্রুভালের অপেক্ষা নেই। ডেমোটি শেয়ার্ড — অন্য মূল্যায়নকারীরাও একই স্টোর দেখেন এবং ডেটা নিয়মিত রিসেট হয়, তাই আসল গ্রাহকের তথ্য দেবেন না।",
+            "যেকোনো প্রোডাক্টে \"ইনস্ট্যান্ট ডেমো\" চাপুন, নাম ও ইমেইল দিন, তারপর ইমেইলে আসা ৬ সংখ্যার কোড দিয়ে যাচাই করুন — কোড মিললে স্টোরফ্রন্ট ও অ্যাডমিন প্যানেলের লগইন পাবেন। ডেমোটি শেয়ার্ড — অন্য মূল্যায়নকারীরাও একই স্টোর দেখেন এবং ডেটা নিয়মিত রিসেট হয়, তাই আসল গ্রাহকের তথ্য দেবেন না।",
         },
         {
           id: "own-domain-trial",
           question: "নিজের ডোমেইনে ফ্রি ট্রায়াল কী?",
           answer:
-            "ডেমো পছন্দ হলে আপনি আপনার নিজের ডোমেইন ও হোস্টিংয়ে (VPS বা cPanel) পুরো সিস্টেমটি পূর্ণ এক মাস ফ্রি চালাতে পারবেন। আমাদের টিম আপনার সার্ভারে নিজে বসিয়ে দেয় — আপনাকে ইনস্টল করতে হয় না। আসল গ্রাহক নিয়ে ব্যবসা চালিয়ে যাচাই করুন, তারপর কিনুন। এই সুবিধা অন্য কেউ দেয় না।",
+            "ডেমো পছন্দ হলে আপনি আপনার নিজের ডোমেইন ও হোস্টিংয়ে (VPS বা cPanel) পুরো সিস্টেমটি পূর্ণ এক মাস ফ্রি চালাতে পারবেন। অ্যাডমিন অনুমোদনের পর এক-কমান্ড ইনস্টলার পাবেন — আমরা আপনার সার্ভারে লগইন করি না, ইনস্টলার আপনি চালাবেন। ধাপে ধাপে নির্দেশনা /docs/install ইনস্টল গাইডে আছে। আসল গ্রাহক নিয়ে ব্যবসা চালিয়ে যাচাই করুন, তারপর কিনুন। এই সুবিধা অন্য কেউ দেয় না।",
         },
         {
           id: "trial-hosting",
           question: "আমার হোস্টিং নেই — তাহলে ডোমেইন ট্রায়াল নিতে পারব?",
           answer:
-            "হ্যাঁ। ট্রায়াল ফর্মে \"Trialvo থেকে হোস্টিং নেব\" বেছে নিন। আমাদের টিম হোস্টিং প্ল্যান ও দাম নিয়ে যোগাযোগ করবে; হোস্টিং কনফার্ম হলে সেখানেই ট্রায়াল বসানো হবে। নিজের হোস্টিং থাকলে VPS না cPanel তা জানালেই যথেষ্ট।",
+            "নিজের ডোমেইন ট্রায়ালের জন্য আপনার নিজের VPS বা cPanel লাগবে — Trialvo হোস্টিং বিক্রি করে না। সার্ভার রেডি থাকলে VPS না cPanel তা জানিয়ে রিকোয়েস্ট পাঠান; অনুমোদনের পর ইনস্টলার ZIP পাবেন, এক কমান্ডে চালালেই ট্রায়াল লাইভ। ZIP খোলার পর /docs/install গাইড অনুসরণ করুন।",
         },
         {
           id: "trial-cost",
@@ -248,19 +248,19 @@ const FAQ: Record<Locale, FaqGroup[]> = {
           id: "how-trial-works",
           question: "How does the instant demo work?",
           answer:
-            "Click “Instant demo” on any product, enter your name and email, and you get storefront and admin panel logins immediately — no approval queue. The demo is shared: other evaluators see the same store and data resets regularly, so do not enter real customer data.",
+            "Click “Instant demo” on any product, enter your name and email, then confirm the 6-digit code we send — once verified you get storefront and admin panel logins. The demo is shared: other evaluators see the same store and data resets regularly, so do not enter real customer data.",
         },
         {
           id: "own-domain-trial",
           question: "What is the free trial on my own domain?",
           answer:
-            "If you like the demo, you can run the full system on your own domain and hosting (VPS or cPanel) free for a full month. Our team deploys it on your server — you do not install anything. Run real business with real customers, then buy. Nobody else offers this.",
+            "If you like the demo, you can run the full system on your own domain and hosting (VPS or cPanel) free for a full month. After an admin approves, you get a one-command installer — we do not log into your server. Step-by-step instructions are on the installation guide at /docs/install. Run real business with real customers, then buy. Nobody else offers this.",
         },
         {
           id: "trial-hosting",
           question: "I have no hosting — can I still get the domain trial?",
           answer:
-            "Yes. Pick “Get hosting from Trialvo” in the trial form. Our team contacts you about hosting plans and pricing; once hosting is confirmed we deploy the trial there. If you have your own hosting, just tell us whether it is VPS or cPanel.",
+            "The own-domain trial needs your own VPS or cPanel — Trialvo does not sell hosting. Once the server is ready, tell us whether it is VPS or cPanel and send the request; after approval you get an installer ZIP and one command makes the trial live. Follow /docs/install after you unzip the pack.",
         },
         {
           id: "trial-cost",

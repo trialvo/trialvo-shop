@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, ArrowLeft, ArrowRight, Globe, Loader2, Send } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Globe, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProduct } from "@/hooks/useProducts";
-import { useSubmitDomainTrial } from "@/hooks/useTrialRequests";
+import { useStartEmailVerification, useSubmitDomainTrial } from "@/hooks/useTrialRequests";
 import { ApiError } from "@/lib/api";
 import { trialCopy, trialErrorMessage } from "@/lib/trial/copy";
 import { monthsRangeLabel } from "@/lib/trial/months";
@@ -25,6 +25,7 @@ import {
   type DomainTrialValues,
 } from "@/lib/validation";
 import { useTrialLaunch, type DomainPrefill } from "../TrialLaunchProvider";
+import { EmailVerifyStep } from "../shared/EmailVerifyStep";
 import { HoneypotField } from "../shared/HoneypotField";
 import { ProductChip } from "../shared/ProductChip";
 import { ProductPickerStep } from "../shared/ProductPickerStep";
@@ -52,9 +53,9 @@ const slide = {
 };
 
 /**
- * Own-domain trial request in three short steps. The hosting gate comes
- * first on purpose: if someone has neither a server nor wants one from us,
- * there is nothing to deploy and we should not collect their details.
+ * Own-domain trial request. Hosting gate first so we never collect details
+ * from someone with no server to run the installer on. Email OTP sits
+ * between contact and submit.
  */
 export function DomainTrialWizard({
   open,
@@ -68,10 +69,12 @@ export function DomainTrialWizard({
   const copy = trialCopy(language);
   const { config, domainAvailable } = useTrialLaunch();
   const submit = useSubmitDomainTrial();
+  const startVerify = useStartEmailVerification();
 
   const [picked, setPicked] = useState<TrialProductRef | null>(null);
   const [result, setResult] = useState<DomainSubmitResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [resendAfterSeconds, setResendAfterSeconds] = useState(60);
 
   const { data: fetched, isLoading: fetching } = useProduct(!productProp && productSlug ? productSlug : undefined);
   const product = productProp ?? picked ?? fetched ?? null;
@@ -80,14 +83,13 @@ export function DomainTrialWizard({
 
   const presets = config.domainMonths.length ? config.domainMonths : [1];
   const schema = useMemo(
-    () => createDomainTrialSchema(language, { allowedMonths: presets, hostingPurchaseEnabled: config.hostingPurchaseEnabled }),
-    [language, presets, config.hostingPurchaseEnabled],
+    () => createDomainTrialSchema(language, { allowedMonths: presets }),
+    [language, presets],
   );
 
   const form = useForm<DomainTrialValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      hostingSource: undefined,
       hostKind: undefined,
       hasHosting: false,
       months: config.defaultMonths,
@@ -98,6 +100,7 @@ export function DomainTrialWizard({
       company: prefill?.company ?? "",
       notes: "",
       website: "",
+      code: "",
     },
     mode: "onTouched",
   });
@@ -121,36 +124,57 @@ export function DomainTrialWizard({
       setPicked(null);
       setResult(null);
       setErrorMsg(null);
+      setResendAfterSeconds(60);
       submit.reset();
+      startVerify.reset();
       form.reset();
       wizard.reset(Boolean(productProp));
     }, 200);
     return () => clearTimeout(t);
   }, [open]);
 
+  const pending = submit.isPending || startVerify.isPending;
+
   const goNext = async () => {
     const fields = DOMAIN_TRIAL_STEP_FIELDS[wizard.step as keyof typeof DOMAIN_TRIAL_STEP_FIELDS];
     const ok = fields ? await form.trigger(fields) : true;
     if (!ok) return;
-    if (wizard.isLast) {
-      // Second arg surfaces errors that live on a previous step (or the
-      // honeypot). Without it, handleSubmit fails silently and the button
-      // looks stuck.
-      await form.handleSubmit(onSubmit, (errors) => {
-        if (errors.hostingSource || errors.hostKind || errors.hasHosting) {
-          wizard.go("hosting");
-          setErrorMsg(trialErrorMessage(language, undefined, language === "bn" ? "হোস্টিং ধাপটা আবার দেখুন" : "Please check the hosting step"));
-        } else if (errors.months || errors.domain) {
-          wizard.go("duration");
-          setErrorMsg(trialErrorMessage(language, undefined, language === "bn" ? "ডোমেইন ধাপটা আবার দেখুন" : "Please check the domain step"));
-        }
-      })();
-    } else {
+    if (wizard.step === "contact") {
+      await startVerificationThenAdvance();
+      return;
+    }
+    wizard.next();
+  };
+
+  const startVerificationThenAdvance = async () => {
+    const values = form.getValues();
+    setErrorMsg(null);
+    try {
+      const started = await startVerify.mutateAsync({
+        email: values.email,
+        name: values.name,
+        website: honeypotValue(values.website, values.email),
+      });
+      if (started.skipped) {
+        await onSubmit(values);
+        return;
+      }
+      setResendAfterSeconds(started.resendAfterSeconds ?? 60);
       wizard.next();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (["EMAIL_DISPOSABLE", "EMAIL_INVALID"].includes(err.code || "")) {
+          form.setError("email", { message: trialErrorMessage(language, err.code, err.message) });
+          return;
+        }
+        setErrorMsg(trialErrorMessage(language, err.code, err.message));
+      } else {
+        setErrorMsg(trialErrorMessage(language, undefined, err instanceof Error ? err.message : undefined));
+      }
     }
   };
 
-  const onSubmit = async (values: DomainTrialValues) => {
+  const onSubmit = async (values: DomainTrialValues, verificationToken?: string) => {
     if (!product) return;
     setErrorMsg(null);
     try {
@@ -164,10 +188,10 @@ export function DomainTrialWizard({
         useCase: values.notes || undefined,
         desiredDomain: values.domain || undefined,
         requestedMonths: values.months,
-        hostingSource: values.hostingSource,
-        hostKind: values.hostingSource === "own" ? values.hostKind : undefined,
-        hasHosting: values.hostingSource === "own" ? values.hasHosting === true : undefined,
+        hostKind: values.hostKind,
+        hasHosting: values.hasHosting === true,
         sourceRequestId: sourceRequestId || undefined,
+        verificationToken,
         // Autofill often writes the email into the hidden honeypot — send
         // empty so a real human is never rejected as a bot.
         website: honeypotValue(values.website, values.email),
@@ -176,7 +200,7 @@ export function DomainTrialWizard({
       wizard.go("submitted");
     } catch (err) {
       if (err instanceof ApiError) {
-        if (["HOSTING_SOURCE_REQUIRED", "HOSTING_CONFIRMATION_REQUIRED", "HOST_KIND_REQUIRED", "HOSTING_PURCHASE_DISABLED"].includes(err.code || "")) {
+        if (["HOSTING_CONFIRMATION_REQUIRED", "HOST_KIND_REQUIRED"].includes(err.code || "")) {
           wizard.go("hosting");
         } else if (["DOMAIN_REQUIRED", "DOMAIN_INVALID"].includes(err.code || "")) {
           wizard.go("duration");
@@ -186,7 +210,8 @@ export function DomainTrialWizard({
           wizard.go("duration");
           form.setError("months", { message: trialErrorMessage(language, err.code, err.message) });
           return;
-        } else if (["EMAIL_DISPOSABLE", "EMAIL_INVALID"].includes(err.code || "")) {
+        } else if (["EMAIL_DISPOSABLE", "EMAIL_INVALID", "EMAIL_NOT_VERIFIED"].includes(err.code || "")) {
+          wizard.go("contact");
           form.setError("email", { message: trialErrorMessage(language, err.code, err.message) });
           return;
         }
@@ -200,7 +225,8 @@ export function DomainTrialWizard({
   const unsupported = product ? !productSupportsDomainTrial(product) : false;
   const showSteps = Boolean(product && wizard.step !== "pick" && wizard.step !== "submitted" && domainAvailable && !unsupported);
   const step2Label = presets.length === 1 ? copy.domain.domainLabel : copy.domain.stepDuration;
-  const stepLabels = [copy.domain.stepHosting, step2Label, copy.domain.stepContact];
+  const stepLabels = [copy.domain.stepHosting, step2Label, copy.domain.stepContact, copy.domain.stepVerify];
+  const onVerify = wizard.step === "verify";
 
   return (
     <TrialModalShell
@@ -220,26 +246,26 @@ export function DomainTrialWizard({
               type="button"
               variant="ghost"
               onClick={wizard.back}
-              disabled={wizard.isFirst || submit.isPending}
+              disabled={wizard.isFirst || pending}
               className="h-11 rounded-lg px-3"
             >
               <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden="true" />
               {copy.domain.back}
             </Button>
-            <Button
-              type="submit"
-              form="domain-trial-form"
-              disabled={submit.isPending}
-              className="h-11 min-w-[9rem] rounded-lg bg-accent font-semibold text-accent-foreground shadow-accent-glow hover:bg-accent/90"
-            >
-              {submit.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{copy.domain.submitting}</>
-              ) : wizard.isLast ? (
-                <>{copy.domain.submit}<Send className="ml-2 h-4 w-4" aria-hidden="true" /></>
-              ) : (
-                <>{copy.domain.next}<ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></>
-              )}
-            </Button>
+            {onVerify ? null : (
+              <Button
+                type="submit"
+                form="domain-trial-form"
+                disabled={pending}
+                className="h-11 min-w-[9rem] rounded-lg bg-accent font-semibold text-accent-foreground shadow-accent-glow hover:bg-accent/90"
+              >
+                {pending ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{copy.domain.submitting}</>
+                ) : (
+                  <>{copy.domain.next}<ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></>
+                )}
+              </Button>
+            )}
           </div>
         ) : undefined
       }
@@ -286,13 +312,30 @@ export function DomainTrialWizard({
                   )
                 ) : null}
                 {wizard.step === "hosting" ? (
-                  <HostingStep form={form} language={language} purchaseEnabled={config.hostingPurchaseEnabled} />
+                  <HostingStep form={form} language={language} />
                 ) : null}
                 {wizard.step === "duration" ? (
                   <DurationStep form={form} language={language} presets={presets} />
                 ) : null}
                 {wizard.step === "contact" ? (
                   <ContactStep form={form} language={language} prefilled={Boolean(prefill?.email)} />
+                ) : null}
+                {wizard.step === "verify" ? (
+                  <div className="space-y-4">
+                    <EmailVerifyStep
+                      email={form.getValues("email")}
+                      language={language}
+                      resendAfterSeconds={resendAfterSeconds}
+                      onVerified={(token) => void onSubmit(form.getValues(), token)}
+                    />
+                    <button
+                      type="button"
+                      onClick={wizard.back}
+                      className="w-full text-center text-sm font-medium text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
+                    >
+                      {copy.verify.wrongEmail}
+                    </button>
+                  </div>
                 ) : null}
                 {wizard.step === "submitted" && result ? (
                   <SubmittedScreen result={result} language={language} email={form.getValues("email")} />

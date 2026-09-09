@@ -3,6 +3,8 @@
  * Imports myecomv2.sql + trial_v1.sql into each target DB.
  * For techshop_demo / techshop_ecom, always runs product-3 replace-tech-catalog.js
  * after import (or when dump is skipped) so the storefront is gadgets, not fashion.
+ * After catalog work, syncs host uploads/ into shared-demo named Docker volumes
+ * (lifestyle + tech). Demos serve from those volumes, not the host path.
  *
  * Usage (after infra MySQL is healthy):
  *   node scripts/seed-shared-demo.js
@@ -116,6 +118,19 @@ function applyTechCatalog(database) {
   }
 }
 
+function syncDemoUploadsToVolumes() {
+  const script = path.join(__dirname, 'sync-demo-uploads-to-volumes.js');
+  if (!fs.existsSync(script)) {
+    console.warn(`==> demo uploads sync skipped (missing ${script})`);
+    return;
+  }
+  console.log('\n==> Syncing host seeded uploads into shared-demo Docker volumes...');
+  const r = spawnSync(process.execPath, [script], { stdio: 'inherit', windowsHide: true });
+  if (r.status !== 0) {
+    throw new Error('demo uploads volume sync failed');
+  }
+}
+
 async function seedDatabase(database, demo, trial, useDocker) {
   console.log(`\n==> Seeding ${database}`);
   const conn = await mysql.createConnection({ ...baseCfg, database });
@@ -168,6 +183,9 @@ async function main() {
   for (const database of databases) {
     await seedDatabase(database, demo, trial, useDocker);
   }
+
+  // Named volumes do not see host uploads/ after lifestyle/tech catalog replace.
+  syncDemoUploadsToVolumes();
   console.log('\n✅ All requested demo DBs seeded');
 }
 

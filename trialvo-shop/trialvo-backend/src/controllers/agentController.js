@@ -106,6 +106,33 @@ async function registerAgent(req, res, next) {
             );
         }
 
+        // Agent register is the real go-live for Option 2 — mark the pipeline LIVE
+        // and flip a still-pending parent request, matching staff fulfill.
+        if (inst.request_id) {
+            try {
+                const { STAGES, setStage } = require('../services/trialFulfillment');
+                await setStage(inst.request_id, STAGES.LIVE, {
+                    by: null,
+                    note: 'agent registered',
+                    force: true,
+                });
+            } catch (e) {
+                console.error('[agent] setStage LIVE failed', e.message);
+            }
+            try {
+                await pool.query(
+                    `UPDATE trial_requests
+                        SET status = 'active',
+                            approved_at = COALESCE(approved_at, NOW()),
+                            updated_at = NOW()
+                      WHERE id = $1 AND status = 'pending'`,
+                    [inst.request_id]
+                );
+            } catch (e) {
+                console.error('[agent] request active update failed', e.message);
+            }
+        }
+
         res.json({
             ok: true,
             instanceKind: inst.instance_kind || 'trial',

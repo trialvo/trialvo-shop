@@ -46,6 +46,38 @@ export async function updateEmailConfig(payload: {
   return res.data;
 }
 
+export type EmailLogoStatus = {
+  hasLogo: boolean;
+};
+
+export async function getEmailLogoStatus() {
+  const res = await api.get(`/config/emailLogo`);
+  return res.data as EmailLogoStatus;
+}
+
+export async function uploadEmailLogo(file: File) {
+  const form = new FormData();
+  form.append("logo", file);
+  const res = await api.post(`/config/emailLogo`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}
+
+export async function deleteEmailLogo() {
+  const res = await api.delete(`/config/emailLogo`);
+  return res.data;
+}
+
+/** Authenticated blob URL for admin preview only — not used in customer emails. */
+export async function fetchEmailLogoPreviewUrl(): Promise<string | null> {
+  const res = await api.get(`/config/emailLogo/file`, { responseType: "blob" });
+  const blob = res.data as Blob;
+  if (!blob || blob.size === 0) return null;
+  if (blob.type && blob.type.includes("application/json")) return null;
+  return URL.createObjectURL(blob);
+}
+
 /**
  * SMS Provider Update
  * - PUT /config/alphaSms

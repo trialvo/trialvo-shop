@@ -14,7 +14,13 @@ import {
   useModalTransition,
 } from "@/components/ui/modal/useModalTransition";
 
-import { updateEmailConfig } from "@/api/service-config.api";
+import {
+  updateEmailConfig,
+  getEmailLogoStatus,
+  uploadEmailLogo,
+  deleteEmailLogo,
+  fetchEmailLogoPreviewUrl,
+} from "@/api/service-config.api";
 import type { EmailCard } from "./types";
 
 type Props = {
@@ -135,6 +141,10 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
   const [fromAddress, setFromAddress] = useState("");
   const [fromName, setFromName] = useState("");
   const [triage, setTriage] = useState<Triage | null>(null);
+  const [hasLogo, setHasLogo] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
   const { isMounted, isVisible, handleTransitionEnd } = useModalTransition(open);
 
   useEffect(() => {
@@ -148,7 +158,44 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
     setFromAddress(safeString(initial?.fromAddress));
     setFromName(safeString(initial?.fromName));
     setTriage(null);
+    setLogoFile(null);
   }, [open, initial]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    let objectUrl: string | null = null;
+
+    const loadLogo = async () => {
+      try {
+        const status = await getEmailLogoStatus();
+        if (cancelled) return;
+        const present = Boolean(status?.hasLogo);
+        setHasLogo(present);
+        if (!present) {
+          setPreviewUrl(null);
+          return;
+        }
+        objectUrl = await fetchEmailLogoPreviewUrl();
+        if (cancelled) {
+          if (objectUrl) URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        setPreviewUrl(objectUrl);
+      } catch {
+        if (!cancelled) {
+          setHasLogo(false);
+          setPreviewUrl(null);
+        }
+      }
+    };
+
+    loadLogo();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [open]);
 
   // Close on Escape for keyboard users.
   useEffect(() => {
@@ -232,6 +279,68 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
     });
   };
 
+  const refreshLogoPreview = async (present: boolean) => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setHasLogo(present);
+    if (!present) return;
+    try {
+      const next = await fetchEmailLogoPreviewUrl();
+      setPreviewUrl(next);
+    } catch {
+      setPreviewUrl(null);
+    }
+  };
+
+  const onUploadLogo = async () => {
+    if (!logoFile) return;
+    setLogoBusy(true);
+    try {
+      const res: any = await uploadEmailLogo(logoFile);
+      if (res?.success === false) {
+        toast.error(res?.error ?? res?.message ?? "Failed to upload logo");
+        return;
+      }
+      toast.success("Email logo uploaded");
+      setLogoFile(null);
+      await refreshLogoPreview(true);
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.error ??
+          err?.response?.data?.message ??
+          err?.message ??
+          "Failed to upload logo"
+      );
+    } finally {
+      setLogoBusy(false);
+    }
+  };
+
+  const onRemoveLogo = async () => {
+    setLogoBusy(true);
+    try {
+      const res: any = await deleteEmailLogo();
+      if (res?.success === false) {
+        toast.error(res?.error ?? res?.message ?? "Failed to remove logo");
+        return;
+      }
+      toast.success("Email logo removed");
+      setLogoFile(null);
+      await refreshLogoPreview(false);
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.error ??
+          err?.response?.data?.message ??
+          err?.message ??
+          "Failed to remove logo"
+      );
+    } finally {
+      setLogoBusy(false);
+    }
+  };
+
   if (!isMounted) return null;
 
   return (
@@ -276,6 +385,41 @@ export default function EmailConfigModal({ open, initial, onClose, onSaved }: Pr
 
         {/* Body */}
         <div className="max-h-[560px] overflow-y-auto px-6 py-5">
+          <div className="mb-5 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Email logo (SVG)
+            </p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Shown at the top of customer emails. Embedded in the message (no external link). If empty, emails show no logo.
+            </p>
+            {hasLogo && previewUrl ? (
+              <div className="mt-3 flex flex-wrap items-center gap-4">
+                <img
+                  src={previewUrl}
+                  alt="Email logo preview"
+                  className="h-12 w-auto max-w-[160px] rounded border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-800"
+                />
+                <Button variant="outline" onClick={onRemoveLogo} disabled={logoBusy}>
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">No logo uploaded.</p>
+            )}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <input
+                type="file"
+                accept=".svg,image/svg+xml"
+                onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+                disabled={logoBusy}
+                className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200 dark:text-gray-300 dark:file:bg-gray-800 dark:file:text-gray-200"
+              />
+              <Button variant="outline" onClick={onUploadLogo} disabled={logoBusy || !logoFile}>
+                {logoBusy ? "Uploading..." : "Upload"}
+              </Button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <label htmlFor="mail-provider" className="block text-sm font-medium text-gray-700 dark:text-gray-300">

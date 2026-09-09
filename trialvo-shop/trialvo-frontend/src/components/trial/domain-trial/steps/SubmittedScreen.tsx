@@ -17,9 +17,8 @@ export function SubmittedScreen({
   email,
 }: Readonly<{ result: DomainSubmitResponse; language: MarketplaceLanguage; email?: string }>) {
   const copy = trialCopy(language).domain;
-  const buying = result.hostingSource === "buy_from_trialvo";
   const title = result.existing ? copy.existingTitle : copy.submittedTitle;
-  const lead = result.existing ? copy.existingLead : buying ? copy.submittedBuyLead : copy.submittedLead;
+  const lead = result.existing ? copy.existingLead : copy.submittedLead;
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
@@ -29,7 +28,7 @@ export function SubmittedScreen({
         </span>
         <h3 className="mt-4 font-display text-xl font-bold tracking-tight text-foreground">{title}</h3>
         <p className="mx-auto mt-1.5 max-w-sm text-sm leading-6 text-muted-foreground">{lead}</p>
-        {!buying && result.slaHours ? (
+        {result.slaHours ? (
           <p className="mt-2 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
             {copy.slaLine(localizeNumber(result.slaHours, language))}
           </p>
@@ -39,7 +38,6 @@ export function SubmittedScreen({
       <div className="rounded-2xl border border-border bg-card p-4">
         <TrialTimeline
           stage={result.fulfillmentStage ?? "received"}
-          hostingSource={result.hostingSource}
           language={language}
           slaHours={result.slaHours}
         />

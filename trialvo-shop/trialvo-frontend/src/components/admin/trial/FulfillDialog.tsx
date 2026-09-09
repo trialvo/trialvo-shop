@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Globe, Loader2, Rocket } from "lucide-react";
+import { Loader2, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -58,10 +58,9 @@ export function FulfillDialog({
     setNotes("");
   }, [request, presets]);
 
-  const needsHostKind = request?.hosting_source === "buy_from_trialvo" && !request?.has_hosting;
   const valid = useMemo(
-    () => URL_RE.test(shopUrl) && URL_RE.test(adminUrl) && months > 0 && (!needsHostKind || Boolean(hostKind)),
-    [shopUrl, adminUrl, months, needsHostKind, hostKind],
+    () => URL_RE.test(shopUrl) && URL_RE.test(adminUrl) && months > 0,
+    [shopUrl, adminUrl, months],
   );
 
   const submit = async () => {
@@ -140,31 +139,6 @@ export function FulfillDialog({
               Customer asked for {request?.requested_months ?? "—"} mo · ends {formatDate(endDateForMonths(months), "en")}
             </p>
           </div>
-
-          {needsHostKind ? (
-            <div className="space-y-1.5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
-              <Label className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
-                <Globe className="h-3.5 w-3.5" aria-hidden="true" />
-                Hosting sold by Trialvo — record the host type
-              </Label>
-              <div className="flex gap-2">
-                {(["vps", "cpanel"] as HostKind[]).map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => setHostKind(k)}
-                    aria-pressed={hostKind === k}
-                    className={cn(
-                      "h-9 rounded-lg border px-3 text-sm font-semibold uppercase transition-colors",
-                      hostKind === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-muted",
-                    )}
-                  >
-                    {k}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
 
           <div className="space-y-1.5">
             <Label htmlFor="fulfill-notes">Internal notes</Label>

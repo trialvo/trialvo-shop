@@ -17,7 +17,7 @@ export type ContactHeroContent = {
   };
 };
 
-export type ContactChannelId = "email" | "phone" | "address";
+export type ContactChannelId = "email" | "phone" | "whatsapp" | "address";
 
 export type ContactChannel = {
   id: ContactChannelId;

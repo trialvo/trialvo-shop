@@ -27,7 +27,7 @@ export interface TrialSettings {
   domainEnabled?: boolean;
   domainMonths?: number[];
   defaultMonths?: number;
-  hostingPurchaseEnabled?: boolean;
+  emailVerificationRequired?: boolean;
   fulfillmentSlaHours?: number;
 }
 
@@ -44,7 +44,7 @@ export interface PublicTrialConfig {
   domainMonths: number[];
   defaultMonths: number;
   maxMonths: number;
-  hostingPurchaseEnabled: boolean;
+  emailVerificationRequired: boolean;
   fulfillmentSlaHours: number;
   // legacy
   hostedDays: number;
@@ -65,7 +65,7 @@ export const FALLBACK_PUBLIC_TRIAL_CONFIG: PublicTrialConfig = {
   domainMonths: [1],
   defaultMonths: 1,
   maxMonths: 3,
-  hostingPurchaseEnabled: true,
+  emailVerificationRequired: true,
   fulfillmentSlaHours: 24,
   hostedDays: 14,
   selfHostedDays: 30,

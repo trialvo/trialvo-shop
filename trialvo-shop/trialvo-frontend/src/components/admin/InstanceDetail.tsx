@@ -52,7 +52,9 @@ export function InstanceDetail({
   if (!instance) return null;
 
   const canDestroy = !['destroyed', 'destroying'].includes(instance.status);
-  const isSharedDemo = Boolean(instance.meta?.sharedDemo);
+  const isSharedDemo = Boolean(instance.meta?.sharedDemo) || instance.provision_mode === 'shared';
+  const isManual = instance.provision_mode === 'manual';
+  const noAgentTools = isSharedDemo || isManual;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -104,10 +106,10 @@ export function InstanceDetail({
 
           <div className="flex flex-wrap gap-1.5">
             <Button size="sm" variant="outline" onClick={() => onCreds(instance.id)}><Key className="w-3.5 h-3.5 mr-1" />Creds</Button>
-            {instance.trial_type === 'self_hosted' && onInstaller && (
+            {instance.trial_type === 'self_hosted' && onInstaller && !noAgentTools && (
               <Button size="sm" variant="outline" onClick={() => onInstaller(instance.id)}><Package className="w-3.5 h-3.5 mr-1" />Installer</Button>
             )}
-            {!isSharedDemo && (
+            {!noAgentTools && (
               <>
                 <Button size="sm" variant="outline" onClick={() => onBackup(instance.id)}><HardDrive className="w-3.5 h-3.5 mr-1" />Backup</Button>
                 <Button size="sm" variant="outline" onClick={() => onRestore(instance.id)}><RotateCcw className="w-3.5 h-3.5 mr-1" />Restore</Button>

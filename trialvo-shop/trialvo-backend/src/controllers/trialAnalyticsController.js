@@ -143,7 +143,6 @@ async function getTrialFunnel(req, res, next) {
          SUM(trial_type = 'self_hosted' AND source_request_id IS NOT NULL) AS domain_from_demo,
          SUM(trial_type = 'self_hosted' AND fulfillment_stage IN ('live','expiring','expired','converted')) AS domain_live,
          SUM(trial_type = 'self_hosted' AND fulfillment_stage = 'converted') AS domain_converted,
-         SUM(trial_type = 'self_hosted' AND hosting_source = 'buy_from_trialvo') AS domain_buy_hosting,
          SUM(trial_type = 'self_hosted' AND host_kind = 'vps') AS domain_vps,
          SUM(trial_type = 'self_hosted' AND host_kind = 'cpanel') AS domain_cpanel,
          SUM(trial_type = 'self_hosted' AND status = 'pending'
@@ -176,7 +175,6 @@ async function getTrialFunnel(req, res, next) {
       domain: {
         total: n(r.domain_total),
         fromDemo: domainFromDemo,
-        buyHosting: n(r.domain_buy_hosting),
         vps: n(r.domain_vps),
         cpanel: n(r.domain_cpanel),
         overdue: n(r.domain_overdue),

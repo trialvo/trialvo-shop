@@ -1,4 +1,4 @@
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import type { ContactPageContent } from "@/types/contact";
 import { BRAND } from "@/lib/brand";
 
@@ -69,8 +69,8 @@ export const CONTACT_PAGE_CONTENT: ContactPageContent = {
       en: "Contact details",
     },
     supporting: {
-      bn: "সরাসরি ইমেইল বা ফোনেও যোগাযোগ করতে পারেন।",
-      en: "You can also reach us directly by email or phone.",
+      bn: "সরাসরি ইমেইল, ফোন বা হোয়াটসঅ্যাপে যোগাযোগ করতে পারেন।",
+      en: "You can also reach us directly by email, phone, or WhatsApp.",
     },
   },
   channels: [
@@ -87,6 +87,16 @@ export const CONTACT_PAGE_CONTENT: ContactPageContent = {
       label: { bn: "ফোন", en: "Phone" },
       value: { bn: BRAND.contactPhone, en: BRAND.contactPhone },
       href: BRAND.contactPhoneHref,
+    },
+    {
+      id: "whatsapp",
+      icon: MessageCircle,
+      label: { bn: "হোয়াটসঅ্যাপ", en: "WhatsApp" },
+      value: {
+        bn: `${BRAND.contactPhone} (হোয়াটসঅ্যাপ)`,
+        en: `${BRAND.contactPhone} (WhatsApp)`,
+      },
+      href: BRAND.social.whatsapp,
     },
     {
       id: "address",

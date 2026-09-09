@@ -15,6 +15,14 @@ const nodemailer = require('nodemailer');
 const validator = require('validator');
 const axios = require('axios');
 const pLimit = require('p-limit'); // Recommended to handle rate limits
+const multer = require('multer');
+const responses = require('../helpers/responses');
+const {
+  hasEmailLogo,
+  saveEmailLogoSvg,
+  deleteEmailLogo: removeStoredEmailLogo,
+  readEmailLogoBuffer,
+} = require('../helpers/emailLogo');
 
 const { optionalUploadApi, saveImage, deleteFileIfExists } = require('../helpers/img'); // Adjust paths as needed
 
@@ -926,6 +934,115 @@ exports.updateEmailConfig = api(
       success: true,
       message: setNull == true ? "Email configuration cleared and disabled" : "Email configuration verified and enabled"
     };
+  })
+);
+
+const EMAIL_LOGO_MAX_BYTES = 256 * 1024;
+
+const emailLogoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: EMAIL_LOGO_MAX_BYTES },
+  fileFilter: (req, file, cb) => {
+    const name = String(file.originalname || "").toLowerCase();
+    const mime = String(file.mimetype || "").toLowerCase();
+    const okMime =
+      mime === "image/svg+xml" ||
+      (mime === "application/octet-stream" && name.endsWith(".svg"));
+    if (okMime || name.endsWith(".svg")) {
+      cb(null, true);
+      return;
+    }
+    cb(new errors.INVALID_FIELDS_PROVIDED("Only SVG files are allowed"));
+  },
+}).single("logo");
+
+function wrapEmailLogoUpload(handler) {
+  return (req, res) => {
+    emailLogoUpload(req, res, (err) => {
+      if (err) {
+        if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+          return res.status(422).json({
+            flag: 422,
+            error: "SVG must be 256 KB or smaller",
+            message: "SVG must be 256 KB or smaller",
+          });
+        }
+        const msg = err instanceof errors.QError ? err.error : (err.message || "Invalid logo file");
+        const flag = err instanceof errors.QError ? err.flag : 422;
+        const httpStatus = flag >= 400 && flag < 600 ? flag : 422;
+        return res.status(httpStatus).json({ flag, error: msg, message: msg });
+      }
+      return handler(req, res);
+    });
+  };
+}
+
+class InlineSvgResponse extends responses.QResponse {
+  apply(res) {
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("Content-Disposition", 'inline; filename="logo.svg"');
+    return res.status(200).send(this._data);
+  }
+}
+
+exports.getEmailLogoStatus = api(
+  {},
+  auth(async (req, connection, adminInfo) => {
+    if (!adminInfo.roles.includes("SUPER_ADMIN")) throw new errors.UNAUTHORIZED();
+    return { hasLogo: hasEmailLogo() };
+  })
+);
+
+exports.getEmailLogoFile = api(
+  {},
+  auth(async (req, connection, adminInfo) => {
+    if (!adminInfo.roles.includes("SUPER_ADMIN")) throw new errors.UNAUTHORIZED();
+    const buffer = readEmailLogoBuffer();
+    if (!buffer) throw new errors.NOT_FOUND("Email logo not found");
+    return new InlineSvgResponse(buffer);
+  })
+);
+
+const uploadEmailLogoHandler = api(
+  {},
+  auth(async (req, connection, adminInfo) => {
+    if (!adminInfo.roles.includes("SUPER_ADMIN")) throw new errors.UNAUTHORIZED();
+    const file = req.file;
+    if (!file || !file.buffer) {
+      throw new errors.INVALID_FIELDS_PROVIDED("SVG logo file is required (field name: logo)");
+    }
+    try {
+      saveEmailLogoSvg(file.buffer);
+    } catch (err) {
+      throw new errors.INVALID_FIELDS_PROVIDED(err.message || "Invalid SVG logo");
+    }
+
+    await connection.query(
+      `INSERT INTO admin_audit_logs (admin_id, action, resource, resource_id, meta)
+       VALUES (?, 'UPDATE_EMAIL_LOGO', 'system_config', 'EMAIL_LOGO', ?)`,
+      [adminInfo.id, JSON.stringify({ action: "UPLOAD", bytes: file.buffer.length })]
+    );
+
+    return { success: true, hasLogo: true, message: "Email logo uploaded" };
+  })
+);
+
+exports.uploadEmailLogo = wrapEmailLogoUpload(uploadEmailLogoHandler);
+
+exports.deleteEmailLogo = api(
+  {},
+  auth(async (req, connection, adminInfo) => {
+    if (!adminInfo.roles.includes("SUPER_ADMIN")) throw new errors.UNAUTHORIZED();
+    removeStoredEmailLogo();
+
+    await connection.query(
+      `INSERT INTO admin_audit_logs (admin_id, action, resource, resource_id, meta)
+       VALUES (?, 'UPDATE_EMAIL_LOGO', 'system_config', 'EMAIL_LOGO', ?)`,
+      [adminInfo.id, JSON.stringify({ action: "DELETE" })]
+    );
+
+    return { success: true, hasLogo: false, message: "Email logo removed" };
   })
 );
 

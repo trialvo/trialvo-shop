@@ -309,23 +309,9 @@
                   <!-- Header -->
                   <tr>
                     <td align="center" class="px" style="padding: 22px 22px 14px">
-                      <!-- Light logo (DEFAULT) -->
-                      <img
-                        class="logoImg logoLight"
-                        src="https://cdn.graduatefashionbd.com/logo/my_dark_logo.png"
-                        width="160"
-                        alt="{{BRAND_NAME}}"
-                        style="width: 160px; height: auto; display: block;"
-                      />
-
-                      <!-- Dark logo (HIDDEN by default via INLINE display:none) -->
-                      <img
-                        class="logoImg logoDark"
-                        src="https://cdn.graduatefashionbd.com/logo/my_light_logo.png"
-                        width="160"
-                        alt="{{BRAND_NAME}}"
-                        style="width: 160px; height: auto; display: none;"
-                      />
+                      {{#if hasEmailLogo}}
+                      <img class="logoImg" src="{{EMAIL_LOGO_SRC}}" width="160" alt="{{BRAND_NAME}}" style="width:160px;height:auto;display:block;border:0;" />
+                      {{/if}}
                     </td>
                   </tr>
 
@@ -339,20 +325,6 @@
                   <tr>
                     <td class="cardPad px" style="padding: 24px 22px 6px">
                       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                        {{!-- <!-- Success Icon -->
-                        <tr>
-                          <td align="center" style="padding-bottom: 16px">
-                            <div class="iconWrap">
-                              <img
-                                src="https://cdn.graduatefashionbd.com/icon/otp_icon_email.png"
-                                width="32"
-                                alt="Admin Created"
-                                style="width: 32px; height: auto"
-                              />
-                            </div>
-                          </td>
-                        </tr> --}}
-
                         <tr>
                           <td align="center" style="padding: 6px 0 4px">
                             <div class="h1">Admin Account Created</div>

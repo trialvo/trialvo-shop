@@ -22,6 +22,7 @@ export type ChildCategory = {
   name_bd?: string | null;
   img_path: string | null;
   total_stock: number;
+  product_count?: number;
 
   status: boolean;
   featured: boolean;
