@@ -14,6 +14,7 @@ const { domainTrialLiveEmail, FRONTEND } = require('../services/trialEmails');
 const { listBackups, getBackupForInstance, openStoredBackup, backupKeepCount } = require('../services/backupService');
 const { buildMigrationZip } = require('../services/trialBackupCodec');
 const { buildInstallerZip, buildTrialInstallerZip } = require('../services/packager');
+const { logAdminActivity } = require('../services/adminActivityLog');
 
 /** Strip secrets from admin list/detail JSON (credentials via dedicated endpoints only). */
 function sanitizeInstanceForAdminList(row) {
@@ -232,6 +233,15 @@ async function fulfillTrialRequest(req, res, next) {
         });
         sendMail({ to: request.email, ...mail }).catch((e) => console.error('[fulfill] live email failed:', e.message));
 
+        await logAdminActivity({
+            req,
+            action: 'trial.request_fulfill',
+            resource: 'trial_request',
+            resourceId: request.id,
+            summary: `Fulfilled own-domain trial for ${request.email}`,
+            meta: { instanceId, months, shopUrl, hostKind },
+        });
+
         res.json({
             ok: true,
             instanceId,
@@ -292,6 +302,14 @@ async function approveTrialRequest(req, res, next) {
                 console.error(`[approve] stage bookkeeping failed for ${request.id}:`, e.message || e);
             }
         }
+        await logAdminActivity({
+            req,
+            action: 'trial.request_approve',
+            resource: 'trial_request',
+            resourceId: request.id,
+            summary: `Approved trial request ${request.email || request.id}`,
+            meta: { trialDays, trialType: request.trial_type },
+        });
         res.json({ ok: true, trialDays, ...result });
     } catch (err) { next(err); }
 }
@@ -314,6 +332,14 @@ async function rejectTrialRequest(req, res, next) {
             reason: reason || null,
         });
         await sendMail({ to: rows[0].email, ...mail });
+        await logAdminActivity({
+            req,
+            action: 'trial.request_reject',
+            resource: 'trial_request',
+            resourceId: req.params.id,
+            summary: `Rejected trial request ${rows[0].email || req.params.id}`,
+            meta: { reason: reason || null },
+        });
         res.json({ ok: true });
     } catch (err) { next(err); }
 }
@@ -425,6 +451,14 @@ async function freezeInstance(req, res, next) {
         if (isManualInstance(inst)) {
             await setInstanceStatus(req.params.id, 'frozen');
             await logEvent(req.params.id, 'manual_frozen', { by: req.admin?.id, note: 'staff must disable on server' });
+            await logAdminActivity({
+                req,
+                action: 'trial.instance_freeze',
+                resource: 'trial_instance',
+                resourceId: req.params.id,
+                summary: 'Froze trial instance',
+                meta: { manual: true },
+            });
             return res.json({ ok: true, status: 'frozen', manual: true, message: 'Marked frozen. Disable the deployment on the customer server by hand.' });
         }
 
@@ -433,12 +467,27 @@ async function freezeInstance(req, res, next) {
             const rev = await revokeTrialAdmin({ email: inst.admin_email, instance: inst });
             await setInstanceStatus(req.params.id, 'frozen');
             await logEvent(req.params.id, 'shared_demo_frozen', { by: req.admin?.id, revoke: rev });
+            await logAdminActivity({
+                req,
+                action: 'trial.instance_freeze',
+                resource: 'trial_instance',
+                resourceId: req.params.id,
+                summary: 'Froze trial instance',
+                meta: { sharedDemo: true },
+            });
             return res.json({ ok: true, status: 'frozen', sharedDemo: true });
         }
 
         await setInstanceStatus(req.params.id, 'frozen');
         await enqueueCommand(req.params.id, 'freeze', null, req.admin?.id);
         await logEvent(req.params.id, 'freeze', { by: req.admin?.id });
+        await logAdminActivity({
+            req,
+            action: 'trial.instance_freeze',
+            resource: 'trial_instance',
+            resourceId: req.params.id,
+            summary: 'Froze trial instance',
+        });
         res.json({ ok: true, status: 'frozen' });
     } catch (err) { next(err); }
 }
@@ -455,6 +504,14 @@ async function unfreezeInstance(req, res, next) {
         if (isManualInstance(inst)) {
             await setInstanceStatus(req.params.id, 'active');
             await logEvent(req.params.id, 'manual_unfrozen', { by: req.admin?.id });
+            await logAdminActivity({
+                req,
+                action: 'trial.instance_unfreeze',
+                resource: 'trial_instance',
+                resourceId: req.params.id,
+                summary: 'Unfroze trial instance',
+                meta: { manual: true },
+            });
             return res.json({ ok: true, status: 'active', manual: true });
         }
 
@@ -463,12 +520,27 @@ async function unfreezeInstance(req, res, next) {
             const act = await reactivateTrialAdmin({ email: inst.admin_email, password, instance: inst });
             await setInstanceStatus(req.params.id, 'active');
             await logEvent(req.params.id, 'shared_demo_unfrozen', { by: req.admin?.id, reactivate: act });
+            await logAdminActivity({
+                req,
+                action: 'trial.instance_unfreeze',
+                resource: 'trial_instance',
+                resourceId: req.params.id,
+                summary: 'Unfroze trial instance',
+                meta: { sharedDemo: true },
+            });
             return res.json({ ok: true, status: 'active', sharedDemo: true });
         }
 
         await setInstanceStatus(req.params.id, 'active');
         await enqueueCommand(req.params.id, 'unfreeze', null, req.admin?.id);
         await logEvent(req.params.id, 'unfreeze', { by: req.admin?.id });
+        await logAdminActivity({
+            req,
+            action: 'trial.instance_unfreeze',
+            resource: 'trial_instance',
+            resourceId: req.params.id,
+            summary: 'Unfroze trial instance',
+        });
         res.json({ ok: true, status: 'active' });
     } catch (err) { next(err); }
 }
@@ -494,6 +566,14 @@ async function extendInstance(req, res, next) {
                 await setStage(inst.request_id, STAGES.LIVE, { by: req.admin?.id || null, note: `extended ${days}d`, force: true });
             }
             await logEvent(req.params.id, 'manual_extended', { days, by: req.admin?.id });
+            await logAdminActivity({
+                req,
+                action: 'trial.instance_extend',
+                resource: 'trial_instance',
+                resourceId: req.params.id,
+                summary: `Extended trial instance by ${days} days`,
+                meta: { days, manual: true },
+            });
             return res.json({ ok: true, days, manual: true });
         }
 
@@ -501,11 +581,27 @@ async function extendInstance(req, res, next) {
             const password = inst.admin_password_enc ? decrypt(inst.admin_password_enc) : null;
             await reactivateTrialAdmin({ email: inst.admin_email, password, instance: inst });
             await logEvent(req.params.id, 'shared_demo_extended', { days });
+            await logAdminActivity({
+                req,
+                action: 'trial.instance_extend',
+                resource: 'trial_instance',
+                resourceId: req.params.id,
+                summary: `Extended trial instance by ${days} days`,
+                meta: { days, sharedDemo: true },
+            });
             return res.json({ ok: true, days, sharedDemo: true });
         }
 
         await enqueueCommand(req.params.id, 'extend', { days }, req.admin?.id);
         await logEvent(req.params.id, 'extend', { days });
+        await logAdminActivity({
+            req,
+            action: 'trial.instance_extend',
+            resource: 'trial_instance',
+            resourceId: req.params.id,
+            summary: `Extended trial instance by ${days} days`,
+            meta: { days },
+        });
         res.json({ ok: true, days });
     } catch (err) { next(err); }
 }
@@ -526,6 +622,14 @@ async function destroyInstance(req, res, next) {
         if (isManualInstance(inst)) {
             await setInstanceStatus(instanceId, 'destroyed');
             await logEvent(instanceId, 'manual_destroyed', { mode, by: req.admin?.id, note: 'staff removed deployment by hand' });
+            await logAdminActivity({
+                req,
+                action: 'trial.instance_destroy',
+                resource: 'trial_instance',
+                resourceId: instanceId,
+                summary: 'Destroyed trial instance',
+                meta: { mode, manual: true },
+            });
             return res.json({ ok: true, status: 'destroyed', mode, manual: true, message: 'Marked destroyed. Remove the deployment from the customer server by hand.' });
         }
 
@@ -535,6 +639,14 @@ async function destroyInstance(req, res, next) {
             const rev = await revokeTrialAdmin({ email: inst.admin_email, instance: inst });
             await setInstanceStatus(instanceId, 'destroyed');
             await logEvent(instanceId, 'shared_demo_revoked', { mode, revoke: rev, by: req.admin?.id });
+            await logAdminActivity({
+                req,
+                action: 'trial.instance_destroy',
+                resource: 'trial_instance',
+                resourceId: instanceId,
+                summary: 'Destroyed trial instance',
+                meta: { mode, sharedDemo: true },
+            });
             return res.json({
                 ok: true,
                 status: 'destroyed',
@@ -547,6 +659,14 @@ async function destroyInstance(req, res, next) {
         await setInstanceStatus(instanceId, 'destroying');
         await enqueueCommand(instanceId, mode, { mode: hard ? 'hard' : 'soft' }, req.admin?.id);
         await logEvent(instanceId, 'destroy_requested', { mode });
+        await logAdminActivity({
+            req,
+            action: 'trial.instance_destroy',
+            resource: 'trial_instance',
+            resourceId: instanceId,
+            summary: 'Destroyed trial instance',
+            meta: { mode },
+        });
 
         // Return immediately so the admin UI does not spin while Docker tears down
         res.json({ ok: true, status: 'destroying', mode });
@@ -645,6 +765,14 @@ async function downloadInstaller(req, res, next) {
         });
 
         await logEvent(inst.id, 'installer_downloaded', { by: req.admin?.id, admin: true });
+        await logAdminActivity({
+            req,
+            action: 'trial.installer_issue',
+            resource: 'trial_instance',
+            resourceId: inst.id,
+            summary: 'Issued trial installer zip',
+            meta: { filename: zip.filename },
+        });
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${zip.filename}"`);
         res.send(zip.buffer);

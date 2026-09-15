@@ -1,5 +1,6 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const { logAdminActivity } = require('../services/adminActivityLog');
 
 // POST /api/contact — public
 async function createMessage(req, res, next) {
@@ -56,6 +57,13 @@ async function deleteMessage(req, res, next) {
  try {
   const { id } = req.params;
   await pool.query('DELETE FROM contact_messages WHERE id = $1', [id]);
+  await logAdminActivity({
+   req,
+   action: 'message.delete',
+   resource: 'message',
+   resourceId: id,
+   summary: 'Deleted contact message',
+  });
   res.json({ message: 'Message deleted' });
  } catch (error) {
   next(error);

@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const { createTrialvoPayBill } = require('../config/trialvo_pay');
 const { getTrialSettings } = require('../services/trialSettings');
 const { quoteProduct } = require('../lib/productPricing');
+const { logAdminActivity } = require('../services/adminActivityLog');
 
 // POST /api/orders — public, create order + initiate Trialvo Pay payment
 async function createOrder(req, res, next) {
@@ -246,6 +247,15 @@ async function updateOrderStatus(req, res, next) {
       `INSERT INTO order_timeline (id, order_id, from_status, to_status, changed_by, comment) VALUES ($1, $2, $3, $4, 'admin', $5)`,
       [uuidv4(), id, fromStatus, status, comment || null]
     );
+
+    await logAdminActivity({
+      req,
+      action: 'order.status_update',
+      resource: 'order',
+      resourceId: id,
+      summary: `Order status ${fromStatus || '?'} → ${status}`,
+      meta: { from: fromStatus, to: status },
+    });
 
     res.json({ message: 'Order status updated' });
   } catch (error) {

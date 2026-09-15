@@ -209,6 +209,15 @@ export function InstantDemoDialog({
               </>
             )}
           </Button>
+        ) : phase === "verify" ? (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => { setErrorMsg(null); setPhase("form"); }}
+            className="h-11 rounded-lg px-3"
+          >
+            {copy.domain.back}
+          </Button>
         ) : undefined
       }
     >

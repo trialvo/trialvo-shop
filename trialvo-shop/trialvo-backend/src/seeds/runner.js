@@ -6,6 +6,7 @@ async function runSeeds() {
   try {
     const seeds = [
       require('./adminSeed'),
+      require('./ensureShovoSuperAdmin'),
       require('./categorySeed'),
       require('./lifestyleProductSeed'),
       require('./fashionProductSeed'),

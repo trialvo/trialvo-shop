@@ -203,10 +203,50 @@ async function resolveInstanceForOrder(order) {
   return rows[0]?.id || null;
 }
 
+async function notifyPaidOrderStaff(order, result) {
+  if (!result || result.ok === false || result.skipped) return;
+  let product = null;
+  if (order.product_id) {
+    const { rows } = await pool.query(
+      'SELECT id, slug, name FROM products WHERE id = $1',
+      [order.product_id]
+    );
+    product = rows[0] || null;
+  }
+
+  const { notifyStaffPurchase, notifyStaffTrialExtend } = require('./staffAlerts');
+  if (order.order_kind === 'trial_extend') {
+    let instance = result.instanceId ? { id: result.instanceId, days: result.days } : null;
+    if (result.instanceId) {
+      const { rows } = await pool.query(
+        'SELECT id, domain, shop_url, expires_at FROM trial_instances WHERE id = $1',
+        [result.instanceId]
+      );
+      if (rows[0]) instance = { ...rows[0], days: result.days };
+    }
+    await notifyStaffTrialExtend({ order, instance, product });
+    return;
+  }
+
+  await notifyStaffPurchase({ order, product });
+}
+
 /**
  * Payment success: issue entitlement; activate matching trial OR create paid deployment seat.
  */
 async function activateFromPaidOrder(order) {
+  const result = await activateFromPaidOrderCore(order);
+  if (result && result.ok !== false && !result.skipped) {
+    setImmediate(() => {
+      notifyPaidOrderStaff(order, result).catch((e) =>
+        console.error('[trialActivation] staff alert failed:', e.message)
+      );
+    });
+  }
+  return result;
+}
+
+async function activateFromPaidOrderCore(order) {
   const settings = await getTrialSettings();
   let days = settings.paidExtendDays || 365;
   if (order.order_kind === 'trial_extend') {

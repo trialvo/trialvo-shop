@@ -7,11 +7,13 @@ module.exports = {
   const id = uuidv4();
   const passwordHash = await bcrypt.hash('Antor@123', 12);
 
+  // Bootstrap operator account — not super_admin. Sole super is
+  // ensured separately by ensureShovoSuperAdmin (5arafatshovo@gmail.com).
   await client.query(
    `INSERT INTO admin_profiles (id, email, password_hash, full_name, avatar_url, role) VALUES ($1, $2, $3, $4, $5, $6)`,
-   [id, 'admin@trialvo.com', passwordHash, 'Super Admin', '', 'super_admin']
+   [id, 'admin@trialvo.com', passwordHash, 'Admin', '', 'admin']
   );
 
-  console.log('    📧 Default admin: admin@trialvo.com / Antor@123');
+  console.log('    📧 Default admin: admin@trialvo.com / Antor@123 (role=admin)');
  },
 };

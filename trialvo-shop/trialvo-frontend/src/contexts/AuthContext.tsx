@@ -9,6 +9,8 @@ interface AdminProfile {
  full_name: string;
  avatar_url: string;
  role: 'super_admin' | 'admin' | 'editor';
+ phone?: string | null;
+ is_active?: boolean;
 }
 
 interface AuthContextType {

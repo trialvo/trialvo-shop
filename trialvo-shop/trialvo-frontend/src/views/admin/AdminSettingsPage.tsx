@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQueryString } from '@/hooks/useQueryString';
-import { User, Lock, Loader2, Save, ShieldCheck, CreditCard, Activity, CheckCircle2, AlertCircle, Eye, EyeOff, FlaskConical, Mail } from 'lucide-react';
+import { User, Lock, Loader2, Save, ShieldCheck, CreditCard, Activity, CheckCircle2, AlertCircle, Eye, EyeOff, FlaskConical, Mail, MessageSquare } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,17 +14,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import { Switch } from '@/components/ui/switch';
 import { TrialSettingsPanel } from '@/components/admin/trial/TrialSettingsPanel';
+import { adminSmsApi, type SmsProviderId, type SmsSettings } from '@/lib/adminStaffApi';
+
+type SettingsTab = 'profile' | 'payment' | 'trial' | 'email' | 'sms';
 
 const AdminSettingsPage: React.FC = () => {
  const { toast } = useToast();
  const { adminProfile, applyAdminProfile } = useAuth();
  const { searchParams, setSearchParams } = useQueryString();
  const rawTab = searchParams.get('tab');
+ const isSuperAdmin = adminProfile?.role === 'super_admin';
  // Profile + Security merged; keep old ?tab=security links working
- const activeTab = (
+ const activeTab: SettingsTab = (
   !rawTab || rawTab === 'security'
    ? 'profile'
-   : (rawTab as 'profile' | 'payment' | 'trial' | 'email')
+   : rawTab === 'sms' && !isSuperAdmin
+    ? 'profile'
+    : (rawTab as SettingsTab)
  );
 
  const setActiveTab = (tab: string) => {
@@ -33,6 +39,7 @@ const AdminSettingsPage: React.FC = () => {
 
  const [fullName, setFullName] = useState(adminProfile?.full_name || '');
  const [email, setEmail] = useState(adminProfile?.email || '');
+ const [phone, setPhone] = useState(adminProfile?.phone || '');
  const [nameLoading, setNameLoading] = useState(false);
 
  const [currentPassword, setCurrentPassword] = useState('');
@@ -76,6 +83,42 @@ const AdminSettingsPage: React.FC = () => {
  const [smtpTestLoading, setSmtpTestLoading] = useState(false);
  const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
+ const [smsForm, setSmsForm] = useState({
+  activeProvider: '' as SmsProviderId,
+  alphaEnabled: false,
+  bulkEnabled: false,
+  alphaSenderId: '',
+  bulkSenderId: '',
+  alphaApiKey: '',
+  bulkApiKey: '',
+  hasAlphaApiKey: false,
+  hasBulkApiKey: false,
+ });
+ const [smsBalance, setSmsBalance] = useState<SmsSettings['balance']>(undefined);
+ const [smsSaving, setSmsSaving] = useState(false);
+ const [smsTestPhone, setSmsTestPhone] = useState('');
+ const [smsTestMessage, setSmsTestMessage] = useState('');
+ const [smsTestLoading, setSmsTestLoading] = useState(false);
+ const [smsTestResult, setSmsTestResult] = useState<{ success: boolean; message: string } | null>(null);
+ const [showAlphaKey, setShowAlphaKey] = useState(false);
+ const [showBulkKey, setShowBulkKey] = useState(false);
+
+ const applySmsSettings = (data: SmsSettings) => {
+  setSmsForm((prev) => ({
+   ...prev,
+   activeProvider: data.activeProvider || '',
+   alphaEnabled: data.alphaEnabled ?? false,
+   bulkEnabled: data.bulkEnabled ?? false,
+   alphaSenderId: data.alphaSenderId || '',
+   bulkSenderId: data.bulkSenderId || '',
+   alphaApiKey: '',
+   bulkApiKey: '',
+   hasAlphaApiKey: data.hasAlphaApiKey ?? false,
+   hasBulkApiKey: data.hasBulkApiKey ?? false,
+  }));
+  setSmsBalance(data.balance);
+ };
+
  useEffect(() => {
   const fetchSettings = async () => {
    try {
@@ -110,11 +153,24 @@ const AdminSettingsPage: React.FC = () => {
  }, [adminProfile?.email]);
 
  useEffect(() => {
+  if (!isSuperAdmin) return;
+  const fetchSms = async () => {
+   try {
+    applySmsSettings(await adminSmsApi.get());
+   } catch (err) {
+    console.error('Failed to fetch SMS settings', err);
+   }
+  };
+  fetchSms();
+ }, [isSuperAdmin]);
+
+ useEffect(() => {
   if (adminProfile) {
    setFullName(adminProfile.full_name || '');
    setEmail(adminProfile.email || '');
+   setPhone(adminProfile.phone || '');
   }
- }, [adminProfile?.id, adminProfile?.full_name, adminProfile?.email]);
+ }, [adminProfile?.id, adminProfile?.full_name, adminProfile?.email, adminProfile?.phone]);
 
  const handleUpdateProfile = async () => {
   if (!fullName.trim()) {
@@ -130,6 +186,7 @@ const AdminSettingsPage: React.FC = () => {
    const res = await api.put<{ message: string; admin: any }>('/auth/profile', {
     full_name: fullName.trim(),
     email: email.trim(),
+    phone: phone.trim() || null,
    });
    if (res.admin) applyAdminProfile(res.admin);
    toast({ title: 'Profile updated successfully' });
@@ -164,6 +221,63 @@ const AdminSettingsPage: React.FC = () => {
    toast({ title: 'Error', description: err.message, variant: 'destructive' });
   }
   setSmtpSaving(false);
+ };
+
+ const handleSaveSmsSettings = async () => {
+  setSmsSaving(true);
+  try {
+   const payload = {
+    activeProvider: smsForm.activeProvider,
+    alphaEnabled: smsForm.alphaEnabled,
+    bulkEnabled: smsForm.bulkEnabled,
+    alphaSenderId: smsForm.alphaSenderId,
+    bulkSenderId: smsForm.bulkSenderId,
+    ...(smsForm.alphaApiKey ? { alphaApiKey: smsForm.alphaApiKey } : {}),
+    ...(smsForm.bulkApiKey ? { bulkApiKey: smsForm.bulkApiKey } : {}),
+   };
+   const res = await adminSmsApi.save(payload);
+   applySmsSettings(res);
+   toast({ title: 'SMS settings saved' });
+  } catch (err: any) {
+   toast({ title: 'Error', description: err.message, variant: 'destructive' });
+  }
+  setSmsSaving(false);
+ };
+
+ const handleTestSms = async () => {
+  if (!smsTestPhone.trim()) {
+   toast({ title: 'Phone number is required', variant: 'destructive' });
+   return;
+  }
+  if (smsForm.activeProvider === 'bulksms' && !smsForm.bulkSenderId.trim()) {
+   toast({ title: 'BulkSMS Sender ID is required', variant: 'destructive' });
+   return;
+  }
+  setSmsTestLoading(true);
+  setSmsTestResult(null);
+  try {
+   // Persist draft first so Active badge matches what the test actually uses
+   const payload = {
+    activeProvider: smsForm.activeProvider,
+    alphaEnabled: smsForm.alphaEnabled,
+    bulkEnabled: smsForm.bulkEnabled,
+    alphaSenderId: smsForm.alphaSenderId,
+    bulkSenderId: smsForm.bulkSenderId,
+    ...(smsForm.alphaApiKey ? { alphaApiKey: smsForm.alphaApiKey } : {}),
+    ...(smsForm.bulkApiKey ? { bulkApiKey: smsForm.bulkApiKey } : {}),
+   };
+   const saved = await adminSmsApi.save(payload);
+   applySmsSettings(saved);
+
+   const res = await adminSmsApi.test(smsTestPhone.trim(), smsTestMessage.trim() || undefined);
+   setSmsTestResult({ success: true, message: res.message || 'Test SMS sent' });
+   toast({ title: 'Test SMS sent', description: res.message });
+  } catch (err: any) {
+   const msg = err.message || 'SMS test failed';
+   setSmsTestResult({ success: false, message: msg });
+   toast({ title: 'SMS test failed', description: msg, variant: 'destructive' });
+  }
+  setSmsTestLoading(false);
  };
 
  const handleTestSmtp = async () => {
@@ -276,6 +390,15 @@ const AdminSettingsPage: React.FC = () => {
      <Mail className="w-4 h-4" />
      Email
     </button>
+    {isSuperAdmin && (
+     <button
+      onClick={() => setActiveTab('sms')}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'sms' ? 'bg-card text-foreground shadow-soft-sm' : 'text-muted-foreground hover:text-foreground'}`}
+     >
+      <MessageSquare className="w-4 h-4" />
+      SMS
+     </button>
+    )}
     <button
      onClick={() => setActiveTab('payment')}
      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'payment' ? 'bg-card text-foreground shadow-soft-sm' : 'text-muted-foreground hover:text-foreground'}`}
@@ -332,6 +455,17 @@ const AdminSettingsPage: React.FC = () => {
           autoComplete="email"
          />
          <p className="text-[10px] text-muted-foreground">Used for admin login. Must be unique.</p>
+        </div>
+
+        <div className="space-y-1.5">
+         <Label className="text-xs text-muted-foreground font-medium">Phone</Label>
+         <Input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className={inputClass}
+          autoComplete="tel"
+          placeholder="Required for SMS alerts"
+         />
         </div>
 
         <Button
@@ -578,6 +712,217 @@ const AdminSettingsPage: React.FC = () => {
        <Button variant="outline" onClick={handleTestSmtp} disabled={smtpTestLoading} className="border-primary/20 text-primary hover:bg-primary/5">
         {smtpTestLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Activity className="w-4 h-4 mr-1.5" />}
         Send Test Email
+       </Button>
+      </div>
+     </div>
+    </div>
+   )}
+
+   {/* SMS Tab — super_admin only */}
+   {activeTab === 'sms' && isSuperAdmin && (
+    <div className="admin-card overflow-hidden">
+     <div className="hero-gradient-soft p-6 border-b border-border/50">
+      <div className="flex items-center gap-4">
+       <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center shadow-soft-sm ring-1 ring-primary/20">
+        <MessageSquare className="w-6 h-6 text-primary" />
+       </div>
+       <div>
+        <h3 className="text-lg font-bold text-foreground">SMS</h3>
+        <p className="text-sm text-muted-foreground">Configure AlphaSMS or BulkSMS for staff alerts</p>
+       </div>
+      </div>
+     </div>
+
+     <div className="p-6 space-y-6">
+      <div className="space-y-2">
+       <Label className="text-xs text-muted-foreground font-medium">Active provider</Label>
+       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        {([
+         { id: '' as SmsProviderId, label: 'None' },
+         { id: 'alphasms' as SmsProviderId, label: 'AlphaSMS' },
+         { id: 'bulksms' as SmsProviderId, label: 'BulkSMS' },
+        ]).map((option) => (
+         <button
+          key={option.id || 'none'}
+          type="button"
+          onClick={() => setSmsForm((prev) => ({
+            ...prev,
+            activeProvider: option.id,
+            ...(option.id === 'alphasms' ? { alphaEnabled: true } : {}),
+            ...(option.id === 'bulksms' ? { bulkEnabled: true } : {}),
+          }))}
+          className={`px-3 py-2 rounded-xl border text-sm font-medium transition-all ${
+           smsForm.activeProvider === option.id
+            ? 'border-primary/40 bg-primary/5 text-foreground'
+            : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted/40'
+          }`}
+         >
+          {option.label}
+         </button>
+        ))}
+       </div>
+       {smsBalance && (
+        <p className="text-xs text-muted-foreground">
+         Balance:{' '}
+         {smsBalance.ok
+          ? `${String((smsBalance as { balance?: unknown }).balance ?? '—')} BDT`
+          : smsBalance.reason || 'unavailable'}
+        </p>
+       )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+       <div className="rounded-xl border border-border p-4 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+         <div>
+          <p className="text-sm font-semibold text-foreground">AlphaSMS</p>
+          <p className="text-xs text-muted-foreground">sms.net.bd</p>
+         </div>
+         <div className="flex items-center gap-2">
+          {smsForm.activeProvider === 'alphasms' && (
+           <Badge variant="outline" className="admin-badge admin-badge-active">Active</Badge>
+          )}
+          <Switch
+           checked={smsForm.alphaEnabled}
+           onCheckedChange={(v) => setSmsForm((prev) => ({
+            ...prev,
+            alphaEnabled: v,
+            ...(v ? { activeProvider: 'alphasms' as SmsProviderId } : prev.activeProvider === 'alphasms' ? { activeProvider: '' as SmsProviderId } : {}),
+           }))}
+          />
+         </div>
+        </div>
+        <div className="space-y-1.5">
+         <Label className="text-xs text-muted-foreground font-medium">
+          API Key {smsForm.hasAlphaApiKey && !smsForm.alphaApiKey && '(saved — leave blank to keep)'}
+         </Label>
+         <div className="relative">
+          <Input
+           type={showAlphaKey ? 'text' : 'password'}
+           value={smsForm.alphaApiKey}
+           onChange={(e) => setSmsForm({ ...smsForm, alphaApiKey: e.target.value })}
+           className={`${inputClass} pr-10`}
+           placeholder={smsForm.hasAlphaApiKey ? '••••••••' : 'AlphaSMS API key'}
+          />
+          <button
+           type="button"
+           aria-label={showAlphaKey ? 'Hide API key' : 'Show API key'}
+           onClick={() => setShowAlphaKey((v) => !v)}
+           className="absolute right-0.5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          >
+           {showAlphaKey ? <EyeOff className="w-4 h-4 pointer-events-none" /> : <Eye className="w-4 h-4 pointer-events-none" />}
+          </button>
+         </div>
+        </div>
+        <div className="space-y-1.5">
+         <Label className="text-xs text-muted-foreground font-medium">Sender ID (optional)</Label>
+         <Input
+          value={smsForm.alphaSenderId}
+          onChange={(e) => setSmsForm({ ...smsForm, alphaSenderId: e.target.value })}
+          className={inputClass}
+          placeholder="Optional for AlphaSMS"
+         />
+        </div>
+       </div>
+
+       <div className="rounded-xl border border-border p-4 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+         <div>
+          <p className="text-sm font-semibold text-foreground">BulkSMS</p>
+          <p className="text-xs text-muted-foreground">bulksmsbd.net</p>
+         </div>
+         <div className="flex items-center gap-2">
+          {smsForm.activeProvider === 'bulksms' && (
+           <Badge variant="outline" className="admin-badge admin-badge-active">Active</Badge>
+          )}
+          <Switch
+           checked={smsForm.bulkEnabled}
+           onCheckedChange={(v) => setSmsForm((prev) => ({
+            ...prev,
+            bulkEnabled: v,
+            ...(v ? { activeProvider: 'bulksms' as SmsProviderId } : prev.activeProvider === 'bulksms' ? { activeProvider: '' as SmsProviderId } : {}),
+           }))}
+          />
+         </div>
+        </div>
+        <div className="space-y-1.5">
+         <Label className="text-xs text-muted-foreground font-medium">
+          API Key {smsForm.hasBulkApiKey && !smsForm.bulkApiKey && '(saved — leave blank to keep)'}
+         </Label>
+         <div className="relative">
+          <Input
+           type={showBulkKey ? 'text' : 'password'}
+           value={smsForm.bulkApiKey}
+           onChange={(e) => setSmsForm({ ...smsForm, bulkApiKey: e.target.value })}
+           className={`${inputClass} pr-10`}
+           placeholder={smsForm.hasBulkApiKey ? '••••••••' : 'BulkSMS API key'}
+          />
+          <button
+           type="button"
+           aria-label={showBulkKey ? 'Hide API key' : 'Show API key'}
+           onClick={() => setShowBulkKey((v) => !v)}
+           className="absolute right-0.5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          >
+           {showBulkKey ? <EyeOff className="w-4 h-4 pointer-events-none" /> : <Eye className="w-4 h-4 pointer-events-none" />}
+          </button>
+         </div>
+        </div>
+        <div className="space-y-1.5">
+         <Label className="text-xs text-muted-foreground font-medium">Sender ID (required)</Label>
+         <Input
+          value={smsForm.bulkSenderId}
+          onChange={(e) => setSmsForm({ ...smsForm, bulkSenderId: e.target.value })}
+          className={inputClass}
+          placeholder="Required for BulkSMS"
+         />
+        </div>
+       </div>
+      </div>
+
+      <div className="space-y-4 rounded-xl border border-border bg-muted/20 p-4">
+       <div>
+        <p className="text-sm font-semibold text-foreground">Send test SMS</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Saves your settings first, then sends with the active provider.</p>
+       </div>
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+         <Label className="text-xs text-muted-foreground font-medium">Phone</Label>
+         <Input
+          value={smsTestPhone}
+          onChange={(e) => setSmsTestPhone(e.target.value)}
+          className={inputClass}
+          placeholder="01XXXXXXXXX"
+         />
+        </div>
+        <div className="space-y-1.5">
+         <Label className="text-xs text-muted-foreground font-medium">Message (optional)</Label>
+         <Input
+          value={smsTestMessage}
+          onChange={(e) => setSmsTestMessage(e.target.value)}
+          className={inputClass}
+          placeholder="Trialvo Shop — SMS test"
+         />
+        </div>
+       </div>
+      </div>
+
+      {smsTestResult && (
+       <div className={`p-4 rounded-xl border ${smsTestResult.success ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+        <div className="flex items-center gap-2">
+         {smsTestResult.success ? <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> : <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />}
+         <p className="text-sm">{smsTestResult.message}</p>
+        </div>
+       </div>
+      )}
+
+      <div className="flex items-center gap-3 pt-2">
+       <Button onClick={handleSaveSmsSettings} disabled={smsSaving} className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-soft-sm">
+        {smsSaving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
+        Save SMS Settings
+       </Button>
+       <Button variant="outline" onClick={handleTestSms} disabled={smsTestLoading} className="border-primary/20 text-primary hover:bg-primary/5">
+        {smsTestLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Activity className="w-4 h-4 mr-1.5" />}
+        Send Test SMS
        </Button>
       </div>
      </div>

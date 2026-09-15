@@ -31,7 +31,7 @@ import { ProductChip } from "../shared/ProductChip";
 import { ProductPickerStep } from "../shared/ProductPickerStep";
 import { StepIndicator } from "../shared/StepIndicator";
 import { TrialModalFacts, TrialModalShell } from "../shared/TrialModalShell";
-import { useDomainTrialWizard } from "./useDomainTrialWizard";
+import { useDomainTrialWizard, ORDERED_STEPS } from "./useDomainTrialWizard";
 import { HostingStep } from "./steps/HostingStep";
 import { DurationStep } from "./steps/DurationStep";
 import { ContactStep } from "./steps/ContactStep";
@@ -227,6 +227,27 @@ export function DomainTrialWizard({
   const step2Label = presets.length === 1 ? copy.domain.domainLabel : copy.domain.stepDuration;
   const stepLabels = [copy.domain.stepHosting, step2Label, copy.domain.stepContact, copy.domain.stepVerify];
   const onVerify = wizard.step === "verify";
+  const canLeaveProduct = !productProp && !productSlug;
+  const backDisabled = pending || (wizard.isFirst && !canLeaveProduct);
+
+  const goBack = () => {
+    if (pending) return;
+    setErrorMsg(null);
+    // First numbered step: return to product picker when the product was chosen in-modal.
+    if (wizard.isFirst && canLeaveProduct) {
+      setPicked(null);
+      wizard.go("pick");
+      return;
+    }
+    wizard.back();
+  };
+
+  const jumpToStep = (index: number) => {
+    if (pending) return;
+    if (index < 0 || index >= wizard.index) return;
+    setErrorMsg(null);
+    wizard.go(ORDERED_STEPS[index]);
+  };
 
   return (
     <TrialModalShell
@@ -238,15 +259,22 @@ export function DomainTrialWizard({
       badge={copy.domain.freeFor(monthsRangeLabel(presets, language))}
       title={product && wizard.step === "submitted" ? productDisplayName(product, language) : copy.domain.title}
       description={wizard.step === "submitted" ? undefined : <TrialModalFacts items={[...copy.domain.bullets]} />}
-      headerExtra={showSteps ? <StepIndicator steps={stepLabels} current={wizard.index} className="mt-4" /> : null}
+      headerExtra={showSteps ? (
+        <StepIndicator
+          steps={stepLabels}
+          current={wizard.index}
+          onStepSelect={jumpToStep}
+          className="mt-4"
+        />
+      ) : null}
       footer={
         showSteps ? (
           <div className="flex items-center justify-between gap-3">
             <Button
               type="button"
               variant="ghost"
-              onClick={wizard.back}
-              disabled={wizard.isFirst || pending}
+              onClick={goBack}
+              disabled={backDisabled}
               className="h-11 rounded-lg px-3"
             >
               <ArrowLeft className="mr-1.5 h-4 w-4" aria-hidden="true" />
@@ -330,7 +358,7 @@ export function DomainTrialWizard({
                     />
                     <button
                       type="button"
-                      onClick={wizard.back}
+                      onClick={goBack}
                       className="w-full text-center text-sm font-medium text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
                     >
                       {copy.verify.wrongEmail}

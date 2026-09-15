@@ -74,6 +74,8 @@ async function runMigrations() {
       require('./025_product_discount'),
       require('./026_trial_paths'),
       require('./027_trial_verification_and_process'),
+      require('./028_admin_rbac_notifications'),
+      require('./029_admin_activity_logs'),
     ];
 
     let count = 0;

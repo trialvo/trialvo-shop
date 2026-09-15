@@ -4,6 +4,9 @@ const crypto = require('crypto');
 const { getTrialSettings, updateTrialSettings } = require('../services/trialSettings');
 const { getSmtpSettingsForAdmin, updateSmtpSettings, getSmtpConfig } = require('../services/smtpSettings');
 const { sendTestMail } = require('../services/mailer');
+const { getSmsSettingsForAdmin, updateSmsSettings } = require('../services/smsSettings');
+const { sendSms, getSmsBalance } = require('../services/smsSender');
+const { logAdminActivity, maskPhone } = require('../services/adminActivityLog');
 
 /**
  * GET /api/admin/settings/trialvo-pay
@@ -39,14 +42,28 @@ async function updateTrialvoPaySettings(req, res, next) {
       ['trialvo_pay_base_url', baseUrl]
     ];
 
+    const changedKeys = [];
     for (const [key, value] of updates) {
       if (value !== undefined) {
+        changedKeys.push(key);
         await pool.query(
           'UPDATE system_config SET value = $1, updated_at = NOW() WHERE `key` = $2',
           [value, key]
         );
       }
     }
+
+    await logAdminActivity({
+      req,
+      action: 'settings.pay_update',
+      resource: 'settings',
+      summary: 'Updated Trialvo Pay settings',
+      meta: {
+        keys: changedKeys,
+        apiKeyUpdated: apiKey !== undefined,
+        ipnSecretUpdated: ipnSecret !== undefined,
+      },
+    });
 
     res.json({ message: 'Settings updated successfully' });
   } catch (error) {
@@ -131,6 +148,13 @@ module.exports = {
         emailVerificationRequired, fulfillmentSlaHours, demoResetEnabled,
         demoMaxPerEmailDay, demoMaxPerIpHour,
       });
+      await logAdminActivity({
+        req,
+        action: 'settings.trial_update',
+        resource: 'settings',
+        summary: 'Updated trial settings',
+        meta: { keys: Object.keys(req.body || {}) },
+      });
       res.json({ message: 'Trial settings updated', ...settings });
     } catch (error) {
       next(error);
@@ -146,6 +170,19 @@ module.exports = {
   updateSmtpSettings: async (req, res, next) => {
     try {
       const settings = await updateSmtpSettings(req.body || {});
+      await logAdminActivity({
+        req,
+        action: 'settings.smtp_update',
+        resource: 'settings',
+        summary: 'Updated SMTP settings',
+        meta: {
+          enabled: settings.enabled,
+          host: settings.host,
+          port: settings.port,
+          secure: settings.secure,
+          hasPassword: settings.hasPassword,
+        },
+      });
       res.json({ message: 'SMTP settings updated', ...settings });
     } catch (error) {
       next(error);
@@ -189,6 +226,66 @@ module.exports = {
         success: false,
         error: error.message || 'SMTP test failed',
       });
+    }
+  },
+  getSmsSettings: async (req, res, next) => {
+    try {
+      const settings = await getSmsSettingsForAdmin();
+      const balance = await getSmsBalance(settings.activeProvider || undefined);
+      res.json({
+        ...settings,
+        balance: balance.ok ? balance : { ok: false, reason: balance.reason || null, provider: settings.activeProvider || null },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  updateSmsSettings: async (req, res, next) => {
+    try {
+      const settings = await updateSmsSettings(req.body || {});
+      await logAdminActivity({
+        req,
+        action: 'settings.sms_update',
+        resource: 'settings',
+        summary: 'Updated SMS settings',
+        meta: {
+          activeProvider: settings.activeProvider,
+          alphaEnabled: settings.alphaEnabled,
+          bulkEnabled: settings.bulkEnabled,
+          hasAlphaApiKey: settings.hasAlphaApiKey,
+          hasBulkApiKey: settings.hasBulkApiKey,
+        },
+      });
+      res.json({ message: 'SMS settings updated', ...settings });
+    } catch (error) {
+      res.status(400).json({ error: error.message || 'SMS settings update failed' });
+    }
+  },
+  testSmsSettings: async (req, res, next) => {
+    try {
+      const phone = String(req.body?.phone || '').trim();
+      if (!phone) {
+        return res.status(400).json({ error: 'Phone number is required' });
+      }
+      const message = String(req.body?.message || 'Trialvo Shop — SMS test. Your SMS provider is working.').trim();
+      const result = await sendSms(phone, message);
+      if (!result.ok) {
+        return res.status(400).json({
+          success: false,
+          error: result.message || result.reason || 'SMS test failed',
+          reason: result.reason || null,
+        });
+      }
+      await logAdminActivity({
+        req,
+        action: 'settings.sms_test',
+        resource: 'settings',
+        summary: 'Sent SMS test',
+        meta: { phone: maskPhone(phone) },
+      });
+      res.json({ success: true, message: `Test SMS sent to ${phone}` });
+    } catch (error) {
+      next(error);
     }
   },
 };

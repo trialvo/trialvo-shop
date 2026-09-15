@@ -21,6 +21,9 @@ import {
   ChevronRight,
   Calendar,
   Bell,
+  Users,
+  Shield,
+  History,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -35,16 +38,22 @@ import {
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/admin/useAdminMessages';
 
+type AdminRole = 'super_admin' | 'admin' | 'editor';
+
 type AdminNavItem = {
   path: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   exact?: boolean;
   badge?: boolean;
+  /** When set, item is only shown to these roles. */
+  roles?: AdminRole[];
 };
 
+type AdminNavGroup = { label: string; items: AdminNavItem[] };
+
 // Nav groups with section labels
-const navGroups: { label: string; items: AdminNavItem[] }[] = [
+const navGroups: AdminNavGroup[] = [
   {
     label: 'Main',
     items: [
@@ -70,6 +79,14 @@ const navGroups: { label: string; items: AdminNavItem[] }[] = [
     ],
   },
   {
+    label: 'Access',
+    items: [
+      { path: '/admin/staff', label: 'Staff', icon: Users, roles: ['super_admin'] },
+      { path: '/admin/permissions', label: 'Permissions', icon: Shield, roles: ['super_admin'] },
+      { path: '/admin/activity', label: 'Activity Log', icon: History, roles: ['super_admin', 'admin'] },
+    ],
+  },
+  {
     label: 'Account',
     items: [
       { path: '/admin/settings', label: 'Settings', icon: Settings },
@@ -77,7 +94,35 @@ const navGroups: { label: string; items: AdminNavItem[] }[] = [
   },
 ];
 
-const allNavItems = navGroups.flatMap((g) => g.items);
+const EDITOR_HIDDEN_PATHS = new Set([
+  '/admin',
+  '/admin/trial-requests',
+  '/admin/trial-instances',
+  '/admin/deployments',
+  '/admin/orders',
+  '/admin/activity',
+]);
+
+function isPathAllowed(item: AdminNavItem, role?: AdminRole): boolean {
+  if (item.roles && (!role || !item.roles.includes(role))) return false;
+  if (role === 'editor' && EDITOR_HIDDEN_PATHS.has(item.path)) return false;
+  return true;
+}
+
+function visibleNavGroups(role?: AdminRole): AdminNavGroup[] {
+  return navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => isPathAllowed(item, role)),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+function isBlockedEditorPath(pathname: string): boolean {
+  return [...EDITOR_HIDDEN_PATHS].some((path) =>
+    path === '/admin' ? pathname === '/admin' : pathname === path || pathname.startsWith(`${path}/`),
+  );
+}
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { adminProfile, signOut } = useAuth();
@@ -86,6 +131,9 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: unreadCount } = useUnreadCount();
+  const role = adminProfile?.role;
+  const filteredGroups = visibleNavGroups(role);
+  const filteredNavItems = filteredGroups.flatMap((g) => g.items);
 
   // Lock body scroll when mobile sidebar is open
   React.useEffect(() => {
@@ -96,6 +144,23 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
+
+  React.useEffect(() => {
+    if (!role) return;
+    if (
+      role !== 'super_admin' &&
+      (pathname === '/admin/staff' ||
+        pathname.startsWith('/admin/staff/') ||
+        pathname === '/admin/permissions' ||
+        pathname.startsWith('/admin/permissions/'))
+    ) {
+      router.replace('/admin/settings');
+      return;
+    }
+    if (role === 'editor' && isBlockedEditorPath(pathname)) {
+      router.replace('/admin/products');
+    }
+  }, [role, pathname, router]);
 
   const handleLogout = async () => {
     await signOut();
@@ -108,7 +173,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   // Get current nav item for breadcrumb
-  const currentNavItem = allNavItems.find((item) => isActive(item.path, item.exact));
+  const currentNavItem = filteredNavItems.find((item) => isActive(item.path, item.exact));
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -133,7 +198,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-2 overflow-y-auto">
-        {navGroups.map((group) => (
+        {filteredGroups.map((group) => (
           <div key={group.label}>
             {(sidebarOpen || isMobile) && (
               <div className="admin-nav-group">{group.label}</div>

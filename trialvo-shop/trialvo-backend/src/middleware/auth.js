@@ -13,7 +13,7 @@ async function authenticate(req, res, next) {
 
   // Fetch admin profile
   const { rows } = await pool.query(
-   'SELECT id, email, full_name, avatar_url, role FROM admin_profiles WHERE id = $1',
+   'SELECT id, email, full_name, avatar_url, role, phone, is_active FROM admin_profiles WHERE id = $1',
    [decoded.id]
   );
 
@@ -21,7 +21,16 @@ async function authenticate(req, res, next) {
    return res.status(401).json({ error: 'Invalid token. Admin not found.', code: 'TOKEN_INVALID' });
   }
 
-  req.admin = rows[0];
+  const admin = rows[0];
+  if (Number(admin.is_active) === 0) {
+   return res.status(401).json({ error: 'Account is disabled.', code: 'ACCOUNT_DISABLED' });
+  }
+
+  req.admin = {
+   ...admin,
+   phone: admin.phone || null,
+   is_active: Number(admin.is_active) !== 0,
+  };
   next();
  } catch (error) {
   if (error.name === 'JsonWebTokenError') {

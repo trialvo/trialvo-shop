@@ -1,5 +1,6 @@
 const { pool } = require('../config/db');
 const { v4: uuidv4 } = require('uuid');
+const { logAdminActivity } = require('../services/adminActivityLog');
 
 // Categories are referenced by products via the products.category (slug) column.
 // Keeping that loose coupling avoids a destructive migration while still letting
@@ -73,6 +74,14 @@ async function createCategory(req, res, next) {
         );
 
         const { rows } = await pool.query('SELECT * FROM categories WHERE id = $1', [id]);
+        await logAdminActivity({
+            req,
+            action: 'category.create',
+            resource: 'category',
+            resourceId: id,
+            summary: `Created category ${slug}`,
+            meta: { slug },
+        });
         res.status(201).json(rows[0]);
     } catch (error) {
         next(error);
@@ -111,6 +120,14 @@ async function updateCategory(req, res, next) {
 
         const { rows } = await pool.query('SELECT * FROM categories WHERE id = $1', [id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Category not found' });
+        await logAdminActivity({
+            req,
+            action: 'category.update',
+            resource: 'category',
+            resourceId: id,
+            summary: `Updated category ${rows[0].slug}`,
+            meta: { fields: Object.keys(updates).filter((k) => allowed.includes(k)) },
+        });
         res.json(rows[0]);
     } catch (error) {
         next(error);
@@ -136,6 +153,14 @@ async function deleteCategory(req, res, next) {
         }
 
         await pool.query('DELETE FROM categories WHERE id = $1', [id]);
+        await logAdminActivity({
+            req,
+            action: 'category.delete',
+            resource: 'category',
+            resourceId: id,
+            summary: `Deleted category ${cat.rows[0].slug}`,
+            meta: { slug: cat.rows[0].slug },
+        });
         res.json({ message: 'Category deleted successfully' });
     } catch (error) {
         next(error);

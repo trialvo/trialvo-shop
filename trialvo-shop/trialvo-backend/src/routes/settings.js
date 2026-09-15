@@ -16,4 +16,9 @@ router.get('/smtp', settingsController.getSmtpSettings);
 router.post('/smtp', settingsController.updateSmtpSettings);
 router.post('/smtp/test', settingsController.testSmtpSettings);
 
+// SMS picker + test: super_admin only (write + test must not be available to admin)
+router.get('/sms', roleAuth(['super_admin']), settingsController.getSmsSettings);
+router.post('/sms', roleAuth(['super_admin']), settingsController.updateSmsSettings);
+router.post('/sms/test', roleAuth(['super_admin']), settingsController.testSmsSettings);
+
 module.exports = router;

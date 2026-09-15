@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../middleware/auth');
+const { authenticate, roleAuth } = require('../middleware/auth');
+
+const contentRoles = roleAuth(['super_admin', 'admin', 'editor']);
+const opsRoles = roleAuth(['super_admin', 'admin']);
+const superOnly = roleAuth(['super_admin']);
 
 // Admin controllers
 const {
@@ -15,12 +19,18 @@ const {
 const { adminGetTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } = require('../controllers/testimonialController');
 const { adminGetMessages, toggleRead, deleteMessage, getUnreadCount } = require('../controllers/contactMessageController');
 const { getSeoStatus, resubmitSeo } = require('../controllers/seoController');
+const {
+  listActivityLogs,
+  listActivityActions,
+  listActivityResources,
+} = require('../controllers/adminActivityController');
 
-// All admin routes require auth
+// All admin routes require auth; editors may manage catalog content only.
 router.use(authenticate);
+router.use(contentRoles);
 
 // Dashboard
-router.get('/dashboard', getDashboardStats);
+router.get('/dashboard', opsRoles, getDashboardStats);
 
 // Categories (modular sub-router; auth inherited from above)
 router.use('/categories', require('./admin/categories'));
@@ -28,9 +38,18 @@ router.use('/categories', require('./admin/categories'));
 // Media uploads (modular sub-router; auth inherited from above)
 router.use('/media', require('./admin/media'));
 
-// Trial control plane
-router.use('/trial-requests', require('./admin/trialRequests'));
-router.use('/trial-instances', require('./admin/trialInstances'));
+// Trial control plane — operators only (editor 403)
+router.use('/trial-requests', opsRoles, require('./admin/trialRequests'));
+router.use('/trial-instances', opsRoles, require('./admin/trialInstances'));
+
+// Staff + notification matrix — super_admin only
+router.use('/staff', superOnly, require('./admin/staff'));
+router.use('/notification-permissions', superOnly, require('./admin/notificationPermissions'));
+
+// Audit log — operators only (editor 403)
+router.get('/activity-logs/actions', opsRoles, listActivityActions);
+router.get('/activity-logs/resources', opsRoles, listActivityResources);
+router.get('/activity-logs', opsRoles, listActivityLogs);
 
 // Products
 router.get('/products', adminGetProducts);
@@ -45,16 +64,16 @@ router.delete('/products/:id', deleteProduct);
 router.get('/seo/status', getSeoStatus);
 router.post('/seo/resubmit', resubmitSeo);
 
-// Orders
-router.get('/orders', adminGetOrders);
-router.get('/orders/export', exportOrders);
-router.post('/orders/bulk-status', bulkUpdateStatus);
-router.get('/orders/:id/timeline', getOrderTimeline);
-router.get('/orders/:id/notes', getOrderNotes);
-router.post('/orders/:id/notes', addOrderNote);
-router.delete('/orders/notes/:noteId', deleteOrderNote);
-router.put('/orders/:id/status', updateOrderStatus);
-router.put('/orders/:id', updateOrder);
+// Orders — operators only (editor 403)
+router.get('/orders', opsRoles, adminGetOrders);
+router.get('/orders/export', opsRoles, exportOrders);
+router.post('/orders/bulk-status', opsRoles, bulkUpdateStatus);
+router.get('/orders/:id/timeline', opsRoles, getOrderTimeline);
+router.get('/orders/:id/notes', opsRoles, getOrderNotes);
+router.post('/orders/:id/notes', opsRoles, addOrderNote);
+router.delete('/orders/notes/:noteId', opsRoles, deleteOrderNote);
+router.put('/orders/:id/status', opsRoles, updateOrderStatus);
+router.put('/orders/:id', opsRoles, updateOrder);
 
 // Testimonials
 router.get('/testimonials', adminGetTestimonials);

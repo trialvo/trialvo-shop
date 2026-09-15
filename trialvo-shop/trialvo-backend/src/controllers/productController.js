@@ -9,6 +9,7 @@ const {
 const { clampDiscountPercent } = require('../lib/productPricing');
 const { normalizeVideoUrl } = require('../lib/videoUrl');
 const { notifySeoChangeAsync } = require('../services/seoNotify');
+const { logAdminActivity } = require('../services/adminActivityLog');
 
 // Helper: build parameterized query with $1, $2, ... placeholders
 function pgParams(startIdx, count) {
@@ -123,6 +124,14 @@ async function createProduct(req, res, next) {
         // Link any freshly uploaded /uploads assets to this product for later cleanup.
         await linkMediaToProduct(id, collectProductMediaUrls(rows[0]));
         if (rows[0].is_active) notifySeoChangeAsync({ slugs: [rows[0].slug] });
+        await logAdminActivity({
+            req,
+            action: 'product.create',
+            resource: 'product',
+            resourceId: id,
+            summary: `Created product ${slug}`,
+            meta: { slug },
+        });
         res.status(201).json(rows[0]);
     } catch (error) {
         next(error);
@@ -182,6 +191,14 @@ async function updateProduct(req, res, next) {
         notifySeoChangeAsync({
             slugs: [...new Set([before.rows[0].slug, rows[0].slug])],
         });
+        await logAdminActivity({
+            req,
+            action: 'product.update',
+            resource: 'product',
+            resourceId: id,
+            summary: `Updated product ${rows[0].slug}`,
+            meta: { fields: Object.keys(updates).filter((k) => k !== 'id' && allowed.has(k)) },
+        });
         res.json(rows[0]);
     } catch (error) {
         next(error);
@@ -200,6 +217,14 @@ async function deleteProduct(req, res, next) {
         // Best-effort: remove uploaded files that belonged to this product.
         await cleanupAllProductMedia(rows[0]);
         notifySeoChangeAsync({ slugs: [rows[0].slug], paths: ['/products'] });
+        await logAdminActivity({
+            req,
+            action: 'product.delete',
+            resource: 'product',
+            resourceId: id,
+            summary: `Deleted product ${rows[0].slug}`,
+            meta: { slug: rows[0].slug },
+        });
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         next(error);
@@ -262,6 +287,14 @@ async function bulkToggleProducts(req, res, next) {
             ids
         );
         notifySeoChangeAsync({ slugs: changed.map((row) => row.slug), paths: ['/products'] });
+
+        await logAdminActivity({
+            req,
+            action: 'product.bulk',
+            resource: 'product',
+            summary: `Bulk updated ${ids.length} products`,
+            meta: { count: ids.length, field, value: Boolean(value) },
+        });
 
         res.json({ message: `${ids.length} products updated` });
     } catch (error) {
