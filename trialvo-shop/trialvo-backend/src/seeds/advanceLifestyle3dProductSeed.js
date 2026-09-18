@@ -163,16 +163,14 @@ module.exports = {
         };
 
         if (existing.rows.length) {
+            // Preserve admin-managed media/content on existing rows. Boot-time seeds
+            // only refresh operational demo links and deploy_config (shared-demo URLs).
             await client.query(
                 `UPDATE products SET
-                  category=$2, price_bdt=$3, price_usd=$4, thumbnail=$5, images=$6, demo=$7,
-                  name=$8, short_description=$9, features=$10, facilities=$11,
-                  seo=$12, deploy_config=$13, is_trialable=1, is_active=1, is_featured=1,
+                  demo=$2, deploy_config=$3, is_trialable=1,
                   updated_at=NOW()
                  WHERE slug=$1`,
-                [slug, payload.category, payload.price_bdt, payload.price_usd, payload.thumbnail,
-                    payload.images, payload.demo, payload.name, payload.short_description, payload.features,
-                    payload.facilities, payload.seo, payload.deploy_config]
+                [slug, payload.demo, payload.deploy_config]
             );
         } else {
             await client.query(

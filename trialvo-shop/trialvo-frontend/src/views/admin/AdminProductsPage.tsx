@@ -841,6 +841,7 @@ const AdminProductsPage: React.FC = () => {
                 Media
               </h3>
               <div className="space-y-4">
+                <p className="text-[11px] text-muted-foreground">Uploads are kept only after you save the product.</p>
                 <div className="space-y-1">
                   <Label className={labelClass}>Thumbnail URL *</Label>
                   <div className="flex gap-2">

@@ -43,7 +43,10 @@ const ImageUploadButton: React.FC<ImageUploadButtonProps> = ({
     try {
       const res = await upload.mutateAsync({ file, kind, ownerType, ownerId });
       onUploaded(res.url);
-      toast({ title: 'Image uploaded' });
+      toast({
+        title: 'Image uploaded',
+        description: 'Click Update Product (or Create) to save it on the product.',
+      });
     } catch (err: any) {
       toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
     }
